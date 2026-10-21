@@ -311,4 +311,29 @@ do
 	assertEqual(exported.GetPersistenceStats().dirty, 0, 'intervalo 0 não deixa sujo')
 	Config.Server.flushIntervalMs = original
 end
+
+-- Teste de suporte a formatos modernos de imagem (.webp, .png, .svg)
+do
+	local itemWebp, errWebp = Inventory.Items.Register('test_format_webp', {
+		label = 'Item WebP',
+		image = 'test_item.webp'
+	})
+	assertEqual(itemWebp ~= nil, true, 'registro com imagem .webp')
+	assertEqual(itemWebp.image, 'test_item.webp', 'item preserva nome .webp')
+
+	local itemSvg, errSvg = Inventory.Items.Register('test_format_svg', {
+		label = 'Item SVG',
+		image = 'test_icon.svg'
+	})
+	assertEqual(itemSvg ~= nil, true, 'registro com imagem .svg')
+	assertEqual(itemSvg.image, 'test_icon.svg', 'item preserva nome .svg')
+
+	local itemBmp, errBmp = Inventory.Items.Register('test_format_bmp', {
+		label = 'Item BMP',
+		image = 'test_item.bmp'
+	})
+	assertEqual(itemBmp, nil, 'recusa formatos não suportados (.bmp)')
+	assertEqual(errBmp, 'invalid_item_image', 'erro correto para formato não suportado')
+end
+
 print('inventory service tests passed')

@@ -536,9 +536,31 @@ function createSlot(slotNumber, item, side) {
 		itemIcon.className = 'item-icon';
 		itemIcon.alt = '';
 		itemIcon.draggable = false;
-		const imageName = typeof item.image === 'string' ? item.image : `${itemName}.png`;
-		itemIcon.src = `../data/images/${encodeURIComponent(imageName)}`;
-		itemIcon.addEventListener('error', () => itemIcon.remove(), { once: true });
+
+		const rawImage = typeof item.image === 'string' && item.image.trim().length > 0
+			? item.image.trim()
+			: `${itemName}.webp`;
+		const baseName = rawImage.replace(/\.(webp|png|svg)$/i, '');
+		const requestedExt = (rawImage.match(/\.(webp|png|svg)$/i)?.[1] || 'webp').toLowerCase();
+		const candidates = [
+			`${baseName}.${requestedExt}`,
+			...(requestedExt !== 'webp' ? [`${baseName}.webp`] : []),
+			...(requestedExt !== 'png' ? [`${baseName}.png`] : []),
+			...(requestedExt !== 'svg' ? [`${baseName}.svg`] : [])
+		];
+
+		let candidateIndex = 0;
+		function tryNextSource() {
+			if (candidateIndex >= candidates.length) {
+				itemIcon.remove();
+				return;
+			}
+			const nextCandidate = candidates[candidateIndex++];
+			itemIcon.src = `../data/images/${encodeURIComponent(nextCandidate)}`;
+		}
+
+		itemIcon.addEventListener('error', tryNextSource);
+		tryNextSource();
 
 		const itemLabel = document.createElement('span');
 		itemLabel.className = 'item-label';

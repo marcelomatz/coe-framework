@@ -30,7 +30,6 @@ assert(registered, ('failed to register shop consumables: %s'):format(errorMessa
 -- Galão de combustível (coe_fuel): metadata { fuel, liters }. Comprado cheio na bomba; usar despeja no veículo
 -- mais perto. Não é consumido ao usar (o coe_fuel baixa os litros).
 registered, errorMessage = Inventory.Items.RegisterImageGroup('misc', 'fuel_can', {
-	images = { fuel_can = 'WEAPON_PETROLCAN.png' },
 	items = {
 		fuel_can = { label = 'Galão de combustível', weight = 3000, stack = false, usable = true, consume = 0, maxStack = 1, metadata = { fuel = 'empty', liters = 0 } }
 	}

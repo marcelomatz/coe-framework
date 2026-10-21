@@ -287,7 +287,8 @@ function Inventory.Items.Register(name, data)
 			return nil, 'invalid_weapon_profile'
 		end
 	end
-	if type(image) ~= 'string' or image:match("^[%w_%-'.]+%.png$") == nil then
+	local imageExt = type(image) == 'string' and image:match("^[%w_%-'.]+%.([%w]+)$") or nil
+	if not imageExt or (imageExt ~= 'png' and imageExt ~= 'webp' and imageExt ~= 'svg') then
 		return nil, 'invalid_item_image'
 	end
 	if maxStack ~= nil and (not Core.Functions.IsInteger(maxStack) or maxStack < 1) then

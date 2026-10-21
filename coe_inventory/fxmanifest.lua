@@ -19,6 +19,8 @@ ui_page 'html/index.html'
 files {
 	'lib/init.lua',
 	'data/images/*.png',
+	'data/images/*.webp',
+	'data/images/*.svg',
 	'html/index.html',
 	'html/style.css',
 	'html/app.js'
