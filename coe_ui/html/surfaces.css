@@ -1,0 +1,92 @@
+/*
+ * Superfícies e efeitos do framework Coe: vidro, profundidade sutil e cantos chanfrados.
+ * Visual "tech" discreto: sem neon; o acento aparece só em linhas finas e estados ativos.
+ * Depende de tokens.css. Efeitos respeitam prefers-reduced-motion.
+ */
+
+/* Vidro: painel translúcido com borda fina. Sem backdrop-filter: na NUI do FiveM ele vira um retângulo preto. */
+.coe-glass {
+	border: 1px solid var(--coe-line-strong);
+	background:
+		linear-gradient(160deg, rgba(var(--coe-ink-rgb), 0.07), rgba(var(--coe-ink-rgb), 0) 38%),
+		rgba(var(--coe-panel-rgb), 0.72);
+	color: var(--coe-text);
+	box-shadow: var(--coe-shadow-depth);
+}
+
+/* Cantos chanfrados (corte diagonal em dois cantos opostos). */
+.coe-chamfer {
+	clip-path: polygon(
+		var(--coe-chamfer) 0, 100% 0, 100% calc(100% - var(--coe-chamfer)),
+		calc(100% - var(--coe-chamfer)) 100%, 0 100%, 0 var(--coe-chamfer)
+	);
+}
+
+/* Mira: ponto central e quatro cantos que se fecham quando há alvo. */
+.coe-reticle {
+	--coe-reticle-size: 30px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: var(--coe-reticle-size);
+	height: var(--coe-reticle-size);
+	color: var(--coe-text);
+	opacity: 0;
+	transform: translate(-50%, -50%) scale(0.8);
+	transition: opacity var(--coe-dur) var(--coe-ease), transform var(--coe-dur-slow) var(--coe-ease), color var(--coe-dur) var(--coe-ease);
+	pointer-events: none;
+	filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
+}
+
+.coe-reticle.is-visible {
+	opacity: 0.6;
+	transform: translate(-50%, -50%) scale(1);
+}
+
+.coe-reticle.has-target {
+	opacity: 1;
+	color: var(--coe-accent);
+	transform: translate(-50%, -50%) scale(1) rotate(45deg);
+}
+
+.coe-reticle::before {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 4px;
+	height: 4px;
+	background: currentColor;
+	border-radius: 50%;
+	content: "";
+	transform: translate(-50%, -50%);
+}
+
+.coe-reticle::after {
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(currentColor, currentColor) top left / 7px 1px no-repeat,
+		linear-gradient(currentColor, currentColor) top left / 1px 7px no-repeat,
+		linear-gradient(currentColor, currentColor) top right / 7px 1px no-repeat,
+		linear-gradient(currentColor, currentColor) top right / 1px 7px no-repeat,
+		linear-gradient(currentColor, currentColor) bottom left / 7px 1px no-repeat,
+		linear-gradient(currentColor, currentColor) bottom left / 1px 7px no-repeat,
+		linear-gradient(currentColor, currentColor) bottom right / 7px 1px no-repeat,
+		linear-gradient(currentColor, currentColor) bottom right / 1px 7px no-repeat;
+	content: "";
+	opacity: 0.55;
+	transform: scale(1.35);
+	transition: transform var(--coe-dur-slow) var(--coe-ease), opacity var(--coe-dur) var(--coe-ease);
+}
+
+.coe-reticle.has-target::after {
+	opacity: 1;
+	transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.coe-reticle,
+	.coe-reticle::after {
+		transition-duration: 1ms;
+	}
+}

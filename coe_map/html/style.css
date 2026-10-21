@@ -1,0 +1,16 @@
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: var(--coe-font); color: var(--coe-text); }
+[hidden] { display: none !important; }
+
+.chip {
+	position: fixed; left: 2vw; top: 3vh;
+	display: flex; align-items: center; gap: 12px; padding: 6px 10px;
+	border: 1px solid var(--coe-line-strong); border-radius: 8px;
+	background: rgba(var(--coe-panel-rgb), 0.82); font-size: 11px; white-space: nowrap;
+}
+.chip-title { letter-spacing: 0.18em; color: var(--coe-accent); font-weight: 700; }
+.chip-dest b { font-variant-numeric: tabular-nums; color: var(--coe-text); }
+.chip-keys { color: var(--coe-subtle); }
+.chip-keys kbd {
+	font: inherit; padding: 1px 5px; margin-right: 4px; border-radius: 4px;
+	border: 1px solid var(--coe-line-strong); color: var(--coe-muted);
+}

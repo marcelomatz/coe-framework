@@ -1,0 +1,27 @@
+Locales = Locales or {}
+
+Locales['pt-BR'] = {
+	in_game_only = 'Use em jogo: precisa de um personagem ativo.',
+	character_not_loaded = 'Personagem não carregado.',
+	create_failed = 'Não foi possível criar o veículo.',
+	spawn_failed = 'Veículo criado, mas não foi possível gerá-lo.',
+	coords_unavailable = 'Posição do jogador indisponível.',
+	vehicle_created = 'Veículo %{model} criado (placa %{plate}).',
+	mileage_usage = 'Uso: coe_vehicle_mileage <placa> <km>',
+	invalid_value = 'Valor inválido.',
+	mileage_updated = 'Quilometragem de %{plate}: %{kilometers} km.',
+	target_player_invalid = 'Informe o ID de outro jogador online.',
+	target_character_missing = 'O jogador não tem personagem ativo.',
+	no_vehicle_near = 'Nenhum veículo seu por perto.',
+	key_error_not_owner = 'Só o dono do veículo pode fazer isso.',
+	key_error_limit_reached = 'Esse veículo já tem o máximo de chaves emprestadas.',
+	key_error_already_owner = 'Essa pessoa já é a dona do veículo.',
+	player_too_far = 'O jogador está longe demais.',
+	lend_failed = 'Não foi possível emprestar a chave.',
+	key_lent = 'Chave de %{plate} emprestada.',
+	key_received = 'Você recebeu a chave do veículo %{plate}.',
+	take_failed = 'Não foi possível retirar a chave.',
+	key_revoked = 'Chave de %{plate} retirada.',
+	key_revoked_target = 'Sua chave do veículo %{plate} foi retirada.',
+	no_key_warning = 'Você não tem a chave deste veículo.'
+}

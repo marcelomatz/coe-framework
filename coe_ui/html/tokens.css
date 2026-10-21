@@ -1,0 +1,195 @@
+/*
+ * Design tokens do framework Coe. Única fonte de cores, espaçamento e tipografia.
+ * Ordem da folha de estilos:
+ *   1. Tema padrão (:root e :root[data-coe-theme="..."]) — aplicado quando o usuário não escolheu tema.
+ *   2. Tema definido pelo usuário (:root[data-coe-user-theme="..."]) — declarado abaixo do tema padrão;
+ *      quando o usuário escolhe um tema, ele sempre prevalece sobre o tema padrão.
+ */
+
+/* 1. TEMA PADRÃO ---------------------------------------------------------------------------------------- */
+:root,
+:root[data-coe-theme="moss"] {
+	--coe-font: "Bahnschrift", "Segoe UI", sans-serif;
+
+	--coe-page: #0c1110;
+	--coe-sidebar: #111816;
+	--coe-panel: #151d1a;
+	--coe-panel-raised: #1a2420;
+	--coe-text: #e7eee9;
+	--coe-muted: #8d9b92;
+	--coe-subtle: #637168;
+	--coe-accent: #c4df9b;
+	--coe-accent-rgb: 196, 223, 155;
+	--coe-panel-rgb: 21, 29, 26;
+	--coe-ink-rgb: 219, 232, 223;
+
+	--coe-danger: #e39b8b;
+	--coe-danger-rgb: 227, 155, 139;
+	--coe-success: #a9d3ae;
+	--coe-success-rgb: 169, 211, 174;
+	--coe-warning: #e6b65c;
+
+	--coe-line: rgba(var(--coe-ink-rgb), 0.1);
+	--coe-line-strong: rgba(var(--coe-ink-rgb), 0.17);
+	--coe-accent-soft: rgba(var(--coe-accent-rgb), 0.1);
+	--coe-danger-soft: rgba(var(--coe-danger-rgb), 0.1);
+	--coe-overlay: rgba(6, 9, 8, 0.72);
+	--coe-on-accent: #0c1110;
+
+	--coe-space-1: 4px;
+	--coe-space-2: 8px;
+	--coe-space-3: 12px;
+	--coe-space-4: 16px;
+	--coe-space-5: 24px;
+
+	--coe-text-xs: 11px;
+	--coe-text-sm: 12px;
+	--coe-text-md: 14px;
+	--coe-text-lg: 18px;
+
+	--coe-radius: 2px;
+	--coe-chamfer: 8px;
+	--coe-shadow-depth: 0 1px 0 rgba(var(--coe-ink-rgb), 0.06) inset;
+	--coe-ease: cubic-bezier(0.22, 0.8, 0.28, 1);
+	--coe-dur: 140ms;
+	--coe-dur-slow: 260ms;
+	--coe-z-modal: 10000;
+}
+
+:root[data-coe-theme="ocean"] {
+	--coe-page: #0b1118;
+	--coe-sidebar: #101822;
+	--coe-panel: #141e2a;
+	--coe-panel-raised: #192534;
+	--coe-text: #e6edf5;
+	--coe-muted: #8b9bb0;
+	--coe-subtle: #5f7088;
+	--coe-accent: #8db6d8;
+	--coe-accent-rgb: 141, 182, 216;
+	--coe-panel-rgb: 20, 30, 42;
+	--coe-ink-rgb: 219, 230, 240;
+	--coe-overlay: rgba(5, 8, 12, 0.72);
+}
+
+:root[data-coe-theme="amber"] {
+	--coe-page: #12100b;
+	--coe-sidebar: #19150e;
+	--coe-panel: #1f1a12;
+	--coe-panel-raised: #262017;
+	--coe-text: #f0ebe1;
+	--coe-muted: #a09784;
+	--coe-subtle: #756b55;
+	--coe-accent: #e6b65c;
+	--coe-accent-rgb: 230, 182, 92;
+	--coe-panel-rgb: 31, 26, 18;
+	--coe-ink-rgb: 240, 230, 210;
+	--coe-overlay: rgba(10, 8, 4, 0.72);
+}
+
+:root[data-coe-theme="rose"] {
+	--coe-page: #130c0f;
+	--coe-sidebar: #1a1115;
+	--coe-panel: #21161b;
+	--coe-panel-raised: #281b21;
+	--coe-text: #f0e7ea;
+	--coe-muted: #a08c93;
+	--coe-subtle: #75646a;
+	--coe-accent: #d98aa5;
+	--coe-accent-rgb: 217, 138, 165;
+	--coe-panel-rgb: 33, 22, 27;
+	--coe-ink-rgb: 240, 220, 226;
+	--coe-overlay: rgba(10, 5, 7, 0.72);
+}
+
+:root[data-coe-theme="violet"] {
+	--coe-page: #0f0c15;
+	--coe-sidebar: #15111d;
+	--coe-panel: #1b1625;
+	--coe-panel-raised: #221c2e;
+	--coe-text: #ece8f4;
+	--coe-muted: #9a92ab;
+	--coe-subtle: #6f6882;
+	--coe-accent: #b6a3f0;
+	--coe-accent-rgb: 182, 163, 240;
+	--coe-panel-rgb: 27, 22, 37;
+	--coe-ink-rgb: 226, 220, 240;
+	--coe-overlay: rgba(7, 5, 11, 0.72);
+}
+
+/* 2. TEMA DEFINIDO PELO USUÁRIO (sempre sobrescreve o tema padrão quando presente) ---------------------- */
+:root[data-coe-user-theme="moss"],
+:root[data-coe-user-theme="lime"] {
+	--coe-page: #0c1110;
+	--coe-sidebar: #111816;
+	--coe-panel: #151d1a;
+	--coe-panel-raised: #1a2420;
+	--coe-text: #e7eee9;
+	--coe-muted: #8d9b92;
+	--coe-subtle: #637168;
+	--coe-accent: #c4df9b;
+	--coe-accent-rgb: 196, 223, 155;
+	--coe-panel-rgb: 21, 29, 26;
+	--coe-ink-rgb: 219, 232, 223;
+	--coe-overlay: rgba(6, 9, 8, 0.72);
+}
+
+:root[data-coe-user-theme="ocean"],
+:root[data-coe-user-theme="cyan"] {
+	--coe-page: #0b1118;
+	--coe-sidebar: #101822;
+	--coe-panel: #141e2a;
+	--coe-panel-raised: #192534;
+	--coe-text: #e6edf5;
+	--coe-muted: #8b9bb0;
+	--coe-subtle: #5f7088;
+	--coe-accent: #7fd6e6;
+	--coe-accent-rgb: 127, 214, 230;
+	--coe-panel-rgb: 20, 30, 42;
+	--coe-ink-rgb: 219, 230, 240;
+	--coe-overlay: rgba(5, 8, 12, 0.72);
+}
+
+:root[data-coe-user-theme="amber"] {
+	--coe-page: #12100b;
+	--coe-sidebar: #19150e;
+	--coe-panel: #1f1a12;
+	--coe-panel-raised: #262017;
+	--coe-text: #f0ebe1;
+	--coe-muted: #a09784;
+	--coe-subtle: #756b55;
+	--coe-accent: #e6b65c;
+	--coe-accent-rgb: 230, 182, 92;
+	--coe-panel-rgb: 31, 26, 18;
+	--coe-ink-rgb: 240, 230, 210;
+	--coe-overlay: rgba(10, 8, 4, 0.72);
+}
+
+:root[data-coe-user-theme="rose"] {
+	--coe-page: #130c0f;
+	--coe-sidebar: #1a1115;
+	--coe-panel: #21161b;
+	--coe-panel-raised: #281b21;
+	--coe-text: #f0e7ea;
+	--coe-muted: #a08c93;
+	--coe-subtle: #75646a;
+	--coe-accent: #e69bb0;
+	--coe-accent-rgb: 230, 155, 176;
+	--coe-panel-rgb: 33, 22, 27;
+	--coe-ink-rgb: 240, 220, 226;
+	--coe-overlay: rgba(10, 5, 7, 0.72);
+}
+
+:root[data-coe-user-theme="violet"] {
+	--coe-page: #0f0c15;
+	--coe-sidebar: #15111d;
+	--coe-panel: #1b1625;
+	--coe-panel-raised: #221c2e;
+	--coe-text: #ece8f4;
+	--coe-muted: #9a92ab;
+	--coe-subtle: #6f6882;
+	--coe-accent: #b9a4ee;
+	--coe-accent-rgb: 185, 164, 238;
+	--coe-panel-rgb: 27, 22, 37;
+	--coe-ink-rgb: 226, 220, 240;
+	--coe-overlay: rgba(7, 5, 11, 0.72);
+}

@@ -1,0 +1,179 @@
+* {
+	box-sizing: border-box;
+	user-select: none;
+	margin: 0;
+	padding: 0;
+}
+
+html, body {
+	background: transparent;
+	overflow: hidden;
+	height: 100%;
+	width: 100%;
+	font-family: var(--coe-font, sans-serif);
+	color: var(--coe-text, #ffffff);
+}
+
+[hidden] {
+	display: none !important;
+}
+
+.talk-container {
+	display: none !important;
+}
+
+.talk-badge {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 10px;
+	border-radius: var(--coe-radius, 4px);
+	border: 1px solid var(--coe-line-strong, rgba(255, 255, 255, 0.15));
+	background: linear-gradient(135deg, rgba(var(--coe-panel-rgb, 21, 29, 26), 0.85), rgba(var(--coe-panel-rgb, 21, 29, 26), 0.6));
+	backdrop-filter: blur(8px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+	transition: border-color var(--coe-dur, 140ms) ease, box-shadow var(--coe-dur, 140ms) ease;
+}
+
+/* Microfone e Pulso */
+.voice-icon-wrap {
+	position: relative;
+	width: 18px;
+	height: 18px;
+	display: grid;
+	place-items: center;
+}
+
+.voice-mic-icon {
+	width: 16px;
+	height: 16px;
+	color: var(--coe-muted, #8d9b92);
+	transition: color var(--coe-dur, 140ms) ease, transform var(--coe-dur, 140ms) ease;
+}
+
+.voice-pulse-ring {
+	position: absolute;
+	inset: -2px;
+	border-radius: 50%;
+	border: 1.5px solid var(--coe-accent, #c4df9b);
+	opacity: 0;
+	transform: scale(0.8);
+	pointer-events: none;
+}
+
+/* Estado: Falando */
+.voice-badge.is-talking {
+	border-color: var(--coe-accent, #c4df9b);
+	box-shadow: 0 0 10px rgba(var(--coe-accent-rgb, 196, 223, 155), 0.35);
+}
+
+.voice-badge.is-talking .voice-mic-icon {
+	color: var(--coe-accent, #c4df9b);
+	transform: scale(1.1);
+}
+
+.voice-badge.is-talking .voice-pulse-ring {
+	animation: voice-pulse 1.4s ease-out infinite;
+}
+
+@keyframes voice-pulse {
+	0% {
+		transform: scale(0.8);
+		opacity: 0.8;
+	}
+	100% {
+		transform: scale(1.6);
+		opacity: 0;
+	}
+}
+
+/* Barras de Alcance */
+.voice-bars {
+	display: flex;
+	align-items: flex-end;
+	gap: 2.5px;
+	height: 14px;
+}
+
+.voice-bars .bar {
+	width: 3px;
+	border-radius: 1.5px;
+	background: rgba(var(--coe-ink-rgb, 255, 255, 255), 0.15);
+	transition: background 180ms ease, height 180ms ease;
+}
+
+.voice-bars .b1 { height: 6px; }
+.voice-bars .b2 { height: 10px; }
+.voice-bars .b3 { height: 14px; }
+
+/* Niveis de voz */
+.voice-badge[data-level="1"] .b1 { background: var(--coe-accent, #c4df9b); }
+.voice-badge[data-level="2"] .b1,
+.voice-badge[data-level="2"] .b2 { background: var(--coe-accent, #c4df9b); }
+.voice-badge[data-level="3"] .b1,
+.voice-badge[data-level="3"] .b2,
+.voice-badge[data-level="3"] .b3 { background: var(--coe-accent, #c4df9b); }
+
+.voice-label {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--coe-text, #ffffff);
+}
+
+/* Rádio */
+.radio-badge {
+	border-color: var(--coe-line-strong, rgba(255, 255, 255, 0.15));
+}
+
+.radio-icon {
+	width: 15px;
+	height: 15px;
+	color: var(--coe-accent, #c4df9b);
+}
+
+.radio-freq {
+	font-size: 11px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--coe-text, #ffffff);
+}
+
+.radio-tx {
+	padding: 1px 4px;
+	border-radius: 2px;
+	font-size: 9px;
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	background: var(--coe-accent, #c4df9b);
+	color: var(--coe-on-accent, #0c1110);
+	animation: tx-blink 1s ease-in-out infinite alternate;
+}
+
+@keyframes tx-blink {
+	0% { opacity: 0.7; }
+	100% { opacity: 1; filter: drop-shadow(0 0 4px var(--coe-accent, #c4df9b)); }
+}
+
+.radio-badge.is-transmitting {
+	border-color: var(--coe-accent, #c4df9b);
+	box-shadow: 0 0 10px rgba(var(--coe-accent-rgb, 196, 223, 155), 0.4);
+}
+
+/* Chamada */
+.call-badge {
+	border-color: var(--coe-success, #a9d3ae);
+}
+
+.call-icon {
+	width: 14px;
+	height: 14px;
+	color: var(--coe-success, #a9d3ae);
+}
+
+.call-label {
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--coe-success, #a9d3ae);
+}

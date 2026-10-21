@@ -1,0 +1,164 @@
+/*
+ * Callout 3D: ações flutuando em perspectiva sobre o ponto de mira, sem painel de fundo.
+ * Cada item recua em profundidade (--i), flutua levemente e "salta" para a frente no hover.
+ * O container reage ao mouse via --rx/--ry (ver coetarget/html/app.js). Depende de tokens.css.
+ * Sem backdrop-filter nem sombras grandes: na NUI do FiveM geram retângulo preto.
+ */
+.coe-callout {
+	position: absolute;
+	width: min(230px, calc(100vw - 24px));
+	perspective: 640px;
+	perspective-origin: 50% -30px;
+	opacity: 0;
+	transform: translateX(-50%);
+	transition: opacity var(--coe-dur) var(--coe-ease);
+	pointer-events: none;
+}
+
+.coe-callout.is-visible {
+	opacity: 1;
+}
+
+.coe-callout__stage {
+	position: relative;
+	transform: rotateX(var(--rx, 12deg)) rotateY(var(--ry, 0deg));
+	transform-origin: 50% 0;
+	transform-style: preserve-3d;
+	transition: transform 220ms var(--coe-ease);
+}
+
+/* Conector da mira até o primeiro item. */
+.coe-callout__stage::before {
+	position: absolute;
+	top: -22px;
+	left: 50%;
+	width: 1px;
+	height: 22px;
+	background: linear-gradient(to bottom, transparent, rgba(var(--coe-accent-rgb), 0.85));
+	content: "";
+	transform-origin: 50% 100%;
+	animation: coe-link-in var(--coe-dur-slow) var(--coe-ease) both;
+}
+
+.coe-callout__list {
+	display: grid;
+	gap: 6px;
+	transform-style: preserve-3d;
+}
+
+.coe-callout__item {
+	position: relative;
+	display: block;
+	width: 100%;
+	min-height: 30px;
+	padding: 7px 14px 7px 18px;
+	border: 1px solid var(--coe-line-strong);
+	background:
+		linear-gradient(100deg, rgba(var(--coe-ink-rgb), 0.1), rgba(var(--coe-ink-rgb), 0) 55%),
+		rgba(var(--coe-panel-rgb), 0.82);
+	color: var(--coe-text);
+	font: inherit;
+	font-size: var(--coe-text-sm);
+	letter-spacing: 0.04em;
+	text-align: left;
+	clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+	opacity: 0;
+	transform: translateZ(calc(var(--i, 0) * -26px)) translateX(calc(var(--i, 0) * 10px)) translateY(-8px);
+	animation:
+		coe-item-in var(--coe-dur-slow) var(--coe-ease) forwards,
+		coe-float 3.4s ease-in-out infinite;
+	animation-delay: calc(var(--i, 0) * 60ms), calc(var(--i, 0) * -0.7s);
+	transition: border-color var(--coe-dur) var(--coe-ease), color var(--coe-dur) var(--coe-ease), filter var(--coe-dur) var(--coe-ease);
+}
+
+/* Nó de acento à esquerda, acende no hover. */
+.coe-callout__item::before {
+	position: absolute;
+	top: 50%;
+	left: 7px;
+	width: 4px;
+	height: 4px;
+	background: var(--coe-subtle);
+	border-radius: 50%;
+	content: "";
+	transform: translateY(-50%);
+	transition: background var(--coe-dur) var(--coe-ease), transform var(--coe-dur) var(--coe-ease);
+}
+
+.coe-callout.is-interactive .coe-callout__item {
+	cursor: pointer;
+	pointer-events: auto;
+}
+
+.coe-callout.is-interactive .coe-callout__item:hover,
+.coe-callout.is-interactive .coe-callout__item:focus-visible {
+	z-index: 1;
+	border-color: rgba(var(--coe-accent-rgb), 0.7);
+	color: var(--coe-accent);
+	filter: brightness(1.25);
+	outline: none;
+	animation: coe-item-pop var(--coe-dur) var(--coe-ease) forwards;
+}
+
+.coe-callout.is-interactive .coe-callout__item:hover::before,
+.coe-callout.is-interactive .coe-callout__item:focus-visible::before {
+	background: var(--coe-accent);
+	transform: translateY(-50%) scale(1.8);
+}
+
+.coe-callout__hint {
+	display: flex;
+	align-items: center;
+	margin-top: 10px;
+	color: var(--coe-subtle);
+	font-size: 10px;
+	gap: 4px;
+	transform: translateZ(-80px);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.coe-callout__hint kbd {
+	display: grid;
+	min-width: 16px;
+	height: 16px;
+	padding: 0 3px;
+	place-items: center;
+	border: 1px solid var(--coe-line-strong);
+	color: var(--coe-muted);
+	font: inherit;
+}
+
+@keyframes coe-item-in {
+	to {
+		opacity: 1;
+		transform: translateZ(calc(var(--i, 0) * -26px)) translateX(calc(var(--i, 0) * 10px)) translateY(0);
+	}
+}
+
+@keyframes coe-float {
+	0%, 100% { translate: 0 0; }
+	50% { translate: 0 -2.5px; }
+}
+
+@keyframes coe-item-pop {
+	to {
+		opacity: 1;
+		transform: translateZ(40px) translateX(calc(var(--i, 0) * 10px + 6px)) translateY(0) scale(1.05);
+	}
+}
+
+@keyframes coe-link-in {
+	from { transform: scaleY(0); }
+	to { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.coe-callout,
+	.coe-callout__stage,
+	.coe-callout__stage::before,
+	.coe-callout__item {
+		animation-duration: 1ms;
+		animation-iteration-count: 1;
+		transition-duration: 1ms;
+	}
+}

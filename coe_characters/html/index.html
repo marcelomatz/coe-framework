@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/surfaces.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="style.css">
+	<title>Personagens</title>
+</head>
+<body>
+	<main id="app" class="select is-hidden" aria-labelledby="title">
+		<header class="brand">
+			<p class="eyebrow">COE · LOS SANTOS</p>
+			<h1 id="title">Escolha seu personagem</h1>
+			<p class="subtitle">Cada personagem tem a própria vida: dinheiro, inventário, imóveis e veículos.</p>
+		</header>
+
+		<section class="roster" aria-label="Seus personagens">
+			<div id="character-list" class="character-list"></div>
+			<button id="new-character" class="new-card" type="button">
+				<span class="plus" aria-hidden="true">+</span>
+				<span><strong>Criar personagem</strong><small>Herança, rosto, cabelo e roupa</small></span>
+			</button>
+			<p class="keys">↑ ↓ escolher · Enter jogar</p>
+		</section>
+
+		<section id="hero" class="hero is-hidden" aria-live="polite">
+			<p id="hero-state" class="eyebrow">PERSONAGEM</p>
+			<h2 id="hero-name" class="hero-name"></h2>
+			<div id="hero-meta" class="hero-meta"></div>
+			<p id="hero-pending" class="pending is-hidden">Aparência ainda não definida. Ao jogar, você passa pelo criador uma vez.</p>
+			<div class="hero-actions">
+				<button id="play" class="coe-button coe-button--primary play" type="button">Jogar <b>→</b></button>
+				<button id="archive" class="coe-button ghost" type="button">Arquivar</button>
+			</div>
+		</section>
+
+		<p id="message" class="message" role="status" aria-live="polite"></p>
+		<button id="change-character" class="coe-button is-hidden" type="button">Trocar personagem</button>
+
+		<!-- Formulário simples, usado só quando o criador (coe_appearance) não está iniciado. -->
+		<div id="create-modal" class="modal is-hidden" role="dialog" aria-labelledby="create-title">
+			<form id="create-form" class="create-form coe-glass coe-chamfer">
+				<h2 id="create-title">Criar personagem</h2>
+				<div class="name-fields">
+					<label>Nome<input class="coe-field" name="firstName" maxlength="48" autocomplete="off" required></label>
+					<label>Sobrenome<input class="coe-field" name="lastName" maxlength="48" autocomplete="off" required></label>
+				</div>
+				<div class="name-fields">
+					<label>Data de nascimento<input class="coe-field" name="birthDate" type="date" required></label>
+					<label>Gênero<select class="coe-field" name="gender" id="gender" required></select></label>
+				</div>
+				<div class="form-actions">
+					<button id="create-cancel" class="coe-button" type="button">Cancelar</button>
+					<button class="coe-button coe-button--primary" type="submit">Criar personagem</button>
+				</div>
+			</form>
+		</div>
+	</main>
+	<script src="app.js"></script>
+</body>
+</html>

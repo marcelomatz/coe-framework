@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Coe</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/surfaces.css">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<!-- Cena: fotos de `backgrounds/` (se houver) ou o pôr do sol de Los Santos desenhado aqui, com câmera lenta. -->
+	<div class="scene" aria-hidden="true">
+		<div id="photos" class="photos"></div>
+		<div id="sunset" class="sunset">
+			<div class="sky"></div>
+			<div class="sun"></div>
+			<svg id="skyline" class="skyline" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMax slice"></svg>
+			<div class="haze"></div>
+		</div>
+		<div class="grain"></div>
+	</div>
+
+	<main id="app" class="load" aria-labelledby="title">
+		<header class="brand">
+			<p class="eyebrow" id="eyebrow">COE · LOS SANTOS</p>
+			<h1 id="title">Bem-vindo a Los Santos</h1>
+			<p class="subtitle" id="subtitle">Preparando a cidade para você. Isso leva só um instante.</p>
+		</header>
+
+		<p class="tag"><span class="tag-dot"></span><span id="tag">Enhanced Roleplay</span></p>
+
+		<section class="steps" aria-label="Etapas do carregamento">
+			<ol id="steps" class="step-list"></ol>
+			<p id="log" class="log"></p>
+		</section>
+
+		<section class="hero" aria-live="polite">
+			<p id="hero-state" class="eyebrow">CARREGANDO</p>
+			<h2 id="hero-name" class="hero-name">Conectando</h2>
+			<p id="hero-detail" class="hero-detail" title="Clique para sortear outra atividade">Calibrando lockpicks e pés de cabra…</p>
+			<div class="hero-meta">
+				<span>Etapa <strong id="hero-step">1</strong> de <strong id="hero-total">5</strong></span>
+				<span><strong id="percent">0%</strong></span>
+			</div>
+			<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar">
+				<span class="fill" id="fill"></span>
+			</div>
+		</section>
+	</main>
+	<script src="app.js"></script>
+</body>
+</html>

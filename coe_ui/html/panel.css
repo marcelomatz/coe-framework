@@ -1,0 +1,102 @@
+/*
+ * Painéis e slots "tech" do framework Coe: gradiente, cantos chanfrados, colchetes de acento
+ * e entrada em perspectiva. Visual discreto (sem neon). Depende de tokens.css.
+ * Sem backdrop-filter nem sombras grandes: na NUI do FiveM geram retângulo preto.
+ * O chanfro usa clip-path: elementos position:fixed (menus, ghost de arrasto) devem
+ * ficar fora do painel (filhos do body).
+ */
+.coe-panel {
+	--coe-panel-cut: 14px;
+	position: relative;
+	/* Fonte e cor do tema no próprio painel: a página não precisa definir nada para o painel ficar certo. */
+	color: var(--coe-text);
+	font-family: var(--coe-font);
+	font-size: var(--coe-text-md);
+	border: 1px solid var(--coe-line-strong);
+	background:
+		linear-gradient(165deg, rgba(var(--coe-ink-rgb), 0.07), rgba(var(--coe-ink-rgb), 0) 34%),
+		rgba(var(--coe-panel-rgb), 0.93);
+	clip-path: polygon(
+		var(--coe-panel-cut) 0, 100% 0, 100% calc(100% - var(--coe-panel-cut)),
+		calc(100% - var(--coe-panel-cut)) 100%, 0 100%, 0 var(--coe-panel-cut)
+	);
+}
+
+/* Colchetes de acento nos dois cantos que permanecem retos. */
+.coe-panel::before,
+.coe-panel::after {
+	position: absolute;
+	z-index: 2;
+	width: 22px;
+	height: 22px;
+	content: "";
+	pointer-events: none;
+	opacity: 0.75;
+}
+
+.coe-panel::before {
+	top: 0;
+	right: 0;
+	border-top: 2px solid var(--coe-accent);
+	border-right: 2px solid var(--coe-accent);
+}
+
+.coe-panel::after {
+	bottom: 0;
+	left: 0;
+	border-bottom: 2px solid var(--coe-accent);
+	border-left: 2px solid var(--coe-accent);
+}
+
+.coe-panel--compact {
+	--coe-panel-cut: 8px;
+}
+
+.coe-panel--compact::before,
+.coe-panel--compact::after {
+	width: 12px;
+	height: 12px;
+	border-width: 1px;
+}
+
+/* Entrada: inclina de leve para trás e assenta. Termina em transform: none. */
+.coe-panel-enter {
+	animation: coe-panel-in 320ms var(--coe-ease) both;
+	transform-origin: 50% 0;
+}
+
+.coe-panel-enter:nth-child(2) { animation-delay: 60ms; }
+.coe-panel-enter:nth-child(3) { animation-delay: 120ms; }
+
+@keyframes coe-panel-in {
+	from {
+		opacity: 0;
+		transform: perspective(900px) translateY(14px) rotateX(7deg);
+	}
+	to {
+		opacity: 1;
+		transform: perspective(900px) translateY(0) rotateX(0);
+	}
+}
+
+/* Slot: célula chanfrada; o hover levanta e acende a borda. */
+.coe-slot {
+	border: 1px solid var(--coe-line);
+	background:
+		linear-gradient(150deg, rgba(var(--coe-ink-rgb), 0.06), rgba(var(--coe-ink-rgb), 0) 55%),
+		rgba(var(--coe-ink-rgb), 0.025);
+	clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+}
+
+.coe-slot.is-filled {
+	border-color: rgba(var(--coe-accent-rgb), 0.32);
+	background:
+		linear-gradient(150deg, rgba(var(--coe-accent-rgb), 0.16), rgba(var(--coe-accent-rgb), 0.03) 70%),
+		rgba(var(--coe-panel-rgb), 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.coe-panel-enter {
+		animation-duration: 1ms;
+	}
+}

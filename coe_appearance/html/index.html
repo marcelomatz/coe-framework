@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/surfaces.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="style.css">
+	<title>Criação de personagem</title>
+</head>
+<body>
+	<main id="creator" class="creator is-hidden" aria-labelledby="creator-title">
+		<header class="creator-top">
+			<div class="brand">
+				<p class="eyebrow">COE · <span id="creator-mode">NOVO PERSONAGEM</span></p>
+				<h1 id="creator-title">Criação de personagem</h1>
+			</div>
+			<div class="top-actions">
+				<button id="randomize" class="coe-button ghost" type="button" title="Sortear rosto, herança e detalhes">⟳ Aleatório</button>
+				<button id="cancel" class="coe-button ghost" type="button">Sair</button>
+			</div>
+		</header>
+
+		<nav id="steps" class="steps" aria-label="Etapas"></nav>
+
+		<!-- Área livre: arrastar gira o personagem. -->
+		<section id="stage" class="stage" aria-label="Arraste para girar o personagem"></section>
+
+		<aside class="panel coe-glass coe-chamfer">
+			<header class="panel-head">
+				<p class="eyebrow" id="step-count">ETAPA 1 DE 7</p>
+				<h2 id="step-title">Identidade</h2>
+				<p id="step-hint" class="hint"></p>
+			</header>
+			<div id="step-body" class="panel-body"></div>
+			<p id="message" class="message" role="status" aria-live="polite"></p>
+			<footer class="panel-foot">
+				<button id="back" class="coe-button" type="button">Voltar</button>
+				<button id="next" class="coe-button coe-button--primary" type="button">Próximo</button>
+			</footer>
+		</aside>
+
+		<footer class="dock">
+			<div id="cameras" class="chips" role="group" aria-label="Câmera"></div>
+			<div class="chips" role="group" aria-label="Girar">
+				<button class="chip" type="button" data-rotate="-30" title="Girar para a esquerda">⟲</button>
+				<button class="chip" type="button" data-rotate-reset title="Voltar de frente">Frente</button>
+				<button class="chip" type="button" data-rotate="30" title="Girar para a direita">⟳</button>
+			</div>
+			<p class="dock-hint">Arraste no espaço vazio para girar</p>
+		</footer>
+
+		<div id="saving" class="saving is-hidden" role="alert">
+			<div class="saving-box coe-glass coe-chamfer">
+				<span class="spinner" aria-hidden="true"></span>
+				<p>Registrando sua identidade...</p>
+			</div>
+		</div>
+	</main>
+	<!-- Progresso do gerador de fotos de roupa (fora da área recortada). -->
+	<p id="thumbs-progress" class="thumbs-progress is-hidden" role="status"></p>
+	<script src="app.js"></script>
+</body>
+</html>

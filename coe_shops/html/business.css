@@ -1,0 +1,23 @@
+/* Aba Loja do app do negócio (coe_businesses, tablet). Carregado por nui://coe_shops/html/business.css. */
+.shb { display: flex; flex-direction: column; gap: 10px; }
+.shb-note { margin: 0; color: var(--coe-muted); font-size: var(--coe-text-sm); }
+.shb-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.shb-kpi { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--coe-line); border-radius: 8px; }
+.shb-kpi strong { font-size: 1.1em; font-variant-numeric: tabular-nums; }
+.shb-kpi small { color: var(--coe-muted); font-size: var(--coe-text-xs); }
+.shb-table { display: flex; flex-direction: column; border: 1px solid var(--coe-line); border-radius: 8px; overflow: hidden; }
+.shb-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) 64px 72px 224px; align-items: center; gap: 10px; padding: 6px 10px; border-top: 1px solid var(--coe-line); }
+.shb-row:first-child { border-top: 0; }
+.shb-row--head { color: var(--coe-muted); font-size: var(--coe-text-xs); text-transform: uppercase; letter-spacing: .04em; }
+.shb-row img { width: 30px; height: 30px; object-fit: contain; }
+.shb-name { display: flex; flex-direction: column; min-width: 0; }
+.shb-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shb-name small { color: var(--coe-muted); font-size: var(--coe-text-xs); }
+.shb-stock { font-variant-numeric: tabular-nums; }
+.shb-stock.is-empty { color: var(--coe-danger); }
+.shb-price { font-variant-numeric: tabular-nums; }
+.shb-price.is-custom { color: var(--coe-accent); }
+.shb-edit { display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+.shb-edit input { width: 80px; }
+.shb-sale { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; padding: 6px 0; border-top: 1px solid var(--coe-line); font-size: var(--coe-text-sm); }
+.shb-sale small { color: var(--coe-muted); }

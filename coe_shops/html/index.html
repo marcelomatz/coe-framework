@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="shop.css">
+	<title>Loja</title>
+</head>
+<body>
+	<div id="shop" class="sh-overlay is-hidden" aria-hidden="true">
+		<section class="sh-panel coe-panel" role="dialog" aria-modal="true" aria-labelledby="sh-title">
+			<header class="sh-head">
+				<div class="sh-title">
+					<p id="sh-eyebrow" class="sh-eyebrow"></p>
+					<h1 id="sh-title"></h1>
+					<div id="sh-badges" class="sh-badges"></div>
+				</div>
+				<nav id="sh-tabs" class="sh-tabs"></nav>
+				<button id="sh-close" class="coe-button" type="button">Fechar <kbd>Esc</kbd></button>
+			</header>
+			<div id="sh-body" class="sh-body"></div>
+			<p id="sh-status" class="sh-status" role="status"></p>
+		</section>
+	</div>
+	<script src="shop.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "coe-database",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MariaDB provider resource for the Coe framework",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "mysql2": "3.24.6"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:integration": "node --test test/integration/*.test.js"
+  }
+}

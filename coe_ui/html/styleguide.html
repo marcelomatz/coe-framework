@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<title>Coe UI — guia de estilos</title>
+	<link rel="stylesheet" href="tokens.css">
+	<link rel="stylesheet" href="components.css">
+	<link rel="stylesheet" href="surfaces.css">
+	<link rel="stylesheet" href="callout.css">
+	<link rel="stylesheet" href="panel.css">
+	<style>
+		html, body { margin: 0; height: 100%; background: transparent !important; overflow: hidden; }
+		.sg-shell { display: none; position: fixed; inset: 0; padding: 40px 16px 28px; background: var(--coe-overlay); font-family: var(--coe-font); color: var(--coe-text); overflow: auto; }
+		.sg-shell.is-open { display: block; }
+		.sg-section { margin-bottom: var(--coe-space-5); }
+		.sg-row { display: flex; flex-wrap: wrap; gap: var(--coe-space-2); align-items: center; margin-top: var(--coe-space-2); }
+		h1, h2 { margin: 0 0 var(--coe-space-2); }
+	</style>
+</head>
+<body>
+	<main id="sg" class="sg-shell" aria-hidden="true">
+		<h1>Coe UI</h1>
+		<section class="sg-section coe-card">
+			<h2>Botões</h2>
+			<div class="sg-row">
+				<button class="coe-button" type="button">Padrão</button>
+				<button class="coe-button coe-button--primary" type="button">Primário</button>
+				<button class="coe-button coe-button--danger" type="button">Perigo</button>
+				<button class="coe-button" type="button" disabled>Desativado</button>
+			</div>
+		</section>
+		<section class="sg-section coe-card">
+			<h2>Campos e badges</h2>
+			<div class="sg-row">
+				<input class="coe-field" type="text" placeholder="Campo de texto" style="max-width: 260px">
+				<span class="coe-badge">neutro</span>
+				<span class="coe-badge coe-badge--success">started</span>
+				<span class="coe-badge coe-badge--danger">stopped</span>
+			</div>
+		</section>
+		<section class="sg-section coe-card">
+			<h2>Confirmação</h2>
+			<div class="sg-row">
+				<button id="sg-confirm" class="coe-button" type="button">Confirmar</button>
+				<button id="sg-confirm-danger" class="coe-button coe-button--danger" type="button">Confirmar (perigo)</button>
+				<span id="sg-result" class="coe-badge"></span>
+			</div>
+		</section>
+		<section class="sg-section coe-card">
+			<h2>Temas (pré-visualização local)</h2>
+			<div class="sg-row">
+				<button class="coe-button" type="button" data-theme="moss">Musgo</button>
+				<button class="coe-button" type="button" data-theme="ocean">Oceano</button>
+				<button class="coe-button" type="button" data-theme="amber">Âmbar</button>
+				<button class="coe-button" type="button" data-theme="rose">Rosa</button>
+				<button class="coe-button" type="button" data-theme="violet">Violeta</button>
+			</div>
+		</section>
+		<section class="sg-section coe-card">
+			<h2>Superfícies e target</h2>
+			<div class="sg-row" style="position: relative; height: 190px">
+				<div class="coe-reticle is-visible has-target" style="left: 90px"></div>
+				<div class="coe-callout is-visible is-interactive" style="top: 100px; left: 90px">
+					<div class="coe-callout__stage">
+						<div class="coe-callout__list">
+							<button class="coe-callout__item" style="--i: 0" type="button">Abrir</button>
+							<button class="coe-callout__item" style="--i: 1" type="button">Inspecionar</button>
+						</div>
+						<span class="coe-callout__hint"><kbd>Esc</kbd> cancelar</span>
+					</div>
+				</div>
+				<div class="coe-reticle is-visible" style="left: 300px"></div>
+				<div class="coe-glass coe-chamfer" style="padding: 12px 16px; margin-left: 360px">.coe-glass .coe-chamfer</div>
+			</div>
+		</section>
+		<section class="sg-section">
+			<div class="coe-panel coe-panel-enter" style="padding: 16px">
+				<h2>.coe-panel</h2>
+				<div class="sg-row"><div class="coe-slot" style="width: 64px; height: 64px"></div><div class="coe-slot is-filled" style="width: 64px; height: 64px"></div></div>
+			</div>
+		</section>
+		<div class="sg-row"><button id="sg-close" class="coe-button" type="button">Fechar</button></div>
+	</main>
+	<script src="components.js"></script>
+	<script>
+		const shell = document.getElementById('sg');
+		const result = document.getElementById('sg-result');
+		const show = (value) => { result.textContent = value ? 'confirmado' : 'cancelado'; };
+		const close = () => fetch(`https://${GetParentResourceName()}/close`, { method: 'POST', body: '{}' });
+		document.getElementById('sg-confirm').addEventListener('click', () => CoeUI.confirm({ title: 'Salvar alterações?', message: 'Isto é um exemplo.' }).then(show));
+		document.getElementById('sg-confirm-danger').addEventListener('click', () => CoeUI.confirm({ title: 'Remover grupo?', message: 'Ação destrutiva.\nTem certeza?', confirmLabel: 'Remover', danger: true }).then(show));
+		document.getElementById('sg-close').addEventListener('click', close);
+		document.querySelectorAll('[data-theme]').forEach((button) => button.addEventListener('click', () => CoeUI.setTheme(button.dataset.theme)));
+		window.addEventListener('message', (event) => {
+			if (event.data?.action === 'open') { shell.classList.add('is-open'); shell.setAttribute('aria-hidden', 'false'); }
+			if (event.data?.action === 'close') { shell.classList.remove('is-open'); shell.setAttribute('aria-hidden', 'true'); }
+		});
+		window.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && shell.classList.contains('is-open')) close();
+		});
+	</script>
+</body>
+</html>

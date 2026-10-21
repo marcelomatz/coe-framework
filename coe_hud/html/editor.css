@@ -1,0 +1,97 @@
+/* Posição livre do modo de edição: --fx/--fy são o canto superior esquerdo, relativos à tela. */
+.hud-free {
+	position: fixed !important;
+	left: var(--fx) !important;
+	top: var(--fy) !important;
+	right: auto !important;
+	bottom: auto !important;
+	transform: scale(calc(var(--hud-scale, 1) * var(--c-size, 1))) !important;
+	transform-origin: left top !important;
+}
+.hud-group.hud-loc.hud-free { width: calc(var(--mm-w, 280px) / (var(--hud-scale, 1) * var(--c-size, 1))); }
+
+/* Durante a edição nada anima: as caixas acompanham o componente na hora. */
+body.editing .hud-group, body.editing #hud-speedo, body.editing #hud-indicators { transition: none !important; }
+body.editing .ed-ghost { opacity: 0.3; filter: grayscale(1); }
+
+.hud-editor { position: fixed; inset: 0; z-index: 50; user-select: none; }
+.ed-grid, .ed-safe, .ed-zones, .ed-boxes { position: absolute; inset: 0; pointer-events: none; }
+.ed-grid {
+	display: none;
+	background-image:
+		linear-gradient(to right, rgba(var(--coe-ink-rgb), 0.07) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(var(--coe-ink-rgb), 0.07) 1px, transparent 1px);
+	background-size: 20px 20px;
+}
+.hud-editor.show-grid .ed-grid { display: block; }
+.ed-safe { display: none; border: 1px dashed var(--coe-warning, #e6b65c); }
+.hud-editor.show-safe .ed-safe { display: block; }
+.ed-area { position: absolute; top: 0; bottom: 0; box-sizing: border-box; border-left: 1px dashed var(--coe-accent); border-right: 1px dashed var(--coe-accent); }
+.ed-area[hidden] { display: none; }
+.ed-zone { position: absolute; box-sizing: border-box; border: 1px dashed rgba(var(--coe-ink-rgb), 0.35); border-radius: 8px; background: rgba(var(--coe-ink-rgb), 0.04); }
+
+.ed-box {
+	position: absolute; box-sizing: border-box; pointer-events: auto; cursor: move;
+	border: 1px solid var(--coe-accent); border-radius: 8px; background: var(--coe-accent-soft, rgba(255, 255, 255, 0.06));
+}
+.ed-box.free { border-style: solid; }
+.ed-box:not(.free) { border-style: dashed; }
+.ed-box.off { border-color: var(--coe-subtle); background: transparent; }
+.ed-box.dragging { box-shadow: 0 0 0 2px var(--coe-accent); }
+.ed-label {
+	position: absolute; left: 0; bottom: 100%; margin-bottom: 4px; padding: 2px 6px; border-radius: 4px;
+	font-size: 11px; white-space: nowrap; color: var(--coe-on-accent); background: var(--coe-accent);
+}
+.ed-box.off .ed-label { color: var(--coe-text); background: rgb(var(--coe-panel-rgb)); }
+.ed-box.off .ed-label::after { content: ' (oculto)'; }
+.ed-eye {
+	position: absolute; right: 4px; top: 4px; width: 22px; height: 22px; padding: 0; cursor: pointer;
+	border: 1px solid var(--coe-line-strong); border-radius: 50%; background: rgb(var(--coe-panel-rgb)) center / 14px no-repeat;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2'%3E%3Cpath d='M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+}
+.ed-box.off .ed-eye {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2'%3E%3Cpath d='M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z'/%3E%3Cpath d='M3 3l18 18'/%3E%3C/svg%3E");
+}
+.ed-resize {
+	position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; cursor: nwse-resize;
+	border-radius: 3px; background: var(--coe-accent);
+}
+.ed-box[data-size]::after {
+	content: attr(data-size) '%'; position: absolute; right: 10px; bottom: 100%; margin-bottom: 4px;
+	font-size: 10px; color: var(--coe-muted);
+}
+
+.ed-bar {
+	position: absolute; top: 2vh; left: 50%; transform: translateX(-50%); pointer-events: auto;
+	display: flex; flex-wrap: wrap; align-items: center; gap: 10px; max-width: 94vw; box-sizing: border-box;
+	padding: 8px 12px; border: 1px solid var(--coe-line-strong); border-radius: 12px; background: rgb(var(--coe-panel-rgb));
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+	transition: box-shadow 150ms ease;
+}
+.ed-bar.dragging {
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9), 0 0 0 2px var(--coe-accent);
+}
+.ed-drag-handle {
+	display: flex; align-items: center; gap: 6px; cursor: grab; user-select: none;
+}
+.ed-drag-handle:active, .ed-bar.dragging .ed-drag-handle {
+	cursor: grabbing;
+}
+.ed-grip-icon {
+	color: var(--coe-subtle); transition: color 150ms ease;
+}
+.ed-drag-handle:hover .ed-grip-icon {
+	color: var(--coe-accent);
+}
+.ed-title { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; cursor: grab; }
+.ed-opts, .ed-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ed-opt { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--coe-muted); cursor: pointer; }
+.ed-actions button { min-height: 28px; padding: 0 10px; font-size: 12px; }
+.ed-actions button:disabled { opacity: 0.4; cursor: default; }
+.ed-actions [data-act="settings"].on {
+	border-color: var(--coe-accent); background: var(--coe-accent-soft); color: var(--coe-accent); font-weight: 600;
+}
+.ed-done { border-color: var(--coe-accent); color: var(--coe-accent); }
+
+/* Preferências por cima do editor. */
+#settings { z-index: 60; }

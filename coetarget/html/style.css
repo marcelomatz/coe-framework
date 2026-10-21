@@ -1,0 +1,19 @@
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	overflow: hidden;
+	background: transparent;
+	font-family: var(--coe-font);
+}
+
+/* A mira e o callout vêm de coe_ui/surfaces.css; aqui só o posicionamento. */
+#target-action {
+	top: calc(50% + 34px);
+	left: 50%;
+}

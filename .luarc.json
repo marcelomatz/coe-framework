@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.4",
+  "workspace.checkThirdParty": false,
+  "diagnostics.globals": [
+    "exports",
+    "Citizen",
+    "CreateThread",
+    "Wait",
+    "SetTimeout",
+    "GetGameTimer",
+    "AddEventHandler",
+    "RegisterNetEvent",
+    "TriggerEvent",
+    "TriggerClientEvent",
+    "TriggerServerEvent",
+    "GetCurrentResourceName",
+    "RegisterCommand",
+    "Config",
+    "Inventory",
+    "Core"
+  ]
+}

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Inventário</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/perspective.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<main id="inventory" class="inventory-overlay" aria-hidden="true">
+		<div class="inventory-layout coe-stage">
+		<section class="coe-panel coe-panel-enter inventory-panel" aria-labelledby="inventory-title">
+			<header class="inventory-header">
+				<div class="header-title">
+					<h1 id="inventory-title">Inventário</h1>
+				</div>
+				<div class="header-capacity">
+					<span class="capacity-label">SLOTS</span>
+					<strong><span id="occupied-slots">00</span> <i>/ <span id="total-slots">00</span></i></strong>
+				</div>
+				<button id="close-button" class="close-button" type="button" aria-label="Fechar inventário" title="Fechar inventário">
+					<span aria-hidden="true">×</span>
+				</button>
+			</header>
+
+			<div class="inventory-content">
+				<div class="section-heading hotbar-heading">
+					<h2>Hotbar</h2>
+					<span>1–5</span>
+				</div>
+				<div id="hotbar-grid" class="slot-grid hotbar-grid" role="list" aria-label="Hotbar"></div>
+
+				<div class="section-heading">
+					<div>
+						<h2>Inventário</h2>
+					</div>
+					<p id="free-slots" class="free-slots">0 espaços livres</p>
+				</div>
+				<div id="slot-grid" class="slot-grid" role="list" aria-label="Slots do inventário"></div>
+			</div>
+
+			<footer class="inventory-footer">
+				<span id="hotbar-feedback" class="hotbar-feedback" aria-live="polite"></span>
+				<div class="key-hint">
+					<kbd>1–5</kbd><span>usar</span>
+					<kbd id="open-key">F2</kbd><span>fechar</span>
+				</div>
+			</footer>
+		</section>
+		<section id="container-panel" class="coe-panel coe-panel-enter inventory-panel container-panel" aria-labelledby="container-title" aria-hidden="true">
+			<header class="inventory-header">
+				<div class="header-title">
+					<h1 id="container-title">Container</h1>
+				</div>
+				<div class="header-capacity">
+					<span class="capacity-label">SLOTS</span>
+					<strong><span id="container-occupied-slots">00</span> <i>/ <span id="container-total-slots">00</span></i></strong>
+				</div>
+				<div class="header-capacity container-weight">
+					<span class="capacity-label">PESO</span>
+					<strong><span id="container-current-weight">0</span> <i>/ <span id="container-max-weight">0</span> g</i></strong>
+				</div>
+				<button id="container-close-button" class="close-button" type="button" aria-label="Fechar container" title="Fechar container">
+					<span aria-hidden="true">×</span>
+				</button>
+			</header>
+			<div class="inventory-content">
+				<div class="section-heading">
+					<h2 id="container-label">Conteúdo</h2>
+					<p id="container-free-slots" class="free-slots">0 espaços livres</p>
+				</div>
+				<div id="container-grid" class="slot-grid" role="list" aria-label="Conteúdo do container"></div>
+			</div>
+			<footer class="inventory-footer">
+				<span>Armazenamento interno</span>
+			</footer>
+		</section>
+		<section id="container-panel-2" class="coe-panel coe-panel-enter inventory-panel container-panel" aria-labelledby="container-title-2" aria-hidden="true">
+			<header class="inventory-header">
+				<div class="header-title">
+					<h1 id="container-title-2">Container</h1>
+				</div>
+				<div class="header-capacity">
+					<span class="capacity-label">SLOTS</span>
+					<strong><span id="container-occupied-slots-2">00</span> <i>/ <span id="container-total-slots-2">00</span></i></strong>
+				</div>
+				<div class="header-capacity container-weight">
+					<span class="capacity-label">PESO</span>
+					<strong><span id="container-current-weight-2">0</span> <i>/ <span id="container-max-weight-2">0</span> g</i></strong>
+				</div>
+				<button id="container-close-button-2" class="close-button" type="button" aria-label="Fechar segundo container" title="Fechar container">
+					<span aria-hidden="true">×</span>
+				</button>
+			</header>
+			<div class="inventory-content">
+				<div class="section-heading">
+					<h2 id="container-label-2">Conteúdo</h2>
+					<p id="container-free-slots-2" class="free-slots">0 espaços livres</p>
+				</div>
+				<div id="container-grid-2" class="slot-grid" role="list" aria-label="Conteúdo do segundo container"></div>
+			</div>
+			<footer class="inventory-footer">
+				<span>Armazenamento interno</span>
+			</footer>
+		</section>
+		</div>
+	</main>
+	<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/perspective.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="style.css">
+	<title>Coe Talk</title>
+</head>
+<body>
+	<div id="talk-container" class="talk-container">
+		<!-- Indicador de Voz / Proximidade -->
+		<div id="voice-badge" class="talk-badge voice-badge" data-level="2">
+			<div class="voice-icon-wrap">
+				<svg class="voice-mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+					<path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+					<line x1="12" y1="19" x2="12" y2="23"/>
+					<line x1="8" y1="23" x2="16" y2="23"/>
+				</svg>
+				<span class="voice-pulse-ring"></span>
+			</div>
+			<div class="voice-bars">
+				<i class="bar b1"></i>
+				<i class="bar b2"></i>
+				<i class="bar b3"></i>
+			</div>
+			<span id="voice-label" class="voice-label">Normal</span>
+		</div>
+
+		<!-- Indicador de Rádio -->
+		<div id="radio-badge" class="talk-badge radio-badge" hidden>
+			<svg class="radio-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<rect x="4" y="6" width="16" height="15" rx="2"/>
+				<circle cx="9" cy="11" r="2"/>
+				<line x1="14" y1="11" x2="17" y2="11"/>
+				<line x1="9" y1="16" x2="15" y2="16"/>
+				<line x1="7" y1="2" x2="7" y2="6"/>
+			</svg>
+			<span id="radio-freq" class="radio-freq">101.5 MHz</span>
+			<span id="radio-tx" class="radio-tx" hidden>TX</span>
+		</div>
+
+		<!-- Indicador de Chamada -->
+		<div id="call-badge" class="talk-badge call-badge" hidden>
+			<svg class="call-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+			</svg>
+			<span class="call-label">Chamada</span>
+		</div>
+	</div>
+
+	<script src="app.js"></script>
+</body>
+</html>

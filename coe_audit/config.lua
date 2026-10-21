@@ -1,0 +1,61 @@
+CoeAuditConfig = {
+	-- Somente estes resources podem registrar eventos; o nome vem do runtime, não do payload.
+	AllowedResources = {
+		coe_core = true,
+		coe_inventory = true,
+		coe_admin = true,
+		coe_vehicles = true,
+		coe_vehicle_catalog = true,
+		coe_handling = true,
+		coe_mechanic = true,
+		coe_garages = true,
+		coe_economy = true,
+		coe_housing = true,
+		coe_doors = true,
+		coe_banking = true,
+		coe_crafting = true,
+		coe_police = true,
+		coe_ems = true,
+		coe_dispatch = true,
+		coe_factions = true,
+		coe_businesses = true,
+		coe_mdt = true,
+		coe_apps = true,
+		coe_amzg = true,
+		coe_mail = true,
+		coe_news = true,
+		coe_crypto = true,
+		coe_deepweb = true,
+		coe_loot = true,
+		coe_shops = true,
+		coe_fuel = true
+	},
+	AllowedContextFields = {
+		action = true,
+		character_id = true,
+		count = true,
+		error_code = true,
+		item = true,
+		mileage = true,
+		model = true,
+		operation = true,
+		plate = true,
+		player_id = true,
+		previous_mileage = true,
+		request_id = true,
+		result = true,
+		role = true,
+		source = true,
+		target = true,
+		vehicle_id = true
+	},
+	Queue = {
+		MaxSize = 1000,
+		BatchSize = 50,
+		FlushIntervalMs = 1000,
+		MaxBackoffMs = 30000
+	},
+	-- 0 mantém os registros indefinidamente. Sobrescreva com `set coe_audit_retention_days N`.
+	RetentionDays = 0,
+	PurgeBatchSize = 5000
+}

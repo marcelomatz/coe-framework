@@ -1,0 +1,167 @@
+/* Componentes do framework Coe. Requer tokens.css. Prefixo .coe- em todas as classes. */
+.coe-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--coe-space-2);
+	min-height: 32px;
+	padding: 0 var(--coe-space-4);
+	border: 1px solid var(--coe-line-strong);
+	border-radius: var(--coe-radius);
+	background: linear-gradient(100deg, rgba(var(--coe-ink-rgb), 0.08), rgba(var(--coe-ink-rgb), 0) 60%);
+	color: var(--coe-text);
+	font: inherit;
+	font-size: var(--coe-text-sm);
+	letter-spacing: 0.03em;
+	cursor: pointer;
+	transition: border-color var(--coe-dur) var(--coe-ease), background var(--coe-dur) var(--coe-ease), transform var(--coe-dur) var(--coe-ease);
+}
+
+.coe-button:hover:not(:disabled) {
+	border-color: rgba(var(--coe-accent-rgb), 0.55);
+	background: linear-gradient(100deg, rgba(var(--coe-accent-rgb), 0.18), rgba(var(--coe-accent-rgb), 0) 70%);
+	transform: translateY(-1px);
+}
+
+.coe-button:focus-visible {
+	outline: 2px solid var(--coe-accent);
+	outline-offset: 2px;
+}
+
+.coe-button:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.coe-button--primary {
+	border-color: transparent;
+	background: var(--coe-accent);
+	color: var(--coe-on-accent);
+	font-weight: 600;
+}
+
+.coe-button--primary:hover:not(:disabled) {
+	background: var(--coe-accent);
+	filter: brightness(1.08);
+}
+
+.coe-button--danger {
+	border-color: rgba(227, 155, 139, 0.4);
+	color: var(--coe-danger);
+}
+
+.coe-button--danger:hover:not(:disabled) {
+	background: var(--coe-danger-soft);
+}
+
+.coe-field {
+	width: 100%;
+	min-height: 34px;
+	padding: 0 var(--coe-space-3);
+	border: 1px solid var(--coe-line-strong);
+	border-radius: var(--coe-radius);
+	background: var(--coe-panel-raised);
+	color: var(--coe-text);
+	font: inherit;
+	font-size: var(--coe-text-sm);
+}
+
+.coe-field:focus-visible {
+	outline: 2px solid var(--coe-accent);
+	outline-offset: 1px;
+}
+
+.coe-card {
+	padding: var(--coe-space-4);
+	border: 1px solid var(--coe-line);
+	background: var(--coe-panel);
+}
+
+.coe-badge {
+	display: inline-block;
+	padding: 1px var(--coe-space-2);
+	border: 1px solid var(--coe-line-strong);
+	color: var(--coe-muted);
+	font-size: var(--coe-text-xs);
+	text-transform: uppercase;
+}
+
+.coe-badge--success {
+	border-color: rgba(169, 211, 174, 0.4);
+	color: var(--coe-success);
+}
+
+.coe-badge--danger {
+	border-color: rgba(227, 155, 139, 0.4);
+	color: var(--coe-danger);
+}
+
+.coe-modal-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: var(--coe-z-modal);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--coe-space-5);
+	background: var(--coe-overlay);
+	font-family: var(--coe-font);
+}
+
+.coe-modal {
+	width: min(440px, 100%);
+	border: 1px solid var(--coe-line-strong);
+	background:
+		linear-gradient(165deg, rgba(var(--coe-ink-rgb), 0.07), rgba(var(--coe-ink-rgb), 0) 34%),
+		rgba(var(--coe-panel-rgb), 0.97);
+	color: var(--coe-text);
+	clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+	animation: coe-modal-in 240ms var(--coe-ease) both;
+}
+
+.coe-modal__title {
+	margin: 0;
+	padding: var(--coe-space-4) var(--coe-space-4) var(--coe-space-2);
+	font-size: var(--coe-text-lg);
+}
+
+.coe-modal__body {
+	margin: 0;
+	padding: 0 var(--coe-space-4) var(--coe-space-4);
+	color: var(--coe-muted);
+	font-size: var(--coe-text-md);
+	line-height: 1.5;
+	white-space: pre-line;
+}
+
+.coe-modal__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--coe-space-2);
+	padding: var(--coe-space-3) var(--coe-space-4);
+	border-top: 1px solid var(--coe-line);
+}
+
+@keyframes coe-modal-in {
+	from {
+		opacity: 0;
+		transform: perspective(900px) translateY(14px) rotateX(7deg);
+	}
+	to {
+		opacity: 1;
+		transform: perspective(900px) translateY(0) rotateX(0);
+	}
+}
+
+/* Alerta de pânico: confirmações de ações que podem derrubar o servidor. */
+.coe-modal--panic { border-color: var(--coe-danger); width: min(500px, 100%); }
+.coe-modal--panic .coe-modal__title { color: var(--coe-danger); letter-spacing: 0.06em; text-transform: uppercase; }
+.coe-modal--panic .coe-modal__body { color: var(--coe-text); }
+.coe-modal__guard { display: grid; gap: var(--coe-space-2); padding: 0 var(--coe-space-4) var(--coe-space-4); }
+.coe-modal__guard-label { color: var(--coe-muted); font-size: var(--coe-text-sm, 12px); }
+.coe-modal__guard-input {
+	padding: 8px 10px; font: inherit; color: var(--coe-text); background: rgba(var(--coe-ink-rgb), 0.06);
+	border: 1px solid var(--coe-line-strong); outline: none;
+}
+.coe-modal__guard-input:focus { border-color: var(--coe-danger); }
+.coe-button:disabled { opacity: 0.4; cursor: not-allowed; }

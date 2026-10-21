@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/perspective.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="speedo.css">
+	<link rel="stylesheet" href="editor.css">
+	<title>Coe HUD</title>
+</head>
+<body class="style-glass icons-round pos-left">
+	<div id="hud-mapframe" hidden><i></i><i></i><i></i><i></i></div>
+
+	<div id="hud-location" class="coe-persp coe-persp-bl hud-group hud-loc" hidden>
+		<div class="coe-persp-panel coe-persp-in hud-panel hud-loc-panel">
+			<span class="loc-dir" id="loc-dir">N</span>
+			<span class="loc-text"><b id="loc-street"></b><small id="loc-zone"></small></span>
+			<span class="loc-clock" id="loc-clock">00:00</span>
+			<div class="loc-route" id="loc-route" hidden></div>
+		</div>
+	</div>
+	<div id="hud-health" class="coe-persp coe-persp-bl hud-group hud-gauges" hidden>
+		<div class="coe-persp-panel coe-persp-in gauge-row">
+			<div class="gauge" data-stat="voice"><span class="gauge-shape"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="8" y1="23" x2="16" y2="23" stroke="currentColor" stroke-width="2"/></svg></span><span class="gauge-val">5m</span></div>
+			<div class="gauge" data-stat="health"><span class="gauge-shape"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-9.3-9.2C1.2 8.5 3 5 6.5 5c2 0 3.5 1.1 5.5 3 2-1.9 3.5-3 5.5-3C21 5 22.8 8.5 21.3 11.8 19 16.4 12 21 12 21z"/></svg></span><span class="gauge-val">100</span></div>
+			<div class="gauge" data-stat="armor"><span class="gauge-shape"><svg viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5l8-3z"/></svg></span><span class="gauge-val">0</span></div>
+			<div class="gauge hud-need" data-stat="hunger"><span class="gauge-shape"><svg viewBox="0 0 24 24"><path d="M7 3v8a2 2 0 0 0 2 2v8h2V3H9v5H7V3zm9 0c-2 0-3 2.5-3 6s1 4 2 4v8h2V3z"/></svg></span><span class="gauge-val">0</span></div>
+			<div class="gauge hud-need" data-stat="thirst"><span class="gauge-shape"><svg viewBox="0 0 24 24"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg></span><span class="gauge-val">0</span></div>
+			<div class="gauge hud-need" data-stat="stress"><span class="gauge-shape"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></span><span class="gauge-val">0</span></div>
+		</div>
+	</div>
+	<div id="hud-speedo" hidden></div>
+	<div id="hud-vehicle" class="coe-persp coe-persp-br hud-group" hidden>
+		<div class="coe-persp-panel coe-persp-in hud-panel hud-veh">
+			<div class="veh-speed"><b id="veh-speed">0</b><small id="veh-unit">km/h</small></div>
+			<div class="veh-rpm hud-bar"><i></i></div>
+			<div class="veh-row">
+				<span class="veh-gear" id="veh-gear">N</span>
+				<span class="veh-chip" data-chip="fuel"><em>COMB</em><b>100</b></span>
+				<span class="veh-chip" data-chip="engine"><em>MOTOR</em><b>100</b></span>
+			</div>
+		</div>
+	</div>
+	<div id="hud-indicators" hidden></div>
+	<div id="hud-logo" class="coe-persp coe-persp-tr hud-group hud-logo" hidden>
+		<div class="coe-persp-panel coe-persp-in hud-logo-panel">
+			<svg class="hud-logo-svg" viewBox="0 0 130 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<text class="logo-txt-coerp" x="0" y="25">COE<tspan class="logo-rp-accent">RP</tspan></text>
+			</svg>
+		</div>
+	</div>
+
+	<div id="hud-editor" class="hud-editor" hidden></div>
+
+	<section id="settings" class="settings" hidden>
+		<header class="set-header">
+			<div class="set-drag-bar" title="Arrastar painel de preferências" data-i18n-title="hud.settings.drag_bar">
+				<svg class="set-grip-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+					<circle cx="5" cy="4" r="1.5"/><circle cx="11" cy="4" r="1.5"/>
+					<circle cx="5" cy="8" r="1.5"/><circle cx="11" cy="8" r="1.5"/>
+					<circle cx="5" cy="12" r="1.5"/><circle cx="11" cy="12" r="1.5"/>
+				</svg>
+				<h1 data-i18n="hud.settings.title">PREFERÊNCIAS</h1>
+			</div>
+			<nav class="set-tabs">
+				<button type="button" class="coe-button set-tab on" data-tab="appearance" data-i18n="hud.settings.tab_appearance">Aparência</button>
+				<button type="button" class="coe-button set-tab" data-tab="vehicle" data-i18n="hud.settings.tab_vehicle">Veículo</button>
+				<button type="button" class="coe-button set-tab" data-tab="radar" data-i18n="hud.settings.tab_radar">Radar & Bússola</button>
+				<button type="button" class="coe-button set-tab" data-tab="components" data-i18n="hud.settings.tab_components">Componentes</button>
+			</nav>
+			<button id="set-close" class="coe-button set-close-btn" type="button" title="Fechar preferências" data-i18n-title="hud.settings.close_title">✕</button>
+		</header>
+		<div class="set-body">
+			<!-- Aba Aparência -->
+			<div class="set-pane on" data-pane="appearance">
+				<div class="set-field" data-key="accent"><label data-i18n="hud.settings.accent">Cor do Tema</label><div class="set-opts"></div></div>
+				<div class="set-field" data-key="style"><label data-i18n="hud.settings.style">Estilo Visual</label><div class="set-opts"></div></div>
+				<div class="set-field" data-key="icons"><label data-i18n="hud.settings.icons">Formato dos Ícones</label><div class="set-opts"></div></div>
+				<div class="set-field" data-key="position"><label data-i18n="hud.settings.position">Posição dos Ícones</label><div class="set-opts"></div></div>
+				<div class="set-field" data-key="tint"><label data-i18n="hud.settings.tint">Cores dos Ícones</label><div class="set-opts"></div></div>
+			</div>
+
+			<!-- Aba Veículo -->
+			<div class="set-pane" data-pane="vehicle">
+				<div class="set-field" data-key="speedo"><label data-i18n="hud.settings.speedo">Modelo do Velocímetro</label><div class="set-opts"></div></div>
+				<div class="set-field" data-key="unit"><label data-i18n="hud.settings.unit">Unidade de Velocidade</label><div class="set-opts"></div></div>
+				<div class="set-toggles">
+					<label><input type="checkbox" data-toggle="showVehicle"> <span data-i18n="hud.settings.show_vehicle">Painel de veículo</span></label>
+					<label><input type="checkbox" data-toggle="showIndicators"> <span data-i18n="hud.settings.show_indicators">Indicadores do veículo</span></label>
+				</div>
+			</div>
+
+			<!-- Aba Radar & Bússola -->
+			<div class="set-pane" data-pane="radar">
+				<div class="set-field" data-key="minimapMode"><label data-i18n="hud.settings.minimap_mode">Modo do Minimapa</label><div class="set-opts"></div></div>
+				<div class="set-field" data-key="locationMode"><label data-i18n="hud.settings.location_mode">Bússola e Localização</label><div class="set-opts"></div></div>
+				<div class="set-field" data-key="aspect"><label data-i18n="hud.settings.aspect">Área do HUD (Ultrawide)</label><div class="set-opts"></div></div>
+				<div class="set-toggles">
+					<label><input type="checkbox" data-toggle="showMinimap"> <span data-i18n="hud.settings.show_minimap">Minimapa</span></label>
+					<label><input type="checkbox" data-toggle="showLocation"> <span data-i18n="hud.settings.show_location">Localização e bússola</span></label>
+					<label><input type="checkbox" data-toggle="showRoute"> <span data-i18n="hud.settings.show_route">Próximas ruas no radar</span></label>
+				</div>
+			</div>
+
+			<!-- Aba Componentes & Escala -->
+			<div class="set-pane" data-pane="components">
+				<div class="set-field"><label><span data-i18n="hud.settings.scale">Tamanho do HUD</span> <span id="set-scale-val">100</span>%</label><input id="set-scale" type="range" min="70" max="130" step="5"></div>
+				<div class="set-toggles">
+					<label><input type="checkbox" data-toggle="autoScale"> <span data-i18n="hud.settings.auto_scale">Escala automática pela resolução (1440p, 4K)</span></label>
+					<label><input type="checkbox" data-toggle="showHealth"> <span data-i18n="hud.settings.show_health">Vida e colete</span></label>
+					<label><input type="checkbox" data-toggle="showPercent"> <span data-i18n="hud.settings.show_percent">Mostrar porcentagem nos medidores</span></label>
+					<label><input type="checkbox" data-toggle="showNeeds"> <span data-i18n="hud.settings.show_needs">Fome, sede e estresse</span></label>
+					<label><input type="checkbox" data-toggle="showLogo"> <span data-i18n="hud.settings.show_logo">Logotipo do servidor</span></label>
+				</div>
+			</div>
+		</div>
+		<footer class="set-footer">
+			<span class="set-hint" data-i18n="hud.settings.hint">Arraste a barra superior ou este painel para visualizar o HUD livremente.</span>
+			<button id="set-reset" class="coe-button" type="button" data-i18n="hud.settings.reset">Restaurar tudo</button>
+		</footer>
+	</section>
+	<script src="speedo.js"></script>
+	<script src="editor.js"></script>
+	<script src="app.js"></script>
+</body>
+</html>

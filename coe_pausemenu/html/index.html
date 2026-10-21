@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>COE Pause Menu</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<div id="pause-container" class="pause-container" hidden>
+		<div class="pause-overlay"></div>
+
+		<!-- Barra Superior de Telemetria e Navegação -->
+		<header class="pause-header">
+			<div class="brand-block">
+				<div class="logo-wrap">
+					<span class="logo-txt">COE<b class="logo-accent">RP</b></span>
+					<span class="logo-sub" id="server-sub">ENHANCED ROLEPLAY</span>
+				</div>
+			</div>
+
+			<nav class="nav-views" aria-label="Navegação do menu">
+				<button class="nav-tab active" type="button" data-view="dashboard">INÍCIO</button>
+				<button class="nav-tab" type="button" data-view="map">MAPA</button>
+				<button class="nav-tab" type="button" data-view="settings">CONFIGURAÇÕES</button>
+				<button class="nav-tab" type="button" data-view="rules">REGRAS</button>
+			</nav>
+
+			<div class="server-telemetry">
+				<div class="telemetry-item">
+					<span class="status-dot"></span>
+					<span class="item-label">STATUS</span>
+					<strong class="item-val online-txt">ONLINE</strong>
+				</div>
+				<div class="telemetry-item">
+					<span class="item-label">JOGADORES</span>
+					<strong class="item-val" id="player-count">1 / 128</strong>
+				</div>
+				<div class="telemetry-item">
+					<span class="item-label">PING</span>
+					<strong class="item-val" id="player-ping">0 ms</strong>
+				</div>
+				<div class="telemetry-item">
+					<span class="item-label">HORA RP</span>
+					<strong class="item-val" id="rp-clock">12:00</strong>
+				</div>
+				<div class="telemetry-item">
+					<span class="item-label">UPTIME</span>
+					<strong class="item-val" id="server-uptime">0m 00s</strong>
+				</div>
+			</div>
+
+			<button id="btn-resume-top" class="coe-button resume-btn" type="button" title="Voltar ao jogo">
+				<span class="key-badge">ESC</span>
+				<span>RETOMAR</span>
+			</button>
+		</header>
+
+		<!-- Área de Conteúdo / Views -->
+		<div class="pause-content">
+			<!-- VIEW 1: DASHBOARD PRINCIPAL -->
+			<section id="view-dashboard" class="view-panel active">
+				<div class="pause-main">
+					<!-- Coluna 1: Ações Principais -->
+					<div class="col-actions">
+						<h2 class="section-title">MENU PRINCIPAL</h2>
+
+						<button class="menu-action-btn primary" type="button" data-act="resume">
+							<div class="btn-icon">▶</div>
+							<div class="btn-text">
+								<strong>RETOMAR JOGO</strong>
+								<small>Voltar à gameplay imediatamente</small>
+							</div>
+							<span class="btn-key">ESC</span>
+						</button>
+
+						<button class="menu-action-btn" type="button" data-view-btn="map">
+							<div class="btn-icon">🗺</div>
+							<div class="btn-text">
+								<strong>MAPA DE SAN ANDREAS</strong>
+								<small>GPS interativo e pontos de interesse</small>
+							</div>
+							<span class="btn-key">MAPA</span>
+						</button>
+
+						<button class="menu-action-btn" type="button" data-act="hud">
+							<div class="btn-icon">📐</div>
+							<div class="btn-text">
+								<strong>PERSONALIZAR HUD</strong>
+								<small>Arrastar, redimensionar e editar a HUD</small>
+							</div>
+							<span class="btn-key">/hud</span>
+						</button>
+
+						<button class="menu-action-btn" type="button" data-view-btn="settings">
+							<div class="btn-icon">⚙</div>
+							<div class="btn-text">
+								<strong>CONFIGURAÇÕES</strong>
+								<small>Áudio, voz, interface e preferências</small>
+							</div>
+						</button>
+
+						<button class="menu-action-btn" type="button" data-view-btn="rules">
+							<div class="btn-icon">📋</div>
+							<div class="btn-text">
+								<strong>REGRAS DA CIDADE</strong>
+								<small>Diretrizes, safezones e suporte</small>
+							</div>
+						</button>
+
+						<button class="menu-action-btn danger" type="button" data-act="disconnect">
+							<div class="btn-icon">⏻</div>
+							<div class="btn-text">
+								<strong>DESCONECTAR</strong>
+								<small>Sair com segurança do servidor</small>
+							</div>
+						</button>
+					</div>
+
+					<!-- Coluna 2: Dossiê do Personagem -->
+					<div class="col-character">
+						<div class="dossier-card">
+							<div class="dossier-header">
+								<div class="char-avatar">
+									<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+										<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+										<circle cx="12" cy="7" r="4"/>
+									</svg>
+								</div>
+								<div class="char-identity">
+									<div class="char-id-tag"><span id="char-state-id">COE0000</span></div>
+									<h3 id="char-name">Nome do Cidadão</h3>
+								</div>
+							</div>
+
+							<div class="dossier-grid">
+								<div class="dossier-field">
+									<span class="field-lbl">OCUPAÇÃO / EMPREGO</span>
+									<strong class="field-val" id="char-job">Civil</strong>
+									<small class="field-sub" id="char-job-grade">Cargo N/A</small>
+								</div>
+
+								<div class="dossier-field">
+									<span class="field-lbl">ORGANIZAÇÃO / FACÇÃO</span>
+									<strong class="field-val" id="char-faction">Nenhuma</strong>
+									<small class="field-sub" id="char-faction-grade">N/A</small>
+								</div>
+
+								<div class="dossier-field">
+									<span class="field-lbl">LOCALIZAÇÃO ATUAL</span>
+									<strong class="field-val" id="char-location">Los Santos</strong>
+								</div>
+
+								<div class="dossier-field">
+									<span class="field-lbl">GÊNERO / NASCIMENTO</span>
+									<strong class="field-val"><span id="char-gender">Masculino</span> • <span id="char-birth">01/01/2000</span></strong>
+								</div>
+							</div>
+
+							<div class="finances-block">
+								<span class="finances-lbl">CONTA BANCÁRIA</span>
+								<div class="finances-row">
+									<b class="bank-amount" id="char-bank">R$ 0</b>
+									<span class="finances-tag">ATIVO</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Coluna 3: Atalhos Rápidos & Comunidade -->
+					<div class="col-info">
+						<div class="card-box binds-card">
+							<h3 class="card-title">ATALHOS ESSENCIAIS</h3>
+							<div id="quick-binds" class="binds-list"></div>
+						</div>
+
+						<div class="card-box community-card">
+							<h3 class="card-title">COMUNIDADE & SUPORTE</h3>
+							<p class="community-desc">Precisa de atendimento com a staff ou novidades da cidade? Acesse os canais oficiais:</p>
+							<div class="community-links">
+								<a href="#" class="com-link" data-copy="discord">
+									<span class="com-icon">💬</span>
+									<div class="com-info">
+										<strong>DISCORD OFICIAL</strong>
+										<small id="discord-url">discord.gg/coerp</small>
+									</div>
+								</a>
+								<a href="#" class="com-link" data-copy="website">
+									<span class="com-icon">🌐</span>
+									<div class="com-info">
+										<strong>PORTAL WEB</strong>
+										<small id="website-url">https://coerp.com.br</small>
+									</div>
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- VIEW 2: MAPA INTERATIVO TOTALMENTE CUSTOMIZADO -->
+			<section id="view-map" class="view-panel">
+				<div class="map-view-container">
+					<div class="map-toolbar">
+						<div class="map-meta">
+							<button class="coe-button back-btn" type="button" data-view-btn="dashboard">← Voltar ao Início</button>
+							<div class="map-location-tag">
+								<span>LOCALIZAÇÃO:</span>
+								<strong id="map-street-tag">Los Santos</strong>
+								<small id="map-coords-tag">X: 0 | Y: 0 | Z: 0</small>
+							</div>
+						</div>
+
+						<!-- Barra de Filtros de Pontos de Interesse (POIs) -->
+						<div class="map-filter-bar">
+							<button class="map-chip active" type="button" data-poi-filter="all">Todos</button>
+							<button class="map-chip" type="button" data-poi-filter="emergency">🚨 Emergência</button>
+							<button class="map-chip" type="button" data-poi-filter="mechanic">🔧 Mecânicas</button>
+							<button class="map-chip" type="button" data-poi-filter="shops">🛒 Lojas & Armas</button>
+							<button class="map-chip" type="button" data-poi-filter="garages">🚗 Garagens & Postos</button>
+							<button class="map-chip" type="button" data-poi-filter="services">🏛️ Serviços</button>
+						</div>
+
+						<div class="map-actions">
+							<button id="btn-center-player" class="coe-button map-tool-btn" type="button" title="Centralizar visualização no personagem">
+								<span>🎯</span> Centralizar
+							</button>
+							<button id="btn-clear-waypoint" class="coe-button map-tool-btn danger-subtle" type="button">Limpar Destino</button>
+						</div>
+					</div>
+
+					<div class="map-viewport" id="map-viewport">
+						<!-- Container Móvel e com Zoom do Mapa -->
+						<div class="map-canvas" id="map-canvas">
+							<!-- Imagem Original em Alta Resolução do Mapa de GTA V -->
+							<img id="map-raster" class="map-raster-img" src="img/map.webp" alt="Mapa de San Andreas" draggable="false">
+
+							<!-- Linha de Rota GPS Dinâmica do Jogador até o Destino -->
+							<svg id="map-route-svg" class="map-route-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+								<line id="gps-route-line" class="gps-route-line" x1="0" y1="0" x2="0" y2="0" style="display: none;"/>
+							</svg>
+
+							<!-- Camada de Blips / Pontos de Interesse Interativos -->
+							<div id="map-blips-layer" class="map-blips-layer">
+								<!-- POIs pré-renderizados para acesso rápido e compatibilidade -->
+								<!-- Emergência -->
+								<div class="map-blip poi emergency" style="left: 48.24%; top: 72.18%;" data-wp-x="298" data-wp-y="-584" data-cat="emergency" data-title="Hospital Central Pillbox Hill" data-desc="Atendimento médico e pronto-socorro central">
+									<span class="blip-ico">🏥</span>
+									<span class="blip-label">Hospital Central</span>
+								</div>
+								<div class="map-blip poi emergency" style="left: 60.67%; top: 38.10%;" data-wp-x="1839" data-wp-y="3673" data-cat="emergency" data-title="Centro Médico Sandy Shores" data-desc="Posto de atendimento do condado">
+									<span class="blip-ico">🏥</span>
+									<span class="blip-label">Hospital Sandy</span>
+								</div>
+								<div class="map-blip poi emergency" style="left: 43.82%; top: 16.85%;" data-wp-x="-247" data-wp-y="6330" data-cat="emergency" data-title="Clínica Paleto Bay" data-desc="Atendimento médico na região norte">
+									<span class="blip-ico">🏥</span>
+									<span class="blip-label">Hospital Paleto</span>
+								</div>
+								<div class="map-blip poi emergency" style="left: 49.26%; top: 75.33%;" data-wp-x="425" data-wp-y="-979" data-cat="emergency" data-title="Mission Row Police Dept" data-desc="Quartel-general da Polícia de Los Santos">
+									<span class="blip-ico">🚔</span>
+									<span class="blip-label">Polícia Central</span>
+								</div>
+								<div class="map-blip poi emergency" style="left: 60.78%; top: 37.99%;" data-wp-x="1853" data-wp-y="3686" data-cat="emergency" data-title="Delegacia Sandy Shores (Sheriff)" data-desc="Gabinete do xerife de Blaine County">
+									<span class="blip-ico">🚔</span>
+									<span class="blip-label">Sheriff Sandy</span>
+								</div>
+								<div class="map-blip poi emergency" style="left: 42.20%; top: 19.38%;" data-wp-x="-448" data-wp-y="6013" data-cat="emergency" data-title="Delegacia Paleto Bay (Sheriff)" data-desc="Posto policial do norte">
+									<span class="blip-ico">🚔</span>
+									<span class="blip-label">Sheriff Paleto</span>
+								</div>
+
+								<!-- Mecânicas -->
+								<div class="map-blip poi mechanic" style="left: 43.10%; top: 68.61%;" data-wp-x="-337" data-wp-y="-136" data-cat="mechanic" data-title="Los Santos Customs (Burton)" data-desc="Oficina e customização veicular">
+									<span class="blip-ico">🔧</span>
+									<span class="blip-label">LS Customs</span>
+								</div>
+								<div class="map-blip poi mechanic" style="left: 44.12%; top: 78.09%;" data-wp-x="-211" data-wp-y="-1324" data-cat="mechanic" data-title="Benny's Original Motorworks" data-desc="Customização lowrider e upgrades especiais">
+									<span class="blip-ico">🔧</span>
+									<span class="blip-label">Benny's Works</span>
+								</div>
+								<div class="map-blip poi mechanic" style="left: 55.35%; top: 46.36%;" data-wp-x="1177" data-wp-y="2640" data-cat="mechanic" data-title="Mecânica Harmony" data-desc="Reparos e modificações na Route 68">
+									<span class="blip-ico">🔧</span>
+									<span class="blip-label">Mecânica Harmony</span>
+								</div>
+								<div class="map-blip poi mechanic" style="left: 46.71%; top: 14.49%;" data-wp-x="110" data-wp-y="6626" data-cat="mechanic" data-title="Beeker's Garage Paleto" data-desc="Oficina completa em Paleto Bay">
+									<span class="blip-ico">🔧</span>
+									<span class="blip-label">Mecânica Paleto</span>
+								</div>
+
+								<!-- Lojas e Armas -->
+								<div class="map-blip poi shops" style="left: 46.00%; top: 76.36%;" data-wp-x="21.6" data-wp-y="-1107" data-cat="shops" data-title="Ammu-Nation Central" data-desc="Armaria licenciada e armamentos">
+									<span class="blip-ico">🔫</span>
+									<span class="blip-label">Ammu-Nation</span>
+								</div>
+								<div class="map-blip poi shops" style="left: 59.49%; top: 37.41%;" data-wp-x="1693" data-wp-y="3759" data-cat="shops" data-title="Ammu-Nation Sandy Shores" data-desc="Armamentos no deserto de Blaine County">
+									<span class="blip-ico">🔫</span>
+									<span class="blip-label">Ammu-Nation Sandy</span>
+								</div>
+								<div class="map-blip poi shops" style="left: 32.22%; top: 75.64%;" data-wp-x="-1680" data-wp-y="-1070" data-cat="shops" data-title="Del Perro Pier (Píer)" data-desc="Parque de diversões, quiosques e lazer à beira-mar">
+									<span class="blip-ico">🎡</span>
+									<span class="blip-label">Del Perro Pier</span>
+								</div>
+
+								<!-- Garagens & Postos -->
+								<div class="map-blip poi garages" style="left: 45.45%; top: 76.16%;" data-wp-x="-45" data-wp-y="-1082" data-cat="garages" data-title="Concessionária Principal" data-desc="Venda e aquisição de veículos civis">
+									<span class="blip-ico">🏎</span>
+									<span class="blip-label">Concessionária</span>
+								</div>
+								<div class="map-blip poi garages" style="left: 47.23%; top: 80.00%;" data-wp-x="174" data-wp-y="-1561" data-cat="garages" data-title="Posto de Combustível Central" data-desc="Abastecimento e conveniência 24h">
+									<span class="blip-ico">⛽</span>
+									<span class="blip-label">Posto Central</span>
+								</div>
+								<div class="map-blip poi garages" style="left: 61.81%; top: 43.05%;" data-wp-x="1980" data-wp-y="3054" data-cat="garages" data-title="Posto Senora Fwy" data-desc="Abastecimento rápido na rodovia">
+									<span class="blip-ico">⛽</span>
+									<span class="blip-label">Posto Rodovia</span>
+								</div>
+
+								<!-- Serviços & Locais de Interesse -->
+								<div class="map-blip poi services" style="left: 47.01%; top: 75.79%;" data-wp-x="147" data-wp-y="-1035" data-cat="services" data-title="Praça Central (Legion Square)" data-desc="Ponto de encontro central de cidadãos e prefeitura">
+									<span class="blip-ico">🏛</span>
+									<span class="blip-label">Praça Central</span>
+								</div>
+								<div class="map-blip poi services" style="left: 37.48%; top: 89.36%;" data-wp-x="-1030" data-wp-y="-2730" data-cat="services" data-title="Aeroporto Internacional (LSIA)" data-desc="Terminal de voos e hangares">
+									<span class="blip-ico">✈️</span>
+									<span class="blip-label">Aeroporto LSIA</span>
+								</div>
+								<div class="map-blip poi services" style="left: 59.83%; top: 41.42%;" data-wp-x="1735" data-wp-y="3256" data-cat="services" data-title="Aeródromo Sandy Shores" data-desc="Pista de pouso e aviação leve">
+									<span class="blip-ico">✈️</span>
+									<span class="blip-label">Aeródromo Sandy</span>
+								</div>
+								<div class="map-blip poi services" style="left: 49.44%; top: 22.65%;" data-wp-x="450" data-wp-y="5600" data-cat="services" data-title="Pico Mount Chiliad" data-desc="Ponto mais alto de San Andreas com teleférico">
+									<span class="blip-ico">⛰️</span>
+									<span class="blip-label">Monte Chiliad</span>
+								</div>
+							</div>
+
+							<!-- Marcador do Jogador com seta de orientação -->
+							<div id="player-map-marker" class="player-marker" style="left: 47.01%; top: 75.79%;">
+								<div class="marker-pulse"></div>
+								<div id="player-heading-arrow" class="marker-arrow">▲</div>
+								<div class="marker-core"></div>
+								<span class="marker-label">VOCÊ</span>
+							</div>
+
+							<!-- Marcador de Destino / Waypoint Ativo -->
+							<div id="waypoint-map-marker" class="waypoint-marker" style="display: none;">
+								<span class="wp-icon">📍</span>
+								<span class="wp-label">DESTINO</span>
+							</div>
+						</div>
+
+						<!-- Controles Flutuantes de Zoom -->
+						<div class="map-zoom-controls">
+							<button id="map-zoom-in" class="zoom-btn" type="button" title="Aproximar (+)">+</button>
+							<button id="map-zoom-reset" class="zoom-btn reset" type="button" title="Redefinir visualização">1x</button>
+							<button id="map-zoom-out" class="zoom-btn" type="button" title="Afastar (-)">−</button>
+						</div>
+
+						<!-- Banner Flutuante de Destino Ativo com Distância -->
+						<div id="active-waypoint-hud" class="map-waypoint-hud" style="display: none;">
+							<div class="wp-hud-left">
+								<span class="wp-hud-dot"></span>
+								<div>
+									<strong class="wp-hud-title">DESTINO GPS ATIVO</strong>
+									<span id="wp-hud-dist" class="wp-hud-dist">Distância: Calculando...</span>
+								</div>
+							</div>
+							<button id="btn-cancel-route" class="wp-hud-cancel" type="button" title="Cancelar destino">✕ Cancelar</button>
+						</div>
+
+						<!-- Chips Informativos no Rodapé do Mapa -->
+						<div class="map-footer-telemetry">
+							<div id="map-cursor-pill" class="map-telemetry-chip">
+								<span class="dot"></span>
+								<span id="map-cursor-coords">Cursor: X: 0 | Y: 0</span>
+							</div>
+							<div class="map-telemetry-chip controls-hint">
+								<span>🖱️ Arraste: Mover</span>
+								<span class="sep">•</span>
+								<span>Roda do Mouse: Zoom</span>
+								<span class="sep">•</span>
+								<span>Clique: Marcar GPS</span>
+							</div>
+						</div>
+
+						<!-- Tooltip Dinâmico ao passar mouse sobre Blips -->
+						<div id="map-tooltip" class="map-tooltip" style="display: none;">
+							<strong id="tooltip-title">Local</strong>
+							<span id="tooltip-category" class="tooltip-cat">Categoria</span>
+							<small id="tooltip-desc">Descrição do local</small>
+							<div id="tooltip-dist" class="tooltip-dist">Distância: 0m</div>
+							<div class="tooltip-action">Clique para traçar rota GPS</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- VIEW 3: CONFIGURAÇÕES COMPLETAS DE CONTROLES, ÁUDIO, VÍDEO & INTERFACE -->
+			<section id="view-settings" class="view-panel">
+				<div class="settings-view-container">
+					<div class="settings-header">
+						<div class="set-header-left">
+							<button class="coe-button back-btn" type="button" data-view-btn="dashboard">← Voltar ao Início</button>
+							<div class="set-title-group">
+								<h3>CONFIGURAÇÕES DO JOGO & SISTEMA</h3>
+								<small>Personalize teclado, sensibilidade, áudio, tela, interface e câmera</small>
+							</div>
+						</div>
+						<div class="set-header-actions">
+							<span id="set-save-pill" class="set-saved-pill">✓ Salvo automaticamente</span>
+							<button id="btn-reset-all-settings" class="coe-button danger-subtle" type="button" title="Restaurar todas as opções aos valores de fábrica">
+								↺ Restaurar Padrões
+							</button>
+						</div>
+					</div>
+
+					<!-- Abas Internas de Navegação das Configurações -->
+					<div class="settings-nav-bar" role="tablist">
+						<button class="set-tab active" type="button" data-set-tab="controls">⌨️ TECLADO & CONTROLES</button>
+						<button class="set-tab" type="button" data-set-tab="audio">🔊 ÁUDIO & VOZ</button>
+						<button class="set-tab" type="button" data-set-tab="display">🖥️ TELA & VÍDEO</button>
+						<button class="set-tab" type="button" data-set-tab="hud">📐 INTERFACE & HUD</button>
+						<button class="set-tab" type="button" data-set-tab="camera">🎮 JOGO & CÂMERA</button>
+					</div>
+
+					<!-- Conteúdo das Abas de Configurações -->
+					<div class="settings-tabs-content">
+						<!-- TAB 1: TECLADO & CONTROLES -->
+						<div id="set-tab-controls" class="set-tab-pane active">
+							<!-- Card Mouse & Resposta de Entrada -->
+							<div class="settings-card full-width">
+								<h4>CONFIGURAÇÕES DE MOUSE & MIRA</h4>
+								<div class="set-controls-grid">
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-mouse-sens">Sensibilidade Geral do Mouse</label>
+											<small>Velocidade de rotação livre da câmera</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="1" max="10" step="0.5" value="5" class="set-slider" id="cfg-mouse-sens">
+											<span class="slider-val" id="val-mouse-sens">5.0</span>
+										</div>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-aim-sens">Sensibilidade ao Mirar</label>
+											<small>Precisão do cursor durante disparo ou mira</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="1" max="10" step="0.5" value="5" class="set-slider" id="cfg-aim-sens">
+											<span class="slider-val" id="val-aim-sens">5.0</span>
+										</div>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-veh-sens">Sensibilidade de Câmera Veicular</label>
+											<small>Giro da visão durante condução de veículos</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="1" max="10" step="0.5" value="5" class="set-slider" id="cfg-veh-sens">
+											<span class="slider-val" id="val-veh-sens">5.0</span>
+										</div>
+									</div>
+								</div>
+
+								<div class="set-toggles-box inline">
+									<label class="switch-label">
+										<input type="checkbox" id="cfg-mouse-invert">
+										<span>Inverter Eixo Y do Mouse (Câmera Invertida)</span>
+									</label>
+									<label class="switch-label">
+										<input type="checkbox" checked id="cfg-mouse-raw">
+										<span>Entrada Direta do Mouse (Raw Input sem aceleração do Windows)</span>
+									</label>
+								</div>
+							</div>
+
+							<!-- Card Mapeamento Interativo de Teclas -->
+							<div class="settings-card full-width">
+								<div class="card-header-flex">
+									<div>
+										<h4>MAPEAMENTO DE TECLAS & ATALHOS DO SERVIDOR</h4>
+										<small class="card-hint">Clique em qualquer botão de tecla para redefinir o atalho desejado.</small>
+									</div>
+									<button id="btn-reset-keybinds" class="coe-button subtle-btn" type="button">
+										↺ Restaurar Teclas Padrão
+									</button>
+								</div>
+
+								<div class="keybinds-interactive-table" id="keybinds-table">
+									<div class="kb-table-header">
+										<span>AÇÃO / FUNÇÃO</span>
+										<span>CATEGORIA</span>
+										<span>TECLA CONFIGURADA</span>
+									</div>
+
+									<!-- Grupo: Comunicação & Voz -->
+									<div class="kb-row-group">COMUNICAÇÃO & CHAT DE VOZ</div>
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Falar no Microfone</strong>
+											<small>Transmissão por proximidade (Push-to-Talk)</small>
+										</div>
+										<span class="kb-badge voice">Voz</span>
+										<button class="keybind-btn" type="button" data-bind-id="voice_ptt" data-default="N">N</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Aumentar Alcance da Voz</strong>
+											<small>Alterna gradativamente até o modo Grito</small>
+										</div>
+										<span class="kb-badge voice">Voz</span>
+										<button class="keybind-btn" type="button" data-bind-id="voice_up" data-default="PAGE UP">PAGE UP</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Diminuir Alcance da Voz</strong>
+											<small>Alterna gradativamente até o modo Sussurro</small>
+										</div>
+										<span class="kb-badge voice">Voz</span>
+										<button class="keybind-btn" type="button" data-bind-id="voice_down" data-default="PAGE DOWN">PAGE DOWN</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Falar no Rádio</strong>
+											<small>Transmissão no canal de rádio configurado</small>
+										</div>
+										<span class="kb-badge radio">Rádio</span>
+										<button class="keybind-btn" type="button" data-bind-id="radio_ptt" data-default="CAPS LOCK">CAPS LOCK</button>
+									</div>
+
+									<!-- Grupo: Interface & Menus -->
+									<div class="kb-row-group">INTERFACE & MENUS</div>
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Menu de Pausa</strong>
+											<small>Interface principal de status e navegação</small>
+										</div>
+										<span class="kb-badge ui">Interface</span>
+										<button class="keybind-btn locked" type="button" data-bind-id="menu_pause" data-default="ESC" title="Tecla fixa de sistema">ESC</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Mapa de San Andreas</strong>
+											<small>Abrir visualizador de mapa e GPS</small>
+										</div>
+										<span class="kb-badge ui">Interface</span>
+										<button class="keybind-btn" type="button" data-bind-id="open_map" data-default="M">M</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Expandir / Alternar Minimapa</strong>
+											<small>Alterna tamanho do radar sem abrir pausa</small>
+										</div>
+										<span class="kb-badge ui">Radar</span>
+										<button class="keybind-btn" type="button" data-bind-id="radar_expand" data-default="Z">Z</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Editor de Posições do HUD</strong>
+											<small>Modo de arrastar e configurar caixas do HUD</small>
+										</div>
+										<span class="kb-badge ui">Interface</span>
+										<button class="keybind-btn" type="button" data-bind-id="edit_hud" data-default="H">H</button>
+									</div>
+
+									<!-- Grupo: Personagem & Gameplay -->
+									<div class="kb-row-group">PERSONAGEM & GAMEPLAY</div>
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Inventário do Personagem</strong>
+											<small>Bolsos, mochilas e itens equipados</small>
+										</div>
+										<span class="kb-badge game">Gameplay</span>
+										<button class="keybind-btn" type="button" data-bind-id="open_inv" data-default="TAB">TAB</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Smartphone Celular</strong>
+											<small>Abre celular com contatos, chamadas e apps</small>
+										</div>
+										<span class="kb-badge game">Gameplay</span>
+										<button class="keybind-btn" type="button" data-bind-id="open_phone" data-default="F1">F1</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Tablet de Serviços & Corporações</strong>
+											<small>MDT policial, despachos e faturas</small>
+										</div>
+										<span class="kb-badge game">Gameplay</span>
+										<button class="keybind-btn" type="button" data-bind-id="open_tablet" data-default="F2">F2</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Interação de Alvo / Target</strong>
+											<small>Olho interativo para cidadãos, veículos e portas</small>
+										</div>
+										<span class="kb-badge game">Gameplay</span>
+										<button class="keybind-btn" type="button" data-bind-id="target_interact" data-default="LEFT ALT">LEFT ALT</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Menu de Animações / Emotes</strong>
+											<small>Roda de poses, danças e expressões</small>
+										</div>
+										<span class="kb-badge game">Gameplay</span>
+										<button class="keybind-btn" type="button" data-bind-id="open_emotes" data-default="F3">F3</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Modo Furtivo / Agachar</strong>
+											<small>Agachar suavemente sem pular</small>
+										</div>
+										<span class="kb-badge game">Gameplay</span>
+										<button class="keybind-btn" type="button" data-bind-id="stealth_crouch" data-default="LEFT CTRL">LEFT CTRL</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Levantar as Mãos</strong>
+											<small>Rendição ou sinalização</small>
+										</div>
+										<span class="kb-badge game">Gameplay</span>
+										<button class="keybind-btn" type="button" data-bind-id="hands_up" data-default="X">X</button>
+									</div>
+
+									<!-- Grupo: Veículos & Condução -->
+									<div class="kb-row-group">VEÍCULOS & CONDUÇÃO</div>
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Ligar / Desligar Motor</strong>
+											<small>Partida manual do veículo</small>
+										</div>
+										<span class="kb-badge veh">Veículo</span>
+										<button class="keybind-btn" type="button" data-bind-id="veh_engine" data-default="G">G</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Cinto de Segurança</strong>
+											<small>Fixação contra colisões e ejeção</small>
+										</div>
+										<span class="kb-badge veh">Veículo</span>
+										<button class="keybind-btn" type="button" data-bind-id="veh_seatbelt" data-default="B">B</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Trancar / Destrancar Portas</strong>
+											<small>Alarme e trava das portas do veículo</small>
+										</div>
+										<span class="kb-badge veh">Veículo</span>
+										<button class="keybind-btn" type="button" data-bind-id="veh_doors" data-default="U">U</button>
+									</div>
+
+									<div class="kb-row">
+										<div class="kb-action">
+											<strong>Limitador de Velocidade (Piloto Automático)</strong>
+											<small>Trava na velocidade atual</small>
+										</div>
+										<span class="kb-badge veh">Veículo</span>
+										<button class="keybind-btn" type="button" data-bind-id="veh_limiter" data-default="L">L</button>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- TAB 2: ÁUDIO & VOZ -->
+						<div id="set-tab-audio" class="set-tab-pane">
+							<div class="settings-grid">
+								<!-- Níveis de Volume -->
+								<div class="settings-card">
+									<h4>VOLUMES DO JOGO</h4>
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-master-vol">Volume Geral (Master)</label>
+											<small>Intensidade global de todo o som do jogo</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="0" max="100" value="80" class="set-slider" id="cfg-master-vol">
+											<span class="slider-val" id="val-master-vol">80%</span>
+										</div>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-sfx-vol">Efeitos Sonoros (SFX)</label>
+											<small>Disparos, motores, passos e sirenes</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="0" max="100" value="70" class="set-slider" id="cfg-sfx-vol">
+											<span class="slider-val" id="val-sfx-vol">70%</span>
+										</div>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-music-vol">Música de Ambiente & Rádios</label>
+											<small>Trilha sonoras de fundo e estações veiculares</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="0" max="100" value="40" class="set-slider" id="cfg-music-vol">
+											<span class="slider-val" id="val-music-vol">40%</span>
+										</div>
+									</div>
+								</div>
+
+								<!-- Chat de Voz & Microfone -->
+								<div class="settings-card">
+									<h4>CHAT DE VOZ & MICROFONE</h4>
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-voice-vol">Volume de Voz dos Outros Jogadores</label>
+											<small>Nível de áudio recebido por proximidade</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="0" max="100" value="85" class="set-slider" id="cfg-voice-vol">
+											<span class="slider-val" id="val-voice-vol">85%</span>
+										</div>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-mic-sens">Sensibilidade de Entrada do Microfone</label>
+											<small>Limiar de captação (Noise Gate)</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="0" max="100" value="60" class="set-slider" id="cfg-mic-sens">
+											<span class="slider-val" id="val-mic-sens">60%</span>
+										</div>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-mic-mode">Modo de Transmissão do Microfone</label>
+											<small>Forma de envio da voz</small>
+										</div>
+										<select id="cfg-mic-mode" class="set-select">
+											<option value="ptt" selected>Push-to-Talk (Pressione para Falar)</option>
+											<option value="voice">Detecção Contínua por Voz</option>
+										</select>
+									</div>
+								</div>
+
+								<!-- Efeitos de Submix & Filtros -->
+								<div class="settings-card full-width">
+									<h4>FILTROS DE ÁUDIO & EFEITOS ESPECIAIS (SUBMIX)</h4>
+									<div class="set-toggles-box">
+										<label class="switch-label">
+											<input type="checkbox" checked id="cfg-radio-sfx">
+											<span>Filtro de Rádio / Walkie-Talkie (Adiciona efeito de transmissão e bipes realistas)</span>
+										</label>
+										<label class="switch-label">
+											<input type="checkbox" checked id="cfg-phone-sfx">
+											<span>Filtro de Áudio para Chamadas Celular (Isolamento de frequência telefônica)</span>
+										</label>
+										<label class="switch-label">
+											<input type="checkbox" checked id="cfg-mute-bg">
+											<span>Silenciar Áudio quando o jogo estiver minimizado em segundo plano</span>
+										</label>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- TAB 3: TELA & VÍDEO -->
+						<div id="set-tab-display" class="set-tab-pane">
+							<div class="settings-grid">
+								<!-- Ajustes Visuais -->
+								<div class="settings-card">
+									<h4>AJUSTES DE BRILHO & ÁREA ÚTIL</h4>
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-brightness">Brilho da Tela (Gamma)</label>
+											<small>Ajuste de visibilidade em ambientes noturnos</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="0" max="100" value="50" class="set-slider" id="cfg-brightness">
+											<span class="slider-val" id="val-brightness">50%</span>
+										</div>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-safezone">Margem de Segurança da Tela (Safezone)</label>
+											<small>Distância dos componentes em relação às bordas</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="0" max="10" value="5" class="set-slider" id="cfg-safezone">
+											<span class="slider-val" id="val-safezone">5%</span>
+										</div>
+									</div>
+
+									<div class="set-toggles-box">
+										<label class="switch-label">
+											<input type="checkbox" checked id="cfg-hud-4k">
+											<span>Escala Automática de HUD para Monitores 2K / 4K</span>
+										</label>
+									</div>
+								</div>
+
+								<!-- Modo de Janela & Taxa de Quadros -->
+								<div class="settings-card">
+									<h4>RESOLUÇÃO & SINCRONIZAÇÃO</h4>
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-screen-mode">Modo de Exibição</label>
+											<small>Tipo de renderização da janela do jogo</small>
+										</div>
+										<select id="cfg-screen-mode" class="set-select">
+											<option value="fullscreen" selected>Tela Cheia Exclusiva</option>
+											<option value="borderless">Janela sem Bordas</option>
+											<option value="windowed">Janela</option>
+										</select>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-vsync">Sincronização Vertical (V-Sync)</label>
+											<small>Elimina rasgos de imagem (Screen Tearing)</small>
+										</div>
+										<select id="cfg-vsync" class="set-select">
+											<option value="off" selected>Desligado (Menor latência)</option>
+											<option value="on">Ligado (Sincronizado ao monitor)</option>
+										</select>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-fps-limit">Limite de Taxa de Quadros (FPS)</label>
+											<small>Economia de processamento e estabilidade</small>
+										</div>
+										<select id="cfg-fps-limit" class="set-select">
+											<option value="unlimited" selected>Ilimitado</option>
+											<option value="240">240 FPS</option>
+											<option value="144">144 FPS</option>
+											<option value="120">120 FPS</option>
+											<option value="60">60 FPS</option>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- TAB 4: INTERFACE & HUD -->
+						<div id="set-tab-hud" class="set-tab-pane">
+							<div class="settings-grid">
+								<!-- Radar & Minimapa -->
+								<div class="settings-card">
+									<h4>RADAR & MINIMAPA</h4>
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-minimap-visibility">Comportamento do Minimapa</label>
+											<small>Quando o radar de localização deve ficar visível</small>
+										</div>
+										<select id="cfg-minimap-visibility" class="set-select">
+											<option value="always" selected>Sempre Visível</option>
+											<option value="vehicle">Apenas dentro de Veículos</option>
+											<option value="hidden">Oculto</option>
+										</select>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-minimap-style">Formato do Radar</label>
+											<small>Estilo geométrico da moldura</small>
+										</div>
+										<select id="cfg-minimap-style" class="set-select">
+											<option value="rect" selected>Retangular Moderno</option>
+											<option value="circle">Circular Clássico</option>
+										</select>
+									</div>
+
+									<div class="set-toggles-box">
+										<label class="switch-label">
+											<input type="checkbox" checked id="cfg-hud-compass">
+											<span>Exibir Bússola e Nome da Rua Atual sobre o radar</span>
+										</label>
+										<label class="switch-label">
+											<input type="checkbox" checked id="cfg-hud-status">
+											<span>Exibir Barras de Vida, Colete, Fome e Sede</span>
+										</label>
+									</div>
+								</div>
+
+								<!-- Velocímetro & Editor Visual -->
+								<div class="settings-card">
+									<h4>VELOCÍMETRO & EDITOR VISUAL</h4>
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-speedo-unit">Unidade de Velocidade</label>
+											<small>Medição dos medidores veiculares</small>
+										</div>
+										<select id="cfg-speedo-unit" class="set-select">
+											<option value="kmh" selected>KM/H (Quilômetros por Hora)</option>
+											<option value="mph">MPH (Milhas por Hora)</option>
+										</select>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-speedo-style">Tema do Velocímetro</label>
+											<small>Design do display de condução</small>
+										</div>
+										<select id="cfg-speedo-style" class="set-select">
+											<option value="modern" selected>Modern</option>
+											<option value="modernpro">Modern Pro</option>
+											<option value="bold">Bold</option>
+											<option value="retro">Retro</option>
+											<option value="minimal">Minimal</option>
+											<option value="analog">Analog</option>
+										</select>
+									</div>
+
+									<div class="hud-quick-actions">
+										<button id="btn-open-hud-editor" class="coe-button highlight-btn" type="button">
+											<span>📐</span> Abrir Modo de Edição do HUD (/hud)
+										</button>
+										<button id="btn-toggle-minimap-mode" class="coe-button" type="button">
+											<span>🗺</span> Alternar Modo Minimapa (Expandir Z)
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- TAB 5: JOGO & CÂMERA -->
+						<div id="set-tab-camera" class="set-tab-pane">
+							<div class="settings-grid">
+								<!-- Campo de Visão (FOV) -->
+								<div class="settings-card">
+									<h4>CAMPO DE VISÃO (FOV)</h4>
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-fov-foot">Campo de Visão a Pé</label>
+											<small>Ângulo de abertura da câmera do personagem</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="70" max="110" value="85" class="set-slider" id="cfg-fov-foot">
+											<span class="slider-val" id="val-fov-foot">85°</span>
+										</div>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-fov-veh">Campo de Visão em Veículo</label>
+											<small>Abertura da câmera ao pilotar ou dirigir</small>
+										</div>
+										<div class="slider-wrapper">
+											<input type="range" min="70" max="110" value="90" class="set-slider" id="cfg-fov-veh">
+											<span class="slider-val" id="val-fov-veh">90°</span>
+										</div>
+									</div>
+
+									<div class="set-row">
+										<div class="set-label-block">
+											<label for="cfg-veh-cam-dist">Distância Padrão da Câmera Veicular</label>
+											<small>Afastamento inicial ao entrar em um automóvel</small>
+										</div>
+										<select id="cfg-veh-cam-dist" class="set-select">
+											<option value="near">Perto</option>
+											<option value="normal" selected>Normal</option>
+											<option value="far">Longe</option>
+										</select>
+									</div>
+								</div>
+
+								<!-- Dinâmica de Câmera & Disparo -->
+								<div class="settings-card">
+									<h4>DINÂMICA DE CÂMERA & COMBATE</h4>
+									<div class="set-toggles-box">
+										<label class="switch-label">
+											<input type="checkbox" checked id="cfg-headbob">
+											<span>Balanço de Câmera em Primeira Pessoa (Headbob ao caminhar e correr)</span>
+										</label>
+										<label class="switch-label">
+											<input type="checkbox" checked id="cfg-veh-autocenter">
+											<span>Centralização Automática da Câmera ao Conduzir Veículos</span>
+										</label>
+										<label class="switch-label">
+											<input type="checkbox" checked id="cfg-auto-reload">
+											<span>Auto-recarga de Armamento ao esvaziar o carregador</span>
+										</label>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- VIEW 4: REGRAS E DIRETRIZES DA CIDADE -->
+			<section id="view-rules" class="view-panel">
+				<div class="rules-view-container">
+					<div class="rules-view-header">
+						<button class="coe-button back-btn" type="button" data-view-btn="dashboard">← Voltar ao Início</button>
+						<h3>DIRETRIZES & REGRAS DO SERVIDOR</h3>
+					</div>
+					<div id="full-rules-body" class="rules-view-body"></div>
+				</div>
+			</section>
+		</div>
+
+		<!-- Diálogo de confirmação para desconexão -->
+		<div id="disconnect-dialog" class="dialog-overlay" hidden>
+			<div class="dialog-card">
+				<h3>CONFIRMAR DESCONEXÃO</h3>
+				<p>Você tem certeza que deseja desconectar do servidor? Certifique-se de estar em um local seguro para evitar combat logging.</p>
+				<div class="dialog-actions">
+					<button id="btn-cancel-dc" class="coe-button" type="button">Cancelar</button>
+					<button id="btn-confirm-dc" class="coe-button danger-btn" type="button">Desconectar da Cidade</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="app.js"></script>
+</body>
+</html>

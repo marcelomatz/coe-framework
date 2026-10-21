@@ -1,0 +1,189 @@
+/* Seleção de personagem sobre a cena 3D. Fundo transparente; vinhetas só nas bordas para dar leitura ao texto. */
+:root {
+	font-family: var(--coe-font);
+	background: transparent;
+	color: var(--coe-text);
+}
+
+/* color-scheme: dark no :root pinta o canvas da NUI de opaco (#121212) e cobre o jogo; aplicar só nos controles. */
+input, select, button { color-scheme: dark; font: inherit; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.is-hidden { display: none !important; }
+
+.select {
+	position: fixed;
+	inset: 0;
+	display: grid;
+	grid-template-columns: minmax(300px, 380px) 1fr minmax(320px, 460px);
+	grid-template-rows: auto 1fr auto;
+	padding: 34px 40px;
+	background:
+		linear-gradient(90deg, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.18) 26%, rgba(0, 0, 0, 0) 40%),
+		linear-gradient(0deg, rgba(0, 0, 0, 0.58) 0%, rgba(0, 0, 0, 0) 30%),
+		linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 16%);
+	animation: select-in 600ms var(--coe-ease);
+}
+
+@keyframes select-in { from { opacity: 0; } }
+
+.eyebrow {
+	margin: 0 0 8px;
+	color: var(--coe-accent);
+	font-size: var(--coe-text-xs);
+	font-weight: 700;
+	letter-spacing: 0.2em;
+}
+
+.brand { grid-column: 1 / 3; grid-row: 1; }
+.brand h1 {
+	margin: 0 0 6px;
+	font-size: 34px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	text-shadow: 0 2px 22px rgba(0, 0, 0, 0.65);
+}
+.subtitle { margin: 0; max-width: 460px; color: var(--coe-muted); font-size: var(--coe-text-md); text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7); }
+
+/* Lista à esquerda */
+.roster {
+	grid-column: 1;
+	grid-row: 2 / 4;
+	align-self: end;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* Sem rolagem em nenhum sentido: a lista cresce para cima (limite de personagens é pequeno) e o deslocamento do card ativo não corta. */
+.character-list { display: flex; flex-direction: column; gap: 8px; overflow: visible; padding-right: 12px; }
+
+.character-card {
+	position: relative;
+	display: grid;
+	grid-template-columns: 40px 1fr;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 14px;
+	border: 1px solid var(--coe-line);
+	background: rgba(var(--coe-panel-rgb), 0.62);
+	color: var(--coe-text);
+	text-align: left;
+	cursor: pointer;
+	transition: border-color var(--coe-dur) var(--coe-ease), transform var(--coe-dur) var(--coe-ease), background var(--coe-dur) var(--coe-ease);
+}
+
+.character-card:hover { border-color: rgba(var(--coe-accent-rgb), 0.45); transform: translateX(4px); }
+.character-card.is-active {
+	border-color: var(--coe-accent);
+	background: rgba(var(--coe-panel-rgb), 0.88);
+	transform: translateX(8px);
+}
+.character-card.is-active::before {
+	content: '';
+	position: absolute;
+	left: -1px;
+	top: -1px;
+	bottom: -1px;
+	width: 3px;
+	background: var(--coe-accent);
+}
+
+.monogram {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border: 1px solid var(--coe-line-strong);
+	color: var(--coe-accent);
+	font-weight: 700;
+	letter-spacing: 0.04em;
+}
+
+.card-name { display: block; font-size: 15px; font-weight: 600; }
+.card-meta { display: block; margin-top: 3px; color: var(--coe-subtle); font-size: var(--coe-text-xs); letter-spacing: 0.04em; }
+.card-badge { margin-left: 6px; color: var(--coe-warning); font-size: 10px; letter-spacing: 0.08em; }
+
+.new-card {
+	display: grid;
+	grid-template-columns: 40px 1fr;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 14px;
+	border: 1px dashed var(--coe-line-strong);
+	background: rgba(var(--coe-panel-rgb), 0.35);
+	color: var(--coe-muted);
+	text-align: left;
+	cursor: pointer;
+}
+.new-card:hover { border-color: var(--coe-accent); color: var(--coe-text); }
+.new-card .plus { display: grid; place-items: center; width: 40px; height: 40px; font-size: 22px; color: var(--coe-accent); }
+.new-card strong { display: block; color: var(--coe-text); font-weight: 600; }
+.new-card small { display: block; margin-top: 2px; font-size: var(--coe-text-xs); }
+
+.keys { margin: 4px 0 0; color: var(--coe-subtle); font-size: var(--coe-text-xs); letter-spacing: 0.06em; }
+
+/* Destaque à direita */
+.hero {
+	grid-column: 3;
+	grid-row: 3;
+	justify-self: end;
+	width: 100%;
+	text-align: right;
+	animation: hero-in var(--coe-dur-slow) var(--coe-ease);
+}
+@keyframes hero-in { from { opacity: 0; transform: translateY(8px); } }
+
+.hero-name {
+	margin: 0 0 10px;
+	font-size: 46px;
+	font-weight: 600;
+	line-height: 1.05;
+	text-shadow: 0 3px 28px rgba(0, 0, 0, 0.7);
+}
+
+.hero-meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-bottom: 14px; }
+.hero-meta span {
+	padding: 5px 10px;
+	border: 1px solid var(--coe-line-strong);
+	background: rgba(var(--coe-panel-rgb), 0.6);
+	color: var(--coe-muted);
+	font-size: var(--coe-text-sm);
+}
+.hero-meta strong { color: var(--coe-text); font-weight: 600; }
+
+.pending { margin: 0 0 14px; color: var(--coe-warning); font-size: var(--coe-text-sm); text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7); }
+
+.hero-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.play { min-width: 210px; padding: 16px 26px; font-size: 16px; letter-spacing: 0.04em; }
+.play b { margin-left: 10px; }
+.coe-button.ghost { background: rgba(var(--coe-panel-rgb), 0.55); }
+
+.message {
+	position: fixed;
+	left: 50%;
+	bottom: 34px;
+	transform: translateX(-50%);
+	margin: 0;
+	color: var(--coe-danger);
+	font-size: var(--coe-text-md);
+	text-shadow: 0 1px 10px rgba(0, 0, 0, 0.8);
+}
+
+#change-character { position: fixed; top: 34px; right: 40px; }
+
+/* Formulário simples (sem criador) */
+.modal { position: fixed; inset: 0; display: grid; place-items: center; background: var(--coe-overlay); }
+.create-form { width: min(560px, calc(100vw - 40px)); padding: 26px; background: rgba(var(--coe-panel-rgb), 0.96); border: 1px solid var(--coe-line); }
+.create-form h2 { margin: 0 0 16px; font-size: 20px; }
+.name-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.create-form label { display: grid; gap: 8px; color: var(--coe-muted); font-size: var(--coe-text-sm); font-weight: 600; }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+.empty-state { padding: 16px; border: 1px dashed var(--coe-line-strong); background: rgba(var(--coe-panel-rgb), 0.5); color: var(--coe-muted); font-size: var(--coe-text-md); }
+
+@media (prefers-reduced-motion: reduce) {
+	.select, .hero { animation: none; }
+	.character-card { transition: none; }
+}

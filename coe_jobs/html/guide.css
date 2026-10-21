@@ -1,0 +1,80 @@
+/* Tela "Como funciona" aberta no NPC de cada emprego. Conteúdo desenhado por guide-view.js. */
+html,
+body {
+	margin: 0;
+	background: transparent;
+	font-family: var(--coe-font);
+	overflow: hidden;
+}
+
+.guide-overlay {
+	position: fixed;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	padding: 24px;
+	background: var(--coe-overlay);
+	transition: opacity var(--coe-dur-slow) var(--coe-ease);
+}
+
+.guide-overlay.is-hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.guide-panel {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr);
+	width: min(980px, 94vw);
+	max-height: 88vh;
+	transform: translateY(0);
+	transition: transform var(--coe-dur-slow) var(--coe-ease);
+}
+
+.guide-overlay.is-hidden .guide-panel {
+	transform: translateY(12px);
+}
+
+.guide-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 14px 22px;
+	border-bottom: 1px solid var(--coe-line);
+}
+
+.guide-brand {
+	margin: 0;
+	color: var(--coe-muted);
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.18em;
+}
+
+.guide-bar kbd {
+	margin-left: 6px;
+	padding: 1px 5px;
+	border: 1px solid var(--coe-line-strong);
+	color: var(--coe-muted);
+	font-family: inherit;
+	font-size: 10px;
+}
+
+.guide-body {
+	padding: 20px 22px 24px;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(var(--coe-accent-rgb), 0.45) transparent;
+}
+
+.guide-body::-webkit-scrollbar {
+	width: 6px;
+}
+
+.guide-body::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.guide-body::-webkit-scrollbar-thumb {
+	background: rgba(var(--coe-accent-rgb), 0.45);
+}

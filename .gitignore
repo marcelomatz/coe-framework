@@ -1,0 +1,27 @@
+# Dependências e Builds
+node_modules/
+package-lock.json
+yarn.lock
+
+# Segredos e Configuração Local
+.env
+.env.*
+*.local.cfg
+*.local.lua
+secrets.*
+*.key
+*.pem
+
+# Logs e Temporários
+*.log
+npm-debug.log*
+*.tmp
+*.bak
+*.cache
+
+# Arquivos de Sistema e IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
