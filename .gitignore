@@ -25,3 +25,7 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Gerador de icones (tools/item_icons)
+__pycache__/
+tools/item_icons/svg/
