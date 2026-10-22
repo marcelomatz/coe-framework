@@ -58,7 +58,7 @@ local definitions = {
 			durability = 100
 		}
 	},
-	-- Chip da operadora (metadata.iccid). Usar coloca o chip no celular ativo (coe_phone).
+	-- Chip da operadora (metadata.iccid). Item para pacotes de telefone com chips; o telefone básico (coe_mobile) não usa.
 	sim_card = {
 		label = 'Chip de celular',
 		weight = 5,

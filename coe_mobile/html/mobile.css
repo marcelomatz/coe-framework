@@ -1,0 +1,497 @@
+/* Telefone básico (coe_mobile). Cores pelos tokens do coe_ui; os papéis de parede misturam os tokens do tema. */
+html,
+body {
+	margin: 0;
+	background: transparent;
+	font-family: var(--coe-font);
+	color: var(--coe-text);
+	overflow: hidden;
+}
+
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; }
+
+.mb {
+	--mb-cut: 18px;
+	--mb-wall-a: rgba(var(--coe-accent-rgb), 0.16);
+	--mb-wall-b: rgba(var(--coe-panel-rgb), 1);
+	position: fixed;
+	right: 56px;
+	bottom: 36px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--coe-space-2);
+	animation: mb-enter var(--coe-dur-slow) var(--coe-ease);
+}
+
+.mb[hidden] { display: none; }
+
+@keyframes mb-enter {
+	from { opacity: 0; transform: translateY(24px); }
+	to { opacity: 1; transform: none; }
+}
+
+/* Aparelho: moldura chanfrada (linguagem dos painéis do coe_ui) e tela com chanfro menor. */
+.mb-device {
+	width: 300px;
+	height: 620px;
+	padding: 10px;
+	background:
+		linear-gradient(160deg, rgba(var(--coe-ink-rgb), 0.12), rgba(var(--coe-ink-rgb), 0.02) 40%),
+		var(--coe-page);
+	border: 1px solid var(--coe-line-strong);
+	clip-path: polygon(var(--mb-cut) 0, 100% 0, 100% calc(100% - var(--mb-cut)), calc(100% - var(--mb-cut)) 100%, 0 100%, 0 var(--mb-cut));
+	box-shadow: inset 0 0 0 1px rgba(var(--coe-accent-rgb), 0.18);
+}
+
+.mb-screen {
+	position: relative;
+	display: grid;
+	grid-template-rows: 28px 1fr 22px;
+	height: 100%;
+	overflow: hidden;
+	background:
+		radial-gradient(120% 70% at 20% 0%, var(--mb-wall-a), transparent 60%),
+		linear-gradient(180deg, rgba(var(--coe-ink-rgb), 0.03), transparent 30%),
+		var(--mb-wall-b);
+	clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.mb-screen[data-wallpaper="noite"] { --mb-wall-a: rgba(var(--coe-ink-rgb), 0.08); --mb-wall-b: var(--coe-page); }
+.mb-screen[data-wallpaper="oceano"] { --mb-wall-a: rgba(64, 140, 190, 0.32); --mb-wall-b: var(--coe-panel); }
+.mb-screen[data-wallpaper="grafite"] { --mb-wall-a: rgba(var(--coe-ink-rgb), 0.16); --mb-wall-b: var(--coe-panel-raised); }
+/* Fora da tela inicial o fundo fica sóbrio para leitura. */
+.mb-screen:not([data-app="home"]) { --mb-wall-a: rgba(var(--coe-accent-rgb), 0.05); --mb-wall-b: var(--coe-panel); }
+
+/* Barra de status */
+.mb-statusbar {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: center;
+	padding: 0 14px;
+	font-size: var(--coe-text-sm);
+	font-variant-numeric: tabular-nums;
+}
+
+.mb-notch { width: 72px; height: 16px; background: var(--coe-page); clip-path: polygon(0 0, 100% 0, 90% 100%, 10% 100%); }
+.mb-signal { display: flex; justify-content: flex-end; gap: 6px; color: var(--coe-text); }
+.mb-signal svg { height: 10px; fill: currentColor; }
+.mb-signal svg:first-child { width: 16px; }
+.mb-signal svg:last-child { width: 22px; }
+
+.mb-view {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	padding: 0 var(--coe-space-3) var(--coe-space-2);
+	overflow-y: auto;
+	scrollbar-width: thin;
+}
+
+.mb-homebar { display: grid; place-items: center; }
+.mb-homebutton {
+	width: 96px;
+	height: 5px;
+	padding: 0;
+	border: 0;
+	background: rgba(var(--coe-ink-rgb), 0.5);
+	cursor: pointer;
+}
+.mb-homebutton:hover { background: var(--coe-accent); }
+
+.mb-icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mb-icon.is-small { width: 13px; height: 13px; vertical-align: -2px; }
+.mb-mono { font-variant-numeric: tabular-nums; letter-spacing: 0.08em; }
+
+/* Início */
+.mb-home { display: grid; justify-items: center; gap: 2px; padding: 34px 0 22px; }
+.mb-bigclock { margin: 0; font-size: 58px; font-weight: 300; line-height: 1; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.mb-date { margin: 4px 0 18px; color: var(--coe-muted); font-size: var(--coe-text-sm); }
+.mb-date::first-letter { text-transform: uppercase; }
+
+.mb-numbercard {
+	display: grid;
+	justify-items: center;
+	gap: 2px;
+	padding: var(--coe-space-2) var(--coe-space-4);
+	background: rgba(var(--coe-panel-rgb), 0.6);
+	border: 1px solid var(--coe-line);
+	box-shadow: inset 2px 0 var(--coe-accent);
+}
+.mb-numbercard-label { color: var(--coe-muted); font-size: var(--coe-text-xs); letter-spacing: 0.16em; text-transform: uppercase; }
+.mb-numbercard-value { font-size: var(--coe-text-lg); letter-spacing: 0.1em; font-variant-numeric: tabular-nums; }
+
+.mb-apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--coe-space-2); margin-top: auto; padding: var(--coe-space-3) 0; }
+.mb-app { display: grid; justify-items: center; gap: 6px; padding: 4px 0; background: none; border: 0; cursor: pointer; }
+.mb-app-icon {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 52px;
+	height: 52px;
+	color: var(--coe-on-accent);
+	background: var(--coe-accent);
+	clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+	transition: transform var(--coe-dur) var(--coe-ease), filter var(--coe-dur) var(--coe-ease);
+}
+.mb-app-icon .mb-icon { width: 24px; height: 24px; }
+.mb-app--contacts .mb-app-icon { color: var(--coe-text); background: var(--coe-panel-raised); box-shadow: inset 0 0 0 1px var(--coe-line-strong); }
+.mb-app--messages .mb-app-icon { background: var(--coe-success); }
+.mb-app--settings .mb-app-icon { color: var(--coe-text); background: rgba(var(--coe-ink-rgb), 0.16); }
+.mb-app:hover .mb-app-icon { transform: translateY(-2px); filter: brightness(1.08); }
+.mb-app:focus-visible { outline: 1px solid var(--coe-accent); outline-offset: 2px; }
+.mb-app-label { font-size: var(--coe-text-xs); letter-spacing: 0.04em; }
+
+.mb-badge {
+	position: absolute;
+	top: 3px;
+	right: 3px;
+	min-width: 17px;
+	height: 17px;
+	padding: 0 4px;
+	font-size: 10px;
+	font-weight: 700;
+	line-height: 17px;
+	text-align: center;
+	color: var(--coe-on-accent);
+	background: var(--coe-danger);
+}
+.mb-badge.is-inline { position: static; display: inline-block; }
+
+/* Cabeçalho dos apps */
+.mb-apphead {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: var(--coe-space-1);
+	margin: 0 calc(var(--coe-space-3) * -1) var(--coe-space-2);
+	padding: var(--coe-space-2) var(--coe-space-2);
+	background: rgba(var(--coe-panel-rgb), 0.96);
+	border-bottom: 1px solid var(--coe-line);
+}
+.mb-apptitle {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	font-size: var(--coe-text-md);
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.mb-iconbtn {
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	flex: none;
+	padding: 0;
+	background: none;
+	border: 0;
+	color: var(--coe-muted);
+	cursor: pointer;
+}
+.mb-iconbtn:hover { color: var(--coe-accent); background: var(--coe-accent-soft); }
+.mb-iconbtn.is-ghost { visibility: hidden; }
+
+.mb-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: var(--coe-space-3); }
+.mb-tab {
+	padding: 8px 0;
+	font-size: var(--coe-text-sm);
+	letter-spacing: 0.06em;
+	color: var(--coe-muted);
+	background: rgba(var(--coe-ink-rgb), 0.04);
+	border: 0;
+	cursor: pointer;
+}
+.mb-tab.is-active { color: var(--coe-accent); background: var(--coe-accent-soft); box-shadow: inset 0 -2px var(--coe-accent); }
+
+/* Listas */
+.mb-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.mb-row { border-bottom: 1px solid var(--coe-line); }
+.mb-row-main {
+	display: flex;
+	align-items: center;
+	gap: var(--coe-space-3);
+	width: 100%;
+	padding: 9px 2px;
+	text-align: left;
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+.mb-row-main:hover { background: rgba(var(--coe-ink-rgb), 0.04); }
+.mb-row-info { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.mb-row-title { font-size: var(--coe-text-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mb-row-meta { color: var(--coe-muted); font-size: var(--coe-text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mb-row-side { display: grid; justify-items: end; gap: 4px; }
+.mb-row-time { color: var(--coe-subtle); font-size: var(--coe-text-xs); font-variant-numeric: tabular-nums; }
+.mb-row.is-missed .mb-row-title,
+.mb-row.is-missed .mb-row-meta { color: var(--coe-danger); }
+.mb-row.is-unread .mb-row-title { font-weight: 700; }
+.mb-row.is-unread .mb-preview { color: var(--coe-text); }
+
+.mb-avatar {
+	display: grid;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+	flex: none;
+	font-size: var(--coe-text-sm);
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	color: var(--coe-accent);
+	background: var(--coe-accent-soft);
+	clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+.mb-avatar.is-large { width: 76px; height: 76px; font-size: 26px; clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); }
+
+.mb-empty { margin: var(--coe-space-5) 0; color: var(--coe-muted); font-size: var(--coe-text-sm); text-align: center; }
+.mb-search { width: 100%; margin-bottom: var(--coe-space-2); }
+
+/* Teclado */
+.mb-keypad { display: flex; flex: 1; flex-direction: column; align-items: center; gap: var(--coe-space-3); }
+.mb-dial { display: grid; justify-items: center; min-height: 58px; }
+.mb-dial-value { font-size: 30px; font-weight: 300; letter-spacing: 0.08em; font-variant-numeric: tabular-nums; min-height: 38px; }
+.mb-dial-name { color: var(--coe-accent); font-size: var(--coe-text-sm); min-height: 16px; }
+.mb-keys { display: grid; grid-template-columns: repeat(3, 62px); gap: 10px 18px; }
+.mb-key {
+	display: grid;
+	place-items: center;
+	height: 52px;
+	font-size: 22px;
+	font-variant-numeric: tabular-nums;
+	background: rgba(var(--coe-ink-rgb), 0.06);
+	border: 1px solid var(--coe-line);
+	clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+	cursor: pointer;
+	transition: background var(--coe-dur) var(--coe-ease);
+}
+.mb-key:hover { background: rgba(var(--coe-ink-rgb), 0.12); }
+.mb-key:active { background: var(--coe-accent-soft); }
+.mb-key.is-erase { color: var(--coe-muted); background: none; border-color: transparent; }
+
+.mb-callbtn,
+.mb-round {
+	display: grid;
+	place-items: center;
+	width: 60px;
+	height: 60px;
+	padding: 0;
+	border: 0;
+	color: var(--coe-on-accent);
+	background: var(--coe-success);
+	clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+	cursor: pointer;
+	transition: filter var(--coe-dur) var(--coe-ease), opacity var(--coe-dur) var(--coe-ease);
+}
+.mb-callbtn .mb-icon,
+.mb-round .mb-icon { width: 26px; height: 26px; }
+.mb-callbtn:hover:not(:disabled),
+.mb-round:hover:not(:disabled) { filter: brightness(1.1); }
+.mb-callbtn:disabled,
+.mb-round:disabled { opacity: 0.35; cursor: not-allowed; }
+.mb-round.is-hangup { background: var(--coe-danger); }
+
+/* Contato */
+.mb-contactcard { display: grid; justify-items: center; gap: 4px; padding: var(--coe-space-4) 0; text-align: center; }
+.mb-contact-name { margin: var(--coe-space-2) 0 0; font-size: var(--coe-text-lg); }
+.mb-contact-number { margin: 0; color: var(--coe-muted); letter-spacing: 0.1em; font-variant-numeric: tabular-nums; }
+.mb-quick { display: grid; grid-template-columns: 1fr 1fr; gap: var(--coe-space-2); margin-bottom: var(--coe-space-4); }
+.mb-quickbtn {
+	display: grid;
+	justify-items: center;
+	gap: 4px;
+	padding: var(--coe-space-3) 0;
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.06em;
+	color: var(--coe-accent);
+	background: var(--coe-accent-soft);
+	border: 0;
+	cursor: pointer;
+}
+.mb-quickbtn:hover { background: rgba(var(--coe-accent-rgb), 0.18); }
+.mb-wide { width: 100%; }
+
+/* Formulários */
+.mb-form { display: grid; gap: var(--coe-space-3); }
+.mb-field { display: grid; gap: 6px; }
+.mb-field-label { color: var(--coe-muted); font-size: var(--coe-text-xs); letter-spacing: 0.12em; text-transform: uppercase; }
+.mb-field .coe-field,
+.mb-form .coe-field { width: 100%; }
+
+/* Conversa */
+.mb-bubbles { display: flex; flex: 1; flex-direction: column; gap: 6px; min-height: 0; padding: var(--coe-space-1) 0 var(--coe-space-2); overflow-y: auto; }
+.mb-bubble {
+	display: grid;
+	gap: 2px;
+	max-width: 82%;
+	padding: 7px 10px;
+	align-self: flex-start;
+	background: rgba(var(--coe-ink-rgb), 0.08);
+	clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.mb-bubble.is-mine {
+	align-self: flex-end;
+	color: var(--coe-on-accent);
+	background: var(--coe-accent);
+	clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+.mb-bubble-body { font-size: var(--coe-text-md); line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mb-bubble-time { justify-self: end; font-size: 10px; opacity: 0.65; font-variant-numeric: tabular-nums; }
+.mb-spacer { flex: 1; }
+
+.mb-composer { display: flex; align-items: flex-end; gap: var(--coe-space-2); padding-top: var(--coe-space-2); border-top: 1px solid var(--coe-line); }
+.mb-composer-input { flex: 1; min-height: 38px; max-height: 96px; resize: none; font-family: inherit; }
+.mb-sendbtn {
+	display: grid;
+	place-items: center;
+	width: 38px;
+	height: 38px;
+	flex: none;
+	padding: 0;
+	border: 0;
+	color: var(--coe-on-accent);
+	background: var(--coe-accent);
+	cursor: pointer;
+}
+.mb-sendbtn:disabled { opacity: 0.5; }
+
+/* Ajustes */
+.mb-settings { display: grid; gap: 2px; }
+.mb-setting {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--coe-space-3);
+	padding: var(--coe-space-3) var(--coe-space-2);
+	background: rgba(var(--coe-ink-rgb), 0.03);
+}
+.mb-setting.is-stacked { display: grid; justify-content: stretch; }
+.mb-setting-head { display: flex; justify-content: space-between; }
+.mb-setting-label { font-size: var(--coe-text-sm); }
+.mb-setting-value { color: var(--coe-accent); font-variant-numeric: tabular-nums; }
+
+.mb-switch {
+	appearance: none;
+	position: relative;
+	width: 38px;
+	height: 20px;
+	margin: 0;
+	background: rgba(var(--coe-ink-rgb), 0.16);
+	cursor: pointer;
+	transition: background var(--coe-dur) var(--coe-ease);
+}
+.mb-switch::after {
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 14px;
+	height: 14px;
+	content: "";
+	background: var(--coe-text);
+	transition: transform var(--coe-dur) var(--coe-ease);
+}
+.mb-switch:checked { background: var(--coe-accent); }
+.mb-switch:checked::after { transform: translateX(18px); background: var(--coe-on-accent); }
+.mb-switch:focus-visible { outline: 1px solid var(--coe-accent); outline-offset: 2px; }
+
+.mb-range { width: 100%; accent-color: var(--coe-accent); }
+
+.mb-choices { display: flex; flex-wrap: wrap; gap: 4px; }
+.mb-choice {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	font-size: var(--coe-text-xs);
+	color: var(--coe-muted);
+	background: rgba(var(--coe-ink-rgb), 0.05);
+	border: 1px solid transparent;
+	cursor: pointer;
+}
+.mb-choice:hover { color: var(--coe-text); }
+.mb-choice.is-active { color: var(--coe-accent); border-color: var(--coe-accent); background: var(--coe-accent-soft); }
+.mb-choices.is-swatches { display: grid; grid-template-columns: 1fr 1fr; }
+.mb-swatch {
+	--mb-wall-a: rgba(var(--coe-accent-rgb), 0.3);
+	--mb-wall-b: var(--coe-panel);
+	width: 16px;
+	height: 24px;
+	flex: none;
+	background: radial-gradient(140% 80% at 20% 0%, var(--mb-wall-a), transparent 70%), var(--mb-wall-b);
+	border: 1px solid var(--coe-line-strong);
+}
+.mb-swatch[data-wallpaper="noite"] { --mb-wall-a: rgba(var(--coe-ink-rgb), 0.12); --mb-wall-b: var(--coe-page); }
+.mb-swatch[data-wallpaper="oceano"] { --mb-wall-a: rgba(64, 140, 190, 0.5); }
+.mb-swatch[data-wallpaper="grafite"] { --mb-wall-a: rgba(var(--coe-ink-rgb), 0.22); --mb-wall-b: var(--coe-panel-raised); }
+
+/* Ligação: cobre a tela inteira, por cima dos apps */
+.mb-call {
+	position: absolute;
+	inset: 28px 0 22px;
+	z-index: 5;
+	display: grid;
+	grid-template-rows: 1fr auto;
+	padding: 48px var(--coe-space-4) 40px;
+	background:
+		radial-gradient(100% 60% at 50% 0%, rgba(var(--coe-accent-rgb), 0.14), transparent 70%),
+		var(--coe-panel);
+	animation: mb-fade var(--coe-dur-slow) var(--coe-ease);
+}
+.mb-call[hidden] { display: none; }
+@keyframes mb-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.mb-call-head { display: grid; justify-items: center; align-content: start; gap: 6px; text-align: center; }
+.mb-call-name { margin: var(--coe-space-3) 0 0; font-size: 22px; font-weight: 400; }
+.mb-call-number { margin: 0; color: var(--coe-muted); letter-spacing: 0.1em; font-variant-numeric: tabular-nums; }
+.mb-call-status { margin: var(--coe-space-2) 0 0; color: var(--coe-muted); font-size: var(--coe-text-sm); letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
+.mb-call.is-active .mb-call-status { color: var(--coe-success); }
+.mb-call.is-ringing.is-incoming .mb-avatar { animation: mb-pulse 1.2s ease-in-out infinite; }
+@keyframes mb-pulse {
+	0%, 100% { box-shadow: inset 0 0 0 0 rgba(var(--coe-accent-rgb), 0.5); filter: none; }
+	50% { filter: brightness(1.25); }
+}
+
+.mb-call-actions { display: flex; justify-content: space-evenly; }
+.mb-call-action { display: grid; justify-items: center; gap: 6px; font-size: var(--coe-text-xs); color: var(--coe-muted); }
+
+/* Aviso rápido dentro do aparelho */
+.mb-toast {
+	position: absolute;
+	right: var(--coe-space-3);
+	bottom: 30px;
+	left: var(--coe-space-3);
+	z-index: 6;
+	margin: 0;
+	padding: var(--coe-space-2) var(--coe-space-3);
+	font-size: var(--coe-text-sm);
+	background: var(--coe-panel-raised);
+	border: 1px solid var(--coe-line-strong);
+	box-shadow: inset 2px 0 var(--coe-accent);
+	animation: mb-fade var(--coe-dur) var(--coe-ease);
+}
+.mb-toast[hidden] { display: none; }
+.mb-toast.is-error { box-shadow: inset 2px 0 var(--coe-danger); }
+.mb-toast.is-success { box-shadow: inset 2px 0 var(--coe-success); }
+
+/* Ligação chegando com o telefone fechado: aparelho sem foco e a dica da tecla. */
+.mb.is-peek .mb-device { opacity: 0.94; }
+.mb-hint {
+	order: -1;
+	margin: 0;
+	padding: 6px 12px;
+	font-size: var(--coe-text-sm);
+	letter-spacing: 0.04em;
+	color: var(--coe-on-accent);
+	background: var(--coe-accent);
+}
+.mb-hint[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+	.mb, .mb-call, .mb-toast, .mb-app-icon, .mb-call.is-ringing.is-incoming .mb-avatar { animation: none; transition: none; }
+}
