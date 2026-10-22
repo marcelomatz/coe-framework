@@ -2,7 +2,7 @@ $engine: 3
 $onesync: on
 
 name: "COE Framework - FiveM Enhanced Gen9"
-version: "1.0.2"
+version: "1.0.3"
 author: "COE Roleplay Team"
 description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 25 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
 
@@ -53,7 +53,6 @@ tasks:
 
       ## OneSync & FiveM Enhanced Settings (DX12 / Gen9)
       onesync on
-      sv_enforceGameBuild 3095
 
       ## Sistema de Voz 3D Nativo Enhanced (Zero-lag interno)
       voice_internal
