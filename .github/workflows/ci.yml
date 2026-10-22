@@ -1,0 +1,42 @@
+name: COE Framework CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.4"
+
+      - name: Unit Tests
+        shell: pwsh
+        run: |
+          $failed = @()
+          foreach ($resource in Get-ChildItem -Directory | Where-Object { Test-Path "$($_.FullName)/test" }) {
+            foreach ($test in Get-ChildItem "$($resource.FullName)/test" -Filter *.lua) {
+              Push-Location $resource.FullName
+              lua "test/$($test.Name)"
+              if ($LASTEXITCODE -ne 0) { $failed += "$($resource.Name)/$($test.Name)" }
+              Pop-Location
+            }
+          }
+          if ($failed) { throw "Falharam: $($failed -join ', ')" }
+
+      - name: Validate Contracts and Platform HAL
+        shell: pwsh
+        run: lua tools/check_contracts.lua --strict --audit-natives --audit-locales
+
+      - name: Run Smoke Boot Suite
+        shell: pwsh
+        run: lua tools/smoke_boot_test.lua
