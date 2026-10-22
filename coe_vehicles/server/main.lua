@@ -59,11 +59,11 @@ local function callerName()
 end
 
 local function isWriter()
-	return config.WriterResources[callerName()] == true
+	return CoeAccess.Allowed(callerName(), config.Ace.Write, config.WriterResources)
 end
 
 local function isMileageEditor()
-	return config.MileageEditors[callerName()] == true
+	return CoeAccess.Allowed(callerName(), config.Ace.Mileage, config.MileageEditors)
 end
 
 local function publicRecord(record)

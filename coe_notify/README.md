@@ -20,7 +20,7 @@ local sent, errorCode = exports.coe_notify:Notify(source, 'info', 'Personagem ca
 
 O servidor valida o chamador, o destinatário e os argumentos antes de enviar a mensagem somente ao client alvo. A rota client→server não aceita mensagens de notificação. O client também valida a origem dos eventos recebidos.
 
-`coe_core`, `coe_inventory`, `coe_admin` e `coe_characters` estão autorizados inicialmente. Para adicionar outro consumidor, atualize a allowlist em `server.lua` e declare a dependência no manifest.
+Os resources do framework que notificam estão autorizados por padrão (`server.lua`). Pacotes e scripts de terceiros recebem a ACE no `server.cfg`, sem editar o framework: `add_ace resource.<nome> coe.notify allow`.
 
 ## Integração com logs
 

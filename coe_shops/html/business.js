@@ -1,4 +1,4 @@
-// Aba Loja do app do negócio no tablet (coe_businesses carrega nui://coe_shops/html/business.js).
+// Aba Loja do app do negócio no tablet (registrada com coe_businesses:RegisterTab; o app carrega este arquivo).
 // Mostra prateleira, preços e vendas da loja; abastecer e retirar ficam no balcão (aba Gestão da vitrine).
 (function () {
 	'use strict';
@@ -64,7 +64,21 @@
 		return row;
 	}
 
-	function render(root, info, ctx) {
+	const ERRORS = {
+		not_a_store: 'Este negócio não é uma loja.', invalid_price: 'Preço fora da faixa permitida.',
+		staff_store: 'Loja da staff: estoque e preço automáticos.', unknown_product: 'Produto não encontrado.', store_closed: 'Loja fechada.'
+	};
+
+	function render(root, info, api) {
+		const ctx = {
+			act: function (op, payload) {
+				api.request(op, payload).then(function (result) {
+					if (!result.ok) { api.status(api.errorText(result.error), 'error'); return; }
+					api.status('Preço atualizado.', 'ok');
+					api.update(result);
+				});
+			}
+		};
 		const wrap = el('div', 'shb');
 		const card = el('div', 'coe-panel coe-panel--compact tb-card');
 		const head = el('div', 'tb-card-head');
@@ -90,7 +104,7 @@
 			info.report.sales.forEach(function (sale) {
 				const row = el('div', 'shb-sale');
 				const when = new Date(sale.at * 1000).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-				row.append(el('span', null, sale.units + (sale.units === 1 ? ' item' : ' itens') + ' · ' + (METHODS[sale.method] || sale.method)),
+				row.append(el('span', null, sale.units + (sale.units === 1 ? ' item' : ' itens') + ' · ' + (sale.methodLabel || METHODS[sale.method] || sale.method)),
 					el('strong', null, money(sale.total)), el('small', null, when));
 				wrap.appendChild(row);
 			});
@@ -98,5 +112,6 @@
 		root.appendChild(wrap);
 	}
 
-	window.CoeBusinessShop = { render: render };
+	window.CoeBusinessTabs = window.CoeBusinessTabs || {};
+	window.CoeBusinessTabs.shop = { errors: ERRORS, render: render };
 })();

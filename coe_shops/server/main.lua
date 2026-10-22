@@ -8,6 +8,7 @@ local shelves = {}       -- negócio -> produto -> { quantity, price }
 local lastCall = {}      -- playerId -> GetGameTimer()
 local playerBusy = {}
 local storeBusy = {}
+local payments = ShopsPayments.New()
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -143,16 +144,19 @@ local function storeView(playerId, character, store)
 		categories[#categories + 1] = { id = category.id, label = category.label }
 	end
 	local inventoryId = inventoryOf(playerId)
-	local cards = {}
-	if config.Payments.card then
-		local result = remote('coe_banking', 'PosCards', playerId)
-		cards = type(result) == 'table' and result.ok and result.cards or {}
+	local cash = inventoryId and countOf(inventoryId, 'money') or 0
+	local methods = {}
+	if config.Payments.cash ~= false then
+		methods[1] = { id = 'cash', label = 'Dinheiro', kind = 'instant', detail = ('Você tem %s em espécie'):format(money(cash)), available = true, options = {} }
+	end
+	for _, method in ipairs(payments:View(playerId, config.Payments, remote)) do
+		methods[#methods + 1] = method
 	end
 	return {
 		store = { id = store.id, label = store.label, type = store.type, typeLabel = kind.label },
 		mode = mode, owner = business.owner and business.owner.name or nil,
 		products = products, categories = categories,
-		payments = config.Payments, cash = inventoryId and countOf(inventoryId, 'money') or 0, cards = cards,
+		payments = methods, cash = cash,
 		limits = { lines = config.Cart.MaxLines, quantity = config.Cart.MaxQuantity, maxStock = config.MaxStock },
 		access = accessOf(playerId, character, store, business, mode)
 	}
@@ -168,19 +172,19 @@ local function refund(playerId, charge, total, description)
 		end
 		return
 	end
-	local result = remote('coe_banking', 'CardRefund', charge.cardId, total, description)
+	local method = payments:Get(charge.method)
+	local result = method and remote(method.resource, method.refund, playerId, charge.ref, total, description) or nil
 	if type(result) ~= 'table' or not result.ok then
 		log('error', 'economy', 'shops_refund_failed', { player_id = playerId, count = total, operation = charge.method })
 	end
 end
 
--- Cobra o total pelo meio escolhido. Devolve { method, cardId? } ou nil + erro (+ detalhe).
+-- Cobra o total pelo meio escolhido. Devolve { method, ref? } ou nil + erro (+ detalhe, ex.: tentativas de senha).
+-- payment: { method, option?, pin?, token? }. Meios registrados cobram pelo export `charge` do resource que os
+-- registrou: (playerId, { option, pin, token }, total, descrição) -> { ok, ref } ou { ok = false, error, left? }.
 local function charge(playerId, payment, total, description)
-	local method = type(payment) == 'table' and payment.method
-	if not config.Payments[method or ''] then
-		return nil, 'invalid_method'
-	end
-	if method == 'cash' then
+	local id = type(payment) == 'table' and payment.method or nil
+	if id == 'cash' and config.Payments.cash ~= false then
 		local inventoryId = inventoryOf(playerId)
 		if not inventoryId or countOf(inventoryId, 'money') < total then
 			return nil, 'insufficient_cash'
@@ -190,23 +194,48 @@ local function charge(playerId, payment, total, description)
 		end
 		return { method = 'cash' }
 	end
-	if method == 'wallet' then
-		local cardId = type(payment.token) == 'string' and remote('coe_phone', 'ConsumePayment', playerId, payment.token, total) or nil
-		if not cardId then
-			return nil, 'payment_expired'
-		end
-		local result = remote('coe_banking', 'CardPurchase', cardId, total, description)
-		if type(result) ~= 'table' or not result.ok then
-			return nil, type(result) == 'table' and result.error or 'payment_failed'
-		end
-		return { method = 'wallet', cardId = cardId }
+	local method = payments:Get(id, config.Payments)
+	if not method then
+		return nil, 'invalid_method'
 	end
-	local cardId = math.tointeger(tonumber(payment.cardId))
-	local result = cardId and remote('coe_banking', 'PosPurchase', playerId, cardId, payment.pin, total, description) or nil
+	local pin = type(payment.pin) == 'string' and payment.pin:sub(1, 8) or nil
+	local token = type(payment.token) == 'string' and payment.token:sub(1, 128) or nil
+	local option = (type(payment.option) == 'number' or type(payment.option) == 'string') and payment.option or nil
+	local result = remote(method.resource, method.charge, playerId, { option = option, pin = pin, token = token }, total, description)
 	if type(result) ~= 'table' or not result.ok then
-		return nil, type(result) == 'table' and result.error or 'payment_failed', type(result) == 'table' and result.left or nil
+		return nil, type(result) == 'table' and type(result.error) == 'string' and result.error or 'payment_failed',
+			type(result) == 'table' and math.tointeger(tonumber(result.left)) or nil
 	end
-	return { method = 'card', cardId = cardId }
+	return { method = method.id, ref = result.ref }
+end
+
+-- Registro de meio de pagamento por outro resource (ACE coe.shops.payments). def: { id, label, kind = 'instant' |
+-- 'pin' | 'device', charge, refund, options?, client?, order? }. Retorna true ou { error }. Some quando o resource para.
+exports('RegisterPaymentMethod', function(def)
+	local resource = GetInvokingResource()
+	if not CoeAccess.Allowed(resource, config.PaymentsAce) then
+		return { error = 'forbidden' }
+	end
+	local ok, errorCode = payments:Register(resource, def)
+	if not ok then
+		return { error = errorCode }
+	end
+	return true
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+	if resource ~= GetCurrentResourceName() then
+		payments:Drop(resource)
+	end
+end)
+
+-- Rótulo do meio em cada venda do relatório.
+local function labelSales(report)
+	local labels = payments:Labels()
+	for _, sale in ipairs(report.sales or {}) do
+		sale.methodLabel = labels[sale.method] or sale.method
+	end
+	return report
 end
 
 local function encodeLines(lines)
@@ -308,7 +337,7 @@ local function manage(playerId, character, store, op, args)
 			return { ok = false, error = 'database_error' }
 		end
 		report.balance = remote('coe_economy', 'SocietyBalance', store.id)
-		return { ok = true, report = report }
+		return { ok = true, report = labelSales(report) }
 	end
 	if mode ~= 'player' then
 		return { ok = false, error = 'staff_store' }
@@ -532,6 +561,34 @@ AddEventHandler('playerDropped', function()
 	lastCall[source], playerBusy[source], clientReports[source] = nil, nil, nil
 end)
 
+-- Permissões de cargo e aba Loja no app do negócio. De novo sempre que o coe_businesses reiniciar.
+local function registerInBusinesses()
+	remote('coe_businesses', 'RegisterPermissions', {
+		{ name = 'shops.prices', label = 'Loja: definir preços' },
+		{ name = 'shops.stock', label = 'Loja: retirar estoque da prateleira' }
+	})
+	local result = remote('coe_businesses', 'RegisterTab', {
+		id = 'shop', label = 'Loja', order = 20, script = 'html/business.js', css = 'html/business.css',
+		handler = 'BusinessTablet', visible = 'IsStore'
+	})
+	if result ~= true then
+		log('warn', 'system', 'shops_tab_register_failed', { error_code = type(result) == 'table' and tostring(result.error) or 'unavailable' })
+	end
+end
+
+AddEventHandler('onResourceStart', function(resource)
+	if resource ~= 'coe_businesses' or not ready then
+		return
+	end
+	CreateThread(function()
+		local deadline = GetGameTimer() + 60000
+		while remote('coe_businesses', 'IsReady') ~= true and GetGameTimer() < deadline do
+			Wait(500)
+		end
+		registerInBusinesses()
+	end)
+end)
+
 exports('IsReady', function()
 	return ready
 end)
@@ -575,7 +632,7 @@ local function tabletView(playerId, character, store)
 		local report = ShopsPersistence.Report(store.id, config.ReportSales, now - (now % 86400), now - 7 * 86400)
 		if report then
 			report.balance = remote('coe_economy', 'SocietyBalance', store.id)
-			result.report = report
+			result.report = labelSales(report)
 		end
 	end
 	return result
@@ -664,10 +721,7 @@ CreateThread(function()
 	while remote('coe_businesses', 'IsReady') ~= true and GetGameTimer() < deadline do
 		Wait(1000)
 	end
-	remote('coe_businesses', 'RegisterPermissions', {
-		{ name = 'shops.prices', label = 'Loja: definir preços' },
-		{ name = 'shops.stock', label = 'Loja: retirar estoque da prateleira' }
-	})
+	registerInBusinesses()
 	for _, store in ipairs(catalog.stores) do
 		local result = remote('coe_businesses', 'Seed', ShopsRules.BusinessSeed(catalog, store))
 		if type(result) == 'table' and result.error then

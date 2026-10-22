@@ -46,6 +46,7 @@ exports = function(name, callback)
 	registeredExports[name] = callback
 end
 
+dofile('../coe_core/lib/access.lua')
 dofile('server.lua')
 
 local function assertEqual(actual, expected, message)
@@ -89,6 +90,13 @@ invokingResource = 'unknown_resource'
 local unauthorized, unauthorizedError = log('error', 'runtime', 'forbidden')
 assertEqual(unauthorized, false, 'unlisted caller is rejected')
 assertEqual(unauthorizedError, 'caller_not_allowed', 'unauthorized caller has an explicit error')
+
+-- Resources fora da lista entram com a ACE coe.logging no principal do resource.
+CoeLoggingConfig.Ace = 'coe.logging'
+IsPrincipalAceAllowed = function(principal, ace) return principal == 'resource.pack_script' and ace == 'coe.logging' end
+invokingResource = 'pack_script'
+assertEqual((log('error', 'runtime', 'granted')), true, 'resource with the ACE can log')
+IsPrincipalAceAllowed = nil
 
 -- Formato legível: colunas fixas, contexto ordenado, cores opcionais e valores saneados.
 format, resourceMinimumLevel, minimumLevel = 'pretty', '', 'debug'

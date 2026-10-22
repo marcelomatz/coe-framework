@@ -2,6 +2,17 @@
 
 Registro em MariaDB dos negócios do servidor (mecânicas, lojinhas, postos, restaurantes, delegacias, hospitais, mídia e outros). Guarda categoria, área, pontos de operação (baús, mesas de craft, showroom) e regras por categoria. A edição é feita pela aba **Negócios** do `coe_admin`.
 
+## Acesso de outros resources
+
+Os exports restritos aceitam os padrões de `config.lua` (só resources do framework) e, para pacotes e scripts de terceiros, a ACE no principal do resource, concedida no `server.cfg` sem editar o framework:
+
+```cfg
+add_ace resource.meu_script coe.businesses.write allow
+add_ace resource.meu_script coe.businesses.permissions allow
+```
+
+Capacidades: `coe.businesses.write`, `.clock`, `.tablet`, `.permissions`, `.payroll`, `.admin` e `.extend` (abas e provedores; `coe.businesses` concede todas).
+
 ## Modelo
 
 ```lua
@@ -20,11 +31,12 @@ As categorias, os pontos aceitos por cada uma e o esquema de regras ficam em `co
 ## Exports (servidor)
 
 - Leitura: `IsReady()`, `Categories()`, `RuleSchema()`, `List(category?)`, `Get(id)`.
-- Escrita (só `WriterResources`: `coe_admin`, `coe_mechanic`, `coe_news` e outros pacotes que semeiam negócios): `Save(raw, by)`, `Seed(raw)` (cria só se não existir), `Delete(id, by)`.
+- Escrita (ACE `coe.businesses.write`; padrão: `coe_shops`, que semeia as lojinhas; painéis e pacotes que semeiam negócios recebem a ACE no `server.cfg`): `Save(raw, by)`, `Seed(raw)` (cria só se não existir), `Delete(id, by)`.
 - Acesso e equipe: `Access(businessId, characterId)`, `Partners(businessId)`, `Debtors(businessId)`.
 - Cargos: `Permissions()`, `RegisterPermissions(list)`, `Grades(businessId)`, `GradeOf(businessId, characterId)`, `Can(businessId, characterId, permission)`, `Salary(businessId, characterId)`, `Payroll(businessId)`.
-- Ponto: `Clock(source, businessId, stationId)`, `ClockIn(...)`, `ClockOut(...)`, `IsOnDuty(businessId, characterId)`, `CurrentDuty(source)`, `DutySummary()` (só `coe_admin`).
-- Tablet: `TabletInstances(playerId)`, `TabletCall(playerId, appId, action, payload, instance)` (só `TabletResources`).
+- Ponto: `Clock(source, businessId, stationId)`, `ClockIn(...)`, `ClockOut(...)`, `IsOnDuty(businessId, characterId)`, `CurrentDuty(source)`, `DutySummary()` (só `coe.businesses.admin`).
+- Tablet: `TabletInstances(playerId)`, `TabletCall(playerId, appId, action, payload, instance)` (só `coe.businesses.tablet`).
+- Extensões (ACE `coe.businesses.extend`): `RegisterTab(def)` e `RegisterProvider(kind, def)`; ver o fim deste arquivo.
 
 > **Retorno entre resources:** `Save`, `Seed`, `Delete`, `ClockIn`, `ClockOut`, `Clock` e `TabletCall` retornam um único valor: o resultado ou `{ error = codigo }` (como em `coe_crafting`, `coe_garages` e `coe_factions`).
 
@@ -51,30 +63,63 @@ Cada acesso é por negócio: dono (`ownerAccess`) ou funcionário cadastrado **n
 - `staff`: lista `{characterId, name}` por negócio (máx. `Limits.MaxStaff`), editada na aba **Equipe** do `coe_admin`. Dois negócios nunca compartilham equipe, mesmo com o mesmo emprego. Migração: quem era equipe por emprego deve ser recadastrado na equipe.
 - Export `Access(businessId, characterId)` → `{ owner, staff, partner, canClock, canWork }`; é a única fonte de decisão usada por `coe_mechanic` e `coe_crafting`.
 - Sócios (`partners`): respondem pelas dívidas do negócio junto com o dono (empréstimos empresariais do `coe_banking`). Ser sócio não dá acesso de trabalho nem conta como emprego. Entram só por convite do dono no tablet, com aceite; o dono remove. Exports `Partners(businessId)` e `Debtors(businessId)` (dono primeiro, depois os sócios; vazio sem dono). O `coe_admin` preserva a lista ao salvar e a limpa quando o dono muda.
-- Export `Clock(source, businessId, stationId)` (restrito a `ClockResources`), comando `/ponto` e prompt (E) nos pontos de ponto dos negócios que não são oficina. Nesses negócios, os baús (`stashes`) também têm prompt (E, "Abrir baú"): só dono e equipe, perto do ponto, abertos pelo `OpenStash` do `coe_inventory` com id `stash:business:<negócio>:<baú>`; a bancada do `coe_crafting` usa o baú mais próximo como fonte de ingredientes. Quem sai da equipe tem o ponto encerrado (`not_staff`).
+- Export `Clock(source, businessId, stationId)` (restrito a `coe.businesses.clock`), comando `/ponto` e prompt (E) nos pontos de ponto dos negócios que não são oficina. Nesses negócios, os baús (`stashes`) também têm prompt (E, "Abrir baú"): só dono e equipe, perto do ponto, abertos pelo `OpenStash` do `coe_inventory` com id `stash:business:<negócio>:<baú>`; a bancada do `coe_crafting` usa o baú mais próximo como fonte de ingredientes. Quem sai da equipe tem o ponto encerrado (`not_staff`).
 
 ## Cargos, salários e permissões
 
-Empregos, cargos e salários vivem **dentro do negócio** (não há `coe_jobs`). Cada negócio tem `grades` (até `Limits.MaxGrades`): `{ id, label, level 0..99, salary, permissions[] }`; ids e níveis são únicos e o menor nível é o cargo de entrada. Cada membro da equipe tem `grade`; sem cargo informado recebe o de entrada, e um cargo inexistente é recusado (`invalid_staff_grade`). Dados inválidos retornam `invalid_grades`. Editado na aba **Cargos** e na aba **Equipe** do `coe_admin`. Nada é compartilhado entre negócios, nem os cargos.
+Empregos, cargos e salários vivem **dentro do negócio** (o `coe_jobs` cuida só dos empregos autônomos). Cada negócio tem `grades` (até `Limits.MaxGrades`): `{ id, label, level 0..99, salary, permissions[] }`; ids e níveis são únicos e o menor nível é o cargo de entrada. Cada membro da equipe tem `grade`; sem cargo informado recebe o de entrada, e um cargo inexistente é recusado (`invalid_staff_grade`). Dados inválidos retornam `invalid_grades`. Editado na aba **Cargos** e na aba **Equipe** do `coe_admin`. Nada é compartilhado entre negócios, nem os cargos.
 
-Permissões usam o formato `prefixo.acao`. O catálogo base é `business.funds`, `business.staff`, `business.fleet` e `business.remote` (gerenciar a distância pelo tablet); pacotes em `PermissionResources` (`coe_police`, `coe_ems`, `coe_mechanic`, `coe_economy`, `coe_mdt`, `coe_news`, `coe_banking`) registram as suas com `RegisterPermissions({ { name = 'police.arrest', label = 'Prender' } })` (o prefixo é o nome do resource sem `coe_`).
+Permissões usam o formato `prefixo.acao`. O catálogo base é `business.funds`, `business.staff`, `business.fleet` e `business.remote` (gerenciar a distância pelo tablet); resources com `coe.businesses.permissions` (padrão: `coe_economy` e `coe_shops`; pacotes recebem a ACE) registram as suas com `RegisterPermissions({ { name = 'police.arrest', label = 'Prender' } })` (o prefixo é o nome do resource sem `coe_`).
 
 - Leitura: `Permissions()`, `Grades(businessId)`, `GradeOf(businessId, characterId)`, `Can(businessId, characterId, permission)` (o dono tem tudo se tiver `ownerAccess`; a equipe só pelo cargo e em serviço quando `clockRequired`).
-- Folha (só `PayrollResources`: `coe_economy`, `coe_admin`, `coe_banking`): `Salary(businessId, characterId)` e `Payroll(businessId)`.
+- Folha (`coe.businesses.payroll`; padrão: `coe_economy`): `Salary(businessId, characterId)` e `Payroll(businessId)`.
 - Eventos de servidor: `coe_businesses:staffChanged` (id, characterId, change `added|removed|grade`, grade) e `coe_businesses:gradesChanged` (id).
 - Categorias `police` (Delegacias) e `ems` (Hospitais), consumidas por `coe_police` e `coe_ems`. Testes: `lua test/grades_test.lua`.
 
 ## Tablet de negócios
 
-App `business` do `coe_tablet` (`html/tablet_app.js`, lógica em `server/tablet.lua`, export `TabletCall` restrito a `TabletResources`). No COE OS cada negócio de que o personagem é dono ou funcionário vira um app (export `TabletInstances`). O negócio é a instância do app, revalidada a cada ação: o **dono** e os cargos com a permissão `business.remote` (gerentes) gerenciam a distância, cada um com as permissões do próprio cargo; o restante da equipe precisa estar **de ponto** naquele negócio (salvo negócio sem ponto obrigatório). Quem não é dono nem funcionário recebe `forbidden`.
+App `business` do `coe_tablet` (`html/tablet_app.js`, lógica em `server/tablet.lua`, export `TabletCall` restrito a `coe.businesses.tablet`). No COE OS cada negócio de que o personagem é dono ou funcionário vira um app (export `TabletInstances`). O negócio é a instância do app, revalidada a cada ação: o **dono** e os cargos com a permissão `business.remote` (gerentes) gerenciam a distância, cada um com as permissões do próprio cargo; o restante da equipe precisa estar **de ponto** naquele negócio (salvo negócio sem ponto obrigatório). Quem não é dono nem funcionário recebe `forbidden`.
 
 - Resumo: cargo, proprietário, equipe, caixa (só com `business.funds`) e regras.
-- Loja: só para negócios que são lojas do `coe_shops` (`IsStore`); a ação `shop` encaminha ao export `BusinessTablet` das lojas (prateleira, preços e vendas; preço com `shops.prices`). A tela é carregada de `nui://coe_shops/html/business.js`.
-- Banco: conta empresarial do `coe_banking` (resumo, extrato com quem fez cada operação, transferências, cartões, folha, bônus e empréstimos), com as permissões de cargo `banking.*`; a ação `bank` encaminha a operação ao export `BusinessTablet` do banco com o negócio do app. Sem o `coe_banking`, volta a aba Financeiro (`business.funds`: saldo da sociedade, folha, lançamentos, depósito e saque via `coe_economy`).
+- Abas de outros resources: registradas com `RegisterTab` (ver abaixo), entram depois do Resumo. A ação `tab` encaminha ao export `handler` do resource com o negócio do app e quem chamou; o resource confere o acesso de cada operação. Uma aba pode substituir uma das daqui (`replaces`, ex.: a conta empresarial no lugar do Financeiro); se ela ficar indisponível, a substituída volta.
+- Financeiro (`business.funds`): saldo da sociedade, folha, lançamentos, depósito e saque via `coe_economy`.
 - Equipe: lista (salários só com `business.staff` ou `business.funds`); contratar por ID de cidadão online, trocar cargo e demitir exigem `business.staff`. Quem não é dono só mexe em cargos abaixo do próprio. A contratação é uma proposta: o cidadão recebe a confirmação na tela e tem `OfferSeconds` (60 s) para aceitar; uma proposta pendente por pessoa. No aceite tudo é revalidado e gravado por `Save`, que aplica `multiJob`.
 - Sócios: lista para toda a equipe de ponto; só o dono convida (ID de cidadão online, mesma proposta com aceite e prazo da contratação, avisando que sócios respondem pelas dívidas do negócio) e remove. Dívidas já contratadas continuam com quem era sócio na contratação.
 - Acessos (`business.staff`): matriz de cargos e permissões, somente leitura.
 - Estrutura: área e pontos (ponto, baús, bancadas, showroom) com botão de GPS. Toda a equipe de ponto vê.
-- Frota: veículos das garagens `business` do negócio (`coe_garages`), estado e quem usa. Liberar/bloquear para a equipe exige `business.fleet`.
-- Propriedades: imóveis comerciais do negócio (`coe_housing:BusinessProperties`, alugados ou cedidos pelo admin) e garagens de frota.
+- Frota: veículos das garagens do negócio, do provedor `fleet` registrado (`RegisterProvider`), estado e quem usa. Liberar/bloquear para a equipe exige `business.fleet`. Sem provedor, `garages_unavailable`.
+- Propriedades: imóveis comerciais do provedor `properties` (alugados ou cedidos pelo admin) e garagens do provedor `fleet`.
 - Próximas fases: apps de Polícia e EMS no COE OS (#229), níveis de negócio (#172) e maquininha de cartão (#262). Testes: `lua test/tablet_test.lua`.
+
+## Extensões do app (abas e provedores)
+
+Resources com a ACE `coe.businesses.extend` (padrão: `coe_shops`) integram o app sem editar o framework. O registro
+some quando o resource para; registre de novo no `onResourceStart` do `coe_businesses`.
+
+```lua
+exports.coe_businesses:RegisterTab({
+	id = 'fuel', label = 'Posto', order = 10,                    -- abaixo de 50 fica antes das abas do pacote padrão
+	script = 'html/business.js', css = 'html/business.css',      -- caminhos dentro do próprio resource
+	handler = 'BusinessTablet',  -- (playerId, characterId, businessId, payload) -> resposta da aba
+	visible = 'IsStation',       -- opcional: (businessId) -> boolean
+	replaces = nil               -- opcional: id de uma aba daqui (ex.: 'finance')
+})
+exports.coe_businesses:RegisterProvider('fleet', { list = 'BusinessFleet', setStaff = 'SetFleetStaffAccess' })
+exports.coe_businesses:RegisterProvider('properties', { list = 'BusinessProperties' })
+```
+
+O script da aba se registra no navegador do tablet:
+
+```js
+window.CoeBusinessTabs = window.CoeBusinessTabs || {};
+window.CoeBusinessTabs.fuel = {
+	errors: { not_a_station: 'Este negócio não é um posto.' }, // opcional: textos dos códigos de erro
+	unavailable: [],             // opcional: códigos que escondem a aba (a substituída volta)
+	state: (result) => result,   // opcional: o que guardar da resposta do `overview`
+	render(root, state, api) {}  // api: request(op, payload) -> Promise, update(state), render(), status(texto, tipo),
+	                             // errorText(código), gps(x, y, texto?), channel = 'tablet'
+};
+```
+
+Erros dos registros: `forbidden`, `invalid_tab`, `tab_taken`, `too_many_tabs`, `invalid_provider`.
+

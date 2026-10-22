@@ -63,6 +63,9 @@ exports = setmetatable({}, {
 })
 
 local db, profiles, savedSessions = {}, {}, {}
+-- O tablet chama a Carreira com a ACE coe.jobs.tablet no principal do resource.
+IsPrincipalAceAllowed = function(principal, ace) return principal == 'resource.coe_tablet' and ace == 'coe.jobs.tablet' end
+dofile('../coe_core/lib/access.lua')
 dofile('locales/pt-br.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')

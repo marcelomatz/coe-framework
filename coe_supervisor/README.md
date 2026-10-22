@@ -13,16 +13,23 @@ Não declara `dependencies`: precisa continuar de pé quando qualquer resource g
 
 O plano é puro (`plan.lua`) e testado em `test/plan_test.lua`. Dependências circulares são recusadas (`dependency_cycle`).
 
-## Exports (somente `SupervisorConfig.Caller` = `coe_admin`)
+## Exports (só resources com a ACE `coe.supervisor`)
 
 - `List()`: resources gerenciados com `state`, `description`/`version` (do fxmanifest), `dependencies`, `dependents` e `restart` (ordem que será seguida).
 - `Restart(name, requesterSource)`: `true` ou código de erro (`forbidden`, `restart_in_progress`, `resource_not_managed`, `dependency_cycle`). Um reinício por vez.
 
-A autorização do operador é do `coe_admin` (ACE `coe_admin.resources.manage`). O resultado final é notificado ao solicitante via `coe_notify`.
+A autorização do operador é de quem chama (ex.: o painel concede com `coe_admin.resources.manage`). Conceda ao painel no `server.cfg`: `add_ace resource.coe_admin coe.supervisor allow`. O resultado final é notificado ao solicitante via `coe_notify`.
 
 ## Configuração
 
-`config.lua`: `Managed` (lista permitida), `Catalog` (categoria e criticidade de cada um; fora dele vira `other`), `StopTimeoutMs`, `StartTimeoutMs`.
+`config.lua`: `Managed` (resources do framework), `Catalog` (categoria e criticidade de cada um; fora dele vira `other`), `StopTimeoutMs`, `StartTimeoutMs`.
+
+Pacotes e scripts de terceiros entram sem editar o framework, declarando no próprio `fxmanifest.lua`:
+
+```lua
+coe_supervisor 'business'          -- categoria (infrastructure, core, interface, gameplay, business, administration...)
+coe_supervisor_critical 'yes'      -- opcional: reiniciar pode derrubar o servidor
+```
 
 Dependentes fora de `Managed` (ex.: scripts de terceiros que dependem do core) também são reiniciados, para não ficarem quebrados.
 

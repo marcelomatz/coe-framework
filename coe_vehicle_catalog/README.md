@@ -25,7 +25,7 @@ Sai com código 1 se houver erros.
 
 ## Exports (servidor)
 
-`GetVehicleInfo(model)`, `ListVehicles(filtro)`, `GetBaseHandling(model)`, `GetIssues()`, `IsReady()` (qualquer resource); `SetOverride(model, campos)`, `ClearOverride(model)`, `Rescan()` (somente `WriterResources`). Contrato completo em `types.lua`.
+`GetVehicleInfo(model)`, `ListVehicles(filtro)`, `GetBaseHandling(model)`, `GetIssues()`, `IsReady()` (qualquer resource); `SetOverride(model, campos)`, `ClearOverride(model)`, `Rescan()` (somente quem tem a ACE `coe.vehicles.catalog`, ex.: `add_ace resource.coe_admin coe.vehicles.catalog allow`). Contrato completo em `types.lua`.
 
 ## Comandos (ACE)
 

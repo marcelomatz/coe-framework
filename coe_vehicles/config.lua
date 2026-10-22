@@ -1,17 +1,12 @@
 CoeVehiclesConfig = {
 	Locale = 'pt-BR',
-	-- Resources que podem criar veículos e alterar estado (nome vem do runtime).
-	WriterResources = {
-		coe_admin = true,
-		coe_garages = true,
-		coe_vehicles = true
-	},
-	-- Somente estes resources podem corrigir a quilometragem (mecânica, admin). Auditado.
-	MileageEditors = {
-		coe_admin = true,
-		coe_mechanic = true,
-		coe_vehicles = true
-	},
+	-- Quem cria veículos e altera estado, e quem corrige a quilometragem (auditado). O nome vem do runtime. Padrão: o
+	-- próprio resource; pacotes (garagens, oficina, painel) e scripts de terceiros recebem a ACE no server.cfg:
+	--   add_ace resource.<nome> coe.vehicles.write allow
+	--   add_ace resource.<nome> coe.vehicles.mileage allow
+	Ace = { Write = 'coe.vehicles.write', Mileage = 'coe.vehicles.mileage' },
+	WriterResources = { coe_vehicles = true },
+	MileageEditors = { coe_vehicles = true },
 	-- Chaves emprestadas por veículo (a do dono é implícita). Raio máximo para emprestar em jogo.
 	MaxLoanedKeysPerVehicle = 5,
 	LendDistanceMeters = 10.0,

@@ -26,7 +26,29 @@ local function readGraph()
 end
 
 local function callerAllowed()
-	return GetInvokingResource() == SupervisorConfig.Caller
+	return CoeAccess.Allowed(GetInvokingResource(), SupervisorConfig.Ace)
+end
+
+-- Gerenciados: os do framework (config) e os que declaram a categoria no fxmanifest (coe_supervisor 'business').
+local function managed()
+	local list, catalog, seen = {}, {}, {}
+	for _, name in ipairs(SupervisorConfig.Managed) do
+		list[#list + 1] = name
+		seen[name] = true
+	end
+	for name, meta in pairs(SupervisorConfig.Catalog) do
+		catalog[name] = meta
+	end
+	for index = 0, GetNumResources() - 1 do
+		local name = GetResourceByFindIndex(index)
+		local category = name and not seen[name] and GetResourceMetadata(name, 'coe_supervisor', 0)
+		if type(category) == 'string' and category:match('^[%w_]+$') then
+			seen[name] = true
+			list[#list + 1] = name
+			catalog[name] = { category = category, critical = GetResourceMetadata(name, 'coe_supervisor_critical', 0) == 'yes' }
+		end
+	end
+	return list, catalog
 end
 
 exports('List', function()
@@ -35,10 +57,11 @@ exports('List', function()
 	end
 
 	local graph = readGraph()
+	local names, catalog = managed()
 	local list = {}
-	for _, name in ipairs(SupervisorConfig.Managed) do
+	for _, name in ipairs(names) do
 		if graph[name] then
-			local plan = SupervisorPlan.Build(name, graph, SupervisorConfig.Managed)
+			local plan = SupervisorPlan.Build(name, graph, names)
 			local dependencies = {}
 			for _, dependency in ipairs(graph[name].dependencies) do
 				if graph[dependency] then
@@ -55,7 +78,7 @@ exports('List', function()
 			end
 			table.sort(dependents)
 			local restart = plan and plan.start or { name }
-			local category, critical = SupervisorPlan.Meta(name, SupervisorConfig.Catalog, #restart, SupervisorConfig.CriticalRestartSize)
+			local category, critical = SupervisorPlan.Meta(name, catalog, #restart, SupervisorConfig.CriticalRestartSize)
 			list[#list + 1] = {
 				name = name,
 				category = category,
@@ -129,7 +152,7 @@ exports('Restart', function(name, requester)
 		return 'restart_in_progress'
 	end
 
-	local plan, planError = SupervisorPlan.Build(name, readGraph(), SupervisorConfig.Managed)
+	local plan, planError = SupervisorPlan.Build(name, readGraph(), (managed()))
 	if not plan then
 		return planError
 	end

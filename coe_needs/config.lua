@@ -52,8 +52,10 @@ N.Empty = 0
 N.StressHigh = 60
 N.StressMax = 85
 
--- Resources autorizados a chamar AddNeed/SetNeed (roubos, itens, admin...).
-N.AllowedResources = { coe_needs = true, coe_inventory = true, coe_admin = true }
+-- Quem chama AddNeed/SetNeed (roubos, itens, admin...). Padrões do framework; pacotes e scripts de terceiros recebem a
+-- ACE no server.cfg: add_ace resource.<nome> coe.needs allow
+N.Ace = 'coe.needs'
+N.AllowedResources = { coe_needs = true, coe_inventory = true }
 
 N.TickMs = 5000
 N.MaxAdvanceSeconds = 30

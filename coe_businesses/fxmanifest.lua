@@ -23,6 +23,7 @@ shared_scripts {
 }
 
 server_scripts {
+	'@coe_core/lib/access.lua',
 	'@coe_core/lib/migrations.lua',
 	'server/migrations.lua',
 	'server/persistence.lua',
@@ -30,6 +31,7 @@ server_scripts {
 	'server/registry.lua',
 	'server/access.lua',
 	'server/duty.lua',
+	'server/extensions.lua',
 	'server/tablet.lua',
 	'server/main.lua'
 }

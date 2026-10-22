@@ -9,6 +9,7 @@ local clerkInteriors = {}
 local pending = {}
 local nextRequest = 0
 local uiStore = nil
+local uiPayments = {}  -- meios de pagamento da vitrine aberta (id -> { kind, resource, client })
 
 local function request(action, payload)
 	nextRequest = nextRequest + 1
@@ -90,6 +91,13 @@ local function paintBlips()
 	end
 end
 
+local function rememberPayments(view)
+	uiPayments = {}
+	for _, method in ipairs(type(view) == 'table' and type(view.payments) == 'table' and view.payments or {}) do
+		uiPayments[method.id] = method
+	end
+end
+
 local function openStore(store)
 	if uiStore then
 		return
@@ -100,6 +108,7 @@ local function openStore(store)
 		return
 	end
 	uiStore = store
+	rememberPayments(result.view)
 	SendNUIMessage({ action = 'open', view = result.view })
 	SetNuiFocus(true, true)
 end
@@ -294,16 +303,18 @@ RegisterNUICallback('close', function(_, cb)
 	cb({ ok = true })
 end)
 
--- Compra. Carteira: pede o total ao servidor, esconde a loja e abre o pagamento no celular; o token vai junto da compra.
+-- Compra. Meio `device` (ex.: carteira do celular): pede o total ao servidor, esconde a loja e chama o export `client`
+-- do resource que registrou o meio ({ amount, label, note } -> { token } ou { error }); o token vai junto da compra.
 RegisterNUICallback('buy', function(data, cb)
 	if not uiStore or type(data) ~= 'table' then
 		return cb({ ok = false, error = 'closed' })
 	end
 	local storeId = uiStore.id
-	local payment = { method = data.method, cardId = data.cardId, pin = data.pin }
-	if data.method == 'wallet' then
-		if GetResourceState('coe_phone') ~= 'started' then
-			return cb({ ok = false, error = 'phone_unavailable' })
+	local payment = { method = data.method, option = data.option, pin = data.pin }
+	local method = type(data.method) == 'string' and uiPayments[data.method] or nil
+	if method and method.kind == 'device' then
+		if type(method.resource) ~= 'string' or GetResourceState(method.resource) ~= 'started' then
+			return cb({ ok = false, error = 'device_unavailable' })
 		end
 		local quote = request('quote', { storeId = storeId, cart = data.cart })
 		if not quote.ok then
@@ -312,7 +323,8 @@ RegisterNUICallback('buy', function(data, cb)
 		SetNuiFocus(false, false)
 		SendNUIMessage({ action = 'suspend', value = true })
 		local ok, paid = pcall(function()
-			return exports.coe_phone:RequestPayment({ amount = quote.total, label = quote.label, note = ('%d %s'):format(quote.units, quote.units == 1 and 'item' or 'itens') })
+			local target = exports[method.resource]
+			return target[method.client](target, { amount = quote.total, label = quote.label, note = ('%d %s'):format(quote.units, quote.units == 1 and 'item' or 'itens') })
 		end)
 		if uiStore then
 			SendNUIMessage({ action = 'suspend', value = false })
@@ -321,9 +333,13 @@ RegisterNUICallback('buy', function(data, cb)
 		if not ok or type(paid) ~= 'table' or not paid.token then
 			return cb({ ok = false, error = (ok and type(paid) == 'table' and paid.error) or 'cancelled' })
 		end
-		payment = { method = 'wallet', token = paid.token }
+		payment = { method = method.id, token = paid.token }
 	end
-	cb(request('buy', { storeId = storeId, cart = data.cart, payment = payment }))
+	local result = request('buy', { storeId = storeId, cart = data.cart, payment = payment })
+	if result.view then
+		rememberPayments(result.view)
+	end
+	cb(result)
 end)
 
 RegisterNUICallback('manage', function(data, cb)

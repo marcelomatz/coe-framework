@@ -109,6 +109,16 @@ Ensure `coe_supervisor` is launched prior to other modules:
 ```cfg
 ensure coe_supervisor
 ensure [coe-framework]
+
+# Staff: manage groups without a panel (/grupo definir <ID> <group> [grade])
+add_ace group.admin command.grupo allow
+```
+
+Third-party scripts integrate without editing the framework: each one gets only the capabilities it uses, as an ACE on its resource principal (full list in the coe-docs `ARCHITECTURE.md`):
+
+```cfg
+add_ace resource.my_script coe.database allow
+add_ace resource.my_script coe.economy.money allow
 ```
 
 ### 3. Validate Contracts

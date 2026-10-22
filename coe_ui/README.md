@@ -38,7 +38,7 @@ Para uma NUI acompanhar o tema:
 
 Novo tema: adicione o bloco em `tokens.css` e a entrada em `config.lua`.
 
-Exports (server): `GetTheme()`, `GetThemes()`, `SetTheme(nome)` (só aceita chamada do `coe_admin`).
+Exports (server): `GetTheme()`, `GetThemes()`, `SetTheme(nome)` (só resources com a ACE `coe.ui.theme`, ex.: `add_ace resource.coe_admin coe.ui.theme allow`).
 
 ## Guia de estilos
 

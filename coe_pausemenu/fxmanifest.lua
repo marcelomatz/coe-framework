@@ -30,5 +30,6 @@ client_scripts {
 }
 
 server_scripts {
+	'@coe_core/lib/access.lua',
 	'server/main.lua'
 }

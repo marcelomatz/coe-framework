@@ -18,6 +18,7 @@ shared_scripts {
 }
 
 server_scripts {
+	'@coe_core/lib/access.lua',
 	'@coe_core/lib/migrations.lua',
 	'data/native_vehicles.lua',
 	'server/migrations.lua',

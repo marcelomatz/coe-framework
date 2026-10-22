@@ -33,3 +33,10 @@ function exports_coe_shops:IsStore(businessId) end
 ---@param payload table
 ---@return table result
 function exports_coe_shops:BusinessTablet(playerId, characterId, businessId, payload) end
+
+---Registra um meio de pagamento do resource chamador (ACE coe.shops.payments). O registro some quando ele para.
+---def: { id, label, kind = 'instant'|'pin'|'device', charge, refund, options?, client? (device), order? }, nomes de
+---exports do próprio resource. Erros: `forbidden`, `invalid_method`, `method_taken`, `too_many_methods`.
+---@param def table
+---@return boolean|table result true ou { error }
+function exports_coe_shops:RegisterPaymentMethod(def) end

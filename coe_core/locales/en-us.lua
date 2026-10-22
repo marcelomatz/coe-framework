@@ -22,5 +22,12 @@ Locales['en-US'] = {
 	group_director = 'Director',
 	character_created = 'Character created.',
 	character_loaded = 'Character loaded.',
-	character_archived = 'Character archived.'
+	character_archived = 'Character archived.',
+	group_command_usage = 'Usage: grupo definir <ID> <group> [grade] | grupo remover <ID> <group> | grupo ver <ID> | grupo lista',
+	group_command_target = 'Character %{id} is not online (%{error}).',
+	group_command_set = 'Group updated for %{id}.',
+	group_command_removed = 'Group removed from %{id}.',
+	group_command_failed = 'Could not change the group (%{error}).',
+	group_command_show = 'Groups of %{id}: %{groups}',
+	group_command_list = 'Groups: %{groups}'
 }

@@ -8,6 +8,7 @@ UiConfig = {
 		{ name = 'rose', label = 'Rosa', swatch = '#d98aa5', base = '#21161b' },
 		{ name = 'violet', label = 'Violeta', swatch = '#b6a3f0', base = '#1b1625' }
 	},
-	-- Único resource autorizado a trocar o tema (a autorização do operador é do painel).
-	Caller = 'coe_admin'
+	-- Quem troca o tema padrão (a autorização do operador é de quem chama): ACE no server.cfg, ex.:
+	--   add_ace resource.coe_admin coe.ui.theme allow
+	Ace = 'coe.ui.theme'
 }

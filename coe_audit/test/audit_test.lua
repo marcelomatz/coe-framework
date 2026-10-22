@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/access.lua')
 dofile('../coe_audit/config.lua')
 dofile('../coe_audit/server/migrations.lua')
 dofile('../coe_audit/server/entry.lua')
@@ -13,7 +14,7 @@ local config = CoeAuditConfig
 local encode = function() return '{}' end
 local function build(overrides)
 	local options = {
-		resource = 'coe_admin',
+		resource = 'coe_core',
 		severity = 'info',
 		category = 'audit',
 		event = 'admin_item_granted',
@@ -39,7 +40,23 @@ assertEqual(entry.occurred_at, '1970-01-01 00:00:00', 'timestamp UTC')
 assertEqual(entry.actor_license, 'license:aaa', 'licença do ator resolvida')
 assertEqual(entry.target_license, '', 'alvo offline fica vazio')
 assertEqual(entry.context_json, '{"ok":true}', 'contexto codificado')
-assertEqual(entry.resource, 'coe_admin', 'resource vem do chamador')
+assertEqual(entry.resource, 'coe_core', 'resource vem do chamador')
+
+-- Pacotes e scripts de terceiros entram por ACE (resource.<nome> coe.audit), não pela lista do framework.
+assertEqual(config.AllowedResources.coe_admin, nil, 'padrão só lista resources do framework')
+local aceGranted = { ['resource.coe_admin|coe.audit'] = true }
+IsPrincipalAceAllowed = function(principal, ace) return aceGranted[principal .. '|' .. ace] == true end
+local function viaAce(resource)
+	return AuditEntry.Build({
+		resource = resource, severity = 'info', category = 'audit', event = 'x', timestamp = 0,
+		isAllowed = function(name) return CoeAccess.Allowed(name, config.Ace, config.AllowedResources) end,
+		allowedFields = config.AllowedContextFields, resolveLicense = function() return nil end, encode = encode
+	})
+end
+assertEqual(viaAce('coe_admin') ~= nil, true, 'resource com ACE registra')
+local refused, refusedError = viaAce('random_script')
+assertEqual(refused, nil, 'resource sem ACE recusado')
+assertEqual(refusedError, 'caller_not_allowed', 'erro de chamador')
 
 -- rejeições
 local _, err = build({ resource = 'outro' })

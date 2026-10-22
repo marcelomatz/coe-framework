@@ -1,34 +1,15 @@
 CoeAuditConfig = {
-	-- Somente estes resources podem registrar eventos; o nome vem do runtime, não do payload.
+	-- Quem registra eventos; o nome vem do runtime, não do payload. Padrões do framework abaixo; pacotes e scripts de
+	-- terceiros recebem a ACE no server.cfg: add_ace resource.<nome> coe.audit allow
+	Ace = 'coe.audit',
 	AllowedResources = {
 		coe_core = true,
 		coe_inventory = true,
-		coe_admin = true,
 		coe_vehicles = true,
 		coe_vehicle_catalog = true,
-		coe_handling = true,
-		coe_mechanic = true,
-		coe_garages = true,
 		coe_economy = true,
-		coe_housing = true,
-		coe_doors = true,
-		coe_banking = true,
-		coe_crafting = true,
-		coe_police = true,
-		coe_ems = true,
-		coe_dispatch = true,
-		coe_factions = true,
 		coe_businesses = true,
-		coe_mdt = true,
-		coe_apps = true,
-		coe_amzg = true,
-		coe_mail = true,
-		coe_news = true,
-		coe_crypto = true,
-		coe_deepweb = true,
-		coe_loot = true,
-		coe_shops = true,
-		coe_fuel = true
+		coe_shops = true
 	},
 	AllowedContextFields = {
 		action = true,

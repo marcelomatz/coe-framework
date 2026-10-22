@@ -50,16 +50,26 @@ local function money(value)
 	return config.Currency .. ' ' .. formatted
 end
 
--- Só resources autorizados movimentam dinheiro; o nome vem do runtime.
+-- Só resources autorizados movimentam dinheiro; o nome vem do runtime. Padrões em config, os demais por ACE
+-- (add_ace resource.<nome> coe.economy.money allow). Ver EconomyConfig.Ace.
 local function caller()
 	local resource = GetInvokingResource()
 	if resource == nil then
 		return 'coe_economy'
 	end
-	if config.AllowedResources[resource] then
+	if CoeAccess.Allowed(resource, config.Ace.Money, config.AllowedResources) then
 		return resource
 	end
 	return nil
+end
+
+-- Painel de staff (ex.: coe_admin): ACE coe.economy.admin.
+local function isAdmin(resource)
+	return CoeAccess.Allowed(resource, config.Ace.Admin)
+end
+
+local function isBanker(resource)
+	return CoeAccess.Allowed(resource, config.Ace.Bank, config.SocietyBankers)
 end
 
 local function prepare(characterId, amount, reason, reference)
@@ -111,7 +121,7 @@ end)
 exports('Summary', function()
 	local source = caller()
 	local blocked = guard(source)
-	if blocked or source ~= 'coe_admin' then
+	if blocked or not isAdmin(source) then
 		return { error = blocked or 'forbidden' }
 	end
 	local summary, summaryError = EconomyPersistence.Summary()
@@ -395,7 +405,7 @@ exports('SocietyCredit', function(businessId, amount, reason)
 	if not gate then
 		return { error = gateError }
 	end
-	if gate.source ~= 'coe_admin' then
+	if not isAdmin(gate.source) then
 		return { error = 'forbidden' }
 	end
 	local value, amountError = EconomyRules.Amount(amount, config)
@@ -430,7 +440,7 @@ exports('SocietyCollect', function(businessId, amount, reason)
 	if not gate then
 		return { error = gateError }
 	end
-	if config.SocietyCollectors[gate.source] ~= true then
+	if not CoeAccess.Allowed(gate.source, config.Ace.Collect, config.SocietyCollectors) then
 		return { error = 'forbidden' }
 	end
 	local value, amountError = EconomyRules.Amount(amount, config)
@@ -465,7 +475,7 @@ exports('SocietyCharge', function(businessId, amount, reason, reference)
 	if not gate then
 		return { error = gateError }
 	end
-	if config.SocietyPayers[gate.source] ~= true then
+	if not CoeAccess.Allowed(gate.source, config.Ace.Pay, config.SocietyPayers) then
 		return { error = 'forbidden' }
 	end
 	local value, amountError = EconomyRules.Amount(amount, config)
@@ -506,7 +516,7 @@ local function bankerGate(businessId, amount, reason, reference)
 	if not gate then
 		return nil, gateError
 	end
-	if config.SocietyBankers[gate.source] ~= true then
+	if not isBanker(gate.source) then
 		return nil, 'forbidden'
 	end
 	local value, amountError = EconomyRules.Amount(amount, config)
@@ -675,7 +685,7 @@ exports('BankSocietyLedger', function(businessId, filter)
 	if not gate then
 		return { error = gateError }
 	end
-	if config.SocietyBankers[gate.source] ~= true and gate.source ~= 'coe_admin' then
+	if not isBanker(gate.source) and not isAdmin(gate.source) then
 		return { error = 'forbidden' }
 	end
 	local page, pageError = EconomyPersistence.SocietyLedgerPage(gate.id, EconomyRules.LedgerFilter(filter))
@@ -738,7 +748,7 @@ exports('RunPayroll', function(businessId)
 	if not gate then
 		return { error = gateError }
 	end
-	if gate.source ~= 'coe_admin' and gate.source ~= 'coe_economy' and config.SocietyBankers[gate.source] ~= true then
+	if gate.source ~= 'coe_economy' and not isAdmin(gate.source) and not isBanker(gate.source) then
 		return { error = 'forbidden' }
 	end
 	return runPayroll(gate.id, gate.source)

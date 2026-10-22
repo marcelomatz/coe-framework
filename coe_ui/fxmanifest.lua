@@ -25,4 +25,4 @@ files {
 
 shared_script 'config.lua'
 client_scripts { 'client.lua', 'theme_bridge.lua' }
-server_script 'server.lua'
+server_scripts { '@coe_core/lib/access.lua', 'server.lua' }

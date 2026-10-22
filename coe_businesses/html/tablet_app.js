@@ -14,53 +14,31 @@
 		garages_unavailable: 'Garagens indisponíveis.', invalid_vehicle: 'Veículo inválido.', not_in_fleet: 'Este veículo não é da frota deste negócio.',
 		properties_unavailable: 'Garagens e imóveis indisponíveis.', offer_pending: 'Este cidadão já tem uma proposta pendente.',
 		already_partner: 'Já é sócio deste negócio.', partner_limit: 'Limite de sócios atingido.', unknown_partner: 'Sócio não encontrado.',
-		invalid_partners: 'Lista de sócios inválida.', bank_unavailable: 'Banco indisponível no momento.',
-		shop_unavailable: 'Lojas indisponíveis no momento.', not_a_store: 'Este negócio não é uma loja.', invalid_price: 'Preço fora da faixa permitida.',
-		staff_store: 'Loja da staff: estoque e preço automáticos.', unknown_product: 'Produto não encontrado.', store_closed: 'Loja fechada.'
+		invalid_partners: 'Lista de sócios inválida.', tab_unavailable: 'Esta aba está indisponível no momento.'
 	};
 
-	// Conta bancária empresarial: telas do coe_banking (business.js + bank-ui.css), carregadas uma vez.
-	let bankAssets = null;
-	function loadBankAssets() {
-		if (window.CoeBusinessBank) { return Promise.resolve(true); }
-		if (bankAssets) { return bankAssets; }
-		bankAssets = new Promise(function (resolve) {
-			if (!document.querySelector('link[data-coe-bank]')) {
+	// Abas registradas por outros resources (RegisterTab no servidor): cada uma traz o script (e o CSS) do próprio
+	// resource, que se registra em window.CoeBusinessTabs[id] = { render(root, state, api), state?, errors?, unavailable? }.
+	window.CoeBusinessTabs = window.CoeBusinessTabs || {};
+	const tabAssets = {};
+	function loadTabAssets(tab) {
+		if (window.CoeBusinessTabs[tab.id]) { return Promise.resolve(true); }
+		if (tabAssets[tab.id]) { return tabAssets[tab.id]; }
+		tabAssets[tab.id] = new Promise(function (resolve) {
+			if (tab.css && !document.querySelector('link[data-coe-tab="' + tab.id + '"]')) {
 				const link = document.createElement('link');
 				link.rel = 'stylesheet';
-				link.href = 'nui://coe_banking/html/bank-ui.css';
-				link.dataset.coeBank = '1';
+				link.href = tab.css;
+				link.dataset.coeTab = tab.id;
 				document.head.appendChild(link);
 			}
 			const script = document.createElement('script');
-			script.src = 'nui://coe_banking/html/business.js';
-			script.onload = function () { resolve(Boolean(window.CoeBusinessBank)); };
-			script.onerror = function () { bankAssets = null; resolve(false); };
+			script.src = tab.script;
+			script.onload = function () { resolve(Boolean(window.CoeBusinessTabs[tab.id])); };
+			script.onerror = function () { tabAssets[tab.id] = null; resolve(false); };
 			document.head.appendChild(script);
 		});
-		return bankAssets;
-	}
-
-	// Aba Loja: tela do coe_shops (business.js + business.css), carregada uma vez.
-	let shopAssets = null;
-	function loadShopAssets() {
-		if (window.CoeBusinessShop) { return Promise.resolve(true); }
-		if (shopAssets) { return shopAssets; }
-		shopAssets = new Promise(function (resolve) {
-			if (!document.querySelector('link[data-coe-shop]')) {
-				const link = document.createElement('link');
-				link.rel = 'stylesheet';
-				link.href = 'nui://coe_shops/html/business.css';
-				link.dataset.coeShop = '1';
-				document.head.appendChild(link);
-			}
-			const script = document.createElement('script');
-			script.src = 'nui://coe_shops/html/business.js';
-			script.onload = function () { resolve(Boolean(window.CoeBusinessShop)); };
-			script.onerror = function () { shopAssets = null; resolve(false); };
-			document.head.appendChild(script);
-		});
-		return shopAssets;
+		return tabAssets[tab.id];
 	}
 
 	const VEHICLE_STATES = { stored: 'Guardado', out: 'Na rua', spawned: 'Na rua', impounded: 'Apreendido', destroyed: 'Destruído' };
@@ -96,18 +74,24 @@
 
 	window.CoeTablet.register('business', function (root, tablet) {
 		const TABS = [
-			['overview', 'Resumo'], ['shop', 'Loja'], ['bank', 'Banco'], ['finance', 'Financeiro'], ['staff', 'Equipe'], ['partners', 'Sócios'], ['access', 'Acessos'],
+			['overview', 'Resumo'], ['finance', 'Financeiro'], ['staff', 'Equipe'], ['partners', 'Sócios'], ['access', 'Acessos'],
 			['structure', 'Estrutura'], ['fleet', 'Frota'], ['properties', 'Propriedades']
 		];
 		let tab = 'overview';
-		// Banco: null = ainda não testado; true = conta empresarial do coe_banking; false = sem banco (usa Financeiro).
-		let bankOk = null;
-		let bankTab = 'summary';
+		// Abas registradas: estado de cada uma e as que ficaram indisponíveis (escondidas, a substituída volta).
+		const extState = {};
+		const extOff = {};
 		let busy = false;
 		let can = { funds: false, staff: false };
 		const data = {};
 
-		function errorText(code) { return ERRORS[code] || tablet.errorText(code); }
+		function extTabs() { return (data.overview && data.overview.business.tabs) || []; }
+		function extTab(id) { return extTabs().find(function (entry) { return entry.id === id; }) || null; }
+		function moduleErrors() {
+			const extension = extTab(tab) && window.CoeBusinessTabs[tab];
+			return (extension && extension.errors) || {};
+		}
+		function errorText(code) { return moduleErrors()[code] || ERRORS[code] || tablet.errorText(code); }
 		function panel(className) { return el('div', 'coe-panel coe-panel--compact ' + (className || '')); }
 		function section(title) { return el('div', 'tb-section', title); }
 		function empty(text) { return el('p', 'tb-empty', text); }
@@ -129,44 +113,60 @@
 			});
 		}
 
-		// Operações da conta empresarial: a resposta sempre traz a conta atualizada (mesmo com erro).
-		function bankCall(payload) {
-			if (busy) { return; }
+		// Pedido de uma aba registrada: a resposta vai crua ao módulo, que decide o que mostrar.
+		function request(id, op, payload) {
+			if (busy) { return Promise.resolve({ ok: false, error: 'busy' }); }
 			busy = true;
-			tablet.call('business', 'bank', payload).then(function (result) {
+			return tablet.call('business', 'tab', Object.assign({}, payload || {}, { tab: id, op: op })).then(function (result) {
 				busy = false;
-				if (result && result.bank) {
-					data.bank = result.bank;
-					bankOk = true;
-				} else if (result && result.error === 'bank_unavailable') {
-					bankOk = false;
-					tab = 'finance';
-					load('finance');
-					return;
+				return result || { ok: false, error: 'tab_unavailable' };
+			});
+		}
+
+		function api(id) {
+			return {
+				channel: 'tablet',
+				request: function (op, payload) { return request(id, op, payload); },
+				update: function (state) { extState[id] = state; view(); },
+				render: function () { view(); },
+				status: function (text, kind) { tablet.status(text, kind); },
+				errorText: errorText,
+				gps: function (x, y, okText) {
+					tablet.waypoint(x, y).then(function (result) {
+						tablet.status(result && result.ok ? (okText || 'Local marcado no GPS.') : 'Não foi possível marcar o GPS.', result && result.ok ? 'ok' : 'error');
+					});
 				}
-				if (!result || !result.ok) {
-					tablet.status((result && result.message) || errorText(result && result.error), 'error');
-				} else if (payload.op !== 'overview' && payload.op !== 'statement') {
-					tablet.status('Operação concluída.', 'ok');
-				}
-				view();
+			};
+		}
+
+		function disable(entry) {
+			extOff[entry.id] = true;
+			delete extState[entry.id];
+			load(entry.replaces && !(entry.replaces === 'finance' && !can.funds) ? entry.replaces : 'overview');
+		}
+
+		function loadExtension(entry) {
+			loadTabAssets(entry).then(function (loaded) {
+				const extension = window.CoeBusinessTabs[entry.id];
+				if (!loaded || !extension) { disable(entry); tablet.status(errorText('tab_unavailable'), 'error'); return; }
+				request(entry.id, 'overview', {}).then(function (result) {
+					if (result.ok) {
+						extState[entry.id] = extension.state ? extension.state(result) : result;
+						view();
+					} else if (result.error === 'tab_unavailable' || (extension.unavailable || []).indexOf(result.error) !== -1) {
+						disable(entry);
+					} else {
+						tablet.status((result && result.message) || errorText(result.error), 'error');
+					}
+				});
 			});
 		}
 
 		function load(name) {
 			tab = name;
-			if (name === 'shop') {
-				loadShopAssets().then(function (ok) {
-					if (!ok) { tablet.status(errorText('shop_unavailable'), 'error'); return; }
-					call('shop', { op: 'overview' }, function (result) { data.shop = result; view(); });
-				});
-				return;
-			}
-			if (name === 'bank') {
-				loadBankAssets().then(function (ok) {
-					if (!ok) { bankOk = false; load('finance'); return; }
-					bankCall({ op: 'overview' });
-				});
+			const entry = extTab(name);
+			if (entry) {
+				loadExtension(entry);
 				return;
 			}
 			call(name, {}, function (result) {
@@ -180,10 +180,13 @@
 
 		function tabs() {
 			const bar = el('div', 'tb-tabs');
-			TABS.forEach(function (entry) {
-				const hidden = (entry[0] === 'bank' && bankOk === false) || (entry[0] === 'finance' && (bankOk !== false || !can.funds))
-					|| (data.overview && entry[0] === 'access' && !can.staff)
-					|| (entry[0] === 'shop' && !(data.overview && data.overview.business.shop));
+			const extensions = extTabs().filter(function (entry) { return !extOff[entry.id]; });
+			const replaced = {};
+			extensions.forEach(function (entry) { if (entry.replaces) { replaced[entry.replaces] = true; } });
+			const list = [TABS[0]].concat(extensions.map(function (entry) { return [entry.id, entry.label]; }), TABS.slice(1));
+			list.forEach(function (entry) {
+				const hidden = replaced[entry[0]] || (entry[0] === 'finance' && !can.funds)
+					|| (data.overview && entry[0] === 'access' && !can.staff);
 				if (hidden) { return; }
 				bar.appendChild(button(entry[1], 'tb-tab' + (tab === entry[0] ? ' is-active' : ''), function () { load(entry[0]); }));
 			});
@@ -368,42 +371,11 @@
 			});
 		}
 
-		function bankView() {
-			const bank = window.CoeBusinessBank;
-			const info = data.bank;
-			if (!bank || !info) { root.appendChild(empty('Carregando a conta da empresa...')); return; }
-			const list = bank.sections(info);
-			if (!list.some(function (entry) { return entry[0] === bankTab; })) { bankTab = list[0][0]; }
-			const kpis = el('div', 'grid-4');
-			bank.summary(info).forEach(function (node) { if (node) { kpis.appendChild(node); } });
-			root.appendChild(kpis);
-			const bar = el('div', 'tb-tabs');
-			list.forEach(function (entry) {
-				const node = button(entry[1] + (entry[2] ? ' •' : ''), 'tb-tab' + (bankTab === entry[0] ? ' is-active' : ''), function () { bankTab = entry[0]; tablet.status(''); view(); });
-				node.className = 'tb-tab' + (bankTab === entry[0] ? ' is-active' : '');
-				bar.appendChild(node);
-			});
-			root.appendChild(bar);
-			const body = el('div', 'bank-ui');
-			bankTab = bank.renderSection(body, bankTab, info, {
-				channel: 'tablet',
-				act: function (action, payload) { bankCall(Object.assign({}, payload || {}, { op: action })); }
-			});
-			root.appendChild(body);
-		}
-
-		function shopView() {
-			const shop = window.CoeBusinessShop;
-			if (!shop || !data.shop) { root.appendChild(empty('Carregando a loja...')); return; }
-			shop.render(root, data.shop, {
-				act: function (op, payload) {
-					call('shop', Object.assign({}, payload || {}, { op: op }), function (result) {
-						data.shop = result;
-						tablet.status('Preço atualizado.', 'ok');
-						view();
-					});
-				}
-			});
+		function extensionView() {
+			const extension = window.CoeBusinessTabs[tab];
+			const state = extState[tab];
+			if (!extension || state === undefined) { root.appendChild(empty('Carregando...')); return; }
+			extension.render(root, state, api(tab));
 		}
 
 		function propertiesView() {
@@ -419,10 +391,11 @@
 		function view() {
 			root.replaceChildren();
 			root.appendChild(tabs());
-			({
-				overview: overviewView, shop: shopView, bank: bankView, finance: financeView, staff: staffView, partners: partnersView, access: accessView,
+			const views = {
+				overview: overviewView, finance: financeView, staff: staffView, partners: partnersView, access: accessView,
 				structure: structureView, fleet: fleetView, properties: propertiesView
-			})[tab]();
+			};
+			(views[tab] || extensionView)();
 		}
 
 		load('overview');

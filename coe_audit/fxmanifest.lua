@@ -11,6 +11,7 @@ dependencies {
 }
 
 server_scripts {
+	'@coe_core/lib/access.lua',
 	'@coe_core/lib/migrations.lua',
 	'config.lua',
 	'server/migrations.lua',

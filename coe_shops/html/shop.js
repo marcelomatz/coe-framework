@@ -1,17 +1,16 @@
-// Loja (coe_shops): vitrine com categorias, carrinho, pagamento (espécie, Carteira do celular ou cartão na maquininha)
+// Loja (coe_shops): vitrine com categorias, carrinho, pagamento (espécie e os meios registrados por outros resources)
 // e gestão para o dono e a equipe (preços, prateleira e relatório). O servidor decide preço, estoque e cobrança.
 (function () {
 	'use strict';
 
 	const resource = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'coe_shops';
 	const IMAGES = 'nui://coe_inventory/data/images/';
-	const METHODS = { cash: 'Dinheiro', wallet: 'Carteira do celular', card: 'Cartão na maquininha' };
 	const ERRORS = {
 		too_far: 'Chegue mais perto do balcão.', store_closed: 'A loja está fechada.', unknown_product: 'Produto indisponível.',
 		invalid_quantity: 'Quantidade inválida.', empty_cart: 'O carrinho está vazio.', cart_too_big: 'Itens demais no carrinho.',
 		cart_too_expensive: 'Compra acima do limite do caixa.', out_of_stock: 'Sem estoque suficiente', invalid_method: 'Escolha como pagar.',
 		insufficient_cash: 'Você não tem dinheiro suficiente.', payment_failed: 'O pagamento não passou.', payment_expired: 'O pagamento expirou. Tente de novo.',
-		cancelled: 'Pagamento cancelado.', phone_unavailable: 'Celular indisponível. Use dinheiro ou cartão.', inventory_full: 'Seus bolsos estão cheios. O valor foi devolvido.',
+		cancelled: 'Pagamento cancelado.', phone_unavailable: 'Celular indisponível. Escolha outro meio.', device_unavailable: 'Aparelho indisponível. Escolha outro meio.', inventory_full: 'Seus bolsos estão cheios. O valor foi devolvido.',
 		no_card: 'Cartão não encontrado.', card_blocked: 'Cartão bloqueado.', card_expired: 'Cartão vencido.', no_credit: 'Esse cartão não tem crédito liberado.',
 		credit_late: 'Cartão bloqueado por fatura em atraso.', credit_limit: 'Limite do cartão insuficiente.', card_not_in_hand: 'O cartão precisa estar com você.',
 		wrong_pin: 'Senha incorreta.', invalid_pin: 'Digite os 4 dígitos da senha.', busy: 'Aguarde um instante.', forbidden: 'Você não tem permissão para isso.',
@@ -37,7 +36,7 @@
 	let search = '';
 	let cart = {};
 	let method = null;
-	let cardId = null;
+	let optionId = null;
 	let busy = false;
 	let report = null;
 
@@ -155,10 +154,12 @@
 		return pane;
 	}
 
-	function methodButton(id, detail, disabled) {
-		const node = button('', 'sh-method' + (method === id ? ' is-active' : ''), function () { method = id; render(); });
+	function methodOf(id) { return view.payments.find(function (m) { return m.id === id; }) || null; }
+
+	function methodButton(m, disabled) {
+		const node = button('', 'sh-method' + (method === m.id ? ' is-active' : ''), function () { method = m.id; render(); });
 		node.disabled = disabled;
-		node.append(el('strong', null, METHODS[id]), el('small', null, detail));
+		node.append(el('strong', null, m.label), el('small', null, m.detail || ''));
 		return node;
 	}
 
@@ -187,19 +188,18 @@
 		totalRow.append(el('span', null, 'Total'), el('strong', null, money(total)));
 		checkout.appendChild(totalRow);
 		const methods = el('div', 'sh-methods');
-		if (view.payments.cash) { methods.appendChild(methodButton('cash', 'Você tem ' + money(view.cash) + ' em espécie', view.cash < total)); }
-		if (view.payments.wallet) { methods.appendChild(methodButton('wallet', 'Paga pelo celular com um cartão da Carteira', false)); }
-		if (view.payments.card) {
-			methods.appendChild(methodButton('card', view.cards.length ? 'Cartão do banco que está com você, com a senha' : 'Nenhum cartão do banco com você', !view.cards.length));
-		}
+		view.payments.forEach(function (m) {
+			methods.appendChild(methodButton(m, m.id === 'cash' ? view.cash < total : !m.available));
+		});
 		checkout.appendChild(methods);
-		if (method === 'card' && view.cards.length) {
-			const cards = el('div', 'sh-cards');
-			if (!view.cards.some(function (c) { return c.id === cardId; })) { cardId = view.cards[0].id; }
-			view.cards.forEach(function (card) {
-				cards.appendChild(button((card.business ? 'Empresa ' : '') + '•••• ' + card.last4, 'sh-card' + (card.id === cardId ? ' is-active' : ''), function () { cardId = card.id; render(); }));
+		const selected = methodOf(method);
+		if (selected && selected.kind === 'pin' && selected.options.length) {
+			const options = el('div', 'sh-cards');
+			if (!selected.options.some(function (o) { return o.id === optionId; })) { optionId = selected.options[0].id; }
+			selected.options.forEach(function (option) {
+				options.appendChild(button(option.label, 'sh-card' + (option.id === optionId ? ' is-active' : ''), function () { optionId = option.id; render(); }));
 			});
-			checkout.appendChild(cards);
+			checkout.appendChild(options);
 		}
 		const pay = button(busy ? 'Processando…' : 'Pagar ' + money(total), 'coe-button coe-button--primary sh-pay', confirm);
 		pay.disabled = busy || !lines.length || !method;
@@ -222,17 +222,18 @@
 	}
 
 	function confirm() {
-		if (busy || !method) { return; }
-		if (method === 'card') { askPin(); return; }
+		const selected = methodOf(method);
+		if (busy || !selected) { return; }
+		if (selected.kind === 'pin') { askPin(selected); return; }
 		busy = true;
-		status(method === 'wallet' ? 'Confirme o pagamento no celular…' : 'Processando…');
+		status(selected.kind === 'device' ? 'Confirme o pagamento no aparelho…' : 'Processando…');
 		render();
 		post('buy', { cart: cartList(), method: method }).then(finish);
 	}
 
-	function askPin() {
-		const card = view.cards.find(function (c) { return c.id === cardId; });
-		if (!card) { return; }
+	function askPin(selected) {
+		const option = selected.options.find(function (o) { return o.id === optionId; });
+		if (!option) { return; }
 		let pin = '';
 		const layer = el('div', 'sh-pin');
 		const box = el('div', 'sh-pin-box coe-panel coe-panel--compact');
@@ -249,7 +250,7 @@
 			busy = true;
 			status('Processando na maquininha…');
 			render();
-			post('buy', { cart: cartList(), method: 'card', cardId: card.id, pin: pin }).then(finish);
+			post('buy', { cart: cartList(), method: selected.id, option: option.id, pin: pin }).then(finish);
 		}
 		function press(key) {
 			if (key === 'back') { pin = pin.slice(0, -1); } else if (key === 'ok') { submit(); return; } else if (pin.length < 4) { pin += key; }
@@ -267,7 +268,7 @@
 		['1', '2', '3', '4', '5', '6', '7', '8', '9', 'back', '0', 'ok'].forEach(function (key) {
 			keys.appendChild(button(key === 'back' ? '⌫' : key === 'ok' ? 'OK' : key, null, function () { press(key); }));
 		});
-		box.append(el('h3', null, 'Senha do cartão •••• ' + card.last4), el('small', 'sh-hint', 'Total: ' + money(cartTotal())), dots, msg, keys,
+		box.append(el('h3', null, 'Senha: ' + option.label), el('small', 'sh-hint', 'Total: ' + money(cartTotal())), dots, msg, keys,
 			button('Cancelar', 'coe-button', close));
 		paintDots();
 		layer.appendChild(box);
@@ -411,7 +412,7 @@
 		report.sales.forEach(function (sale) {
 			const row = el('div', 'sh-sale');
 			const when = new Date(sale.at * 1000).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-			row.append(el('span', null, sale.units + (sale.units === 1 ? ' item' : ' itens') + ' · ' + (METHODS[sale.method] || sale.method)),
+			row.append(el('span', null, sale.units + (sale.units === 1 ? ' item' : ' itens') + ' · ' + (sale.methodLabel || sale.method)),
 				el('strong', null, money(sale.total)), el('small', null, when));
 			pane.appendChild(row);
 		});

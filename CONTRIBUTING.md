@@ -6,7 +6,7 @@ Agradecemos o seu interesse em contribuir com o **COE Framework**! Para manter a
 
 ## 🛠️ Padrões de Engenharia Inegociáveis
 
-Antes de submeter um Pull Request (PR), certifique-se de que o seu código atende às 6 regras de ouro do ecossistema:
+Antes de submeter um Pull Request (PR), certifique-se de que o seu código atende às 7 regras de ouro do ecossistema:
 
 1. **Server-Authoritative Estrito**:
    - O cliente FiveM é 100% não confiável.
@@ -25,6 +25,10 @@ Antes de submeter um Pull Request (PR), certifique-se de que o seu código atend
    - Seu PR deve passar com zero erros no validador: `lua tools/check_contracts.lua --strict`.
 6. **Design System (`coe_ui`)**:
    - Interfaces NUI devem reutilizar os tokens CSS oficiais e suportar os 5 temas dinâmicos.
+7. **Fronteira do open-core**:
+   - O código daqui nunca cita pelo nome um resource que não está neste repositório (exports, `nui://`, eventos, allowlists).
+   - Acesso de outros resources é por ACE no principal do resource (`@coe_core/lib/access.lua`), com padrões só para resources daqui.
+   - Seu PR deve passar em `lua tools/check_boundary.lua`.
 
 ---
 

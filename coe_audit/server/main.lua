@@ -33,7 +33,9 @@ exports('Record', function(severity, category, event, context)
 		event = event,
 		context = context,
 		timestamp = os.time(),
-		allowedResources = config.AllowedResources,
+		isAllowed = function(resource)
+			return CoeAccess.Allowed(resource, config.Ace, config.AllowedResources)
+		end,
 		allowedFields = config.AllowedContextFields,
 		resolveLicense = getLicense,
 		encode = json.encode

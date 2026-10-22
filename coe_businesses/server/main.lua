@@ -16,7 +16,7 @@ local function audit(event, context)
 end
 
 local function isWriter()
-	return config.WriterResources[GetInvokingResource() or GetCurrentResourceName()] == true
+	return CoeAccess.Allowed(GetInvokingResource() or GetCurrentResourceName(), config.Ace.Write, config.WriterResources)
 end
 
 -- Vários retornos se perdem entre resources: devolvemos um valor só, ou { error = codigo }.
@@ -133,7 +133,7 @@ end)
 -- Lista de { name = 'police.arrest', label = 'Prender' }. Retorna true ou { error = codigo }.
 exports('RegisterPermissions', function(list)
 	local invoking = GetInvokingResource()
-	if not invoking or config.PermissionResources[invoking] ~= true then
+	if not CoeAccess.Allowed(invoking, config.Ace.Permissions, config.PermissionResources) then
 		return { error = 'forbidden' }
 	end
 	if type(list) ~= 'table' or #list > 64 then
@@ -175,7 +175,7 @@ exports('Can', function(businessId, characterId, permission, remoteOnly)
 end)
 
 local function payrollReader()
-	return config.PayrollResources[GetInvokingResource() or ''] == true
+	return CoeAccess.Allowed(GetInvokingResource(), config.Ace.Payroll, config.PayrollResources)
 end
 
 exports('Salary', function(businessId, characterId)
@@ -308,7 +308,7 @@ local function clockThrottled(source)
 end
 
 exports('Clock', function(source, businessId, stationId)
-	if not ready or not config.ClockResources[GetInvokingResource() or ''] then
+	if not ready or not CoeAccess.Allowed(GetInvokingResource(), config.Ace.Clock, config.ClockResources) then
 		return { error = ready and 'forbidden' or 'not_ready' }
 	end
 	if type(source) ~= 'number' or type(businessId) ~= 'string' or type(stationId) ~= 'string' or clockThrottled(source) then
@@ -441,9 +441,9 @@ exports('IsOnDuty', function(businessId, characterId)
 	return ready and characterId ~= nil and duty.IsOnDuty(businessId, characterId) or false
 end)
 
--- Resumo de quem está de ponto (só leitura, para o painel admin).
+-- Resumo de quem está de ponto (só leitura, para o painel de staff: ACE coe.businesses.admin).
 exports('DutySummary', function()
-	if GetInvokingResource() ~= 'coe_admin' or not ready then
+	if not ready or not CoeAccess.Allowed(GetInvokingResource(), config.Ace.Admin) then
 		return { total = 0, byBusiness = {} }
 	end
 	return duty.Counts()
@@ -451,6 +451,68 @@ end)
 
 exports('CurrentDuty', function(source)
 	return ready and duty.Current(source) or nil
+end)
+
+-- Extensões (abas e provedores) registradas por outros resources. Ver server/extensions.lua.
+local extensions = BusinessExtensions.New()
+
+-- Chama o export de outro resource (nome vindo do registro, nunca fixo aqui). nil se parado ou com erro.
+local function callExport(resource, name, ...)
+	if GetResourceState(resource) ~= 'started' then
+		return nil
+	end
+	local args = table.pack(...)
+	local ok, result = pcall(function()
+		local target = exports[resource]
+		return target[name](target, table.unpack(args, 1, args.n))
+	end)
+	if not ok then
+		log('warn', 'tablet', 'extension_call_failed', { target = resource .. ':' .. name, error_code = tostring(result):sub(1, 96) })
+		return nil
+	end
+	return result
+end
+
+local function provide(kind, key, ...)
+	local provider = extensions:Provider(kind)
+	if not provider or not provider[key] then
+		return nil
+	end
+	return callExport(provider.resource, provider[key], ...)
+end
+
+-- Registro de aba no app do negócio. Só quem tem a ACE coe.businesses.extend (padrão em ExtensionResources).
+-- Retorna true ou { error = codigo }. O registro some quando o resource para; registre de novo quando o
+-- coe_businesses (re)iniciar (evento onResourceStart).
+exports('RegisterTab', function(def)
+	local resource = GetInvokingResource()
+	if not CoeAccess.Allowed(resource, config.Ace.Extend, config.ExtensionResources) then
+		return { error = 'forbidden' }
+	end
+	local ok, errorCode = extensions:RegisterTab(resource, def)
+	if not ok then
+		return { error = errorCode }
+	end
+	return true
+end)
+
+-- Provedor de dados das abas Frota e Propriedades ('fleet': { list, setStaff? }; 'properties': { list }).
+exports('RegisterProvider', function(kind, def)
+	local resource = GetInvokingResource()
+	if not CoeAccess.Allowed(resource, config.Ace.Extend, config.ExtensionResources) then
+		return { error = 'forbidden' }
+	end
+	local ok, errorCode = extensions:RegisterProvider(resource, kind, def)
+	if not ok then
+		return { error = errorCode }
+	end
+	return true
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+	if resource ~= GetCurrentResourceName() then
+		extensions:Drop(resource)
+	end
 end)
 
 local function economy(name, ...)
@@ -498,34 +560,16 @@ local tabletDeps = {
 	save = function(raw)
 		return registry.Save(raw, 'tablet')
 	end,
-	-- Aba Banco do app do negócio: a conta empresarial é do coe_banking.
-	bank = function(source, characterId, businessId, payload)
-		if GetResourceState('coe_banking') ~= 'started' then
+	-- Abas registradas por outros resources (RegisterTab): lista visível e encaminhamento ao export `handler`.
+	tabs = function(businessId)
+		return extensions:VisibleTabs(businessId, callExport)
+	end,
+	tabCall = function(id, source, characterId, businessId, payload)
+		local tab = extensions:Tab(id, businessId, callExport)
+		if not tab then
 			return nil
 		end
-		local ok, result = pcall(function()
-			return exports.coe_banking:BusinessTablet(source, characterId, businessId, payload)
-		end)
-		return ok and result or nil
-	end,
-	-- Aba Loja do app do negócio: lojas do coe_shops (prateleira, preços e vendas).
-	isShop = function(businessId)
-		if GetResourceState('coe_shops') ~= 'started' then
-			return false
-		end
-		local ok, result = pcall(function()
-			return exports.coe_shops:IsStore(businessId)
-		end)
-		return ok and result == true
-	end,
-	shop = function(source, characterId, businessId, payload)
-		if GetResourceState('coe_shops') ~= 'started' then
-			return nil
-		end
-		local ok, result = pcall(function()
-			return exports.coe_shops:BusinessTablet(source, characterId, businessId, payload)
-		end)
-		return ok and result or nil
+		return callExport(tab.resource, tab.handler, source, characterId, businessId, payload)
 	end,
 	resolve = function(stateId)
 		local character, errorCode = Core.Players.GetCharacterByStateId(stateId)
@@ -539,32 +583,15 @@ local tabletDeps = {
 	permissions = function()
 		return permissions
 	end,
+	-- Frota e propriedades: provedores registrados (RegisterProvider 'fleet' e 'properties'); sem provedor, nil.
 	fleet = function(businessId)
-		if GetResourceState('coe_garages') ~= 'started' then
-			return nil
-		end
-		local ok, result = pcall(function()
-			return exports.coe_garages:BusinessFleet(businessId)
-		end)
-		return ok and result or nil
+		return provide('fleet', 'list', businessId)
 	end,
 	setFleetStaff = function(businessId, vehicleId, enabled)
-		if GetResourceState('coe_garages') ~= 'started' then
-			return nil
-		end
-		local ok, result = pcall(function()
-			return exports.coe_garages:SetFleetStaffAccess(businessId, vehicleId, enabled)
-		end)
-		return ok and result or nil
+		return provide('fleet', 'setStaff', businessId, vehicleId, enabled)
 	end,
 	properties = function(businessId)
-		if GetResourceState('coe_housing') ~= 'started' then
-			return nil
-		end
-		local ok, result = pcall(function()
-			return exports.coe_housing:BusinessProperties(businessId)
-		end)
-		return ok and result or nil
+		return provide('properties', 'list', businessId)
 	end,
 	offers = {},
 	maxPartners = config.Limits.MaxPartners,
@@ -635,19 +662,19 @@ RegisterNetEvent('coe_businesses:answerOffer', function(offerId, accept)
 	end
 end)
 
--- Negócios do jogador para o coe_tablet: um app por negócio de que ele é dono ou da equipe.
+-- Negócios do jogador para o tablet (ACE coe.businesses.tablet): um app por negócio de que ele é dono ou da equipe.
 exports('TabletInstances', function(playerId)
-	if not ready or config.TabletResources[GetInvokingResource() or ''] ~= true then
+	if not ready or not CoeAccess.Allowed(GetInvokingResource(), config.Ace.Tablet, config.TabletResources) then
 		return {}
 	end
 	local characterId = tabletDeps.characterOf(tonumber(playerId))
 	return BusinessTablet.Instances(registry.List(), characterId)
 end)
 
--- Chamado só pelo coe_tablet (que já limita a taxa e confere que o negócio é um app do jogador).
+-- Chamado só pelo tablet (que já limita a taxa e confere que o negócio é um app do jogador).
 -- instance: id do negócio do app; nunca vem do payload.
 exports('TabletCall', function(playerId, appId, action, payload, instance)
-	if not ready or config.TabletResources[GetInvokingResource() or ''] ~= true or appId ~= 'business' then
+	if not ready or not CoeAccess.Allowed(GetInvokingResource(), config.Ace.Tablet, config.TabletResources) or appId ~= 'business' then
 		return { ok = false, error = ready and 'forbidden' or 'not_ready' }
 	end
 	local source = tonumber(playerId)

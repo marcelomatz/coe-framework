@@ -134,7 +134,7 @@ end
 
 local function log(level, category, event, context)
 	local resourceName = GetInvokingResource()
-	if type(resourceName) ~= 'string' or not CoeLoggingConfig.AllowedResources[resourceName] then
+	if not CoeAccess.Allowed(resourceName, CoeLoggingConfig.Ace, CoeLoggingConfig.AllowedResources) then
 		return false, 'caller_not_allowed'
 	end
 	if not levels[level] then
