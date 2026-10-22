@@ -79,7 +79,7 @@ function readConnectionOptions() {
 	const port = Number(portValue)
 	const connectionLimit = Number(connectionLimitValue)
 
-	if (!host || !user || !password || !database) {
+	if (!host || !user || typeof password !== 'string' || !database) {
 		throw configurationError('database_configuration_incomplete')
 	}
 	if (!/^\d+$/.test(portValue) || !Number.isInteger(port) || port < 1 || port > 65535) {

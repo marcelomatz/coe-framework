@@ -1,5 +1,6 @@
 # Dependências e Builds
 node_modules/
+!coe_database/node_modules/
 package-lock.json
 yarn.lock
 

@@ -1,0 +1,126 @@
+$engine: 3
+$minFxVersion: 12913
+$onesync: on
+
+name: "COE Framework - FiveM Enhanced Gen9"
+version: "1.0.0"
+author: "COE Roleplay Team"
+description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 24 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
+
+tasks:
+  # 1. Download official CitizenFX default server data (mapmanager, chat, spawnmanager, sessionmanager, etc.)
+  - action: download_github
+    src: https://github.com/citizenfx/cfx-server-data
+    ref: master
+    subpath: resources
+    dest: ./resources/[cfx-default]
+
+  # 2. Download COE Framework open-source resources
+  - action: download_github
+    src: https://github.com/marcelomatz/coe-framework
+    ref: main
+    dest: ./resources/[coe-framework]
+
+  # 3. Connect to Database (auto creates the database if not existing)
+  - action: connect_database
+
+  # 4. Generate optimized server.cfg
+  - action: write_file
+    file: server.cfg
+    data: |
+      ## ====================================================================
+      ## COE Framework - FiveM Enhanced Gen9 / DX12 Dedicated Server
+      ## Official txAdmin Deployment Configuration (Recipe Engine v3)
+      ## Website: https://www.coeroleplay.app | Docs: https://docs.coeroleplay.app
+      ## ====================================================================
+
+      ## Endpoints do Servidor (Gerenciado pelo txAdmin)
+      {{serverEndpoints}}
+      sv_maxclients {{maxClients}}
+
+      ## Informações do Servidor
+      sv_hostname "{{serverName}} | COE Framework Gen9 DX12"
+      sets sv_projectName "{{serverName}}"
+      sets sv_projectDesc "Servidor FiveM Enhanced Gen9 alimentado por COE Framework"
+      sets locale "pt-BR"
+      sets tags "coe, enhanced, gen9, dx12, roleplay, rp, brasil, optimized"
+
+      ## Chave de Licença Cfx.re (Gerenciada pelo txAdmin)
+      sv_licenseKey "{{svLicense}}"
+
+      ## OneSync & FiveM Enhanced Settings (DX12 / Gen9)
+      onesync on
+      sv_enforceGameBuild 3095
+
+      ## Sistema de Voz 3D Nativo Enhanced (Zero-lag interno)
+      voice_internal
+      setr voice_useNativeAudio true
+      setr voice_use3dAudio true
+      setr voice_useSendingRangeOnly true
+      setr voice_enableUi 0
+
+      ## Configurações Operacionais COE
+      set coe_logging_level "info"
+
+      ## Configuração do Banco de Dados MySQL / MariaDB
+      set mysql_connection_string "{{dbConnectionString}}"
+      set coe_database_host "{{dbHost}}"
+      set coe_database_port {{dbPort}}
+      set coe_database_user "{{dbUsername}}"
+      set coe_database_password "{{dbPassword}}"
+      set coe_database_name "{{dbName}}"
+      set coe_database_connection_limit 20
+      set coe_database_ssl false
+
+      ## Permissões de Administrador txAdmin & COE Admin
+      add_ace group.admin command allow
+      add_ace group.admin command.quit deny
+      {{addPrincipalsMaster}}
+
+      add_ace group.admin coe_admin.open allow
+      add_ace group.admin coe_admin.items.give allow
+      add_ace group.admin coe_admin.staff.manage allow
+      add_ace group.admin coe_admin.groups.manage allow
+      add_ace group.admin coe_admin.resources.manage allow
+      add_ace group.admin coe_admin.theme.manage allow
+      add_ace group.admin coe_admin.businesses.manage allow
+      add_ace group.admin coe_admin.crypto.manage allow
+      add_ace group.admin coe_admin.root allow
+
+      ## --------------------------------------------------------------------
+      ## Recursos Base do CitizenFX
+      ## --------------------------------------------------------------------
+      ensure [cfx-default]
+
+      ## --------------------------------------------------------------------
+      ## Ordem Estrita de Boot - COE Framework
+      ## Supervisor e Core devem iniciar antes dos subsistemas
+      ## --------------------------------------------------------------------
+      ensure coe_supervisor
+      ensure coe_logging
+      ensure coe_database
+      ensure coe_core
+
+      ## Subsistemas e Interface
+      ensure coe_ui
+      ensure coetarget
+      ensure coe_audit
+      ensure coe_notify
+      ensure coe_loadscreen
+
+      ## Gameplay e Vida da Cidade
+      ensure coe_characters
+      ensure coe_spawn
+      ensure coe_appearance
+      ensure coe_hud
+      ensure coe_needs
+      ensure coe_inventory
+      ensure coe_map
+      ensure coe_pausemenu
+      ensure coe_talk
+      ensure coe_businesses
+      ensure coe_economy
+      ensure coe_shops
+      ensure coe_jobs
+      ensure coe_vehicle_catalog
+      ensure coe_vehicles
