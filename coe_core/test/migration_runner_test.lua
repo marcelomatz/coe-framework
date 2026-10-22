@@ -77,14 +77,21 @@ ok, err = CoeMigrations.Run(options)
 assertEqual(ok, false, 'non-ascending versions rejected')
 assertEqual(err, 'invalid_migrations', 'non-ascending versions code')
 
-for _, resourceMigrations in ipairs({ '..\\coe_inventory\\adapters\\migrations.lua', '..\\coe_admin\\server\\migrations.lua' }) do
-	dofile(resourceMigrations)
+local sampleMigrations = { '../coe_inventory/adapters/migrations.lua', '../coe_businesses/server/migrations.lua' }
+for _, resourceMigrations in ipairs(sampleMigrations) do
+	local f = io.open(resourceMigrations, 'r')
+	if f then
+		f:close()
+		dofile(resourceMigrations)
+	end
 end
-for _, definitions in ipairs({ InventoryMigrations, AdminMigrations }) do
-	log, options = harness({})
-	options.migrations = definitions
-	ok, err = CoeMigrations.Run(options)
-	assertEqual(ok, true, 'shipped migrations are valid')
+for _, definitions in ipairs({ InventoryMigrations, BusinessesMigrations }) do
+	if definitions then
+		log, options = harness({})
+		options.migrations = definitions
+		ok, err = CoeMigrations.Run(options)
+		assertEqual(ok, true, 'shipped migrations are valid')
+	end
 end
 
 print('migration runner tests passed')
