@@ -43,3 +43,17 @@ jobs:
       - name: Run Smoke Boot Suite
         shell: pwsh
         run: lua tools/smoke_boot_test.lua
+      
+      - name: Open-core Boundary
+        shell: pwsh
+        run: lua tools/check_boundary.lua
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      
+      - name: Database Provider Tests
+        shell: pwsh
+        working-directory: coe_database
+        run: node --test test/access.test.js test/provider.test.js test/validation.test.js
