@@ -273,6 +273,31 @@ test("coe_bank: inicialização do servidor e do client com _t defensivo", funct
 	assertTrue(okClient, "coe_bank/client/main.lua deve carregar sem erro: " .. tostring(errClient))
 end)
 
+test("coe_mobile: inicialização do servidor e do client com _t defensivo", function()
+	setupFiveMEnvironment()
+	dofile('coe_core/lib/init.lua')
+	_G.GlobalState = {}
+	_G.Locales = {}
+	dofile('coe_mobile/config.lua')
+	dofile('coe_mobile/locales/pt-br.lua')
+	dofile('coe_mobile/locales/en-us.lua')
+	dofile('coe_mobile/shared/rules.lua')
+	dofile('coe_core/lib/access.lua')
+	dofile('coe_core/lib/migrations.lua')
+	dofile('coe_mobile/server/migrations.lua')
+	dofile('coe_mobile/server/persistence.lua')
+
+	local okServer, errServer = pcall(dofile, 'coe_mobile/server/main.lua')
+	assertTrue(okServer, "coe_mobile/server/main.lua deve carregar sem erro: " .. tostring(errServer))
+	assertEqual(_G.GlobalState.coeMobileYielded, false, "coe_mobile começa atendendo")
+
+	_G.AddStateBagChangeHandler = function() end
+	_G.RegisterNUICallback = function() end
+	_G.RegisterKeyMapping = function() end
+	local okClient, errClient = pcall(dofile, 'coe_mobile/client/main.lua')
+	assertTrue(okClient, "coe_mobile/client/main.lua deve carregar sem erro: " .. tostring(errClient))
+end)
+
 -- ---------------------------------------------------------------------------
 -- 4. TESTE DE CONFORMIDADE DOS RECURSOS DO FRAMEWORK COM I18N
 -- ---------------------------------------------------------------------------
@@ -280,7 +305,7 @@ print("\n[4/4] Validação de Recursos do Framework com i18n...")
 
 local frameworkLocales = {
 	'coe_core', 'coe_businesses', 'coe_economy', 'coe_inventory',
-	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_bank'
+	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_bank', 'coe_mobile'
 }
 for _, res in ipairs(frameworkLocales) do
 	test(res .. ": locales e instanciação de _t sem falhas", function()

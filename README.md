@@ -23,7 +23,7 @@
 >
 > *I want to express my deepest respect and heartfelt gratitude to the pioneers and brilliant minds behind frameworks like **ESX**, **QBCore**, **Qbox**, and **Ox**. They laid the very foundation on which we all stand today, and they continue to do tireless, incredible work for the ecosystem. Likewise, my warmest thanks go out to every single **modder**, creator, and server administrator who dedicates their nights and weekends to making FiveM an ever-evolving, richer platform.*
 >
-> *The COE Framework is offered to the community with an open heart: 25 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
+> *The COE Framework is offered to the community with an open heart: 26 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
 >
 > — **Marcelo Matz**
 
@@ -41,9 +41,9 @@
 
 ---
 
-## 📦 Open Source Modules (Tier 1 & Tier 2 — 25 Resources)
+## 📦 Open Source Modules (Tier 1 & Tier 2 — 26 Resources)
 
-The `coe-framework` repository provides **25 essential and self-contained resources** under the permissive [MIT License](LICENSE):
+The `coe-framework` repository provides **26 essential and self-contained resources** under the permissive [MIT License](LICENSE):
 
 ### 🏛️ Tier 1 — Core Ecosystem (9 Resources)
 | Resource | Description |
@@ -58,7 +58,7 @@ The `coe-framework` repository provides **25 essential and self-contained resour
 | [`coe_loadscreen`](coe_loadscreen) | Modern loading screen integrated with the server handshake and seamless camera transitions. |
 | [`coe_audit`](coe_audit) | Immutable, durable audit ledger recorded in MariaDB for financial operations and security. |
 
-### 🌐 Tier 2 — Community Base (16 Resources)
+### 🌐 Tier 2 — Community Base (17 Resources)
 | Resource | Description |
 |---|---|
 | [`coe_characters`](coe_characters) | Multi-character 3D scene selector with dynamic slots, state synchronization, and metadata. |
@@ -70,6 +70,7 @@ The `coe-framework` repository provides **25 essential and self-contained resour
 | [`coe_map`](coe_map) | Dynamic minimap blip controller and radar expansion overlay triggered by the Z key. |
 | [`coe_pausemenu`](coe_pausemenu) | Custom ESC pause menu styled with `coe_ui` tokens, featuring rules, guide, and shortcuts. |
 | [`coe_talk`](coe_talk) | 3D native audio integration, submix filters, radio channels, and proximity volume controls. |
+| [`coe_mobile`](coe_mobile) | Basic phone: a number per character, voice calls, contacts, text messages and simple settings, used with the phone item. |
 | [`coe_businesses`](coe_businesses) | Corporate business management, 0–99 rank hierarchy, physical duty clock-in, and payroll. |
 | [`coe_economy`](coe_economy) | Dual-entry immutable financial ledger, `/balance` command, and corporate society accounts. |
 | [`coe_shops`](coe_shops) | 24/7 convenience stores, supermarkets, and shopping carts with weight checks and account billing. |

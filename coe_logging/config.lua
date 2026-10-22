@@ -18,7 +18,8 @@ CoeLoggingConfig = {
 		coe_spawn = 'info',
 		coe_jobs = 'info',
 		coe_shops = 'info',
-		coe_bank = 'info'
+		coe_bank = 'info',
+		coe_mobile = 'info'
 	},
 	-- Quem grava logs. Padrões do framework; pacotes e scripts de terceiros recebem a ACE no server.cfg:
 	--   add_ace resource.<nome> coe.logging allow
@@ -36,7 +37,8 @@ CoeLoggingConfig = {
 		coe_spawn = true,
 		coe_jobs = true,
 		coe_shops = true,
-		coe_bank = true
+		coe_bank = true,
+		coe_mobile = true
 	},
 	AllowedContextFields = {
 		action = true,
