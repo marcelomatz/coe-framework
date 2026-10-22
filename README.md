@@ -10,6 +10,20 @@
 
 ---
 
+## 💬 Uma Mensagem de Marcelo Matz: Devolvendo à Comunidade FiveM
+
+> *"Trabalho com desenvolvimento de software há mais de 25 anos. Ao longo de toda a minha trajetória na tecnologia, poucas coisas me fascinaram tanto quanto a mágica do roleplay e o poder criativo do FiveM. Ver centenas de pessoas conectadas simultaneamente, construindo histórias, cidades e comunidades inteiras em cima de código é algo verdadeiramente inspirador.*
+>
+> *Hoje, o lançamento do **COE Framework** em código aberto é a minha forma de começar a devolver um pouco de tudo aquilo que essa comunidade já me proporcionou ao longo dos anos.*
+>
+> *Quero deixar registrado o meu mais profundo respeito e gratidão a todos os pioneiros e desenvolvedores de frameworks como **ESX**, **QBCore**, **Qbox** e **Ox**, que desbravaram caminhos, criaram os alicerces onde todos nós pisamos e continuam fazendo um trabalho admirável pelo ecossistema. Da mesma forma, meu agradecimento sincero a cada **modder**, criador de conteúdo e administrador de servidor que dedica noites e fins de semana para tornar o ambiente do FiveM cada vez melhor.*
+>
+> *O COE Framework nasce como uma contribuição de coração aberto: 24 resources em arquitetura limpa, com desempenho inegociável (0.00ms idle), totalmente orientados ao servidor, desacoplados via Platform HAL e com banco assíncrono MariaDB 11. Que ele sirva como ferramenta, inspiração e base sólida para que a comunidade continue criando o futuro do roleplay."*
+>
+> — **Marcelo Matz**
+
+---
+
 ## 📖 Visão Geral
 
 O **COE Framework** é uma base de RPG completa e de alta performance para FiveM construída do zero sobre princípios modernos de engenharia de software:
@@ -60,9 +74,9 @@ O repositório `coe-framework` disponibiliza **24 resources** essenciais e autos
 
 ---
 
-## 💎 Módulos Comerciais Avançados (Tier 3)
+## 💎 Módulos Avançados (Planejamento de Suíte Comercial Futura)
 
-Para servidores que demandam recursos avançados de simulação e economia corporativa, o ecossistema COE oferece pacotes proprietários distribuídos via **Tebex Store** com suporte oficial e atualizações automáticas via **Cfx.re Asset Escrow**:
+O foco absoluto e prioritário deste projeto é fornecer e aprimorar continuamente a base **Open-Source** para a comunidade. Como etapa futura, pacotes opcionais complementares de padrão estúdio AAA serão disponibilizados de forma modular sob proteção **Cfx.re Asset Escrow**:
 
 1. **COE OS Suite**: Celulares de última geração, Tablets corporativos, Redes sociais, E-mail criptografado e Ecossistema de aplicativos.
 2. **Automotive Pro & Dyno**: Dinamômetro ao vivo, mecânica minuciosa de motores, desgaste de peças e postos de combustível com precificação flutuante.
