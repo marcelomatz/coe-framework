@@ -1,140 +1,143 @@
+<p align="right">
+  <b>🇺🇸 English</b> • <a href="README.pt-BR.md">🇧🇷 Português</a>
+</p>
+
 # ⚡ COE Framework
 
-> **A Nova Geração da Engenharia FiveM** — Arquitetura Server-Authoritative, desacoplamento nativo via Camada de Plataforma (`Core.Platform`), 0.00ms de resmon em repouso e tipagem estrita.
+> **The Next Generation of FiveM Engineering** — Strict Server-Authoritative Architecture, Hardware Abstraction Layer (`Core.Platform`), 0.00ms Idle Resmon, and End-to-End Type Safety.
 
 [![FiveM](https://img.shields.io/badge/FiveM-FXServer%20b3407+-blue.svg)](https://fivem.net)
 [![Lua](https://img.shields.io/badge/Lua-5.4-blue.svg)](https://www.lua.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Architecture](https://img.shields.io/badge/Architecture-Server--Authoritative-orange.svg)](#arquitetura-e-padroes-de-engenharia)
+[![Architecture](https://img.shields.io/badge/Architecture-Server--Authoritative-orange.svg)](#architecture--engineering-principles)
 [![Documentation](https://img.shields.io/badge/Docs-COE%20Docs-purple.svg)](https://github.com/marcelomatz/coe-docs)
 
 ---
 
-## 💬 Uma Mensagem de Marcelo Matz: Devolvendo à Comunidade FiveM
+## 💬 A Message from Marcelo Matz: Giving Back to the FiveM Community
 
-> *"Trabalho com desenvolvimento de software há mais de 25 anos. Ao longo de toda a minha trajetória na tecnologia, poucas coisas me fascinaram tanto quanto a mágica do roleplay e o poder criativo do FiveM. Ver centenas de pessoas conectadas simultaneamente, construindo histórias, cidades e comunidades inteiras em cima de código é algo verdadeiramente inspirador.*
+> *"I have been developing software for over 25 years. Throughout my entire career in technology, very few things have captivated me as deeply as the magic of roleplay and the boundless creativity of the FiveM community. Seeing hundreds of players simultaneously connected, weaving stories, creating cities, and sustaining vibrant communities through code is nothing short of inspiring.*
 >
-> *Hoje, o lançamento do **COE Framework** em código aberto é a minha forma de começar a devolver um pouco de tudo aquilo que essa comunidade já me proporcionou ao longo dos anos.*
+> *Releasing the **COE Framework** as open source is my humble way of giving back a portion of everything this wonderful community has given me over the years.*
 >
-> *Quero deixar registrado o meu mais profundo respeito e gratidão a todos os pioneiros e desenvolvedores de frameworks como **ESX**, **QBCore**, **Qbox** e **Ox**, que desbravaram caminhos, criaram os alicerces onde todos nós pisamos e continuam fazendo um trabalho admirável pelo ecossistema. Da mesma forma, meu agradecimento sincero a cada **modder**, criador de conteúdo e administrador de servidor que dedica noites e fins de semana para tornar o ambiente do FiveM cada vez melhor.*
+> *I want to express my deepest respect and heartfelt gratitude to the pioneers and brilliant minds behind frameworks like **ESX**, **QBCore**, **Qbox**, and **Ox**. They laid the very foundation on which we all stand today, and they continue to do tireless, incredible work for the ecosystem. Likewise, my warmest thanks go out to every single **modder**, creator, and server administrator who dedicates their nights and weekends to making FiveM an ever-evolving, richer platform.*
 >
-> *O COE Framework nasce como uma contribuição de coração aberto: 24 resources em arquitetura limpa, com desempenho inegociável (0.00ms idle), totalmente orientados ao servidor, desacoplados via Platform HAL e com banco assíncrono MariaDB 11. Que ele sirva como ferramenta, inspiração e base sólida para que a comunidade continue criando o futuro do roleplay."*
+> *The COE Framework is offered to the community with an open heart: 24 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
 >
 > — **Marcelo Matz**
 
 ---
 
-## 📖 Visão Geral
+## 📖 Overview
 
-O **COE Framework** é uma base de RPG completa e de alta performance para FiveM construída do zero sobre princípios modernos de engenharia de software:
+**COE Framework** is a complete, high-performance roleplay foundation for FiveM, engineered from the ground up based on contemporary software architecture:
 
-* **Server-Authoritative Estrito**: O cliente FiveM não toma decisões de estado, saldo ou inventário. Todas as transações são validadas e processadas no servidor.
-* **Camada de Plataforma (`Core.Platform`)**: Nenhuma chamada a natives do GTA V é feita diretamente dentro da lógica de negócio. Todas as interações com o jogo passam por abstrações testáveis e desacopladas.
-* **Performance Real**: Módulos operando a **0.00ms no resmon** em idle através de renderização orientada a eventos e raycasting otimizado.
-* **Internacionalização (i18n)**: Suporte nativo completo a múltiplos idiomas (`pt-BR`, `en-US`), com paridade de chaves e resolução defensiva em tempo de execução.
-* **Banco de Dados Durável**: Conexões assíncronas via pool MariaDB parametrizado com proteção anti-injeção e auditoria durável em tempo real.
+* **Strict Server-Authoritative**: The FiveM client is treated as an untrusted rendering terminal. State transitions, cash balances, and inventory changes are verified and executed strictly on the server.
+* **Platform Abstraction Layer (`Core.Platform`)**: Zero GTA V raw natives in domain logic. Game engine interactions pass through modular, testable abstraction contracts.
+* **Peak Performance**: Resources operating at **0.00ms idle resmon** via event-driven rendering and spatially optimized raycasting.
+* **Dynamic Internationalization (i18n)**: Native asynchronous multi-language engine (`en-US`, `pt-BR`) with 100% key parity and defensive runtime fallback.
+* **Durable Relational Persistence**: MariaDB 11 connection pooling in Node.js 22 LTS with prepared statements, idempotent migrations, and zero-rollback durability.
 
 ---
 
-## 📦 Estrutura dos Módulos Abertos (Tier 1 & Tier 2)
+## 📦 Open Source Modules (Tier 1 & Tier 2 — 24 Resources)
 
-O repositório `coe-framework` disponibiliza **24 resources** essenciais e autossuficientes sob licença [MIT](LICENSE):
+The `coe-framework` repository provides **24 essential and self-contained resources** under the permissive [MIT License](LICENSE):
 
-### 🏛️ Tier 1 — Core do Ecossistema (9 Resources)
-| Resource | Descrição |
+### 🏛️ Tier 1 — Core Ecosystem (9 Resources)
+| Resource | Description |
 |---|---|
-| [`coe_core`](coe_core) | Registro central de entidades, ciclo de vida do jogador, contratos de export e camada HAL (`Core.Platform`). |
-| [`coe_database`](coe_database) | Camada de persistência assíncrona baseada em MariaDB com pool de conexões otimizado e transações seguras. |
-| [`coe_ui`](coe_ui) | Design System NUI com design tokens, suporte a 5 temas dinâmicos e componentes de interface reativos. |
-| [`coetarget`](coetarget) | Sistema de interação contextual por mira/raycasting com detecção espacial de alta frequência (0.00ms em idle). |
-| [`coe_supervisor`](coe_supervisor) | Monitoramento de integridade e telemetria de inicialização de recursos com watchdogs defensivos. |
-| [`coe_logging`](coe_logging) | Pipeline estruturado de telemetria e registro de logs com níveis dinâmicos por recurso. |
-| [`coe_notify`](coe_notify) | Fila de notificações visuais reativa em NUI integrada com o sistema de design tokens. |
-| [`coe_loadscreen`](coe_loadscreen) | Tela de carregamento imersiva integrada ao ciclo de boot e sincronizada com a autenticação. |
-| [`coe_audit`](coe_audit) | Trilha imutável de auditoria financeira, movimentações de itens e ações de jogadores gravadas em MariaDB. |
+| [`coe_core`](coe_core) | Central entity registry, player lifecycle management, export contracts, and Platform HAL (`Core.Platform`). |
+| [`coe_database`](coe_database) | Asynchronous persistence layer via Node.js 22 MariaDB dynamic pooling with parameterized security. |
+| [`coe_ui`](coe_ui) | NUI Design System featuring CSS design tokens, 5 dynamic themes, and accessible reactive components. |
+| [`coetarget`](coetarget) | High-performance 3D raycast eye-targeting with line-of-sight (LOS) checks (0.00ms idle resmon). |
+| [`coe_supervisor`](coe_supervisor) | Topological dependency boot manager, startup telemetry, and watchdog supervision. |
+| [`coe_logging`](coe_logging) | Structured telemetry pipeline with caller allowlist, sanitization, and runtime level overrides. |
+| [`coe_notify`](coe_notify) | Reactive NUI notification queue integrated with universal audio cues and visual tokens. |
+| [`coe_loadscreen`](coe_loadscreen) | Modern loading screen integrated with the server handshake and seamless camera transitions. |
+| [`coe_audit`](coe_audit) | Immutable, durable audit ledger recorded in MariaDB for financial operations and security. |
 
-### 🌐 Tier 2 — Base Comunitária (15 Resources)
-| Resource | Descrição |
+### 🌐 Tier 2 — Community Base (15 Resources)
+| Resource | Description |
 |---|---|
-| [`coe_characters`](coe_characters) | Seleção de múltiplos personagens por identificador com suporte a metadados dinâmicos e slots configuráveis. |
-| [`coe_spawn`](coe_spawn) | Pipeline determinístico de spawn com câmeras cinemáticas de aproximação e seletor de locais. |
-| [`coe_appearance`](coe_appearance) | Customização facial, genética, roupas e vestuário com compatibilidade com modelos MP e freemode. |
-| [`coe_hud`](coe_hud) | Interface do jogador exibindo velocímetro digital, status corporais, combustível, microfone e cinto de segurança. |
-| [`coe_needs`](coe_needs) | Simulação fisiológica de fome, sede, estresse e fadiga com decaimento desacoplado e efeitos dinâmicos. |
-| [`coe_inventory`](coe_inventory) | Inventário em grid interativo com suporte a baús, portas-luvas, porta-malas, bolsos e drop físico no chão. |
-| [`coe_map`](coe_map) | Gerenciamento de blips no minimapa e mapa ampliado por categorias com controle de visibilidade dinâmica. |
-| [`coe_pausemenu`](coe_pausemenu) | Menu de pausa personalizado integrado à NUI com abas de mapa, inventário, configurações e desconexão. |
-| [`coe_talk`](coe_talk) | Integração com o sistema de voz nativo do FiveM (3D Audio), rádios e canais de frequência. |
-| [`coe_businesses`](coe_businesses) | Registro de empresas privadas, quadros societários, balance sheet e gestão de franquias. |
-| [`coe_economy`](coe_economy) | Livro-razão contábil duplo, suporte a moedas primárias/secundárias e validação transacional estrita. |
-| [`coe_shops`](coe_shops) | Mercados, farmácias e lojas de conveniência com cestas de compras, conferência de peso e pagamento por conta ou dinheiro. |
-| [`coe_jobs`](coe_jobs) | Arquitetura de profissões públicas e privadas com níveis de progressão salarial, turnos e permissões por cargo. |
-| [`coe_vehicle_catalog`](coe_vehicle_catalog) | Catálogo unificado de metadados de veículos, classes, especificações técnicas e capacidades de carga. |
-| [`coe_vehicles`](coe_vehicles) | Gestão de propriedade veicular, emplacamento, chaves digitais, trancamento e danos de motor/lataria. |
+| [`coe_characters`](coe_characters) | Multi-character 3D scene selector with dynamic slots, state synchronization, and metadata. |
+| [`coe_spawn`](coe_spawn) | Deterministic player spawn pipeline with cinematic camera transitions and interior restoration. |
+| [`coe_appearance`](coe_appearance) | Character creator (genetic inheritance, facial sculpting, and clothing) compatible with freemode models. |
+| [`coe_hud`](coe_hud) | Customizable HUD (`/hud`), digital speedometer, health/armor gauges, fuel level, and voice range. |
+| [`coe_needs`](coe_needs) | Physiological simulation of hunger, thirst, and stress calculated authoritatively in server batches. |
+| [`coe_inventory`](coe_inventory) | Grid-based drag-and-drop inventory with trunks, gloveboxes, stashes, and 233 WebP/PNG icons. |
+| [`coe_map`](coe_map) | Dynamic minimap blip controller and radar expansion overlay triggered by the Z key. |
+| [`coe_pausemenu`](coe_pausemenu) | Custom ESC pause menu styled with `coe_ui` tokens, featuring rules, guide, and shortcuts. |
+| [`coe_talk`](coe_talk) | 3D native audio integration, submix filters, radio channels, and proximity volume controls. |
+| [`coe_businesses`](coe_businesses) | Corporate business management, 0–99 rank hierarchy, physical duty clock-in, and payroll. |
+| [`coe_economy`](coe_economy) | Dual-entry immutable financial ledger, `/balance` command, and corporate society accounts. |
+| [`coe_shops`](coe_shops) | 24/7 convenience stores, supermarkets, and shopping carts with weight checks and account billing. |
+| [`coe_jobs`](coe_jobs) | Freelance careers (lumberjack, miner, delivery, etc.) with shared career progression and XP. |
+| [`coe_vehicle_catalog`](coe_vehicle_catalog) | Neutral automotive metadata database indexing GTA V vehicle classes, names, and storage specs. |
+| [`coe_vehicles`](coe_vehicles) | Authoritative vehicle ownership, plate management, digital key chains, lock states, and digital odometers. |
 
 ---
 
-## 💎 Módulos Avançados (Planejamento de Suíte Comercial Futura)
+## 💎 Advanced Modules (Future Commercial Suite)
 
-O foco absoluto e prioritário deste projeto é fornecer e aprimorar continuamente a base **Open-Source** para a comunidade. Como etapa futura, pacotes opcionais complementares de padrão estúdio AAA serão disponibilizados de forma modular sob proteção **Cfx.re Asset Escrow**:
+The primary and immediate focus of this project is to consolidate and support the open-source foundation for the FiveM community. In a future phase, complementary AAA studio-grade suites will be made available as modular, optional add-ons under **Cfx.re Asset Escrow**:
 
-1. **COE OS Suite**: Celulares de última geração, Tablets corporativos, Redes sociais, E-mail criptografado e Ecossistema de aplicativos.
-2. **Automotive Pro & Dyno**: Dinamômetro ao vivo, mecânica minuciosa de motores, desgaste de peças e postos de combustível com precificação flutuante.
-3. **Cyber & Underworld**: Terminal Deepweb (Mercado Negro), Criptoativo Noxcoin com cotação dinâmica, invasão de cofres e sistema de facções ilegais.
-4. **Public Safety & Forensics**: Polícia Forense com análise balística e DNA, SAMU com triagem médica real, Central de Despacho CAD e MDT integrado.
-5. **Enterprise & Governance**: Sistema bancário institucional com empréstimos e cartões de crédito, Imobiliária instanciada, Portas de alta segurança e Manufatura avançada.
+1. **COE OS Suite**: Smartphones with WebRTC calling, enterprise Tablets, professional networking, and App Marketplace.
+2. **Automotive Pro & Dyno**: Live dynamometer with torque curves, 16 mechanical subsystems wear, and mixed fuel pumps.
+3. **Cyber & Underworld**: Dark web Onion browser, Noxcoin cryptocurrency mining, stashes, and faction territory wars.
+4. **Public Safety & Forensics**: Forensic police investigations (ballistics & DNA), EMS medical triage, and MDT mobile data terminal.
+5. **Enterprise & Governance**: Commercial banking with credit scoring, instanced housing in routing buckets, and high-security doors.
 
 ---
 
-## 🚀 Como Iniciar
+## 🚀 Quickstart
 
-### Pré-requisitos
-* FiveM Server Artifacts **b3407** ou superior (Windows ou Linux).
-* MariaDB Server **10.6+** ou MySQL **8.0+**.
-* Lua **5.4** habilitado no `fxmanifest.lua` (`lua54 'yes'`).
+### Prerequisites
+* FiveM Server Artifacts **b3407+** or recommended production build (Windows or Linux).
+* MariaDB Server **10.6+** or MySQL **8.0+** with `utf8mb4_unicode_ci`.
+* Lua **5.4** runtime enabled (`lua54 'yes'`).
 
-### 1. Clonagem e Configuração
+### 1. Installation
 ```bash
-# Clone o repositório dentro do diretório de resources do seu servidor
+# Clone the repository into your server resources directory
 cd txData/YOUR_SERVER/resources
 git clone https://github.com/marcelomatz/coe-framework.git [coe-framework]
 ```
 
-### 2. Configuração do `server.cfg`
-Certifique-se de carregar o supervisor antes de qualquer outro módulo:
+### 2. Configure `server.cfg`
+Ensure `coe_supervisor` is launched prior to other modules:
 ```cfg
-# Inicialização do ecossistema COE
 ensure coe_supervisor
 ensure [coe-framework]
 ```
 
-### 3. Validação de Contratos
-Antes de iniciar o servidor em produção, execute a suíte de auditoria local:
+### 3. Validate Contracts
+Run the offline verification suite before starting your live environment:
 ```bash
 cd [coe-framework]
-lua tools/check_contracts.lua
+lua tools/check_contracts.lua --strict --audit-natives --audit-locales
 lua tools/smoke_boot_test.lua
 ```
 
 ---
 
-## 🛠️ Regras de Contribuição & CLA
+## 🛠️ Contributing & CLA
 
-Contribuições da comunidade são muito bem-vindas! Para submeter código, melhorias ou correções:
-1. Leia atentamente o [Guia de Contribuição e Contributor License Agreement (CLA)](CONTRIBUTING.md).
-2. Certifique-se de que nenhum código viola as 6 regras de ouro (Server-Authoritative, desacoplamento HAL, zero natives no domínio, i18n em todas as mensagens).
-3. Abra um Pull Request detalhando as alterações.
-
----
-
-## 📄 Licença
-
-O código contido neste repositório está licenciado sob a licença [MIT](LICENSE).
+Community contributions are warmly welcomed! To contribute code, translations, or bug fixes:
+1. Review the [Contributing Guidelines & Contributor License Agreement (CLA)](CONTRIBUTING.md).
+2. Ensure new features adhere to the architectural rules (Server-Authoritative, Platform HAL decoupling, strict i18n).
+3. Open a Pull Request with a clear description of your changes.
 
 ---
 
-## 🌐 Links e Comunidade
+## 📄 License
 
-* **Documentação Oficial**: [COE Docs](https://github.com/marcelomatz/coe-docs)
-* **Website Oficial**: [COE Framework](https://coe.matz.digital)
-* **Reportar Bugs / Issues**: [GitHub Issues](https://github.com/marcelomatz/coe-framework/issues)
+The code in this repository is licensed under the permissive [MIT License](LICENSE).
+
+---
+
+## 🌐 Links & Community
+
+* **Official Documentation**: [COE Docs](https://github.com/marcelomatz/coe-docs)
+* **Official Website**: [COE Framework](https://coe.matz.digital)
+* **Issue Tracker**: [GitHub Issues](https://github.com/marcelomatz/coe-framework/issues)
