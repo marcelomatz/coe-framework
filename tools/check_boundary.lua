@@ -97,13 +97,13 @@ local patterns = {
 	'%f[%w_](coe[%w_]+)%s*=%s*true',
 	'GetInvokingResource%(%)%s*[~=]=%s*[\'"](coe[%w_]+)[\'"]'
 }
--- Chamadas cujo primeiro argumento é nome de convar, comando, tecla ou KVP (não de resource).
+-- Chamadas cujo primeiro argumento é nome de convar, comando, tecla, KVP ou state bag (não de resource).
 local notResourceCalls = {
 	GetConvar = true, GetConvarInt = true, RegisterCommand = true, RegisterKeyMapping = true, ExecuteCommand = true,
 	SetResourceKvp = true, SetResourceKvpInt = true, GetResourceKvpString = true, GetResourceKvpInt = true,
 	DeleteResourceKvp = true, AddEventHandler = true, RegisterNetEvent = true, TriggerEvent = true,
 	TriggerServerEvent = true, TriggerClientEvent = true, RegisterNUICallback = true, post = true,
-	getElementById = true, querySelector = true
+	getElementById = true, querySelector = true, AddStateBagChangeHandler = true
 }
 local callPattern = '([%w_%.:]+)%(%s*[\'"](coe[%w_]+)[\'"]'
 

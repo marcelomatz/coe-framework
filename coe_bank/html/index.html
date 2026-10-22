@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/surfaces.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/apps.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="nui://coe_ui/html/perspective.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/prompt.css">
+	<script src="nui://coe_ui/html/prompt.js"></script>
+	<link rel="stylesheet" href="bank.css">
+</head>
+<body>
+	<!-- Agência e caixa eletrônico: mesmo painel; o modo (agency/atm) troca a classe e as seções. -->
+	<main id="bank" class="bk coe-panel coe-panel-enter" hidden aria-labelledby="bk-title">
+		<header class="bk-head">
+			<div class="bk-brand">
+				<span class="bk-logo" aria-hidden="true">COE<small>BANK</small></span>
+				<div class="bk-heading">
+					<p id="bk-eyebrow" class="bk-eyebrow"></p>
+					<h1 id="bk-title"></h1>
+				</div>
+			</div>
+			<button id="bk-close" class="coe-button" type="button">Fechar <kbd>Esc</kbd></button>
+		</header>
+		<div class="bk-layout">
+			<aside class="bk-side">
+				<div id="bk-summary" class="bk-summary"></div>
+				<nav id="bk-tabs" class="bk-tabs" aria-label="Seções"></nav>
+			</aside>
+			<section id="bk-body" class="bk-body"></section>
+		</div>
+		<p id="bk-status" class="bk-status" role="status" aria-live="polite"></p>
+	</main>
+	<script src="bank.js"></script>
+</body>
+</html>

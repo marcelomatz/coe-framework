@@ -16,7 +16,8 @@ local allowedResources = {
 	coe_inventory = true,
 	coe_vehicles = true,
 	coe_jobs = true,
-	coe_shops = true
+	coe_shops = true,
+	coe_bank = true
 }
 
 exports('Notify', function(playerId, kind, message, duration)

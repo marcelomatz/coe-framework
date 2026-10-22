@@ -9,7 +9,8 @@ CoeAuditConfig = {
 		coe_vehicle_catalog = true,
 		coe_economy = true,
 		coe_businesses = true,
-		coe_shops = true
+		coe_shops = true,
+		coe_bank = true
 	},
 	AllowedContextFields = {
 		action = true,
