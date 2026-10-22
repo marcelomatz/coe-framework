@@ -3,28 +3,32 @@ $minFxVersion: 12913
 $onesync: on
 
 name: "COE Framework - FiveM Enhanced Gen9"
-version: "1.0.0"
+version: "1.0.1"
 author: "COE Roleplay Team"
 description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 24 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
 
 tasks:
-  # 1. Download official CitizenFX default server data (mapmanager, chat, spawnmanager, sessionmanager, etc.)
+  # 1. Download official CitizenFX default server data (chat, spawnmanager, sessionmanager, hardcap, etc.)
   - action: download_github
     src: https://github.com/citizenfx/cfx-server-data
     ref: master
     subpath: resources
     dest: ./resources/[cfx-default]
 
-  # 2. Download COE Framework open-source resources
+  # 2. Remove obsolete legacy gamemodes and maps (fivem-map-hipster / skater) that conflict on boot
+  - action: remove_path
+    path: ./resources/[cfx-default]/[gamemodes]
+
+  # 3. Download COE Framework open-source resources
   - action: download_github
     src: https://github.com/marcelomatz/coe-framework
     ref: main
     dest: ./resources/[coe-framework]
 
-  # 3. Connect to Database (auto creates the database if not existing)
+  # 4. Connect to Database (auto creates the database if not existing)
   - action: connect_database
 
-  # 4. Generate optimized server.cfg
+  # 5. Generate optimized server.cfg
   - action: write_file
     file: server.cfg
     data: |
@@ -90,7 +94,11 @@ tasks:
       ## --------------------------------------------------------------------
       ## Recursos Base do CitizenFX
       ## --------------------------------------------------------------------
-      ensure [cfx-default]
+      ensure chat
+      ensure spawnmanager
+      ensure sessionmanager
+      ensure hardcap
+      ensure baseevents
 
       ## --------------------------------------------------------------------
       ## Ordem Estrita de Boot - COE Framework
