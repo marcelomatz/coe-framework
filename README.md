@@ -10,7 +10,8 @@
 [![Lua](https://img.shields.io/badge/Lua-5.4-blue.svg)](https://www.lua.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Architecture](https://img.shields.io/badge/Architecture-Server--Authoritative-orange.svg)](#architecture--engineering-principles)
-[![Documentation](https://img.shields.io/badge/Docs-COE%20Docs-purple.svg)](https://github.com/marcelomatz/coe-docs)
+[![Website](https://img.shields.io/badge/Website-coeroleplay.app-success.svg)](https://www.coeroleplay.app/)
+[![Documentation](https://img.shields.io/badge/Docs-docs.coeroleplay.app-purple.svg)](https://docs.coeroleplay.app/)
 
 ---
 
@@ -148,6 +149,6 @@ The code in this repository is licensed under the permissive [MIT License](LICEN
 
 ## 🌐 Links & Community
 
-* **Official Documentation**: [COE Docs](https://github.com/marcelomatz/coe-docs)
-* **Official Website**: [COE Framework](https://coe.matz.digital)
+* **Official Website**: [www.coeroleplay.app](https://www.coeroleplay.app/)
+* **Official Documentation**: [docs.coeroleplay.app](https://docs.coeroleplay.app/)
 * **Issue Tracker**: [GitHub Issues](https://github.com/marcelomatz/coe-framework/issues)
