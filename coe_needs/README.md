@@ -11,7 +11,7 @@ Fome, sede e estresse por personagem. Escala 0-100: fome/sede 100 = saciado; est
 
 ## API
 
-Servidor: `exports.coe_needs:GetNeeds(source)`, `AddNeed(source, 'stress', 5)`, `SetNeed(source, 'hunger', 50)` (`AddNeed`/`SetNeed` só para resources em `Config.Needs.AllowedResources`; retornam `true` ou um código de erro). Roubos, crimes e eventos devem chamar `AddNeed(source, 'stress', n)`.
+Servidor: `exports.coe_needs:GetNeeds(source)`, `AddNeed(source, 'stress', 5)`, `SetNeed(source, 'hunger', 50)` (`AddNeed`/`SetNeed` só para os padrões de `Config.Needs.AllowedResources` e quem tem a ACE `coe.needs`; retornam `true` ou um código de erro). Roubos, crimes e eventos devem chamar `AddNeed(source, 'stress', n)`.
 
 Client: `exports.coe_needs:GetState()` e o evento local `coe_needs:changed`.
 

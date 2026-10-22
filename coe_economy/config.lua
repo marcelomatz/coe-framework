@@ -10,49 +10,33 @@ EconomyConfig = {
 	-- Ciclo da folha de pagamento dos negócios (minutos). 0 desliga o pagamento automático.
 	PayrollIntervalMinutes = 30,
 
-	-- Somente estes resources movimentam dinheiro; o nome vem do runtime, nunca do payload.
+	-- Quem movimenta dinheiro. O nome vem do runtime, nunca do payload. As listas abaixo são os padrões do framework;
+	-- pacotes e scripts de terceiros recebem a capacidade por ACE no server.cfg, sem editar este arquivo:
+	--   add_ace resource.<nome> coe.economy.money allow          (contas de personagem)
+	--   add_ace resource.<nome> coe.economy.society.collect allow (receita no caixa de um negócio)
+	--   add_ace resource.<nome> coe.economy.society.pay allow     (despesa do caixa de um negócio)
+	--   add_ace resource.<nome> coe.economy.society.bank allow    (conta empresarial e folha manual)
+	--   add_ace resource.<nome> coe.economy.admin allow           (painel de staff: resumo, extratos, folha)
+	Ace = {
+		Money = 'coe.economy.money',
+		Collect = 'coe.economy.society.collect',
+		Pay = 'coe.economy.society.pay',
+		Bank = 'coe.economy.society.bank',
+		Admin = 'coe.economy.admin'
+	},
 	AllowedResources = {
 		coe_economy = true,
-		coe_admin = true,
-		coe_banking = true,
 		coe_businesses = true,
-		coe_garages = true,
-		coe_mechanic = true,
-		coe_housing = true,
-		coe_police = true,
-		coe_apps = true,
-		coe_telecom = true,
-		coe_news = true,
 		coe_pausemenu = true,
-		-- Corretora cripto (compra e venda) e energia dos computadores de mineração.
-		coe_crypto = true,
-		coe_deepweb = true,
-		-- Plataforma de empregos: paga os jobs dos pacotes (coe_basicjobs...) e cobra o depósito dos veículos.
+		-- Plataforma de empregos: paga os jobs e cobra o depósito dos veículos.
 		coe_jobs = true,
 		-- Lojas de conveniência: receita das vendas no caixa do negócio e saldo no relatório da gestão.
-		coe_shops = true,
-		-- Postos: receita das bombas no caixa do negócio.
-		coe_fuel = true
+		coe_shops = true
 	},
 	SocietyCollectors = {
-		-- Vendas das lojas (coe_shops): o cliente já pagou (espécie, cartão ou Carteira); a receita entra no caixa.
-		coe_shops = true,
-		-- Vendas das bombas (coe_fuel): o cliente já pagou; a receita entra no caixa do posto.
-		coe_fuel = true,
-		coe_police = true,
-		coe_housing = true,
-		coe_banking = true,
-		coe_news = true
+		-- Vendas das lojas (coe_shops): o cliente já pagou; a receita entra no caixa.
+		coe_shops = true
 	},
-	-- Conta bancária empresarial (coe_banking): movimenta a sociedade em nome do negócio (exports Bank*) e roda a
-	-- folha manualmente. Quem pode cada operação é conferido no banco pelas permissões de cargo.
-	SocietyBankers = {
-		coe_banking = true
-	},
-	-- Podem cobrar despesas da sociedade (sem personagem), ex.: aluguel de imóvel comercial.
-	SocietyPayers = {
-		coe_housing = true,
-		coe_banking = true,
-		coe_news = true
-	}
+	SocietyBankers = {},
+	SocietyPayers = {}
 }

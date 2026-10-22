@@ -15,9 +15,11 @@ ShopsConfig = {
 	MaxStock = 500,
 	-- Vendas guardadas por loja para o relatório da gestão.
 	ReportSales = 30,
-	-- Meios de pagamento no balcão: espécie (item `money`), Carteira do celular (cartão virtual ou físico vinculado,
-	-- no crédito) e cartão físico na maquininha (com a senha).
-	Payments = { cash = true, wallet = true, card = true },
+	-- Meios de pagamento no balcão. Espécie (item `money`) é daqui; os demais (cartão na maquininha, carteira do
+	-- celular...) são registrados por outros resources com RegisterPaymentMethod e entram ligados. `id = false` desliga.
+	Payments = { cash = true },
+	-- Registrar meios de pagamento: ACE no server.cfg (add_ace resource.<nome> coe.shops.payments allow).
+	PaymentsAce = 'coe.shops.payments',
 
 	-- Quem vê a gestão das lojas da staff (relatório de vendas). Lojas de jogadores usam o acesso do coe_businesses.
 	ManageAce = 'coe_shops.manage',

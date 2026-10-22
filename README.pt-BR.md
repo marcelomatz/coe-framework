@@ -110,6 +110,16 @@ Certifique-se de carregar o supervisor antes de qualquer outro módulo:
 # Inicialização do ecossistema COE
 ensure coe_supervisor
 ensure [coe-framework]
+
+# Staff: administrar grupos sem painel (/grupo definir <ID> <grupo> [grau])
+add_ace group.admin command.grupo allow
+```
+
+Scripts de terceiros se integram sem editar o framework: cada um recebe no `server.cfg` só as capacidades que usa, por ACE no principal do resource (lista em `ARCHITECTURE.md` do coe-docs):
+
+```cfg
+add_ace resource.meu_script coe.database allow
+add_ace resource.meu_script coe.economy.money allow
 ```
 
 ### 3. Validação de Contratos

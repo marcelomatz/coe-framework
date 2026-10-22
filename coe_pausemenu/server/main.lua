@@ -1,5 +1,25 @@
 local startTime = os.time()
 
+-- Facção no dossiê: provedores registrados por outros resources (ACE coe.pausemenu.profile no server.cfg). Cada um
+-- informa o export que recebe o characterId e devolve { label, grade } ou nil. O registro some quando o resource para.
+local factionProviders = {}
+
+exports('RegisterFactionProvider', function(exportName)
+	local resource = GetInvokingResource()
+	if not CoeAccess.Allowed(resource, 'coe.pausemenu.profile') then
+		return { error = 'forbidden' }
+	end
+	if type(exportName) ~= 'string' or #exportName > 64 or not exportName:match('^[%a_][%w_]*$') then
+		return { error = 'invalid_provider' }
+	end
+	factionProviders[resource] = exportName
+	return true
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+	factionProviders[resource] = nil
+end)
+
 local function getCharacterData(source)
 	local char = nil
 	pcall(function()
@@ -82,17 +102,18 @@ local function getCharacterData(source)
 		end
 	end)
 
-	-- Consulta coe_factions
-	pcall(function()
-		if exports.coe_factions and exports.coe_factions.Memberships and charId then
-			local memberships = exports.coe_factions:Memberships(charId)
-			if memberships and #memberships > 0 then
-				local m = memberships[1]
-				factionTitle = m.factionName or m.factionId or factionTitle
-				factionGrade = m.gradeName or tostring(m.grade or factionGrade)
-			end
+	-- Provedores registrados (o primeiro que responder vale)
+	for resource, exportName in pairs(charId and factionProviders or {}) do
+		local ok, info = pcall(function()
+			local target = exports[resource]
+			return target[exportName](target, charId)
+		end)
+		if ok and type(info) == 'table' and type(info.label) == 'string' then
+			factionTitle = info.label
+			factionGrade = tostring(info.grade or factionGrade)
+			break
 		end
-	end)
+	end
 
 	return {
 		name = fullName,

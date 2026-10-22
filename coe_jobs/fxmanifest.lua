@@ -24,6 +24,7 @@ shared_scripts {
 }
 
 server_scripts {
+	'@coe_core/lib/access.lua',
 	'@coe_core/lib/migrations.lua',
 	'jobs/*.lua',
 	'shared/guide.lua',

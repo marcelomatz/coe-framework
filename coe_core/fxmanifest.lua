@@ -37,6 +37,7 @@ shared_scripts {
 client_script 'core/client/init.lua'
 
 server_scripts {
+	'lib/access.lua',
 	'lib/logger.lua',
 	'core/server/database.lua',
 	'core/server/migrations.lua',

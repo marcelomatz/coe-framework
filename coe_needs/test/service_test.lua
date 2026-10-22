@@ -33,6 +33,7 @@ NeedsPersistence = {
 	Save = function(id, s) saved[id] = { hunger = s.hunger, thirst = s.thirst, stress = s.stress }; return true end
 }
 
+dofile('../coe_core/lib/access.lua')
 dofile('config.lua')
 dofile('domain/needs.lua')
 dofile('application/service.lua')
@@ -78,6 +79,10 @@ netEvents['coe_needs:activity']('idle')
 -- exports com autorizacao
 invoking = 'resource_estranho'
 eq(exportsMap.AddNeed(7, 'hunger', 10), 'caller_not_allowed', 'chamador nao autorizado')
+IsPrincipalAceAllowed = function(principal, ace) return principal == 'resource.coe_admin' and ace == 'coe.needs' end
+invoking = 'coe_admin'
+eq(exportsMap.SetNeed(7, 'hunger', 40), true, 'resource com ACE coe.needs autorizado')
+IsPrincipalAceAllowed = nil
 invoking = 'coe_inventory'
 eq(exportsMap.SetNeed(7, 'hunger', 50), true, 'SetNeed autorizado')
 eq(exportsMap.AddNeed(7, 'thirst', 'x'), 'invalid_need', 'delta invalido')

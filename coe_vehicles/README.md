@@ -8,7 +8,7 @@ Registro persistente de veículos de jogador: dono, modelo, placa, estado e **Mi
 - O client do motorista amostra a posição e reporta em lote (`ReportIntervalMs`).
 - O servidor valida cada reporte: o veículo precisa ter sido criado pelo servidor, o remetente precisa ser o motorista e a distância é limitada por um crédito proporcional ao tempo decorrido. Reportes inválidos são recusados e registrados.
 - O contador fica em memória e é gravado em lotes transacionais (`FlushIntervalMs`), ao guardar o veículo, ao remover a entidade e ao parar o resource.
-- Somente `MileageEditors` (admin e, futuramente, a mecânica) corrigem o valor, sempre com auditoria.
+- Só quem tem `coe.vehicles.mileage` (ACE no `server.cfg`, ex.: painel e oficina) corrige o valor, sempre com auditoria.
 - State bags no veículo: `coe:vehicleId` e `coe:mileage` (atualizado a cada 100 m).
 
 ## Chaves
@@ -24,14 +24,14 @@ Registro persistente de veículos de jogador: dono, modelo, placa, estado e **Mi
 
 | Export | Quem pode chamar | Retorno |
 | --- | --- | --- |
-| `Create(data)` | `WriterResources` | veículo ou código de erro |
+| `Create(data)` | `coe.vehicles.write` | veículo ou código de erro |
 | `Get(id)`, `GetByPlate(plate)`, `ListByOwner(characterId)`, `GetMileage(id)` | qualquer um | dados ou erro |
-| `SetMileage(id, meters)` | `MileageEditors` | `true` ou erro |
-| `Spawn(id, x, y, z, heading, type)` | `WriterResources` | netId ou erro |
-| `Store(id)` | `WriterResources` | `true` ou erro |
+| `SetMileage(id, meters)` | `coe.vehicles.mileage` | `true` ou erro |
+| `Spawn(id, x, y, z, heading, type)` | `coe.vehicles.write` | netId ou erro |
+| `Store(id)` | `coe.vehicles.write` | `true` ou erro |
 | `IsReady()` | qualquer um | boolean |
 | `HasKey(characterId, id)`, `ListKeyHolders(id)` | qualquer um | boolean / lista |
-| `GiveKey(id, characterId)`, `RevokeKey(id, characterId)` | `WriterResources` | `true` ou erro |
+| `GiveKey(id, characterId)`, `RevokeKey(id, characterId)` | `coe.vehicles.write` | `true` ou erro |
 
 Contrato completo em `types.lua`.
 

@@ -19,6 +19,7 @@ shared_scripts {
 client_scripts { 'client.lua' }
 
 server_scripts {
+	'@coe_core/lib/access.lua',
 	'@coe_core/lib/init.lua',
 	'@coe_core/lib/logger.lua',
 	'@coe_core/lib/migrations.lua',

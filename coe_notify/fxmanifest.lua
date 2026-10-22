@@ -18,4 +18,4 @@ files {
 }
 
 client_scripts { 'client.lua', '@coe_ui/theme_bridge.lua' }
-server_script 'server.lua'
+server_scripts { '@coe_core/lib/access.lua', 'server.lua' }

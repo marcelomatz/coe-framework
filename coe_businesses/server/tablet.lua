@@ -107,7 +107,8 @@ function actions.overview(deps, ctx, business)
 			grade = grade and grade.label or (owner and 'Proprietário' or nil),
 			staffCount = #business.staff, onDuty = onDuty,
 			rules = business.rules,
-			shop = deps.isShop ~= nil and deps.isShop(business.id) == true or nil
+			-- Abas registradas por outros resources (RegisterTab) visíveis para este negócio.
+			tabs = deps.tabs ~= nil and deps.tabs(business.id) or {}
 		},
 		can = {
 			funds = deps.can(business.id, ctx.characterId, 'business.funds'),
@@ -288,28 +289,21 @@ function actions.withdraw(deps, ctx, business, payload)
 	return { ok = true }
 end
 
--- Conta bancária empresarial (coe_banking): a aba Banco do app encaminha a operação ao banco, que confere as
--- permissões de cargo (banking.*) e devolve a conta atualizada. payload: { op, ... }.
-function actions.bank(deps, ctx, business, payload)
-	if not deps.bank then
-		return fail('bank_unavailable')
+-- Aba registrada por outro resource (RegisterTab): encaminha ao export `handler` dele com o negócio do app e quem
+-- chamou; o resource confere o acesso de cada operação. payload: { tab, op, ... } (o `tab` não é encaminhado).
+function actions.tab(deps, ctx, business, payload)
+	if type(payload.tab) ~= 'string' or not deps.tabCall then
+		return fail('tab_unavailable')
 	end
-	local result = deps.bank(ctx.source, ctx.characterId, business.id, payload)
+	local forward = {}
+	for key, value in pairs(payload) do
+		if key ~= 'tab' then
+			forward[key] = value
+		end
+	end
+	local result = deps.tabCall(payload.tab, ctx.source, ctx.characterId, business.id, forward)
 	if type(result) ~= 'table' then
-		return fail('bank_unavailable')
-	end
-	return result
-end
-
--- Loja (coe_shops): a aba Loja encaminha ao export BusinessTablet das lojas, que confere o acesso de cada operação
--- (preços com shops.prices, vendas para quem gerencia). payload: { op = 'overview' | 'price', ... }.
-function actions.shop(deps, ctx, business, payload)
-	if not deps.shop then
-		return fail('shop_unavailable')
-	end
-	local result = deps.shop(ctx.source, ctx.characterId, business.id, payload)
-	if type(result) ~= 'table' then
-		return fail('shop_unavailable')
+		return fail('tab_unavailable')
 	end
 	return result
 end
@@ -394,7 +388,7 @@ function actions.fleetAccess(deps, ctx, business, payload)
 	return { ok = true }
 end
 
--- Propriedades: garagens de frota (coe_garages) e imóveis comerciais (coe_housing) do negócio.
+-- Propriedades: garagens de frota (provedor fleet) e imóveis comerciais (provedor properties) do negócio.
 function actions.properties(deps, _, business)
 	local garages, buildings = deps.fleet(business.id), deps.properties(business.id)
 	local garagesOk = type(garages) == 'table' and garages.error == nil
@@ -559,7 +553,7 @@ end
 
 -- deps: get(id), currentDuty(source), characterOf(source), can(id, characterId, permission), onDuty(id, characterId),
 -- balance(id), ledger(id, limit), deposit/withdraw(id, characterId, amount), save(raw), resolve(stateId), permissions(),
--- fleet(id), setFleetStaff(id, vehicleId, bool), properties(id), audit(event, ctx, target, count), bank(...), shop(...), isShop(id),
+-- fleet(id), setFleetStaff(id, vehicleId, bool), properties(id), audit(event, ctx, target, count), bank(...), shop(...), isShop(id), fuel(...), isStation(id),
 -- offers (tabela por characterId), now(), nextOfferId(), sendOffer(offer), maxPartners.
 -- Pode usar o app do negócio agora: o dono e os cargos com business.remote (gerentes) a distância; o resto da
 -- equipe só de ponto (canWork). access: BusinessAccess.Evaluate.

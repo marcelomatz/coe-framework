@@ -253,38 +253,27 @@ eq(call(1, 'addPartner', { stateId = 'ONLINE01' }).ok, true, 'novo convite')
 business.owner = { characterId = '11', name = 'Gerente' }
 eq(BusinessTablet.Answer(deps, 5, sentOffers[#sentOffers].id, true).error, 'no_business', 'convite de ex-dono')
 
--- Aba Banco: encaminha ao coe_banking com o negócio do app e quem chamou; sem banco, avisa
+-- Abas registradas por outros resources: aparecem no resumo e o app encaminha com o negócio do app e quem chamou
 business.owner = { characterId = '10', name = 'Dono' }
-eq(call(1, 'bank', { op = 'overview' }).error, 'bank_unavailable', 'sem coe_banking a aba Banco avisa')
+eq(#call(1, 'overview').business.tabs, 0, 'sem extensões não há abas extras')
+eq(call(1, 'tab', { tab = 'bank', op = 'overview' }).error, 'tab_unavailable', 'aba não registrada')
+deps.tabs = function(id) return id == 'rest_a' and { { id = 'bank', label = 'Banco', script = 'nui://pack/html/business.js', replaces = 'finance' } } or {} end
+eq(call(1, 'overview').business.tabs[1].replaces, 'finance', 'aba no resumo')
 local forwarded
-deps.bank = function(source, characterId, businessId, payload)
-	forwarded = { source = source, characterId = characterId, businessId = businessId, op = payload.op }
-	return { ok = true, bank = { mode = 'business' } }
-end
-eq(call(1, 'bank', { op = 'overview' }).bank.mode, 'business', 'conta empresarial pelo tablet')
-eq(forwarded.businessId, 'rest_a', 'negócio do app, não do payload')
-eq(forwarded.characterId, '10', 'personagem de quem chamou')
-eq(forwarded.op, 'overview', 'operação encaminhada')
-deps.bank = function() return nil end
-eq(call(1, 'bank', { op = 'overview' }).error, 'bank_unavailable', 'banco sem resposta')
-deps.bank = nil
-
--- Aba Loja: só aparece para lojas do coe_shops; encaminha com o negócio do app
-eq(call(1, 'overview').business.shop, nil, 'sem coe_shops nao e loja')
-eq(call(1, 'shop', { op = 'overview' }).error, 'shop_unavailable', 'sem coe_shops a aba Loja avisa')
-deps.isShop = function(id) return id == 'rest_a' end
-eq(call(1, 'overview').business.shop, true, 'loja marcada no resumo')
-local shopCall
-deps.shop = function(source, characterId, businessId, payload)
-	shopCall = { source = source, characterId = characterId, businessId = businessId, op = payload.op, price = payload.price }
+deps.tabCall = function(id, source, characterId, businessId, payload)
+	forwarded = { id = id, source = source, characterId = characterId, businessId = businessId, op = payload.op, tab = payload.tab, price = payload.price }
 	return { ok = true, mode = 'player' }
 end
-eq(call(1, 'shop', { op = 'price', productId = 'water', price = 6 }).mode, 'player', 'loja pelo tablet')
-eq(shopCall.businessId, 'rest_a', 'loja do app')
-eq(shopCall.characterId, '10', 'quem chamou')
-eq(shopCall.price, 6, 'payload encaminhado')
-deps.shop = function() return nil end
-eq(call(1, 'shop', {}).error, 'shop_unavailable', 'loja sem resposta')
-deps.shop, deps.isShop = nil, nil
+eq(call(1, 'tab', { tab = 'bank', op = 'price', price = 6, businessId = 'outro' }).mode, 'player', 'aba pelo tablet')
+eq(forwarded.id, 'bank', 'aba pedida')
+eq(forwarded.businessId, 'rest_a', 'negócio do app, não do payload')
+eq(forwarded.characterId, '10', 'personagem de quem chamou')
+eq(forwarded.op, 'price', 'operação encaminhada')
+eq(forwarded.price, 6, 'payload encaminhado')
+eq(forwarded.tab, nil, 'o id da aba não vai no payload')
+eq(call(1, 'tab', { op = 'overview' }).error, 'tab_unavailable', 'sem id de aba')
+deps.tabCall = function() return nil end
+eq(call(1, 'tab', { tab = 'bank' }).error, 'tab_unavailable', 'aba sem resposta')
+deps.tabs, deps.tabCall = nil, nil
 
 print('tablet tests passed')

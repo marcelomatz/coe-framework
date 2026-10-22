@@ -47,9 +47,9 @@ exports('GetThemes', function()
 	return { current = current, options = UiConfig.Themes }
 end)
 
--- Retorna true ou um código de erro; só aceita chamada de UiConfig.Caller.
+-- Retorna true ou um código de erro; só aceita resource com a ACE UiConfig.Ace (coe.ui.theme).
 exports('SetTheme', function(name)
-	if GetInvokingResource() ~= UiConfig.Caller then
+	if not CoeAccess.Allowed(GetInvokingResource(), UiConfig.Ace) then
 		return 'forbidden'
 	end
 	if not isValid(name) then

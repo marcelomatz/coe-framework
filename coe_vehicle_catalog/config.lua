@@ -1,9 +1,8 @@
 CoeVehicleCatalogConfig = {
-	-- Quem pode alterar overrides e pedir nova varredura (nome vem do runtime).
-	WriterResources = {
-		coe_admin = true,
-		coe_vehicle_catalog = true
-	},
+	-- Quem altera overrides e pede nova varredura (nome vem do runtime). Padrão: o próprio resource; painéis e scripts
+	-- de terceiros recebem a ACE no server.cfg: add_ace resource.<nome> coe.vehicles.catalog allow
+	Ace = 'coe.vehicles.catalog',
+	WriterResources = { coe_vehicle_catalog = true },
 	-- Preço usado quando não há override; o valor real vem de overrides/concessionária.
 	DefaultPrice = 20000,
 	PriceByClass = {

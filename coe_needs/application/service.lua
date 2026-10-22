@@ -131,7 +131,7 @@ end
 
 local function callerAllowed()
 	local caller = GetInvokingResource()
-	return caller == nil or settings.AllowedResources[caller] == true
+	return caller == nil or CoeAccess.Allowed(caller, settings.Ace, settings.AllowedResources)
 end
 
 exports('GetNeeds', function(source)

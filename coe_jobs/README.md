@@ -177,6 +177,6 @@ natives simulados) e `lua test\jobs_test.lua` (empregos de `jobs/` e faixa de sa
 
 ## Dependências e allowlists
 
-`coe_core`, `coe_database`, `coe_economy`, `coe_logging`, `coe_notify`, `coetarget`. O `coe_jobs` está em
-`ALLOWED_CALLERS` do `coe_database`, `AllowedResources` do `coe_economy` e do `coe_logging`, na lista do
-`coe_notify` e no `coe_supervisor`.
+`coe_core`, `coe_database`, `coe_economy`, `coe_logging`, `coe_notify`, `coetarget`. O `coe_jobs` está nos padrões
+de acesso desses resources (banco, dinheiro, logs e notificações) e no `coe_supervisor`. O app Carreira aceita o
+tablet que tiver a ACE `coe.jobs.tablet` (`add_ace resource.coe_tablet coe.jobs.tablet allow`).

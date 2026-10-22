@@ -61,20 +61,22 @@ exports = {
 			}
 		end
 	},
-	coe_factions = {
-		Memberships = function(charId)
-			return {
-				{
-					factionId = 'tactical_squad',
-					factionName = 'COE Tático',
-					grade = 2,
-					gradeName = 'Operador'
-				}
-			}
+	-- Pacote de facções simulado: registra o provedor do dossiê (ACE coe.pausemenu.profile).
+	pack_factions = {
+		PauseMenuFaction = function(_, charId)
+			return charId == 10 and { label = 'COE Tático', grade = 'Operador' } or nil
 		end
 	}
 }
+local exported = {}
+setmetatable(exports, { __call = function(_, name, fn) exported[name] = fn end })
+local handlers = {}
+AddEventHandler = function(name, fn) handlers[name] = fn end
+local invoking = nil
+GetInvokingResource = function() return invoking end
+IsPrincipalAceAllowed = function(principal, ace) return principal == 'resource.pack_factions' and ace == 'coe.pausemenu.profile' end
 
+dofile('../coe_core/lib/access.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 dofile('server/main.lua')
@@ -84,6 +86,14 @@ local function eq(a, b, msg)
 		error(('%s: esperado %s, obtido %s'):format(msg, tostring(b), tostring(a)))
 	end
 end
+
+-- Provedor de facção: só com a ACE
+invoking = 'intruso'
+eq(exported.RegisterFactionProvider('PauseMenuFaction').error, 'forbidden', 'sem ACE não registra')
+invoking = 'pack_factions'
+eq(exported.RegisterFactionProvider('bad name').error, 'invalid_provider', 'export inválido')
+eq(exported.RegisterFactionProvider('PauseMenuFaction'), true, 'provedor registrado')
+invoking = nil
 
 -- Teste de requisição de dados pelo cliente
 source = 1
@@ -100,6 +110,13 @@ eq(data.character.stateId, 'COE1020', 'stateId')
 eq(data.character.job, 'Polícia Militar', 'emprego')
 eq(data.character.jobGrade, 'Sargento', 'cargo')
 eq(data.character.faction, 'COE Tático', 'facção')
+eq(data.character.factionGrade, 'Operador', 'grau na facção')
+
+-- Pacote parado: o dossiê volta para os grupos do core
+handlers.onResourceStop('pack_factions')
+netEvents['coe_pausemenu:server:requestData']()
+eq(clientEvents[#clientEvents].args[1].character.faction, 'Nenhuma', 'sem provedor')
+clientEvents = { clientEvents[1] }
 eq(data.character.bank, 'R$ 85.000', 'saldo formatado')
 eq(data.server.onlinePlayers, 3, 'total de jogadores online')
 eq(data.server.ping, 22, 'ping do jogador')

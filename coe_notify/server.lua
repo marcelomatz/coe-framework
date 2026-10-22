@@ -5,36 +5,23 @@ local notificationTypes = {
 	warning = true
 }
 
+-- Quem envia notificações. Padrões do framework; pacotes e scripts de terceiros recebem a ACE no server.cfg:
+--   add_ace resource.<nome> coe.notify allow
+local NOTIFY_ACE = 'coe.notify'
 local allowedResources = {
-	coe_admin = true,
-	coe_amzg = true,
-	coe_mail = true,
-	coe_news = true,
-	coe_crypto = true,
-	coe_deepweb = true,
-	coe_loot = true,
-	coe_banking = true,
 	coe_businesses = true,
 	coe_characters = true,
 	coe_core = true,
-	coe_garages = true,
 	coe_economy = true,
-	coe_housing = true,
-	coe_doors = true,
 	coe_inventory = true,
-	coe_mechanic = true,
-	coe_phone = true,
-	coe_telecom = true,
 	coe_vehicles = true,
 	coe_jobs = true,
-	coe_elos = true,
-	coe_shops = true,
-	coe_fuel = true
+	coe_shops = true
 }
 
 exports('Notify', function(playerId, kind, message, duration)
 	local caller = GetInvokingResource()
-	if type(caller) ~= 'string' or not allowedResources[caller] then
+	if not CoeAccess.Allowed(caller, NOTIFY_ACE, allowedResources) then
 		return false, 'caller_not_allowed'
 	end
 	if type(playerId) ~= 'number' or playerId < 1 or playerId % 1 ~= 0

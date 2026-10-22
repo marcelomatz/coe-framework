@@ -17,7 +17,7 @@ Cada linha inclui `timestamp` UTC, `level`, `category`, `event`, `resource` e `c
 
 `event` deve ser um código estável, em formato `snake_case`; não use texto de UI, SQL, exceções ou dados arbitrários como nome. Contexto é limitado a uma allowlist em `config.lua`, valores escalares e até 16 campos. Campos sensíveis e estruturas aninhadas não são registrados.
 
-Somente os resources listados em `AllowedResources` podem chamar o export. `resource` é obtido do chamador pelo servidor, não aceito pelo payload. Não há evento de rede para escrita de logs.
+Podem chamar o export os padrões de `AllowedResources` (resources do framework) e quem tem a ACE `coe.logging` (`add_ace resource.<nome> coe.logging allow`). `resource` é obtido do chamador pelo servidor, não aceito pelo payload. Não há evento de rede para escrita de logs.
 
 ## Configuração
 

@@ -16,6 +16,7 @@ exports = function(name, callback)
 	registeredExports[name] = callback
 end
 
+dofile('../coe_core/lib/access.lua')
 dofile('server.lua')
 
 local function assertEqual(actual, expected, message)
@@ -37,6 +38,13 @@ invokingResource = 'untrusted_resource'
 local unauthorized, unauthorizedError = notify(12, 'info', 'No.')
 assertEqual(unauthorized, false, 'unlisted resources cannot notify players')
 assertEqual(unauthorizedError, 'caller_not_allowed', 'unauthorized resource has explicit error')
+
+IsPrincipalAceAllowed = function(principal, ace) return principal == 'resource.pack_script' and ace == 'coe.notify' end
+invokingResource = 'pack_script'
+local granted = notify(12, 'info', 'Ok.')
+assertEqual(granted, true, 'resource with the coe.notify ACE can notify')
+events[#events] = nil
+IsPrincipalAceAllowed = nil
 
 invokingResource = 'coe_core'
 local invalid, invalidError = notify(12, 'success', string.rep('x', 241))

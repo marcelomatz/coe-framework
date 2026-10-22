@@ -43,9 +43,12 @@ AddEventHandler('playerDropped', function()
 	lastIdCommand[source] = nil
 end)
 
--- Administração de grupos: só o painel admin pode alterar vínculos (a autorização do operador é dele).
+-- Administração de grupos por outro resource (ex.: painel de staff): ACE coe.groups.admin no principal do resource
+-- (add_ace resource.<nome> coe.groups.admin allow). A autorização do operador é responsabilidade de quem chama.
+local GROUP_ADMIN_ACE = 'coe.groups.admin'
+
 local function groupAdminCaller()
-	return GetInvokingResource() == 'coe_admin'
+	return CoeAccess.Allowed(GetInvokingResource(), GROUP_ADMIN_ACE)
 end
 
 exports('GetGroupDefinitions', function()
@@ -86,6 +89,76 @@ exports('RemovePlayerGroup', function(source, name, callback)
 	local dispatched, errorCode = Core.Groups.RemoveForPlayer(source, name, toFunction(callback))
 	return dispatched == true or errorCode or 'unknown_error'
 end)
+
+-- /grupo: administração de grupos sem painel (console ou staff com a ACE command.grupo).
+--   grupo definir <stateId> <grupo> [grau]   grupo remover <stateId> <grupo>   grupo ver <stateId>   grupo lista
+local function groupReply(source, kind, message)
+	if source <= 0 then
+		print(('[coe_core] %s'):format(message))
+		return
+	end
+	pcall(function()
+		exports.coe_notify:Notify(source, kind, message)
+	end)
+end
+
+local function groupTarget(source, stateId)
+	local character, lookupError = Core.Players.GetCharacterByStateId(type(stateId) == 'string' and stateId:upper() or stateId)
+	if not character then
+		groupReply(source, 'error', _t('group_command_target', { id = tostring(stateId), error = tostring(lookupError) }))
+		return nil
+	end
+	return character
+end
+
+local function groupDone(source, character, action)
+	return function(success, _, errorMessage)
+		if success then
+			groupReply(source, 'success', _t('group_command_' .. action, { id = character.stateId }))
+		else
+			groupReply(source, 'error', _t('group_command_failed', { error = tostring(errorMessage) }))
+		end
+	end
+end
+
+RegisterCommand('grupo', function(source, args)
+	local action, stateId, name = args[1], args[2], args[3]
+	if action == 'lista' then
+		local names = {}
+		for _, group in ipairs(Core.Groups.List()) do
+			names[#names + 1] = group.name
+		end
+		groupReply(source, 'info', _t('group_command_list', { groups = table.concat(names, ', ') }))
+		return
+	end
+	if action ~= 'definir' and action ~= 'remover' and action ~= 'ver' then
+		groupReply(source, 'info', _t('group_command_usage'))
+		return
+	end
+	local character = groupTarget(source, stateId)
+	if not character then
+		return
+	end
+	if action == 'ver' then
+		local session = Core.Players.GetPlayerByStateId(character.stateId)
+		local parts = {}
+		for groupType, link in pairs(session and Core.Groups.GetCharacterGroups(session.source) or {}) do
+			parts[#parts + 1] = ('%s=%s/%s'):format(groupType, link.name, tostring(link.grade))
+		end
+		groupReply(source, 'info', _t('group_command_show', { id = character.stateId, groups = #parts > 0 and table.concat(parts, ' ') or '-' }))
+		return
+	end
+	local dispatched, errorCode
+	if action == 'definir' then
+		local grade = tonumber(args[4] or '0')
+		dispatched, errorCode = Core.Groups.Set(character.characterId, name, grade and math.tointeger(grade), groupDone(source, character, 'set'))
+	else
+		dispatched, errorCode = Core.Groups.Remove(character.characterId, name, groupDone(source, character, 'removed'))
+	end
+	if not dispatched then
+		groupReply(source, 'error', _t('group_command_failed', { error = tostring(errorCode) }))
+	end
+end, true)
 
 local stopping = false
 local waitingForDatabaseLogged = false

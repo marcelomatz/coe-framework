@@ -21,7 +21,7 @@ local function callerName()
 end
 
 local function isWriter()
-	return config.WriterResources[callerName()] == true
+	return CoeAccess.Allowed(callerName(), config.Ace, config.WriterResources)
 end
 
 -- Lê os data_file de um resource; vehicles.meta e handling.meta são os únicos tipos usados.

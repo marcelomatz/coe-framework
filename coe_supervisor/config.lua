@@ -1,7 +1,9 @@
 SupervisorConfig = {
-	-- Único resource autorizado a pedir reinícios (a autorização do operador é do painel).
-	Caller = 'coe_admin',
-	-- Resources do framework que podem ser reiniciados.
+	-- Quem pede reinícios (a autorização do operador é de quem chama): ACE no server.cfg, ex.:
+	--   add_ace resource.coe_admin coe.supervisor allow
+	Ace = 'coe.supervisor',
+	-- Resources do framework que podem ser reiniciados. Pacotes e scripts de terceiros entram declarando no próprio
+	-- fxmanifest a categoria: coe_supervisor 'business' (e coe_supervisor_critical 'yes' se derrubar o servidor).
 	Managed = {
 		'coe_logging',
 		'coe_notify',
@@ -20,28 +22,12 @@ SupervisorConfig = {
 		'coe_map',
 		'coe_vehicles',
 		'coe_vehicle_catalog',
-		'coe_handling',
 		'coe_economy',
-		'coe_banking',
-		'coe_crypto',
 		'coe_businesses',
-		'coe_factions',
-		'coe_crafting',
-		'coe_garages',
-		'coe_housing',
-		'coe_doors',
-		'coe_mechanic',
-		'coe_phone',
-		'coe_tablet',
-		'coe_apps',
-		'coe_amzg',
-		'coe_news',
-		'coe_deepweb',
 		'coe_jobs',
-		'coe_elos',
 		'coe_shops',
-		'coe_fuel',
-		'coe_admin'
+		'coe_talk',
+		'coe_pausemenu'
 	},
 	-- Categoria de cada resource gerenciado; critical = reiniciar pode derrubar o servidor inteiro.
 	Catalog = {
@@ -62,28 +48,12 @@ SupervisorConfig = {
 		coe_needs = { category = 'gameplay' },
 		coe_vehicles = { category = 'gameplay' },
 		coe_vehicle_catalog = { category = 'gameplay' },
-		coe_handling = { category = 'gameplay' },
 		coe_economy = { category = 'business' },
-		coe_banking = { category = 'business' },
-		coe_crypto = { category = 'business' },
 		coe_businesses = { category = 'business' },
-		coe_factions = { category = 'gameplay' },
-		coe_crafting = { category = 'business' },
-		coe_garages = { category = 'business' },
-		coe_housing = { category = 'business' },
-		coe_doors = { category = 'gameplay' },
-		coe_mechanic = { category = 'business' },
-		coe_phone = { category = 'gameplay' },
-		coe_tablet = { category = 'gameplay' },
-		coe_apps = { category = 'gameplay' },
-		coe_amzg = { category = 'business' },
-		coe_news = { category = 'business' },
-		coe_deepweb = { category = 'gameplay' },
 		coe_jobs = { category = 'gameplay' },
-		coe_elos = { category = 'gameplay' },
 		coe_shops = { category = 'business' },
-		coe_fuel = { category = 'business' },
-		coe_admin = { category = 'administration' }
+		coe_talk = { category = 'gameplay' },
+		coe_pausemenu = { category = 'gameplay' }
 	},
 	-- Reinício que derruba muitos resources também é tratado como crítico.
 	CriticalRestartSize = 6,

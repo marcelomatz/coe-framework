@@ -2,8 +2,8 @@ const mysql = require('mysql2/promise')
 // O FXServer resolve require() a partir da raiz do resource, não da pasta deste arquivo.
 const { createDatabaseProvider } = require('./server/provider')
 const { validateStatement, validateTransaction } = require('./server/validation')
+const { createCallerCheck } = require('./server/access')
 
-const ALLOWED_CALLERS = new Set(['coe_core', 'coe_inventory', 'coe_admin', 'coe_audit', 'coe_vehicles', 'coe_vehicle_catalog', 'coe_handling', 'coe_mechanic', 'coe_businesses', 'coe_garages', 'coe_needs', 'coe_economy', 'coe_housing', 'coe_banking', 'coe_doors', 'coe_spawn', 'coe_crafting', 'coe_apps', 'coe_phone', 'coe_telecom', 'coe_amzg', 'coe_mail', 'coe_news', 'coe_factions', 'coe_police', 'coe_ems', 'coe_mdt', 'coe_crypto', 'coe_deepweb', 'coe_jobs', 'coe_elos', 'coe_shops', 'coe_fuel'])
 const MAX_CONNECTION_LIMIT = 50
 
 function logStructured(level, category, event, context) {
@@ -55,9 +55,11 @@ function complete(callback, success, result, errorCode) {
 	})
 }
 
+// Padrão: resources do framework. Pacotes e scripts de terceiros: add_ace resource.<nome> coe.database allow
+const callerAllowed = createCallerCheck({ isAceAllowed: IsPrincipalAceAllowed })
+
 function isAuthorizedCaller() {
-	const caller = GetInvokingResource()
-	return typeof caller === 'string' && ALLOWED_CALLERS.has(caller)
+	return callerAllowed(GetInvokingResource())
 }
 
 function configurationError(code) {

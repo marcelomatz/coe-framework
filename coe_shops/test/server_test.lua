@@ -15,6 +15,12 @@ function RegisterNetEvent(name, fn) netHandlers[name] = fn end
 function AddEventHandler(name, fn) handlers[name] = fn end
 function TriggerClientEvent(name, target, a, b) if name == 'coe_shops:response' then responses[#responses + 1] = { target = target, id = a, result = b } end end
 local aces = {}
+local invoking = nil
+function GetInvokingResource() return invoking end
+-- Meios de pagamento de pacotes simulados: só recursos com a ACE coe.shops.payments registram.
+function IsPrincipalAceAllowed(principal, ace)
+	return ace == 'coe.shops.payments' and (principal == 'resource.pack_card' or principal == 'resource.pack_wallet')
+end
 function IsPlayerAceAllowed(id, ace) return aces[id] == true end
 local positions = {}
 function GetPlayerPed(id) return id end
@@ -24,7 +30,7 @@ local characters = { [1] = 11, [2] = 22, [3] = 33 }
 Core = { Players = { GetActiveCharacter = function(id) return characters[id] and { characterId = characters[id] } end } }
 
 -- Negócios: as lojas começam sem dono; o teste dá dono a uma delas.
-local businesses, seeds, permissions = {}, {}, nil
+local businesses, seeds, permissions, tabs = {}, {}, nil, {}
 local accessOf = {}
 local can = {}
 -- Inventários e banco
@@ -40,6 +46,7 @@ exports = setmetatable({}, {
 			return {
 				IsReady = function() return true end,
 				RegisterPermissions = function(_, list) permissions = list; return true end,
+				RegisterTab = function(_, def) tabs[#tabs + 1] = def; return true end,
 				Seed = function(_, raw) seeds[#seeds + 1] = raw; businesses[raw.id] = businesses[raw.id] or raw; return businesses[raw.id] end,
 				Get = function(_, id) return businesses[id] end,
 				Access = function(_, id, characterId) return accessOf[id .. ':' .. characterId] or { owner = false, canWork = false } end,
@@ -61,21 +68,24 @@ exports = setmetatable({}, {
 				Items = function(_, item) return { label = 'Item ' .. item, image = item .. '.png' } end
 			}
 		end
-		if resource == 'coe_banking' then
+		if resource == 'pack_card' then
 			return {
-				PosCards = function(_, id) return { ok = true, cards = id == 3 and { { id = 501, last4 = '4321' } } or {} } end,
-				PosPurchase = function(_, id, cardId, pin, amount, description)
-					if pins[cardId] ~= pin then return { ok = false, error = 'wrong_pin', left = 2 } end
-					purchases[#purchases + 1] = { cardId = cardId, amount = amount, description = description }; return { ok = true }
+				ShopOptions = function(_, id) return { detail = 'Cartão com você', options = id == 3 and { { id = 501, label = '•••• 4321' } } or {} } end,
+				ShopCharge = function(_, id, payment, amount, description)
+					if pins[payment.option] ~= payment.pin then return { ok = false, error = 'wrong_pin', left = 2 } end
+					purchases[#purchases + 1] = { cardId = payment.option, amount = amount, description = description }; return { ok = true, ref = payment.option }
 				end,
-				CardPurchase = function(_, cardId, amount, description)
-					purchases[#purchases + 1] = { cardId = cardId, amount = amount, description = description }; return { ok = true }
-				end,
-				CardRefund = function(_, cardId, amount) refunds[#refunds + 1] = { cardId = cardId, amount = amount }; return { ok = true } end
+				ShopRefund = function(_, id, ref, amount) refunds[#refunds + 1] = { cardId = ref, amount = amount }; return { ok = true } end
 			}
 		end
-		if resource == 'coe_phone' then
-			return { ConsumePayment = function(_, id, token, amount) if token == 'tok' and amount > 0 then return 777 end end }
+		if resource == 'pack_wallet' then
+			return {
+				ShopCharge = function(_, id, payment, amount, description)
+					if payment.token ~= 'tok' then return { ok = false, error = 'payment_expired' } end
+					purchases[#purchases + 1] = { cardId = 777, amount = amount, description = description }; return { ok = true, ref = 777 }
+				end,
+				ShopRefund = function(_, id, ref, amount) refunds[#refunds + 1] = { cardId = ref, amount = amount }; return { ok = true } end
+			}
 		end
 		if resource == 'coe_economy' then
 			return {
@@ -102,8 +112,10 @@ ShopsPersistence = {
 	Report = function(b) local list = {} for _, s in ipairs(sales) do if s.businessId == b then list[#list + 1] = s end end return { sales = list, today = 0, week = 0, weekSales = #list } end
 }
 
+dofile('../coe_core/lib/access.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
+dofile('server/payments.lua')
 dofile('server/main.lua')
 
 local function eq(a, b, m)
@@ -124,6 +136,24 @@ eq(exported.IsReady(), true, 'pronto')
 eq(#seeds, #ShopsConfig.Stores, 'negocios semeados')
 eq(seeds[1].owner, nil, 'semeado sem dono')
 eq(permissions[1].name, 'shops.prices', 'permissao de preco registrada')
+eq(tabs[1].id, 'shop', 'aba Loja registrada no app do negocio')
+eq(tabs[1].visible, 'IsStore', 'aba so nas lojas')
+
+-- meios de pagamento registrados por pacotes (ACE coe.shops.payments)
+invoking = 'intruso'
+eq(exported.RegisterPaymentMethod({ id = 'pix', label = 'Pix', kind = 'instant', charge = 'C', refund = 'R' }).error, 'forbidden', 'sem ACE nao registra')
+invoking = 'pack_card'
+eq(exported.RegisterPaymentMethod({ id = 'card', label = 'Cartão na maquininha', kind = 'pin', options = 'ShopOptions', charge = 'ShopCharge', refund = 'ShopRefund', order = 30 }), true, 'cartao registrado')
+eq(exported.RegisterPaymentMethod({ id = 'cash', label = 'X', kind = 'instant', charge = 'C', refund = 'R' }).error, 'invalid_method', 'especie e da loja')
+invoking = 'pack_wallet'
+eq(exported.RegisterPaymentMethod({ id = 'card', label = 'Outro', kind = 'instant', charge = 'C', refund = 'R' }).error, 'method_taken', 'id de outro resource')
+eq(exported.RegisterPaymentMethod({ id = 'wallet', label = 'Carteira', kind = 'device', charge = 'ShopCharge', refund = 'ShopRefund' }).error, 'invalid_method', 'device exige export client')
+eq(exported.RegisterPaymentMethod({ id = 'wallet', label = 'Carteira do celular', kind = 'device', client = 'RequestPayment', charge = 'ShopCharge', refund = 'ShopRefund', order = 20 }), true, 'carteira registrada')
+invoking = nil
+
+local function methodIn(view, id)
+	for _, m in ipairs(view.payments) do if m.id == id then return m end end
+end
 
 local store = ShopsConfig.Stores[1]
 local clerk = { x = store.clerk[1], y = store.clerk[2], z = store.clerk[3] }
@@ -168,22 +198,33 @@ eq(purchases[#purchases].amount, 10, 'valor no credito')
 
 -- maquininha
 atCounter(3)
-eq(call(3, 'open', { storeId = store.id }).view.cards[1].last4, '4321', 'cartoes em maos')
-result = call(3, 'buy', { storeId = store.id, cart = { { id = 'chips', quantity = 1 } }, payment = { method = 'card', cardId = 501, pin = '0000' } })
+local view3 = call(3, 'open', { storeId = store.id }).view
+eq(methodIn(view3, 'card').options[1].label, '•••• 4321', 'cartoes em maos')
+eq(methodIn(view3, 'card').available, true, 'cartao disponivel')
+eq(view3.payments[1].id, 'cash', 'especie primeiro')
+eq(view3.payments[2].id, 'wallet', 'ordem dos meios')
+eq(methodIn(view3, 'wallet').resource, 'pack_wallet', 'client sabe quem abre o aparelho')
+eq(methodIn(call(1, 'open', { storeId = store.id }).view, 'card').available, false, 'sem cartao em maos')
+result = call(3, 'buy', { storeId = store.id, cart = { { id = 'chips', quantity = 1 } }, payment = { method = 'card', option = 501, pin = '0000' } })
 eq(result.error, 'wrong_pin', 'senha errada')
 eq(result.left, 2, 'tentativas restantes')
 fullInventory.inv3 = true
-result = call(3, 'buy', { storeId = store.id, cart = { { id = 'chips', quantity = 1 } }, payment = { method = 'card', cardId = 501, pin = '1234' } })
+result = call(3, 'buy', { storeId = store.id, cart = { { id = 'chips', quantity = 1 } }, payment = { method = 'card', option = 501, pin = '1234' } })
 eq(result.error, 'inventory_full', 'sem espaco')
 eq(refunds[#refunds].amount, 5, 'estorno no cartao')
 fullInventory.inv3 = nil
-result = call(3, 'buy', { storeId = store.id, cart = { { id = 'chips', quantity = 1 } }, payment = { method = 'card', cardId = 501, pin = '1234' } })
+result = call(3, 'buy', { storeId = store.id, cart = { { id = 'chips', quantity = 1 } }, payment = { method = 'card', option = 501, pin = '1234' } })
 eq(result.ok, true, 'compra na maquininha')
 
 -- gestao da loja da staff: so relatorio para quem tem a ACE
 eq(call(1, 'manage', { storeId = store.id, op = 'report' }).error, 'forbidden', 'cliente nao ve vendas')
 aces[1] = true
-eq(#call(1, 'manage', { storeId = store.id, op = 'report' }).report.sales, 3, 'staff ve as vendas')
+local report = call(1, 'manage', { storeId = store.id, op = 'report' }).report
+eq(#report.sales, 3, 'staff ve as vendas')
+local labels = {}
+for _, sale in ipairs(report.sales) do labels[sale.method] = sale.methodLabel end
+eq(labels.wallet, 'Carteira do celular', 'rotulo do meio registrado no relatorio')
+eq(labels.cash, 'Dinheiro', 'rotulo da especie')
 eq(call(1, 'manage', { storeId = store.id, op = 'restock', args = { productId = 'water', quantity = 1 } }).error, 'staff_store', 'staff nao abastece')
 
 -- passa para um jogador: prateleira vazia, dono define preco e a equipe abastece

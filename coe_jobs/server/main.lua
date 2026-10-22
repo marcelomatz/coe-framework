@@ -952,14 +952,14 @@ CreateThread(function()
 	end
 end)
 
--- App Carreira no tablet (coe_tablet) ---------------------------------------------------------------------
+-- App Carreira no tablet (ex.: coe_tablet, com a ACE coe.jobs.tablet) ----------------------------------------------
 
 exports('TabletVisible', function()
 	return ready
 end)
 
 exports('TabletCall', function(playerId, appId, action, payload)
-	if GetInvokingResource() ~= 'coe_tablet' or appId ~= 'career' then
+	if not CoeAccess.Allowed(GetInvokingResource(), 'coe.jobs.tablet') or appId ~= 'career' then
 		return { ok = false, error = 'forbidden' }
 	end
 	if not ready then

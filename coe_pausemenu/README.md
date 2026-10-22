@@ -16,6 +16,12 @@ Menu de Pausa customizado (`ESC`) do framework **COE Enhanced Roleplay**, substi
 
 ## Exports
 
+### Server
+- `exports.coe_pausemenu:RegisterFactionProvider(exportName)` -> `true` ou `{ error }`: a facção do dossiê vem do
+  export `exportName` do resource chamador, `(characterId) -> { label, grade }` ou `nil`. Exige a ACE
+  `coe.pausemenu.profile` (`add_ace resource.<nome> coe.pausemenu.profile allow`); o registro some quando o resource
+  para (registre de novo no `onResourceStart` do `coe_pausemenu`). Sem provedor, vale o grupo do tipo `faction` do core.
+
 ### Client
 - `exports.coe_pausemenu:IsOpen()` -> `boolean`
 - `exports.coe_pausemenu:Toggle(open)` -> Alterna ou define a visibilidade do menu.

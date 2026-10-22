@@ -1,0 +1,2 @@
+# Referências a resources de fora deste repositório que ainda serão removidas (arquivo nome).
+# Gerado por lua tools/check_boundary.lua --update. Esta lista só pode diminuir.

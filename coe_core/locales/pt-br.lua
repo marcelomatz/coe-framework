@@ -22,5 +22,12 @@ Locales['pt-BR'] = {
 	group_director = 'Diretor',
 	character_created = 'Personagem criado.',
 	character_loaded = 'Personagem carregado.',
-	character_archived = 'Personagem arquivado.'
+	character_archived = 'Personagem arquivado.',
+	group_command_usage = 'Uso: grupo definir <ID> <grupo> [grau] | grupo remover <ID> <grupo> | grupo ver <ID> | grupo lista',
+	group_command_target = 'Personagem %{id} não está online (%{error}).',
+	group_command_set = 'Grupo atualizado para %{id}.',
+	group_command_removed = 'Grupo removido de %{id}.',
+	group_command_failed = 'Não foi possível alterar o grupo (%{error}).',
+	group_command_show = 'Grupos de %{id}: %{groups}',
+	group_command_list = 'Grupos: %{groups}'
 }

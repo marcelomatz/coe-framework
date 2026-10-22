@@ -3,18 +3,30 @@ BusinessesConfig = {
 	-- Categorias cujo ponto é operado pelo próprio resource (prompt e fluxo na oficina); as demais usam o prompt daqui.
 	ClockPromptElsewhere = { mechanic = true },
 
-	-- Quem pode gravar/remover negócios (o coe_mechanic só semeia os padrões ausentes).
-	WriterResources = {
-		coe_admin = true,
-		coe_mechanic = true,
-		coe_news = true, -- semeia a Weazel News e a Rebel News
-		coe_shops = true, -- semeia as lojinhas (24/7, LTD, Rob's Liquor), da staff até a staff passar para um jogador
-		coe_fuel = true -- semeia os postos sem loja (os LTD são das lojinhas)
+	-- Acesso de outros resources. O nome vem do runtime. As listas são os padrões do framework; pacotes e scripts de
+	-- terceiros recebem a ACE no server.cfg, sem editar este arquivo (add_ace resource.<nome> <ace> allow):
+	--   coe.businesses.write        gravar/remover negócios (painel, ou pacotes que semeiam os seus)
+	--   coe.businesses.clock        acionar o ponto em nome do jogador (o resource confere local e acesso antes)
+	--   coe.businesses.tablet       app do negócio no tablet (o tablet valida o ponto e limita a taxa)
+	--   coe.businesses.permissions  registrar permissões de cargo (prefixo = nome do resource sem "coe_")
+	--   coe.businesses.payroll      ler salários para a folha de pagamento
+	--   coe.businesses.admin        resumo de quem está de ponto (painel de staff)
+	--   coe.businesses.extend       registrar abas no app do negócio e provedores de frota e propriedades
+	Ace = {
+		Write = 'coe.businesses.write',
+		Clock = 'coe.businesses.clock',
+		Tablet = 'coe.businesses.tablet',
+		Permissions = 'coe.businesses.permissions',
+		Payroll = 'coe.businesses.payroll',
+		Admin = 'coe.businesses.admin',
+		Extend = 'coe.businesses.extend'
 	},
-	-- Quem pode acionar o ponto em nome do jogador (o resource confere local e acesso antes).
-	ClockResources = { coe_mechanic = true },
-	-- Quem pode chamar o tablet de negócios (o coe_tablet valida o ponto e limita a taxa).
-	TabletResources = { coe_tablet = true },
+	-- coe_shops semeia as lojinhas (24/7, LTD, Rob's Liquor) até a staff passar uma para um jogador.
+	WriterResources = { coe_shops = true },
+	ClockResources = {},
+	TabletResources = {},
+	-- coe_shops registra a aba Loja.
+	ExtensionResources = { coe_shops = true },
 
 	-- Categorias da aba "Negócios". `stations` diz quais pontos a categoria aceita; `rules`, quais regras.
 	Categories = {
@@ -37,10 +49,9 @@ BusinessesConfig = {
 		['business.fleet'] = 'Gerenciar frota',
 		['business.remote'] = 'Gerenciar sem ponto batido (remoto)'
 	},
-	-- Resources que podem registrar permissões de cargo (prefixo = nome sem "coe_").
-	PermissionResources = { coe_police = true, coe_ems = true, coe_mechanic = true, coe_economy = true, coe_mdt = true, coe_news = true, coe_banking = true, coe_shops = true },
-	-- Leitura de salários para a folha de pagamento (o coe_banking mostra a folha na conta empresarial).
-	PayrollResources = { coe_economy = true, coe_admin = true, coe_banking = true },
+	-- Padrões de coe.businesses.permissions e coe.businesses.payroll (ver Ace acima).
+	PermissionResources = { coe_economy = true, coe_shops = true },
+	PayrollResources = { coe_economy = true },
 
 	-- Validação de cada regra.
 	Rules = {

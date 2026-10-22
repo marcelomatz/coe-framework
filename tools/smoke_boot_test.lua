@@ -166,6 +166,9 @@ test("coe_businesses: inicialização do chunk global e CLOCK_MESSAGES", functio
 	_G.Locales = {}
 	dofile('coe_businesses/locales/pt-br.lua')
 	dofile('coe_businesses/locales/en-us.lua')
+	-- Mesma ordem do fxmanifest: helper de acesso e registro de extensões antes do main.
+	dofile('coe_core/lib/access.lua')
+	dofile('coe_businesses/server/extensions.lua')
 
 	local ok, err = pcall(dofile, 'coe_businesses/server/main.lua')
 	assertTrue(ok, "coe_businesses/server/main.lua deve carregar sem erro: " .. tostring(err))

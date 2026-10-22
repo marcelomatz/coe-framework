@@ -6,7 +6,7 @@ Trilha de auditoria **durável** em MariaDB, independente do console (`coe_loggi
 
 - Os resources `coe_core`, `coe_inventory` e `coe_admin` já chamam `log(..., 'audit' | 'security', ...)`. Esse helper local também envia o evento para `coe_audit` (best effort, via `pcall`); o log de console continua existindo.
 - Export server-side: `exports.coe_audit:Record(severity, category, event, context?)`, com `severity` em `info|warn|error`. Retorna `true` quando o evento foi aceito na fila, ou `false, motivo`.
-- O nome do resource vem do runtime (`GetInvokingResource`), nunca do payload; só os resources em `CoeAuditConfig.AllowedResources` podem gravar. Não há evento de rede de escrita nem export de leitura.
+- O nome do resource vem do runtime (`GetInvokingResource`), nunca do payload; só os padrões de `CoeAuditConfig.AllowedResources` (resources do framework) e quem tem a ACE `coe.audit` (`add_ace resource.<nome> coe.audit allow`) podem gravar. Não há evento de rede de escrita nem export de leitura.
 - O contexto passa pela allowlist de `config.lua` (escalares, até 16 campos, strings de até 96 bytes).
 - No momento do registro, `source`/`player_id` e `target` (IDs de servidor) são resolvidos para `license:` e gravados em `actor_license` / `target_license`, pois IDs de servidor não são estáveis.
 

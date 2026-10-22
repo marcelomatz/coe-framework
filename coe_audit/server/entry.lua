@@ -57,10 +57,16 @@ local function licenseFor(resolveLicense, playerId)
 end
 
 -- options: resource, severity, category, event, context, timestamp (epoch s),
--- allowedResources, allowedFields, resolveLicense(playerId), encode(table)
+-- allowedResources ou isAllowed(resource), allowedFields, resolveLicense(playerId), encode(table)
 -- Licenças ausentes ficam como '' (a persistência converte para NULL).
 function AuditEntry.Build(options)
-	if not options.allowedResources[options.resource] then
+	local allowed
+	if type(options.isAllowed) == 'function' then
+		allowed = options.isAllowed(options.resource) == true
+	else
+		allowed = type(options.allowedResources) == 'table' and options.allowedResources[options.resource] == true
+	end
+	if not allowed then
 		return nil, 'caller_not_allowed'
 	end
 	if not SEVERITIES[options.severity] then
