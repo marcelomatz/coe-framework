@@ -31,7 +31,9 @@ EconomyConfig = {
 		-- Plataforma de empregos: paga os jobs e cobra o depósito dos veículos.
 		coe_jobs = true,
 		-- Lojas de conveniência: receita das vendas no caixa do negócio e saldo no relatório da gestão.
-		coe_shops = true
+		coe_shops = true,
+		-- Banco básico: saque, depósito, transferência e extrato da conta do personagem.
+		coe_bank = true
 	},
 	SocietyCollectors = {
 		-- Vendas das lojas (coe_shops): o cliente já pagou; a receita entra no caixa.

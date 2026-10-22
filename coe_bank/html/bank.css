@@ -1,0 +1,226 @@
+/* Banco básico (coe_bank). Só tokens do coe_ui; o painel chanfrado vem de panel.css. */
+html,
+body {
+	margin: 0;
+	background: transparent;
+	font-family: var(--coe-font);
+	color: var(--coe-text);
+	overflow: hidden;
+}
+
+.bk {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	width: min(820px, 94vw);
+	max-height: min(620px, 90vh);
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	translate: -50% -50%;
+	box-sizing: border-box;
+}
+
+.bk[hidden] { display: none; }
+.bk--atm { width: min(680px, 94vw); }
+.bk.is-busy .bk-body { opacity: 0.6; pointer-events: none; }
+
+/* Cabeçalho */
+.bk-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--coe-space-4);
+	padding: var(--coe-space-4) var(--coe-space-5);
+	border-bottom: 1px solid var(--coe-line);
+}
+
+.bk-brand { display: flex; align-items: center; gap: var(--coe-space-4); min-width: 0; }
+
+.bk-logo {
+	display: grid;
+	place-items: center;
+	width: 52px;
+	height: 52px;
+	flex: none;
+	font-weight: 800;
+	font-size: 15px;
+	line-height: 1;
+	letter-spacing: 0.08em;
+	color: var(--coe-on-accent);
+	background: var(--coe-accent);
+	clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.bk-logo small { display: block; font-size: 9px; letter-spacing: 0.22em; }
+.bk-heading { min-width: 0; }
+
+.bk-eyebrow {
+	margin: 0 0 2px;
+	color: var(--coe-muted);
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+
+.bk-heading h1 {
+	margin: 0;
+	font-size: var(--coe-text-lg);
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+kbd {
+	margin-left: 6px;
+	padding: 0 4px;
+	font-family: inherit;
+	font-size: var(--coe-text-xs);
+	color: var(--coe-muted);
+	border: 1px solid var(--coe-line-strong);
+}
+
+/* Corpo */
+.bk-layout {
+	display: grid;
+	grid-template-columns: 232px 1fr;
+	min-height: 0;
+}
+
+.bk-side {
+	display: flex;
+	flex-direction: column;
+	gap: var(--coe-space-4);
+	padding: var(--coe-space-4);
+	border-right: 1px solid var(--coe-line);
+	background: rgba(var(--coe-ink-rgb), 0.02);
+}
+
+.bk-summary { display: grid; gap: var(--coe-space-2); }
+
+.bk-stat {
+	display: grid;
+	gap: 2px;
+	padding: var(--coe-space-2) var(--coe-space-3);
+	background: rgba(var(--coe-ink-rgb), 0.03);
+	box-shadow: inset 2px 0 var(--coe-line-strong);
+}
+
+.bk-stat.is-main {
+	padding: var(--coe-space-3);
+	background: var(--coe-accent-soft);
+	box-shadow: inset 2px 0 var(--coe-accent);
+}
+
+.bk-stat-label {
+	color: var(--coe-muted);
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.bk-stat-value {
+	font-size: var(--coe-text-md);
+	font-variant-numeric: tabular-nums;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.bk-stat.is-main .bk-stat-value { font-size: 22px; color: var(--coe-accent); }
+.bk-stat.is-mono .bk-stat-value { letter-spacing: 0.14em; }
+
+.bk-tabs { display: grid; gap: 2px; }
+
+.bk-tab {
+	padding: 10px var(--coe-space-3);
+	text-align: left;
+	font: inherit;
+	font-size: var(--coe-text-sm);
+	letter-spacing: 0.06em;
+	color: var(--coe-muted);
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	transition: background var(--coe-dur) var(--coe-ease), color var(--coe-dur) var(--coe-ease);
+}
+
+.bk-tab:hover { color: var(--coe-text); background: rgba(var(--coe-ink-rgb), 0.05); }
+.bk-tab:focus-visible { outline: 1px solid var(--coe-accent); outline-offset: -1px; }
+.bk-tab.is-active { color: var(--coe-accent); background: var(--coe-accent-soft); box-shadow: inset 2px 0 var(--coe-accent); }
+
+.bk-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--coe-space-4);
+	min-height: 360px;
+	padding: var(--coe-space-5);
+	overflow-y: auto;
+	transition: opacity var(--coe-dur) var(--coe-ease);
+}
+
+.bk-section-title {
+	display: flex;
+	align-items: center;
+	gap: var(--coe-space-2);
+	margin: 0;
+	font-size: var(--coe-text-md);
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.bk-section-title::before { content: ""; width: 3px; height: 13px; background: var(--coe-accent); }
+.bk-hint { margin: 4px 0 0; color: var(--coe-muted); font-size: var(--coe-text-xs); }
+
+/* Formulários */
+.bk-form { display: grid; gap: var(--coe-space-3); max-width: 420px; }
+.bk-field { display: grid; gap: 6px; font-size: var(--coe-text-sm); color: var(--coe-muted); }
+.bk-field .coe-field { width: 100%; box-sizing: border-box; font-size: var(--coe-text-lg); font-variant-numeric: tabular-nums; }
+.bk-id { letter-spacing: 0.18em; text-transform: uppercase; }
+.bk-id::placeholder { letter-spacing: normal; text-transform: none; }
+.bk-chips { display: flex; flex-wrap: wrap; gap: var(--coe-space-1); }
+.bk-chip { min-height: 30px; padding: 0 var(--coe-space-3); font-size: var(--coe-text-sm); }
+.bk-submit { justify-self: start; min-width: 160px; }
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Extrato */
+.bk-statement { display: grid; margin: 0; padding: 0; list-style: none; }
+
+.bk-entry {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--coe-space-3);
+	padding: 9px var(--coe-space-3);
+	border-bottom: 1px solid var(--coe-line);
+}
+
+.bk-entry:nth-child(even) { background: rgba(var(--coe-ink-rgb), 0.025); }
+.bk-entry-info { display: grid; gap: 2px; min-width: 0; }
+.bk-entry-label { font-size: var(--coe-text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-entry-date { color: var(--coe-subtle); font-size: var(--coe-text-xs); font-variant-numeric: tabular-nums; }
+.bk-entry-amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bk-entry-amount.is-in { color: var(--coe-success); }
+.bk-entry-amount.is-out { color: var(--coe-danger); }
+.bk-empty { padding: var(--coe-space-5); color: var(--coe-muted); font-size: var(--coe-text-sm); text-align: center; }
+
+/* Rodapé de status */
+.bk-status {
+	min-height: 18px;
+	margin: 0;
+	padding: var(--coe-space-2) var(--coe-space-5);
+	border-top: 1px solid var(--coe-line);
+	font-size: var(--coe-text-sm);
+	color: var(--coe-muted);
+}
+
+.bk-status.is-success { color: var(--coe-success); }
+.bk-status.is-error { color: var(--coe-danger); }
+
+@media (prefers-reduced-motion: reduce) {
+	.bk-tab, .bk-body { transition: none; }
+}

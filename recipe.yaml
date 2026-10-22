@@ -5,7 +5,7 @@ $onesync: on
 name: "COE Framework - FiveM Enhanced Gen9"
 version: "1.0.1"
 author: "COE Roleplay Team"
-description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 24 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
+description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 25 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
 
 tasks:
   # 1. Download official CitizenFX default server data (chat, spawnmanager, sessionmanager, hardcap, etc.)
@@ -129,6 +129,7 @@ tasks:
       ensure coe_businesses
       ensure coe_economy
       ensure coe_shops
+      ensure coe_bank
       ensure coe_jobs
       ensure coe_vehicle_catalog
       ensure coe_vehicles

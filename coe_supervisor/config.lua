@@ -26,6 +26,7 @@ SupervisorConfig = {
 		'coe_businesses',
 		'coe_jobs',
 		'coe_shops',
+		'coe_bank',
 		'coe_talk',
 		'coe_pausemenu'
 	},
@@ -52,6 +53,7 @@ SupervisorConfig = {
 		coe_businesses = { category = 'business' },
 		coe_jobs = { category = 'gameplay' },
 		coe_shops = { category = 'business' },
+		coe_bank = { category = 'business' },
 		coe_talk = { category = 'gameplay' },
 		coe_pausemenu = { category = 'gameplay' }
 	},
