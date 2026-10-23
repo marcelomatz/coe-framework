@@ -33,7 +33,9 @@ EconomyConfig = {
 		-- Lojas de conveniência: receita das vendas no caixa do negócio e saldo no relatório da gestão.
 		coe_shops = true,
 		-- Banco básico: saque, depósito, transferência e extrato da conta do personagem.
-		coe_bank = true
+		coe_bank = true,
+		-- Painel básico da staff: dar e retirar dinheiro da conta (motivo admin_adjustment).
+		coe_staff = true
 	},
 	SocietyCollectors = {
 		-- Vendas das lojas (coe_shops): o cliente já pagou; a receita entra no caixa.

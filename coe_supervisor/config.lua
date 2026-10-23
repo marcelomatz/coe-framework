@@ -30,7 +30,8 @@ SupervisorConfig = {
 		'coe_bank',
 		'coe_talk',
 		'coe_mobile',
-		'coe_pausemenu'
+		'coe_pausemenu',
+		'coe_staff'
 	},
 	-- Categoria de cada resource gerenciado; critical = reiniciar pode derrubar o servidor inteiro.
 	Catalog = {
@@ -59,7 +60,8 @@ SupervisorConfig = {
 		coe_bank = { category = 'business' },
 		coe_talk = { category = 'gameplay' },
 		coe_mobile = { category = 'gameplay' },
-		coe_pausemenu = { category = 'gameplay' }
+		coe_pausemenu = { category = 'gameplay' },
+		coe_staff = { category = 'administration' }
 	},
 	-- Reinício que derruba muitos resources também é tratado como crítico.
 	CriticalRestartSize = 6,

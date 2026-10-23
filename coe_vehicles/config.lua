@@ -5,7 +5,8 @@ CoeVehiclesConfig = {
 	--   add_ace resource.<nome> coe.vehicles.write allow
 	--   add_ace resource.<nome> coe.vehicles.mileage allow
 	Ace = { Write = 'coe.vehicles.write', Mileage = 'coe.vehicles.mileage' },
-	WriterResources = { coe_vehicles = true },
+	-- coe_staff: o painel básico da staff cria veículos registrados e guarda os que apaga.
+	WriterResources = { coe_vehicles = true, coe_staff = true },
 	MileageEditors = { coe_vehicles = true },
 	-- Chaves emprestadas por veículo (a do dono é implícita). Raio máximo para emprestar em jogo.
 	MaxLoanedKeysPerVehicle = 5,

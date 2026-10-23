@@ -320,6 +320,31 @@ test("coe_workpad: inicialização do servidor e do client com _t defensivo", fu
 	assertTrue(okClient, "coe_workpad/client/main.lua deve carregar sem erro: " .. tostring(errClient))
 end)
 
+test("coe_staff: inicialização do servidor e do client com _t defensivo", function()
+	setupFiveMEnvironment()
+	dofile('coe_core/lib/init.lua')
+	_G.GlobalState = {}
+	_G.Locales = {}
+	dofile('coe_staff/config.lua')
+	dofile('coe_staff/locales/pt-br.lua')
+	dofile('coe_staff/locales/en-us.lua')
+	dofile('coe_staff/shared/rules.lua')
+	dofile('coe_core/lib/access.lua')
+
+	local okServer, errServer = pcall(dofile, 'coe_staff/server/main.lua')
+	assertTrue(okServer, "coe_staff/server/main.lua deve carregar sem erro: " .. tostring(errServer))
+	assertEqual(_G.GlobalState.coeStaffYielded, false, "coe_staff começa atendendo")
+	assertEqual(_G.GlobalState.coeStaffWorld, false, "coe_staff começa sem hora e clima fixos")
+
+	_G.AddStateBagChangeHandler = function() end
+	_G.RegisterNUICallback = function() end
+	_G.RegisterKeyMapping = function() end
+	local okNoclip, errNoclip = pcall(dofile, 'coe_staff/client/noclip.lua')
+	assertTrue(okNoclip, "coe_staff/client/noclip.lua deve carregar sem erro: " .. tostring(errNoclip))
+	local okClient, errClient = pcall(dofile, 'coe_staff/client/main.lua')
+	assertTrue(okClient, "coe_staff/client/main.lua deve carregar sem erro: " .. tostring(errClient))
+end)
+
 -- ---------------------------------------------------------------------------
 -- 4. TESTE DE CONFORMIDADE DOS RECURSOS DO FRAMEWORK COM I18N
 -- ---------------------------------------------------------------------------
@@ -327,7 +352,7 @@ print("\n[4/4] Validação de Recursos do Framework com i18n...")
 
 local frameworkLocales = {
 	'coe_core', 'coe_businesses', 'coe_economy', 'coe_inventory',
-	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_bank', 'coe_mobile', 'coe_workpad'
+	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_bank', 'coe_mobile', 'coe_workpad', 'coe_staff'
 }
 for _, res in ipairs(frameworkLocales) do
 	test(res .. ": locales e instanciação de _t sem falhas", function()

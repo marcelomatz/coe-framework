@@ -24,7 +24,7 @@ Registro persistente de veículos de jogador: dono, modelo, placa, estado e **Mi
 
 | Export | Quem pode chamar | Retorno |
 | --- | --- | --- |
-| `Create(data)` | `coe.vehicles.write` | veículo ou código de erro |
+| `Create(data)` | `coe.vehicles.write` (padrão: `coe_vehicles` e o painel `coe_staff`) | veículo ou código de erro |
 | `Get(id)`, `GetByPlate(plate)`, `ListByOwner(characterId)`, `GetMileage(id)` | qualquer um | dados ou erro |
 | `SetMileage(id, meters)` | `coe.vehicles.mileage` | `true` ou erro |
 | `Spawn(id, x, y, z, heading, type)` | `coe.vehicles.write` | netId ou erro |

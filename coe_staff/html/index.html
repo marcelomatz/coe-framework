@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="staff.css">
+</head>
+<body>
+	<!-- Painel da staff: abas por módulo liberado (Pessoal, Jogadores, Veículos, Mundo, Negócios), montadas por staff.js. -->
+	<main id="staff" class="sf coe-panel coe-panel-enter" hidden aria-labelledby="sf-title">
+		<header class="sf-head">
+			<div class="sf-brand">
+				<span class="sf-logo" aria-hidden="true">COE<small>STAFF</small></span>
+				<div>
+					<p class="sf-eyebrow">Painel da staff</p>
+					<h1 id="sf-title">Ferramentas de teste</h1>
+				</div>
+			</div>
+			<button id="sf-close" class="coe-button" type="button">Fechar <kbd>Esc</kbd></button>
+		</header>
+		<div class="sf-layout">
+			<nav id="sf-tabs" class="sf-tabs" aria-label="Módulos"></nav>
+			<section id="sf-body" class="sf-body"></section>
+		</div>
+		<p id="sf-status" class="sf-status" role="status" aria-live="polite"></p>
+	</main>
+	<script src="staff.js"></script>
+</body>
+</html>
