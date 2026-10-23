@@ -298,6 +298,28 @@ test("coe_mobile: inicialização do servidor e do client com _t defensivo", fun
 	assertTrue(okClient, "coe_mobile/client/main.lua deve carregar sem erro: " .. tostring(errClient))
 end)
 
+test("coe_workpad: inicialização do servidor e do client com _t defensivo", function()
+	setupFiveMEnvironment()
+	dofile('coe_core/lib/init.lua')
+	_G.GlobalState = {}
+	_G.Locales = {}
+	dofile('coe_workpad/config.lua')
+	dofile('coe_workpad/locales/pt-br.lua')
+	dofile('coe_workpad/locales/en-us.lua')
+	dofile('coe_workpad/shared/rules.lua')
+	dofile('coe_core/lib/access.lua')
+
+	local okServer, errServer = pcall(dofile, 'coe_workpad/server/main.lua')
+	assertTrue(okServer, "coe_workpad/server/main.lua deve carregar sem erro: " .. tostring(errServer))
+	assertEqual(_G.GlobalState.coeWorkpadYielded, false, "coe_workpad começa atendendo")
+
+	_G.AddStateBagChangeHandler = function() end
+	_G.RegisterNUICallback = function() end
+	_G.RegisterKeyMapping = function() end
+	local okClient, errClient = pcall(dofile, 'coe_workpad/client/main.lua')
+	assertTrue(okClient, "coe_workpad/client/main.lua deve carregar sem erro: " .. tostring(errClient))
+end)
+
 -- ---------------------------------------------------------------------------
 -- 4. TESTE DE CONFORMIDADE DOS RECURSOS DO FRAMEWORK COM I18N
 -- ---------------------------------------------------------------------------
@@ -305,7 +327,7 @@ print("\n[4/4] Validação de Recursos do Framework com i18n...")
 
 local frameworkLocales = {
 	'coe_core', 'coe_businesses', 'coe_economy', 'coe_inventory',
-	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_bank', 'coe_mobile'
+	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_bank', 'coe_mobile', 'coe_workpad'
 }
 for _, res in ipairs(frameworkLocales) do
 	test(res .. ": locales e instanciação de _t sem falhas", function()

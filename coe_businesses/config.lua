@@ -23,8 +23,9 @@ BusinessesConfig = {
 	},
 	-- coe_shops semeia as lojinhas (24/7, LTD, Rob's Liquor) até a staff passar uma para um jogador.
 	WriterResources = { coe_shops = true },
-	ClockResources = {},
-	TabletResources = {},
+	-- O tablet de trabalho básico (coe_workpad) mostra os negócios do jogador e encerra o ponto dele.
+	ClockResources = { coe_workpad = true },
+	TabletResources = { coe_workpad = true },
 	-- coe_shops registra a aba Loja.
 	ExtensionResources = { coe_shops = true },
 

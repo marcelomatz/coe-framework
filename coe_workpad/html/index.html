@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/apps.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="workpad.css">
+</head>
+<body>
+	<!-- Tablet de trabalho: tela inicial com os apps por seção e um contêiner por app aberto (o estado fica ao trocar). -->
+	<main id="workpad" class="wp" hidden aria-label="Tablet de trabalho">
+		<div class="wp-device">
+			<div class="wp-screen">
+				<header class="wp-statusbar">
+					<span class="wp-brand">COE<b>WORK</b></span>
+					<span id="wp-duty" class="wp-duty"></span>
+					<span class="wp-statusbar-right">
+						<span id="wp-clock" class="wp-clock">--:--</span>
+						<button id="wp-close" class="wp-iconbtn" type="button" aria-label="Guardar o tablet" title="Guardar (Esc)">
+							<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+						</button>
+					</span>
+				</header>
+
+				<section id="wp-home" class="wp-home">
+					<aside class="wp-widgets">
+						<div class="coe-panel wp-widget wp-time">
+							<strong id="wp-bigclock">--:--</strong>
+							<span id="wp-date"></span>
+						</div>
+						<div class="coe-panel wp-widget">
+							<span class="wp-widget-label">Serviço</span>
+							<strong id="wp-duty-widget">Fora de serviço</strong>
+							<button id="wp-duty-open" class="coe-button wp-widget-action" type="button">Abrir Ponto</button>
+						</div>
+						<div class="coe-panel wp-widget">
+							<span class="wp-widget-label">Negócios</span>
+							<strong id="wp-business-count">0</strong>
+						</div>
+					</aside>
+					<div id="wp-groups" class="wp-groups"></div>
+				</section>
+
+				<section id="wp-view" class="wp-view" hidden>
+					<header class="wp-view-head">
+						<button id="wp-back" class="wp-back" type="button" aria-label="Início">
+							<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span>Início</span>
+						</button>
+						<span id="wp-view-icon" class="wp-app-icon is-small"></span>
+						<span class="wp-view-heading"><strong id="wp-view-title"></strong><small id="wp-view-kind"></small></span>
+					</header>
+					<div id="wp-apps" class="wp-apps"></div>
+				</section>
+
+				<p id="wp-status" class="wp-status" role="status" aria-live="polite"></p>
+			</div>
+		</div>
+	</main>
+	<script src="workpad.js"></script>
+</body>
+</html>

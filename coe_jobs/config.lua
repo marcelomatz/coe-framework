@@ -18,6 +18,9 @@ JobsConfig = {
 	SpawnDistance = 70.0,
 	-- Quantos trabalhos recentes cada personagem guarda (app Carreira e "Como funciona" no NPC).
 	RecentSessions = 10,
+	-- Tablets que chamam o app Carreira (TabletCall). Padrão do framework: o tablet de trabalho básico; pacotes
+	-- recebem a ACE no server.cfg: add_ace resource.<nome> coe.jobs.tablet allow
+	TabletResources = { coe_workpad = true },
 
 	-- Liga ou desliga cada emprego de jobs/*.lua sem mexer na definição.
 	Enabled = {
