@@ -79,6 +79,9 @@ tasks:
       add_ace group.admin command.quit deny
       {{addPrincipalsMaster}}
 
+      ## Permissões da Staff (COE Staff Open-Source)
+      add_ace group.admin coe.staff.all allow
+
       add_ace group.admin coe_admin.open allow
       add_ace group.admin coe_admin.items.give allow
       add_ace group.admin coe_admin.staff.manage allow

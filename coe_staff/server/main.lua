@@ -618,10 +618,12 @@ local function handle(admin, action, data)
 	end
 	local modules, any = modulesOf(admin)
 	if not any then
+		notify(admin, 'error', _t('forbidden'))
 		return fail('forbidden')
 	end
 	local allowed = StaffRules.Allowed(modules, action)
 	if not allowed or not A[action] then
+		notify(admin, 'error', _t('forbidden'))
 		log('warn', 'security', 'staff_action_denied', { player_id = admin, action = tostring(action):sub(1, 32) })
 		return fail('forbidden')
 	end
@@ -668,6 +670,7 @@ RegisterNetEvent('coe_staff:open', function()
 	end
 	local modules, any = modulesOf(admin)
 	if not any then
+		notify(admin, 'error', _t('forbidden'))
 		return
 	end
 	log('info', 'security', 'staff_panel_opened', { player_id = admin })
