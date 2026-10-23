@@ -80,9 +80,38 @@ local function callDatabase(sql, params)
 	return result.success and result.result or nil
 end
 
+local txAdmins = {}
+
+AddEventHandler('txAdmin:events:adminAuth', function(eventData)
+	if type(eventData) ~= 'table' then
+		return
+	end
+	local netid = tonumber(eventData.netid)
+	if not netid then
+		return
+	end
+	if netid == -1 then
+		txAdmins = {}
+		return
+	end
+	if eventData.isAdmin == true then
+		txAdmins[netid] = true
+	else
+		txAdmins[netid] = nil
+	end
+end)
+
+local function isAllowed(playerId, ace)
+	local numId = tonumber(playerId)
+	if (numId and txAdmins[numId] == true) or txAdmins[playerId] == true then
+		return true
+	end
+	return IsPlayerAceAllowed(playerId, ace) == 1 or IsPlayerAceAllowed(playerId, ace) == true
+end
+
 local function modulesOf(playerId)
 	return StaffRules.Modules(config, function(ace)
-		return IsPlayerAceAllowed(playerId, ace)
+		return isAllowed(playerId, ace)
 	end)
 end
 
@@ -678,8 +707,13 @@ RegisterNetEvent('coe_staff:open', function()
 end)
 
 AddEventHandler('playerDropped', function()
-	lastAction[source] = nil
-	frozen[source] = nil
+	local src = tonumber(source) or source
+	txAdmins[src] = nil
+	if type(src) == 'number' then
+		txAdmins[tostring(src)] = nil
+	end
+	lastAction[src] = nil
+	frozen[src] = nil
 end)
 
 -- Pacote que assume o painel ------------------------------------------------------------------------------------
