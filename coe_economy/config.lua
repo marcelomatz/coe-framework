@@ -27,7 +27,6 @@ EconomyConfig = {
 	AllowedResources = {
 		coe_economy = true,
 		coe_businesses = true,
-		coe_pausemenu = true,
 		-- Plataforma de empregos: paga os jobs e cobra o depósito dos veículos.
 		coe_jobs = true,
 		-- Lojas de conveniência: receita das vendas no caixa do negócio e saldo no relatório da gestão.
