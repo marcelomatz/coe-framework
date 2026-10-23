@@ -7,7 +7,7 @@ author: "COE Roleplay Team"
 description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 28 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
 
 tasks:
-  # 1. Download official CitizenFX default server data (chat, spawnmanager, sessionmanager, hardcap, etc.)
+  # 1. Download official CitizenFX default server data (chat, spawnmanager, baseevents, etc.)
   - action: download_github
     src: https://github.com/citizenfx/cfx-server-data
     ref: master
@@ -94,8 +94,6 @@ tasks:
       ## --------------------------------------------------------------------
       ensure chat
       ensure spawnmanager
-      ensure sessionmanager
-      ensure hardcap
       ensure baseevents
 
       ## --------------------------------------------------------------------
