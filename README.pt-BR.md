@@ -23,7 +23,7 @@
 >
 > *Quero deixar registrado o meu mais profundo respeito e gratidão a todos os pioneiros e desenvolvedores de frameworks como **ESX**, **QBCore**, **Qbox** e **Ox**, que desbravaram caminhos, criaram os alicerces onde todos nós pisamos e continuam fazendo um trabalho admirável pelo ecossistema. Da mesma forma, meu agradecimento sincero a cada **modder**, criador de conteúdo e administrador de servidor que dedica noites e fins de semana para tornar o ambiente do FiveM cada vez melhor.*
 >
-> *O COE Framework nasce como uma contribuição de coração aberto: 27 resources em arquitetura limpa, com desempenho inegociável (0.00ms idle), totalmente orientados ao servidor, desacoplados via Platform HAL e com banco assíncrono MariaDB 11. Que ele sirva como ferramenta, inspiração e base sólida para que a comunidade continue criando o futuro do roleplay."*
+> *O COE Framework nasce como uma contribuição de coração aberto: 28 resources em arquitetura limpa, com desempenho inegociável (0.00ms idle), totalmente orientados ao servidor, desacoplados via Platform HAL e com banco assíncrono MariaDB 11. Que ele sirva como ferramenta, inspiração e base sólida para que a comunidade continue criando o futuro do roleplay."*
 >
 > — **Marcelo Matz**
 
@@ -43,7 +43,7 @@ O **COE Framework** é uma base de RPG completa e de alta performance para FiveM
 
 ## 📦 Estrutura dos Módulos Abertos (Tier 1 & Tier 2)
 
-O repositório `coe-framework` disponibiliza **27 resources** essenciais e autossuficientes sob licença [MIT](LICENSE):
+O repositório `coe-framework` disponibiliza **28 resources** essenciais e autossuficientes sob licença [MIT](LICENSE):
 
 ### 🏛️ Tier 1 — Core do Ecossistema (9 Resources)
 | Resource | Descrição |
@@ -58,7 +58,7 @@ O repositório `coe-framework` disponibiliza **27 resources** essenciais e autos
 | [`coe_loadscreen`](coe_loadscreen) | Tela de carregamento imersiva integrada ao ciclo de boot e sincronizada com a autenticação. |
 | [`coe_audit`](coe_audit) | Trilha imutável de auditoria financeira, movimentações de itens e ações de jogadores gravadas em MariaDB. |
 
-### 🌐 Tier 2 — Base Comunitária (18 Resources)
+### 🌐 Tier 2 — Base Comunitária (19 Resources)
 | Resource | Descrição |
 |---|---|
 | [`coe_characters`](coe_characters) | Seleção de múltiplos personagens por identificador com suporte a metadados dinâmicos e slots configuráveis. |
@@ -77,6 +77,7 @@ O repositório `coe-framework` disponibiliza **27 resources** essenciais e autos
 | [`coe_bank`](coe_bank) | Banco básico: saldo, saque e depósito em espécie, transferência por ID de cidadão e extrato, em agências e caixas eletrônicos. |
 | [`coe_jobs`](coe_jobs) | Arquitetura de profissões públicas e privadas com níveis de progressão salarial, turnos e permissões por cargo. |
 | [`coe_workpad`](coe_workpad) | Tablet de trabalho básico: ponto, empregos livres com GPS, carreira e um app por negócio do personagem, com o item tablet de negócios. |
+| [`coe_staff`](coe_staff) | Painel básico da staff para testar o servidor: noclip e teleportes, jogadores (trazer, congelar, expulsar, itens, dinheiro, grupos), veículos, hora e clima e cadastro de negócios. Acesso por ACE por módulo. |
 | [`coe_vehicle_catalog`](coe_vehicle_catalog) | Catálogo unificado de metadados de veículos, classes, especificações técnicas e capacidades de carga. |
 | [`coe_vehicles`](coe_vehicles) | Gestão de propriedade veicular, emplacamento, chaves digitais, trancamento e danos de motor/lataria. |
 

@@ -23,7 +23,7 @@
 >
 > *I want to express my deepest respect and heartfelt gratitude to the pioneers and brilliant minds behind frameworks like **ESX**, **QBCore**, **Qbox**, and **Ox**. They laid the very foundation on which we all stand today, and they continue to do tireless, incredible work for the ecosystem. Likewise, my warmest thanks go out to every single **modder**, creator, and server administrator who dedicates their nights and weekends to making FiveM an ever-evolving, richer platform.*
 >
-> *The COE Framework is offered to the community with an open heart: 27 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
+> *The COE Framework is offered to the community with an open heart: 28 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
 >
 > — **Marcelo Matz**
 
@@ -41,9 +41,9 @@
 
 ---
 
-## 📦 Open Source Modules (Tier 1 & Tier 2 — 27 Resources)
+## 📦 Open Source Modules (Tier 1 & Tier 2 — 28 Resources)
 
-The `coe-framework` repository provides **27 essential and self-contained resources** under the permissive [MIT License](LICENSE):
+The `coe-framework` repository provides **28 essential and self-contained resources** under the permissive [MIT License](LICENSE):
 
 ### 🏛️ Tier 1 — Core Ecosystem (9 Resources)
 | Resource | Description |
@@ -58,7 +58,7 @@ The `coe-framework` repository provides **27 essential and self-contained resour
 | [`coe_loadscreen`](coe_loadscreen) | Modern loading screen integrated with the server handshake and seamless camera transitions. |
 | [`coe_audit`](coe_audit) | Immutable, durable audit ledger recorded in MariaDB for financial operations and security. |
 
-### 🌐 Tier 2 — Community Base (18 Resources)
+### 🌐 Tier 2 — Community Base (19 Resources)
 | Resource | Description |
 |---|---|
 | [`coe_characters`](coe_characters) | Multi-character 3D scene selector with dynamic slots, state synchronization, and metadata. |
@@ -77,6 +77,7 @@ The `coe-framework` repository provides **27 essential and self-contained resour
 | [`coe_bank`](coe_bank) | Basic banking: balance, cash withdrawal and deposit, transfers by citizen ID and statement at bank branches and ATMs. |
 | [`coe_jobs`](coe_jobs) | Freelance careers (lumberjack, miner, delivery, etc.) with shared career progression and XP. |
 | [`coe_workpad`](coe_workpad) | Basic work tablet: duty clock, free jobs with GPS, career and one app per business the character owns or works for, used with the business tablet item. |
+| [`coe_staff`](coe_staff) | Basic staff panel for testing the server: noclip and teleports, players (bring, freeze, kick, items, money, groups), vehicles, time and weather, and business setup. Access by ACE per module. |
 | [`coe_vehicle_catalog`](coe_vehicle_catalog) | Neutral automotive metadata database indexing GTA V vehicle classes, names, and storage specs. |
 | [`coe_vehicles`](coe_vehicles) | Authoritative vehicle ownership, plate management, digital key chains, lock states, and digital odometers. |
 

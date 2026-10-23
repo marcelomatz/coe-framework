@@ -4,7 +4,7 @@
 
 ## Arquitetura e limites
 
-- Só resources autorizados chamam os exports SQL; o nome vem do runtime (`GetInvokingResource`). Padrão do framework (`server/access.js`): `coe_core`, `coe_inventory`, `coe_audit`, `coe_vehicles`, `coe_vehicle_catalog`, `coe_businesses`, `coe_needs`, `coe_economy`, `coe_spawn`, `coe_jobs`, `coe_shops`, `coe_bank` e `coe_mobile`. Pacotes e scripts de terceiros com persistência recebem a ACE no `server.cfg`, sem editar o framework: `add_ace resource.<nome> coe.database allow`. Cada resource é responsável pelo schema e pelas regras de persistência do seu módulo.
+- Só resources autorizados chamam os exports SQL; o nome vem do runtime (`GetInvokingResource`). Padrão do framework (`server/access.js`): `coe_core`, `coe_inventory`, `coe_audit`, `coe_vehicles`, `coe_vehicle_catalog`, `coe_businesses`, `coe_needs`, `coe_economy`, `coe_spawn`, `coe_jobs`, `coe_shops`, `coe_bank`, `coe_mobile` e `coe_staff`. Pacotes e scripts de terceiros com persistência recebem a ACE no `server.cfg`, sem editar o framework: `add_ace resource.<nome> coe.database allow`. Cada resource é responsável pelo schema e pelas regras de persistência do seu módulo.
 - `coe_database` depende de `coe_logging` para registrar erros operacionais; o logger não depende do provider nem do banco.
 - `Query`, `Execute` e `Transaction` usam prepared statements; `multipleStatements` permanece desabilitado.
 - `Transaction` executa as statements em sequência na mesma conexão e tenta rollback antes de informar falha.

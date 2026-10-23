@@ -1,6 +1,6 @@
 # coe_businesses
 
-Registro em MariaDB dos negócios do servidor (mecânicas, lojinhas, postos, restaurantes, delegacias, hospitais, mídia e outros). Guarda categoria, área, pontos de operação (baús, mesas de craft, showroom) e regras por categoria. A edição é feita pela aba **Negócios** do `coe_admin`.
+Registro em MariaDB dos negócios do servidor (mecânicas, lojinhas, postos, restaurantes, delegacias, hospitais, mídia e outros). Guarda categoria, área, pontos de operação (baús, mesas de craft, showroom) e regras por categoria. A edição é feita pela aba **Negócios** do painel básico da staff (`coe_staff`) ou do painel de um pacote.
 
 ## Acesso de outros resources
 
@@ -31,7 +31,7 @@ As categorias, os pontos aceitos por cada uma e o esquema de regras ficam em `co
 ## Exports (servidor)
 
 - Leitura: `IsReady()`, `Categories()`, `RuleSchema()`, `List(category?)`, `Get(id)`.
-- Escrita (ACE `coe.businesses.write`; padrão: `coe_shops`, que semeia as lojinhas; painéis e pacotes que semeiam negócios recebem a ACE no `server.cfg`): `Save(raw, by)`, `Seed(raw)` (cria só se não existir), `Delete(id, by)`.
+- Escrita (ACE `coe.businesses.write`; padrão: `coe_shops`, que semeia as lojinhas, e o painel `coe_staff`; painéis e pacotes que semeiam negócios recebem a ACE no `server.cfg`): `Save(raw, by)`, `Seed(raw)` (cria só se não existir), `Delete(id, by)`.
 - Acesso e equipe: `Access(businessId, characterId)`, `Partners(businessId)`, `Debtors(businessId)`.
 - Cargos: `Permissions()`, `RegisterPermissions(list)`, `Grades(businessId)`, `GradeOf(businessId, characterId)`, `Can(businessId, characterId, permission)`, `Salary(businessId, characterId)`, `Payroll(businessId)`.
 - Ponto: `Clock(source, businessId, stationId)`, `ClockIn(...)`, `ClockOut(...)`, `IsOnDuty(businessId, characterId)`, `CurrentDuty(source)`, `DutySummary()` (só `coe.businesses.admin`).
