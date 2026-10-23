@@ -18,7 +18,8 @@ local allowedResources = {
 	coe_jobs = true,
 	coe_shops = true,
 	coe_bank = true,
-	coe_mobile = true
+	coe_mobile = true,
+	coe_workpad = true
 }
 
 exports('Notify', function(playerId, kind, message, duration)

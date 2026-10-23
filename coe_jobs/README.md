@@ -64,7 +64,7 @@ Tudo é calculado em `shared/career.lua` (puro e testado) a partir do XP de cada
 
 ### App Carreira (tablet)
 
-App do COE OS para todos (`career` em `coe_tablet/config.lua`): nível e XP de carreira, reputação e o efeito
+App de tablet para todos (no tablet de trabalho básico `coe_workpad`, ou num tablet de pacote): nível e XP de carreira, reputação e o efeito
 dela, os últimos trabalhos (quando, quanto tempo, tarefas, XP, ganhos e o que foi descartado), cada habilidade com
 o bônus atual e por nível, e cada emprego com nível, tarefas, bônus que o histórico dá ali, carga, tempo da ação,
 depósito, requisitos que faltam, **Como funciona** (o mesmo guia do NPC, `html/guide-view.js`) e GPS até o NPC.
@@ -179,4 +179,5 @@ natives simulados) e `lua test\jobs_test.lua` (empregos de `jobs/` e faixa de sa
 
 `coe_core`, `coe_database`, `coe_economy`, `coe_logging`, `coe_notify`, `coetarget`. O `coe_jobs` está nos padrões
 de acesso desses resources (banco, dinheiro, logs e notificações) e no `coe_supervisor`. O app Carreira aceita o
-tablet que tiver a ACE `coe.jobs.tablet` (`add_ace resource.coe_tablet coe.jobs.tablet allow`).
+tablet de trabalho básico (`coe_workpad`, padrão em `TabletResources`) e tablets de pacotes com a ACE
+`coe.jobs.tablet` (`add_ace resource.<nome> coe.jobs.tablet allow`).

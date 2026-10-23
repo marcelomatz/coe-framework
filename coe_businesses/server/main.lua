@@ -76,8 +76,10 @@ exports('ClockIn', function(source, characterId, businessId, at, atStation)
 	return packResult(duty.ClockIn(source, characterId, businessId, at, atStation == true))
 end)
 
+-- Encerra o ponto do jogador. Quem grava negócios, ou quem aciona o ponto (ACE coe.businesses.clock; ex.: o tablet de
+-- trabalho, que só encerra o ponto do próprio jogador).
 exports('ClockOut', function(source, reason)
-	if not ready or not isWriter() then
+	if not ready or not (isWriter() or CoeAccess.Allowed(GetInvokingResource(), config.Ace.Clock, config.ClockResources)) then
 		return { error = ready and 'forbidden' or 'not_ready' }
 	end
 	return packResult(duty.ClockOut(source, reason))
