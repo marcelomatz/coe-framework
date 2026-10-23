@@ -4,7 +4,7 @@ Saldo por personagem, extrato (`coe_economy_ledger`) e operações atômicas. É
 
 - Conta criada no primeiro uso com `StartingBalance` (`config.lua`).
 - Valores sempre inteiros e positivos; saldo `BIGINT UNSIGNED`, então um débito além do saldo falha e desfaz a transação. O resource exige `sql_mode` estrito ao iniciar.
-- Só resources autorizados chamam os exports; o nome vem do runtime. Padrão do framework (`AllowedResources`): `coe_economy`, `coe_businesses`, `coe_pausemenu`, `coe_jobs`, `coe_shops`, `coe_bank` e `coe_staff` (painel básico da staff). Os demais (pacotes comerciais e scripts de terceiros) recebem a ACE no `server.cfg`: `add_ace resource.<nome> coe.economy.money allow`. Pacotes de empregos pagam pelo `coe_jobs` e não precisam dela.
+- Só resources autorizados chamam os exports; o nome vem do runtime. Padrão do framework (`AllowedResources`): `coe_economy`, `coe_businesses`, `coe_jobs`, `coe_shops`, `coe_bank` e `coe_staff` (painel básico da staff). Os demais (pacotes comerciais e scripts de terceiros) recebem a ACE no `server.cfg`: `add_ace resource.<nome> coe.economy.money allow`. Pacotes de empregos pagam pelo `coe_jobs` e não precisam dela.
 
 Exports (server): `GetBalance(characterId)`, `Credit(characterId, valor, motivo, referencia?)`, `Debit(...)`, `Transfer(deId, paraId, valor, motivo, referencia?)`. Retornam `true`/valor ou `nil, codigo` (`insufficient_funds`, `invalid_amount`, `balance_limit`, `same_account`, `forbidden`, `not_ready`...). `motivo` é `[a-z0-9_]{1,32}`.
 
