@@ -9,6 +9,7 @@
 ---@field description string|nil
 ---@field dependencies string[]
 ---@field dependents string[]
+---@field replacedBy string|nil Pacote que substitui este básico agora (coe_supervisor_replaces)
 
 ---@class CoeSupervisorExports
 local exports_coe_supervisor = {}

@@ -508,6 +508,27 @@ def home_server(ic, o):
 		ic.rect(140, y + 24, 30, 6, '#0b0d0e', stroke='none', r=2)
 
 
+def race_tablet(ic, o):
+	# Tablet de corridas: capa emborrachada, cantos com faixa de perigo e bandeira quadriculada na tela.
+	ic.rect(8, 40, 184, 124, 'rubber', r=16)
+	ic.rect(20, 50, 160, 104, 'polymer', r=8)
+	ic.rect(26, 56, 148, 92, 'screen', r=4, sw=1.2)
+	ic.raw('<rect x="29" y="59" width="142" height="86" rx="3" fill="#0b0b0d"/>')
+	cells = []
+	for row in range(4):
+		for col in range(6):
+			if (row + col) % 2 == 0:
+				cells.append('<rect x="%d" y="%d" width="12" height="12" fill="#f2f2f0"/>' % (64 + col * 12, 70 + row * 12))
+	ic.raw('<g transform="skewX(-12) translate(18 0)">' + ''.join(cells) + '</g>')
+	ic.raw('<rect x="56" y="70" width="4" height="62" fill="#9a9aa3"/>')
+	ic.raw('<rect x="29" y="128" width="142" height="5" fill="#ffd400"/><rect x="29" y="134" width="90" height="4" fill="#ff2e88"/>')
+	for x0, y0 in ((26, 41), (114, 154)):
+		stripes = ''.join('<path d="M%d %d l8 0 l-3 8 l-8 0 z" fill="#ffd400"/>' % (x0 + i * 14, y0) for i in range(5))
+		ic.raw('<g opacity="0.95">' + stripes + '</g>')
+	ic.glow(160, 66, 10, '#ff2e88', 0.7)
+	ic.hl([(30, 60), (30, 140)], w=2, opacity=0.25)
+
+
 def usb(ic, o):
 	mat = o.get('mat', 'polymer')
 	ic.rect(30, 70, 120, 60, mat, r=12)

@@ -61,6 +61,13 @@ SupervisorConfig = {
 		coe_mobile = { category = 'gameplay' },
 		coe_staff = { category = 'administration' }
 	},
+	-- Substituição: um pacote completo declara no fxmanifest `coe_supervisor_replaces '<básico>'` e o básico (que declara
+	-- `coe_supervisor_replaceable 'yes'`) não inicia enquanto o pacote roda; volta sozinho se o pacote parar ou não subir.
+	-- SettleMs: tempo sem resources iniciando/parando para considerar o boot (ou a mudança) assentado.
+	Replacements = {
+		Enabled = true,
+		SettleMs = 4000
+	},
 	-- Reinício que derruba muitos resources também é tratado como crítico.
 	CriticalRestartSize = 6,
 	-- Reiniciar não relê o fxmanifest: sem refresh, arquivos novos ou renomeados não carregam.

@@ -11,5 +11,6 @@ server_scripts {
 	'@coe_core/lib/access.lua',
 	'config.lua',
 	'plan.lua',
+	'replace.lua',
 	'server.lua'
 }

@@ -181,6 +181,18 @@ local definitions = {
 		image = 'phone.png',
 		animation = 'phone',
 		category = 'misc'
+	},
+	-- Tablet de corridas (pacote de corridas ilegais): usar abre o tablet das corridas ilegais; o item não é consumido.
+	race_tablet = {
+		label = 'Tablet de corridas',
+		weight = 700,
+		stack = false,
+		maxStack = 1,
+		usable = true,
+		consume = 0,
+		close = true,
+		image = 'race_tablet.png',
+		category = 'misc'
 	}
 }
 

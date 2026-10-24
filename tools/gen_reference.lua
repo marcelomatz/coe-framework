@@ -158,6 +158,10 @@ local function write(path, content)
 		if file then
 			file:close()
 		end
+		if current == nil then
+			io.stderr:write('Ausente: ' .. path .. '\n')
+			return false
+		end
 		if current ~= content then
 			io.stderr:write('Desatualizado: ' .. path .. '\n')
 			return false
@@ -168,6 +172,32 @@ local function write(path, content)
 	file:write(content)
 	file:close()
 	return true
+end
+
+-- Garante que a pasta de saida existe (io.open nao cria diretorios).
+local function ensureDir(dir)
+	local probe = io.open(dir .. '/README.md', 'rb')
+	if probe then
+		probe:close()
+		return true
+	end
+	if package.config:sub(1, 1) == '\\' then
+		os.execute('if not exist "' .. dir .. '" mkdir "' .. dir .. '"')
+	else
+		os.execute('mkdir -p "' .. dir .. '"')
+	end
+	return true
+end
+
+if check then
+	local probe = io.open('reference/README.md', 'rb')
+	if not probe then
+		io.stderr:write('A pasta reference/ nao existe (ou esta sem README.md). Rode sem --check para gerar.\n')
+	else
+		probe:close()
+	end
+else
+	ensureDir('reference')
 end
 
 local ok = true

@@ -5,6 +5,10 @@ lua54 'yes'
 name 'coe_staff'
 description 'Painel básico da staff do Coe: ferramentas pessoais, jogadores, veículos, mundo e negócios'
 
+-- Pacotes completos podem assumir este papel: declaram coe_supervisor_replaces 'coe_staff' e o coe_supervisor não
+-- inicia este resource enquanto o pacote roda (volta sozinho se o pacote parar).
+coe_supervisor_replaceable 'yes'
+
 dependencies {
 	'coe_core',
 	'coe_ui'
