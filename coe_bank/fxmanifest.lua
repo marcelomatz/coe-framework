@@ -5,6 +5,10 @@ lua54 'yes'
 name 'coe_bank'
 description 'Banco básico do Coe: saldo, saque, depósito, transferência por ID de cidadão e extrato, em agências e caixas eletrônicos'
 
+-- Pacotes completos podem assumir este papel: declaram coe_supervisor_replaces 'coe_bank' e o coe_supervisor não
+-- inicia este resource enquanto o pacote roda (volta sozinho se o pacote parar).
+coe_supervisor_replaceable 'yes'
+
 dependencies {
 	'coe_core',
 	'coe_database',

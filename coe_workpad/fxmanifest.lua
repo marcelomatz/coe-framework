@@ -5,6 +5,10 @@ lua54 'yes'
 name 'coe_workpad'
 description 'Tablet de trabalho básico do Coe: ponto, empregos livres, carreira e um app por negócio'
 
+-- Pacotes completos podem assumir este papel: declaram coe_supervisor_replaces 'coe_workpad' e o coe_supervisor não
+-- inicia este resource enquanto o pacote roda (volta sozinho se o pacote parar).
+coe_supervisor_replaceable 'yes'
+
 dependencies {
 	'coe_core',
 	'coe_inventory',

@@ -5,6 +5,10 @@ lua54 'yes'
 name 'coe_mobile'
 description 'Telefone básico do Coe: número do personagem, ligações com voz, contatos, mensagens e ajustes simples'
 
+-- Pacotes completos podem assumir este papel: declaram coe_supervisor_replaces 'coe_mobile' e o coe_supervisor não
+-- inicia este resource enquanto o pacote roda (volta sozinho se o pacote parar).
+coe_supervisor_replaceable 'yes'
+
 dependencies {
 	'coe_core',
 	'coe_database',

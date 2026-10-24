@@ -15,8 +15,8 @@ O plano é puro (`plan.lua`) e testado em `test/plan_test.lua`. Dependências ci
 
 ## Exports (só resources com a ACE `coe.supervisor`)
 
-- `List()`: resources gerenciados com `state`, `description`/`version` (do fxmanifest), `dependencies`, `dependents` e `restart` (ordem que será seguida).
-- `Restart(name, requesterSource)`: `true` ou código de erro (`forbidden`, `restart_in_progress`, `resource_not_managed`, `dependency_cycle`). Um reinício por vez.
+- `List()`: resources gerenciados com `state`, `description`/`version` (do fxmanifest), `dependencies`, `dependents`, `restart` (ordem que será seguida) e `replacedBy` (pacote que substitui o básico, quando houver).
+- `Restart(name, requesterSource)`: `true` ou código de erro (`forbidden`, `restart_in_progress`, `resource_not_managed`, `dependency_cycle`, `resource_replaced`). Um reinício por vez.
 
 A autorização do operador é de quem chama (ex.: o painel concede com `coe_admin.resources.manage`). Conceda ao painel no `server.cfg`: `add_ace resource.coe_admin coe.supervisor allow`. O resultado final é notificado ao solicitante via `coe_notify`.
 
@@ -32,6 +32,30 @@ coe_supervisor_critical 'yes'      -- opcional: reiniciar pode derrubar o servid
 ```
 
 Dependentes fora de `Managed` (ex.: scripts de terceiros que dependem do core) também são reiniciados, para não ficarem quebrados.
+
+## Substituição de básicos por pacotes
+
+Os básicos que um pacote completo pode assumir declaram no `fxmanifest.lua` `coe_supervisor_replaceable 'yes'`
+(`coe_bank`, `coe_mobile`, `coe_staff`, `coe_workpad`). O pacote declara no fxmanifest dele quem substitui:
+
+```lua
+coe_supervisor_replaces 'coe_mobile'
+```
+
+- **Boot**: com o pacote instalado, o supervisor cancela o início do básico (`onResourceStarting`), mesmo que o
+  pacote suba depois na ordem alfabética. O console mostra `resource_replaced resource=<básico> by=<pacote>`.
+- **Pacote não subiu** (não está no `ensure` ou falhou): quando o servidor assenta (`Replacements.SettleMs` sem
+  resources iniciando ou parando), o básico é iniciado (`resource_restored`).
+- **Em execução**: pacote que sobe depois para o básico; pacote que para traz o básico de volta. `ensure` manual do
+  básico com o pacote rodando é recusado e `Restart` responde `resource_replaced`. `List()` informa `replacedBy`.
+- Só básicos com `coe_supervisor_replaceable` podem ser substituídos: um pacote não consegue derrubar o core.
+- O framework não cita o pacote; quem declara é ele. Os exports `Yield` dos básicos continuam como alternativa.
+
+As regras ficam em `replace.lua` e são testadas em `test/replace_test.lua`. `Replacements.Enabled = false` desliga.
+
+No console, `coe_upgrades` mostra o mapa DE > PARA ao vivo: cada básico, quem o substitui e o estado de cada um. Se o
+pacote ativo expõe `UpgradeStatus()`, a linha seguinte mostra o que ele importou do básico. Jogadores precisam da ACE
+`command.coe_upgrades`.
 
 ## Limitações
 
