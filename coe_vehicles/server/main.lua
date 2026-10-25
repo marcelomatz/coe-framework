@@ -147,10 +147,25 @@ local function spawn(vehicleId, x, y, z, heading, vehicleType)
 	return entity
 end
 
+-- Entidade na rua com o state bag do veículo, mas fora do rastreio (ex.: coe_vehicles reiniciou com o carro na rua).
+local function findUntracked(vehicleId)
+	for _, entity in ipairs(GetAllVehicles()) do
+		if Core.Platform.Entities.Exists(entity) and tostring(Entity(entity).state['coe:vehicleId']) == vehicleId then
+			return entity
+		end
+	end
+	return nil
+end
+
 local function store(vehicleId)
 	local entity = trackedByVehicle[vehicleId]
 	if not entity then
-		return nil, 'vehicle_not_spawned'
+		entity = findUntracked(vehicleId)
+		if not entity then
+			return nil, 'vehicle_not_spawned'
+		end
+		trackedByVehicle[vehicleId] = entity
+		vehicleByEntity[entity] = vehicleId
 	end
 	registry.Flush(vehicleId)
 	detach(vehicleId)
