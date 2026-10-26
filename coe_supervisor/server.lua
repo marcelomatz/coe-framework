@@ -1,6 +1,10 @@
+if not SupervisorAnsi then
+	pcall(dofile, 'ansi.lua')
+end
 if not SupervisorUpdater then
 	pcall(dofile, 'updater.lua')
 end
+local Ansi = SupervisorAnsi
 local running = false
 local Replace = SupervisorReplace
 local Updater = SupervisorUpdater
@@ -282,6 +286,8 @@ local function publishUpdateState()
 		outdatedCount = updateState.outdatedCount or 0,
 		outdatedResources = updateState.outdatedResources or {},
 		filesCount = updateState.filesCount or 0,
+		filesWritten = updateState.filesWritten or 0,
+		currentResource = updateState.currentResource,
 		requiresFullRestart = updateState.requiresFullRestart == true,
 		needsRestart = updateState.needsRestart == true,
 		lastError = updateState.lastError
@@ -349,6 +355,10 @@ local function writeResourceFile(resName, relPath, content)
 end
 
 local function printUpdateBanner(plan)
+	if Ansi and Ansi.PrintUpdateAvailable then
+		Ansi.PrintUpdateAvailable(plan)
+		return
+	end
 	print('======================================================================')
 	print(('[COE Framework] NOVA VERSÃO DISPONÍVEL NO REPOSITÓRIO (%s)'):format(tostring(plan.channel or 'beta'):upper()))
 	print(('  Versão instalada : v%s'):format(tostring(plan.localVersion)))
@@ -441,6 +451,8 @@ local function runApplyUpdate(requester)
 	end
 
 	updateState.updating = true
+	updateState.filesWritten = 0
+	updateState.currentResource = nil
 	updateState.lastError = nil
 	publishUpdateState()
 
@@ -466,6 +478,17 @@ local function runApplyUpdate(requester)
 			end
 			updatedResources[item.resource] = true
 			filesWritten = filesWritten + 1
+			updateState.filesWritten = filesWritten
+			updateState.currentResource = item.resource
+			local totalDl = #(plan.downloads or {})
+			if filesWritten % 5 == 0 or filesWritten == totalDl then
+				publishUpdateState()
+			end
+			if Ansi and Ansi.PrintProgress and totalDl > 0 then
+				if filesWritten % 20 == 0 or filesWritten == totalDl then
+					Ansi.PrintProgress(filesWritten, totalDl, item.resource)
+				end
+			end
 		end
 	end
 
@@ -495,13 +518,24 @@ local function runApplyUpdate(requester)
 	updateState.outdatedCount = 0
 	updateState.outdatedResources = {}
 	updateState.filesCount = 0
+	updateState.filesWritten = filesWritten
+	updateState.currentResource = nil
 	updateState.needsRestart = true
 	updateState.lastError = nil
 	lastUpdatePlan = nil
 	publishUpdateState()
 
-	say('INFO', 'update_completed', ('version=v%s resources=%d files=%d'):format(
-		tostring(plan.remoteVersion), updatedCount, filesWritten))
+	if Ansi and Ansi.PrintUpdateCompleted then
+		Ansi.PrintUpdateCompleted({
+			version = plan.remoteVersion,
+			updatedResources = updatedCount,
+			filesUpdated = filesWritten,
+			requiresFullRestart = plan.requiresFullRestart == true
+		})
+	else
+		say('INFO', 'update_completed', ('version=v%s resources=%d files=%d'):format(
+			tostring(plan.remoteVersion), updatedCount, filesWritten))
+	end
 
 	return true, {
 		version = plan.remoteVersion,
@@ -688,13 +722,17 @@ RegisterCommand('coe_version', function(playerId)
 		return
 	end
 	local st = publishUpdateState()
-	print(('[coe_supervisor] COE Framework v%s (canal: %s) | Repositório: %s (%s)'):format(
-		tostring(st.localVersion), tostring(st.channel), tostring(st.repository), tostring(st.branch)))
-	if st.available then
-		print(('[coe_supervisor] Atualização disponível: v%s (%d resource(s)). Use "coe_update apply" para atualizar.'):format(
-			tostring(st.remoteVersion), st.outdatedCount or 0))
-	elseif st.remoteVersion then
-		print('[coe_supervisor] Todos os scripts estão na versão mais recente.')
+	if Ansi and Ansi.PrintVersion then
+		Ansi.PrintVersion(st)
+	else
+		print(('[coe_supervisor] COE Framework v%s (canal: %s) | Repositório: %s (%s)'):format(
+			tostring(st.localVersion), tostring(st.channel), tostring(st.repository), tostring(st.branch)))
+		if st.available then
+			print(('[coe_supervisor] Atualização disponível: v%s (%d resource(s)). Use "coe_update apply" para atualizar.'):format(
+				tostring(st.remoteVersion), st.outdatedCount or 0))
+		elseif st.remoteVersion then
+			print('[coe_supervisor] Todos os scripts estão na versão mais recente.')
+		end
 	end
 end, false)
 

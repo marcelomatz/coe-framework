@@ -13,7 +13,7 @@
 	];
 	const ERRORS = {
 		forbidden: 'Sem permissão.', busy: 'Aguarde um instante.', timeout: 'Sem resposta do servidor.', closed: 'Painel fechado.',
-		no_waypoint: 'Marque um ponto no mapa primeiro.', no_vehicle: 'Nenhum veículo por perto.', invalid_model: 'Modelo inválido.'
+		no_waypoint: 'Marque um ponto no mapa primeiro.', no_vehicle: 'Nenhum veículo por perto.', invalid_model: 'Modelo inválido.', update_in_progress: 'Uma atualização já está em andamento.', already_updating: 'Uma atualização já está em andamento.', update_download_failed: 'Não foi possível baixar os arquivos da atualização.'
 	};
 	const WEATHERS = {
 		EXTRASUNNY: 'Sol forte', CLEAR: 'Limpo', CLOUDS: 'Nuvens', OVERCAST: 'Encoberto', SMOG: 'Poluição', FOGGY: 'Neblina',
@@ -202,58 +202,163 @@
 		}
 	}
 
+	let updatePollingTimer = null;
+	async function startUpdatePolling() {
+		if (updatePollingTimer) { return; }
+		async function check() {
+			try {
+				const res = await post('action', { action: 'updateStatus', data: {} });
+				if (res && res.ok && res.data && res.data.update) {
+					state.update = res.data.update;
+					updateVersionBadge();
+					if (state.tab === 'self') {
+						render();
+					}
+					if (state.update.updating) {
+						updatePollingTimer = setTimeout(check, 1200);
+						return;
+					}
+					updatePollingTimer = null;
+					if (state.update.localVersion) {
+						status('Atualização concluída com sucesso! Versão instalada: v' + state.update.localVersion, 'success');
+					}
+					render();
+					return;
+				}
+			} catch (e) {
+				// Falha de rede momentânea no polling: continua tentando
+			}
+			if (state.update && state.update.updating) {
+				updatePollingTimer = setTimeout(check, 2000);
+			} else {
+				updatePollingTimer = null;
+			}
+		}
+		updatePollingTimer = setTimeout(check, 1200);
+	}
+
 	function renderUpdateCard(force) {
 		updateVersionBadge();
 		const upd = state.update;
 		if (!upd) { return null; }
-		if (!upd.available && !force) { return null; }
+		if (!upd.available && !upd.updating && !force) { return null; }
 
+		const isUpdating = upd.updating === true;
 		const isAvail = upd.available === true;
-		const box = card(
-			isAvail ? 'Atualização do COE Framework' : 'Status do COE Framework',
-			isAvail
-				? 'Nova versão ' + (upd.tag || ('v' + upd.remoteVersion)) + ' disponível para download (' + (upd.channel || 'release') + ').'
-				: 'Você está rodando a versão v' + (upd.localVersion || '0.1.0') + ' (' + (upd.channel || 'atualizada') + ').'
-		);
-		if (isAvail) { box.classList.add('is-update'); }
+
+		let boxTitle = 'Status do COE Framework';
+		let boxSubtitle = 'Você está rodando a versão v' + (upd.localVersion || '0.1.0') + ' (' + (upd.channel || 'atualizada') + ').';
+
+		if (isUpdating) {
+			boxTitle = 'Atualização em andamento...';
+			boxSubtitle = 'Baixando scripts e arquivos atualizados do repositório oficial.';
+		} else if (isAvail) {
+			boxTitle = 'Atualização do COE Framework';
+			boxSubtitle = 'Nova versão ' + (upd.tag || ('v' + upd.remoteVersion)) + ' disponível para download (' + (upd.channel || 'release') + ').';
+		}
+
+		const box = card(boxTitle, boxSubtitle);
+		if (isUpdating) {
+			box.classList.add('is-updating');
+		} else if (isAvail) {
+			box.classList.add('is-update');
+		}
 
 		const info = el('div', 'sf-field');
 		const details = [];
-		if (isAvail) {
+
+		if (isUpdating) {
+			const written = upd.filesWritten || 0;
+			const total = upd.filesCount || 0;
+			const pct = total > 0 ? Math.floor((written / total) * 100) : 0;
+			details.push('Status: Gravando arquivos nos resources (' + written + ' / ' + total + ' concluídos — ' + pct + '%)');
+			if (upd.currentResource) {
+				details.push('Resource em atualização: ' + upd.currentResource);
+			}
+			details.push('Por favor aguarde, o processo é automático e não requer intervenção.');
+
+			info.append(el('p', 'sf-hint sf-hint--busy', details.join('\n')));
+
+			const progressWrap = el('div', 'sf-progress-wrap');
+			const progressBar = el('div', 'sf-progress-bar');
+			const progressFill = el('div', 'sf-progress-fill');
+			progressFill.style.width = Math.min(100, Math.max(4, pct)) + '%';
+			progressBar.append(progressFill);
+			progressWrap.append(progressBar);
+			info.append(progressWrap);
+
+			startUpdatePolling();
+		} else if (isAvail) {
 			details.push('Versão atual: v' + (upd.localVersion || '—') + '  →  Nova versão: v' + (upd.remoteVersion || '—'));
 			if (upd.outdatedCount) { details.push('Resources a atualizar: ' + upd.outdatedCount + ' (' + (upd.outdatedResources || []).join(', ') + ')'); }
 			if (upd.filesCount) { details.push('Arquivos a baixar: ' + upd.filesCount); }
 			if (upd.requiresFullRestart) { details.push('Aviso: requer reinício do servidor após aplicar.'); }
 			if (upd.notes) { details.push('Notas: ' + upd.notes); }
+			info.append(el('p', 'sf-hint', details.join('\n')));
 		} else {
 			details.push('Todos os scripts do COE Framework estão sincronizados com a versão mais recente.');
+			info.append(el('p', 'sf-hint', details.join('\n')));
 		}
-		info.append(el('p', 'sf-hint', details.join('\n')));
 
 		const actions = row();
-		actions.append(
-			button('Verificar agora', '', function () {
-				act('checkUpdate', {}, 'Verificando atualizações...', function (data) {
-					state.update = data.update || state.update;
-					render();
-				});
-			})
-		);
-
-		if (isAvail) {
-			const applyBtn = button('Aplicar atualização', 'coe-button--primary', function () {
-				confirmBox(
-					'Aplicar atualização',
-					'Deseja atualizar para v' + (upd.remoteVersion || '') + ' agora?\nOs arquivos desatualizados serão baixados automaticamente.',
-					'Atualizar'
-				).then(function (ok) {
-					if (!ok) { return; }
-					act('applyUpdate', {}, 'Atualização iniciada...', function (data) {
-						state.update = data.update || state.update;
-						render();
-					});
-				});
+		const checkBtn = button('Verificar agora', '', function () {
+			act('checkUpdate', {}, 'Verificando atualizações...', function (data) {
+				state.update = data.update || state.update;
+				render();
 			});
+		});
+		if (isUpdating) { checkBtn.disabled = true; }
+		actions.append(checkBtn);
+
+		if (isAvail || isUpdating) {
+			const applyBtn = button(
+				isUpdating ? 'Atualizando scripts...' : 'Aplicar atualização',
+				'coe-button--primary',
+				async function () {
+					if (state.update && state.update.updating) { return; }
+					const ok = await confirmBox(
+						'Aplicar atualização',
+						'Deseja atualizar para v' + (upd.remoteVersion || '') + ' agora?\nOs arquivos desatualizados serão baixados automaticamente.',
+						'Atualizar'
+					);
+					if (!ok) { return; }
+
+					applyBtn.disabled = true;
+					applyBtn.textContent = 'Iniciando atualização...';
+					checkBtn.disabled = true;
+					if (!state.update) { state.update = {}; }
+					state.update.updating = true;
+					status('Iniciando atualização no servidor...', 'info');
+					render();
+
+					startUpdatePolling();
+
+					try {
+						const res = await post('action', { action: 'applyUpdate', data: {} });
+						if (!res || !res.ok) {
+							const errMsg = (res && (ERRORS[res.error] || res.message)) || 'Falha ao iniciar atualização.';
+							if (res && (res.error === 'update_in_progress' || res.error === 'already_updating')) {
+								status('Uma atualização já está em andamento. Acompanhando progresso...', 'info');
+							} else {
+								status(errMsg, 'error');
+								state.update.updating = false;
+								render();
+							}
+							return;
+						}
+						if (res.data && res.data.update) {
+							state.update = res.data.update;
+						}
+						status('Atualização concluída com sucesso!', 'success');
+						render();
+					} catch (err) {
+						status('Acompanhando progresso da atualização no servidor...', 'info');
+					}
+				}
+			);
+			if (isUpdating) {
+				applyBtn.disabled = true;
+			}
 			actions.append(applyBtn);
 		}
 

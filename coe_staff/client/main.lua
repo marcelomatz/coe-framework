@@ -23,7 +23,8 @@ local function request(action, data)
 	local requestId = nextRequest
 	local p = promise.new()
 	pending[requestId] = p
-	SetTimeout(15000, function()
+	local timeoutMs = (action == 'applyUpdate') and 300000 or 15000
+	SetTimeout(timeoutMs, function()
 		if pending[requestId] then
 			pending[requestId] = nil
 			p:resolve({ ok = false, error = 'timeout' })

@@ -40,6 +40,40 @@ local function fileExists(path)
 	return false
 end
 
+local function toUtf8(str)
+	if not str or str == '' then return str end
+	if pcall(utf8.len, str) and utf8.len(str) ~= nil then
+		return str
+	end
+	local out = {}
+	local i = 1
+	local len = #str
+	while i <= len do
+		local b = str:byte(i)
+		if b < 128 then
+			out[#out + 1] = string.char(b)
+			i = i + 1
+		elseif b >= 192 and b <= 223 and i + 1 <= len and str:byte(i + 1) >= 128 and str:byte(i + 1) <= 191 then
+			out[#out + 1] = str:sub(i, i + 1)
+			i = i + 2
+		elseif b >= 224 and b <= 239 and i + 2 <= len and str:byte(i + 1) >= 128 and str:byte(i + 1) <= 191 and str:byte(i + 2) >= 128 and str:byte(i + 2) <= 191 then
+			out[#out + 1] = str:sub(i, i + 2)
+			i = i + 3
+		elseif b >= 240 and b <= 247 and i + 3 <= len and str:byte(i + 1) >= 128 and str:byte(i + 1) <= 191 and str:byte(i + 2) >= 128 and str:byte(i + 2) <= 191 and str:byte(i + 3) >= 128 and str:byte(i + 3) <= 191 then
+			out[#out + 1] = str:sub(i, i + 3)
+			i = i + 4
+		else
+			if b >= 128 and b <= 255 then
+				pcall(function() out[#out + 1] = utf8.char(b) end)
+			else
+				out[#out + 1] = string.char(b)
+			end
+			i = i + 1
+		end
+	end
+	return table.concat(out)
+end
+
 local function parseChannel(version)
 	local pre = version:match('^%d+%.%d+%.%d+%-(%a+)')
 	if not pre then
@@ -243,6 +277,7 @@ if not notes or notes == '' then
 	local existingNotes = existing and existing:match('"notes"%s*:%s*"([^"]*)"')
 	notes = existingNotes or ('COE Framework v' .. targetVersion .. ' — FiveM Enhanced Gen9 (Build 170+)')
 end
+notes = toUtf8(notes)
 
 for _, res in ipairs(resources) do
 	local path = res .. '/fxmanifest.lua'
