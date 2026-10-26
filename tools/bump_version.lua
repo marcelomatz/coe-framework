@@ -227,9 +227,15 @@ if not validateSemVer(targetVersion) then
 end
 
 local notes = nil
+local notesFile = nil
+local skipDocsSync = false
 for i = 2, #(arg or {}) do
 	if arg[i] == '--notes' and arg[i + 1] then
 		notes = arg[i + 1]
+	elseif arg[i] == '--notes-file' and arg[i + 1] then
+		notesFile = arg[i + 1]
+	elseif arg[i] == '--no-docs-sync' then
+		skipDocsSync = true
 	end
 end
 if not notes or notes == '' then
@@ -262,3 +268,14 @@ writeFile('coe_supervisor/version.json', jsonContent)
 
 print(string.format('[OK] Versão atualizada para v%s (canal: %s) em %d resources, version.json e recipe.yaml.',
 	targetVersion, parseChannel(targetVersion), #resources))
+
+if not skipDocsSync and fileExists('tools/sync_release_docs_web.js') then
+	local syncCmd = 'node tools/sync_release_docs_web.js'
+	if notesFile and notesFile ~= '' then
+		syncCmd = syncCmd .. ' --notes-file "' .. notesFile:gsub('"', '\\"') .. '"'
+	end
+	if notes and notes ~= '' then
+		syncCmd = syncCmd .. ' --summary "' .. notes:gsub('"', '\\"') .. '"'
+	end
+	os.execute(syncCmd)
+end
