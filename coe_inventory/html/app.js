@@ -554,8 +554,7 @@ function createSlot(slotNumber, item, side) {
 		const candidates = [
 			`${baseName}.${requestedExt}`,
 			...(requestedExt !== 'webp' ? [`${baseName}.webp`] : []),
-			...(requestedExt !== 'png' ? [`${baseName}.png`] : []),
-			...(requestedExt !== 'svg' ? [`${baseName}.svg`] : [])
+			...(requestedExt !== 'png' ? [`${baseName}.png`] : [])
 		];
 
 		let candidateIndex = 0;
