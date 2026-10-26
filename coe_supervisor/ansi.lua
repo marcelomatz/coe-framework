@@ -133,12 +133,21 @@ function SupervisorAnsi.PrintUpdateAvailable(plan)
 	local isCumulative = plan.isCumulative == true or pendingCount >= 2
 	local pendingReleases = plan.pendingReleases or {}
 
+	local isSameVersion = (localVer == remoteVer)
+	local bannerTitle = isSameVersion
+		and string.format('  %s%sSCRIPTS PENDENTES DE SINCRONIZAÇÃO (%s)%s', C.bold, C.brightYellow, channel, C.reset)
+		or string.format('  %s%sNOVA VERSÃO DISPONÍVEL NO REPOSITÓRIO (%s)%s', C.bold, C.brightYellow, channel, C.reset)
+
 	print(hLine)
 	print(string.format('%s  %sCOE FRAMEWORK%s  •  %sSUPERVISOR%s', C.coeBorder, C.bold .. C.coeBrand, C.reset, C.bold .. C.brightWhite, C.reset))
-	print(string.format('  %s%sNOVA VERSÃO DISPONÍVEL NO REPOSITÓRIO (%s)%s', C.bold, C.brightYellow, channel, C.reset))
+	print(bannerTitle)
 	print(sepLine)
-	print(string.format('  %sVersão instalada :%s %sv%s%s', C.brightWhite, C.reset, C.gray, localVer, C.reset))
-	print(string.format('  %sNova versão      :%s %sv%s%s %s(%s)%s', C.brightWhite, C.reset, C.bold .. C.brightGreen, remoteVer, C.reset, C.brightCyan, tag, C.reset))
+	if isSameVersion then
+		print(string.format('  %sVersão do framework:%s %sv%s%s', C.brightWhite, C.reset, C.bold .. C.brightGreen, localVer, C.reset))
+	else
+		print(string.format('  %sVersão instalada :%s %sv%s%s', C.brightWhite, C.reset, C.gray, localVer, C.reset))
+		print(string.format('  %sNova versão      :%s %sv%s%s %s(%s)%s', C.brightWhite, C.reset, C.bold .. C.brightGreen, remoteVer, C.reset, C.brightCyan, tag, C.reset))
+	end
 	print(string.format('  %sCanal de release :%s %s%s%s', C.brightWhite, C.reset, C.yellow, channel:lower(), C.reset))
 
 	if isCumulative and #pendingReleases > 0 then
