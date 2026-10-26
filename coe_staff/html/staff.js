@@ -27,11 +27,12 @@
 
 	const els = {
 		panel: document.getElementById('staff'), tabs: document.getElementById('sf-tabs'), body: document.getElementById('sf-body'),
-		status: document.getElementById('sf-status'), close: document.getElementById('sf-close')
+		status: document.getElementById('sf-status'), close: document.getElementById('sf-close'),
+		version: document.getElementById('sf-version')
 	};
 	const state = {
-		modules: {}, toggles: {}, noclip: false, tab: null,
-		players: null, selected: null, groups: null, itemSearch: '', items: null,
+		modules: {}, toggles: {}, noclip: false, tab: null, update: null,
+		players: null, selected: null, groups: null, itemSearch: '', items: null, itemsLoading: false, itemRequestId: 0,
 		vehicles: null, vehicleSearch: '', world: null,
 		businesses: null, business: null
 	};
@@ -181,6 +182,85 @@
 		return node;
 	}
 
+	function updateVersionBadge() {
+		if (!els.version) { return; }
+		const upd = state.update;
+		if (!upd || (!upd.localVersion && !upd.version)) {
+			els.version.hidden = true;
+			return;
+		}
+		const local = upd.localVersion || upd.version || '0.1.0';
+		els.version.hidden = false;
+		if (upd.available) {
+			els.version.className = 'sf-version-badge is-outdated';
+			els.version.textContent = 'v' + local + ' (v' + (upd.remoteVersion || upd.tag || 'nova') + ' disp.)';
+			els.version.title = 'Nova versão disponível do COE Framework!';
+		} else {
+			els.version.className = 'sf-version-badge';
+			els.version.textContent = 'v' + local;
+			els.version.title = 'COE Framework atualizado';
+		}
+	}
+
+	function renderUpdateCard(force) {
+		updateVersionBadge();
+		const upd = state.update;
+		if (!upd) { return null; }
+		if (!upd.available && !force) { return null; }
+
+		const isAvail = upd.available === true;
+		const box = card(
+			isAvail ? 'Atualização do COE Framework' : 'Status do COE Framework',
+			isAvail
+				? 'Nova versão ' + (upd.tag || ('v' + upd.remoteVersion)) + ' disponível para download (' + (upd.channel || 'release') + ').'
+				: 'Você está rodando a versão v' + (upd.localVersion || '0.1.0') + ' (' + (upd.channel || 'atualizada') + ').'
+		);
+		if (isAvail) { box.classList.add('is-update'); }
+
+		const info = el('div', 'sf-field');
+		const details = [];
+		if (isAvail) {
+			details.push('Versão atual: v' + (upd.localVersion || '—') + '  →  Nova versão: v' + (upd.remoteVersion || '—'));
+			if (upd.outdatedCount) { details.push('Resources a atualizar: ' + upd.outdatedCount + ' (' + (upd.outdatedResources || []).join(', ') + ')'); }
+			if (upd.filesCount) { details.push('Arquivos a baixar: ' + upd.filesCount); }
+			if (upd.requiresFullRestart) { details.push('Aviso: requer reinício do servidor após aplicar.'); }
+			if (upd.notes) { details.push('Notas: ' + upd.notes); }
+		} else {
+			details.push('Todos os scripts do COE Framework estão sincronizados com a versão mais recente.');
+		}
+		info.append(el('p', 'sf-hint', details.join('\n')));
+
+		const actions = row();
+		actions.append(
+			button('Verificar agora', '', function () {
+				act('checkUpdate', {}, 'Verificando atualizações...', function (data) {
+					state.update = data.update || state.update;
+					render();
+				});
+			})
+		);
+
+		if (isAvail) {
+			const applyBtn = button('Aplicar atualização', 'coe-button--primary', function () {
+				confirmBox(
+					'Aplicar atualização',
+					'Deseja atualizar para v' + (upd.remoteVersion || '') + ' agora?\nOs arquivos desatualizados serão baixados automaticamente.',
+					'Atualizar'
+				).then(function (ok) {
+					if (!ok) { return; }
+					act('applyUpdate', {}, 'Atualização iniciada...', function (data) {
+						state.update = data.update || state.update;
+						render();
+					});
+				});
+			});
+			actions.append(applyBtn);
+		}
+
+		box.append(info, actions);
+		return box;
+	}
+
 	function renderSelf() {
 		const tools = card('Ferramentas', 'O noclip fecha o painel: W/A/S/D, Q/E desce e sobe, Shift acelera, roda do mouse muda a velocidade. Atalho: /noclip.');
 		const toggles = el('div', 'sf-grid2');
@@ -314,17 +394,34 @@
 	}
 
 	function playerItem(p) {
-		const box = card('Dar item');
-		const search = input('Buscar item', 'search', state.itemSearch);
+		const box = card('Dar item', 'Selecione um item do catálogo ou busque por nome/código.');
+		const search = input('Buscar item...', 'search', state.itemSearch);
 		const count = input('Qtd.', 'number', 1);
 		count.min = '1';
 		count.className += ' sf-narrow';
 		const results = el('div', 'sf-items');
 		let timer = null;
+		let activeReq = 0;
+
 		function paint() {
 			results.replaceChildren();
-			if (!state.items) { results.append(empty('Digite para buscar.')); return; }
-			if (!state.items.length) { results.append(empty('Nenhum item.')); return; }
+			if (state.itemsLoading) {
+				results.classList.add('is-empty');
+				const loadingMsg = el('p', 'sf-empty sf-loading', 'Carregando itens do catálogo...');
+				results.append(loadingMsg);
+				return;
+			}
+			results.classList.remove('is-empty');
+			if (!state.items) {
+				results.classList.add('is-empty');
+				results.append(empty('Digite para buscar ou aguarde o catálogo.'));
+				return;
+			}
+			if (!state.items.length) {
+				results.classList.add('is-empty');
+				results.append(empty('Nenhum item encontrado.'));
+				return;
+			}
 			state.items.forEach(function (item) {
 				const node = el('button', 'sf-itemcard');
 				node.type = 'button';
@@ -341,27 +438,56 @@
 				let index = 0;
 				img.addEventListener('error', function () { index += 1; if (index < sources.length) { img.src = sources[index]; } else { img.remove(); } });
 				img.src = sources[0];
-				node.append(img, el('span', null, item.label), el('small', null, item.name));
-				node.title = 'Dar ' + item.label;
+				node.append(img, el('span', null, item.label || item.name), el('small', null, item.name));
+				node.title = 'Dar ' + (item.label || item.name) + ' a ' + p.name;
 				node.addEventListener('click', function () {
-					act('giveItem', { target: p.id, item: item.name, count: Number(count.value) || 1 }, (Number(count.value) || 1) + 'x ' + item.label + ' entregue.');
+					const qty = Number(count.value) || 1;
+					act('giveItem', { target: p.id, item: item.name, count: qty }, qty + 'x ' + (item.label || item.name) + ' entregue a ' + p.name + '.');
 				});
 				results.append(node);
 			});
 		}
-		function find() {
-			act('items', { search: search.value.trim() }, null, function (data) { state.items = data.items || []; paint(); });
+
+		async function findAsync(term) {
+			const myReq = ++activeReq;
+			state.itemsLoading = true;
+			paint();
+			try {
+				const res = await post('action', { action: 'items', data: { search: term } });
+				if (myReq !== activeReq) { return; }
+				if (res && res.ok && res.data) {
+					state.items = res.data.items || [];
+				} else {
+					state.items = [];
+				}
+			} catch (err) {
+				if (myReq === activeReq) {
+					state.items = [];
+					status('Falha ao buscar itens.', 'error');
+				}
+			} finally {
+				if (myReq === activeReq) {
+					state.itemsLoading = false;
+					paint();
+				}
+			}
 		}
+
 		search.addEventListener('input', function () {
 			state.itemSearch = search.value;
 			clearTimeout(timer);
-			timer = setTimeout(find, 300);
+			timer = setTimeout(function () {
+				findAsync(search.value.trim());
+			}, 250);
 		});
+
 		const line = row();
 		line.append(search, count);
 		box.append(line, results);
 		paint();
-		if (!state.items) { find(); }
+		if (!state.items && !state.itemsLoading) {
+			findAsync(search.value.trim());
+		}
 		return box;
 	}
 

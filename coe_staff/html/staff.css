@@ -10,6 +10,26 @@ body {
 
 * { box-sizing: border-box; }
 
+/* Scrollbars customizadas do painel */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(var(--coe-ink-rgb), 0.22) transparent;
+}
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background: rgba(var(--coe-ink-rgb), 0.22);
+	border-radius: var(--coe-radius);
+}
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(var(--coe-accent-rgb), 0.5);
+}
+
 .sf {
 	position: fixed;
 	top: 50%;
@@ -213,7 +233,35 @@ select.coe-field.sf-narrow { flex-basis: 140px; width: 140px; }
 .sf-line:nth-child(even) { background: rgba(var(--coe-ink-rgb), 0.025); }
 .sf-vehicles { max-height: 300px; }
 
-.sf-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--coe-space-2); max-height: 240px; overflow-y: auto; }
+.sf-items {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+	gap: var(--coe-space-2);
+	max-height: 220px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding-right: 4px;
+	scrollbar-gutter: stable;
+}
+.sf-items.is-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 80px;
+	overflow: hidden;
+}
+.sf-loading {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--coe-accent);
+	font-weight: 500;
+	animation: sf-pulse 1.4s ease-in-out infinite;
+}
+@keyframes sf-pulse {
+	0%, 100% { opacity: 0.55; }
+	50% { opacity: 1; }
+}
 .sf-itemcard {
 	display: grid;
 	justify-items: center;
