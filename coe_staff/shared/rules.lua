@@ -1,22 +1,26 @@
 -- Regras do painel da staff, sem natives (testáveis fora do jogo).
 StaffRules = {}
 
-StaffRules.ModuleOrder = { 'self', 'players', 'vehicles', 'world', 'businesses' }
+StaffRules.ModuleOrder = { 'self', 'players', 'vehicles', 'hotel', 'garages', 'world', 'businesses' }
 
 -- Ação -> módulo que precisa estar liberado para o admin.
 StaffRules.Actions = {
 	-- Ferramentas pessoais (o efeito acontece no client do próprio admin, depois da autorização)
 	noclip = 'self', invisible = 'self', godmode = 'self', heal = 'self', revive = 'self',
 	tpWaypoint = 'self', tpCoords = 'self', updateStatus = 'self', checkUpdate = 'self', applyUpdate = 'self',
+	getMyCoords = 'self',
 	-- Jogadores
 	players = 'players', items = 'players', gotoPlayer = 'players', bringPlayer = 'players', freezePlayer = 'players',
 	kickPlayer = 'players', healPlayer = 'players', revivePlayer = 'players', giveItem = 'players', money = 'players',
 	groups = 'players', setGroup = 'players', removeGroup = 'players',
 	-- Veículos
 	catalog = 'vehicles', spawnVehicle = 'vehicles', deleteVehicle = 'vehicles', vehicleFix = 'vehicles',
+	-- Hotel de Nascimento
+	hotel = 'hotel', saveStarterHotel = 'hotel', teleportToHotel = 'hotel',
+	-- Garagens Públicas e Corporativas
+	garages = 'garages', garageSave = 'garages', garageDelete = 'garages', garageGoto = 'garages',
 	-- Mundo
 	world = 'world', setTime = 'world', setWeather = 'world', resetWorld = 'world', announce = 'world',
-	getMyCoords = 'world', saveStarterHotel = 'world', teleportToHotel = 'world',
 	-- Negócios
 	businesses = 'businesses', business = 'businesses', businessCreate = 'businesses', businessInfo = 'businesses',
 	businessArea = 'businesses', stationAdd = 'businesses', stationRemove = 'businesses', businessOwner = 'businesses',

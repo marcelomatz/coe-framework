@@ -516,13 +516,17 @@ local function publishWorld()
 end
 
 function A.world()
+	return { ok = true, data = { time = world.time, weather = world.weather, weathers = config.Weathers } }
+end
+
+function A.hotel()
 	local hotel = nil
 	if started('coe_spawn') then
 		pcall(function()
 			hotel = exports.coe_spawn:GetStarterHotel()
 		end)
 	end
-	return { ok = true, data = { time = world.time, weather = world.weather, weathers = config.Weathers, hotel = hotel } }
+	return { ok = true, data = { hotel = hotel } }
 end
 
 function A.getMyCoords(admin)
@@ -552,7 +556,7 @@ function A.saveStarterHotel(admin, data)
 		return { ok = false, error = 'hotel_save_failed' }
 	end
 	audit('staff_hotel_saved', { source = admin, name = data and data.name, enabled = data and data.enabled })
-	return A.world()
+	return A.hotel()
 end
 
 function A.teleportToHotel(admin, data)
@@ -567,6 +571,63 @@ function A.teleportToHotel(admin, data)
 	local target = (point == 'room') and hotel.room or hotel.entrance
 	effect(admin, 'teleport', { x = target.x, y = target.y, z = target.z, heading = target.h or 0.0 })
 	audit('staff_hotel_teleport', { source = admin, point = point })
+	return { ok = true }
+end
+
+local function garagesReady()
+	return started('coe_garages')
+end
+
+function A.garages()
+	if not garagesReady() then
+		return { ok = false, error = 'garages_unavailable' }
+	end
+	local list = remote('coe_garages', 'ListGarages') or {}
+	return { ok = true, data = { garages = list } }
+end
+
+function A.garageSave(admin, data)
+	if not garagesReady() then
+		return { ok = false, error = 'garages_unavailable' }
+	end
+	local result = remote('coe_garages', 'SaveGarage', data)
+	if type(result) == 'table' and result.error then
+		return { ok = false, error = tostring(result.error) }
+	end
+	audit('staff_garage_saved', { source = admin, id = data and data.id, kind = data and data.kind })
+	return A.garages()
+end
+
+function A.garageDelete(admin, data)
+	if not garagesReady() then
+		return { ok = false, error = 'garages_unavailable' }
+	end
+	local result = remote('coe_garages', 'DeleteGarage', data.id)
+	if type(result) == 'table' and result.error then
+		return { ok = false, error = tostring(result.error) }
+	end
+	audit('staff_garage_deleted', { source = admin, id = data and data.id })
+	return A.garages()
+end
+
+function A.garageGoto(admin, data)
+	if not garagesReady() then
+		return { ok = false, error = 'garages_unavailable' }
+	end
+	local list = remote('coe_garages', 'ListGarages') or {}
+	local target = nil
+	for _, g in ipairs(list) do
+		if g.id == data.id then
+			target = g
+			break
+		end
+	end
+	if not target or not target.spots or #target.spots == 0 then
+		return { ok = false, error = 'garage_not_found' }
+	end
+	local firstSpot = target.spots[1]
+	effect(admin, 'teleport', { x = firstSpot.x, y = firstSpot.y, z = firstSpot.z, heading = firstSpot.heading or 0.0 })
+	audit('staff_garage_goto', { source = admin, id = data.id })
 	return { ok = true }
 end
 
