@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_talk'
-version '0.1.0-beta.6'
+version '0.1.0-beta.7'
 description 'Sistema de comunicação e voz nativo do FiveM Enhanced (proximidade, rádio tático e telefonia)'
 
 dependencies {
