@@ -102,4 +102,30 @@ local okComplete = pcall(function()
 end)
 eq(okComplete, true, 'PrintUpdateCompleted executa sem erro')
 
+-- 5. Testes de banners de início e de atualização em andamento
+local okStart = pcall(function()
+	SupervisorAnsi.PrintUpdateStart({
+		localVersion = '0.1.0-beta.4',
+		remoteVersion = '0.1.0-beta.5',
+		tag = 'v0.1.0-beta.5',
+		filesCount = 817,
+		outdatedCount = 27
+	}, 'console')
+end)
+eq(okStart, true, 'PrintUpdateStart executa sem erro')
+
+local okInProgress = pcall(function()
+	SupervisorAnsi.PrintUpdateInProgress({
+		localVersion = '0.1.0-beta.4',
+		remoteVersion = '0.1.0-beta.5',
+		tag = 'v0.1.0-beta.5',
+		filesWritten = 320,
+		filesCount = 817,
+		currentResource = 'coe_inventory',
+		requester = 'console',
+		startTime = os.time() - 25
+	})
+end)
+eq(okInProgress, true, 'PrintUpdateInProgress executa sem erro')
+
 print('coe_supervisor ansi_test: ok')
