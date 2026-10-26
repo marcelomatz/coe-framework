@@ -995,6 +995,13 @@
 	// Garagens -------------------------------------------------------------------------------------------------
 
 	function renderGarages() {
+		if (!state.garages) {
+			const top = card('Gerenciador de Garagens', 'Cadastre, edite ou remova garagens públicas e frotas de Los Santos.');
+			top.append(empty('O serviço de garagens está indisponível ou o resource coe_garages não está ativo no servidor.'));
+			els.body.append(top);
+			return;
+		}
+
 		const data = state.garages || {};
 		const garagesList = Array.isArray(data.garages) ? data.garages : [];
 
