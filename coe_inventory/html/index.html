@@ -47,7 +47,7 @@
 				<span id="hotbar-feedback" class="hotbar-feedback" aria-live="polite"></span>
 				<div class="key-hint">
 					<kbd>1–5</kbd><span>usar</span>
-					<kbd id="open-key">F2</kbd><span>fechar</span>
+					<kbd id="open-key">I</kbd><span>fechar</span>
 				</div>
 			</footer>
 		</section>
@@ -109,6 +109,18 @@
 		</section>
 		</div>
 	</main>
+	<aside id="hotbar-peek" class="hotbar-peek coe-panel" aria-label="Hotbar rápida" aria-hidden="true">
+		<div id="hotbar-peek-grid" class="slot-grid hotbar-peek-grid" role="list"></div>
+	</aside>
+	<aside id="consume-bar" class="consume-bar coe-panel" aria-live="polite" aria-hidden="true">
+		<div class="consume-bar-top">
+			<span class="consume-bar-title">Consumindo <strong id="consume-item-label">Item</strong></span>
+			<span class="consume-bar-cancel"><kbd id="consume-cancel-key">X</kbd> Cancelar</span>
+		</div>
+		<div class="consume-bar-track">
+			<div id="consume-bar-fill" class="consume-bar-fill"></div>
+		</div>
+	</aside>
 	<script src="app.js"></script>
 </body>
 </html>

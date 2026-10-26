@@ -6,8 +6,13 @@ local state = C.state
 local HOTBAR_SLOTS = Config.Client.hotbarSlots
 local DISABLED_CONTROLS = { 14, 15, 16, 17, 37, 157, 158, 159, 160, 161 } -- roda de armas e atalhos 1-5
 
---- Remove props de containers, placement e fecha a UI (descarregar personagem / parar resource).
+--- Remove props de containers, placement, consumo ativo e fecha a UI (descarregar personagem / parar resource).
 local function resetPresentation()
+	if state.consuming then
+		state.consuming.cancelled = true
+		state.consuming = nil
+		SendNUIMessage({ action = 'consumeEnd', cancelled = true })
+	end
 	state.placement = nil
 	C.destroyAllContainerProps()
 end
@@ -38,10 +43,30 @@ end, false)
 RegisterCommand('-coe_core_inventory', function() end, false)
 RegisterKeyMapping('+coe_core_inventory', 'Abrir/fechar inventário', 'keyboard', Config.Client.openKey)
 
+RegisterCommand('+coe_core_hotbar_peek', function()
+	if not IsPauseMenuActive() then
+		C.showHotbarPeek()
+	end
+end, false)
+RegisterCommand('-coe_core_hotbar_peek', function() end, false)
+RegisterKeyMapping('+coe_core_hotbar_peek', 'Exibir hotbar rápida (1-5)', 'keyboard', Config.Client.hotbarKey or 'TAB')
+
+RegisterCommand('+coe_core_cancel_use', function()
+	if not IsPauseMenuActive() then
+		C.cancelItemUse()
+	end
+end, false)
+RegisterCommand('-coe_core_cancel_use', function() end, false)
+RegisterKeyMapping('+coe_core_cancel_use', 'Cancelar consumo de item', 'keyboard', Config.Client.cancelKey or 'X')
+
 for slot = 1, HOTBAR_SLOTS do
 	local command = ('+coe_core_hotbar_%d'):format(slot)
 	RegisterCommand(command, function()
 		if state.inventoryOpen or state.requestPending or state.placement or IsPauseMenuActive() then
+			return
+		end
+		if state.consuming then
+			C.feedback(C.t('consume_busy'), true)
 			return
 		end
 

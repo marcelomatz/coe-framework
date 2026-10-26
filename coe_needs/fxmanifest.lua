@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_needs'
-description 'Necessidades do personagem (fome, sede, estresse) com estado autoritativo no servidor'
+description 'Necessidades do personagem (fome, sede, estresse, alcool, drogas) com estado autoritativo no servidor'
 
 dependencies {
 	'coe_core',
@@ -13,6 +13,8 @@ dependencies {
 
 shared_scripts {
 	'config.lua',
+	'locales/pt-br.lua',
+	'locales/en-us.lua',
 	'domain/needs.lua'
 }
 

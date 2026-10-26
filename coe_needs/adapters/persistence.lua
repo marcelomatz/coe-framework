@@ -1,99 +1,138 @@
 NeedsPersistence = {}
 
 local ready = false
+local logger = CoeLogger.Create('coe_needs')
 
-local function callDatabase(exportName, sql, parameters)
-	if GetResourceState('coe_database') ~= 'started' then
-		return nil, 'database_unavailable'
-	end
-
-	local response = promise.new()
-	local database = exports['coe_database']
-	local dispatched = pcall(function()
-		database[exportName](database, sql, parameters, function(success, result, errorCode)
-			response:resolve({ success = success == true, result = result, error = errorCode })
-		end)
-	end)
-	if not dispatched then
-		return nil, 'database_unavailable'
-	end
-
-	local result = Citizen.Await(response)
-	if not result.success then
-		return nil, result.error or 'database_error'
-	end
-	return result.result
+local function log(level, event, fields)
+	logger:log(level, 'database', event, fields)
 end
 
-function NeedsPersistence.Initialize()
-	local migrated, migrationError = CoeMigrations.Run({
-		tableName = 'coe_needs_schema_migrations',
-		migrations = NeedsMigrations,
-		execute = function(sql, parameters)
-			return callDatabase('Execute', sql, parameters)
-		end,
-		query = function(sql, parameters)
-			return callDatabase('Query', sql, parameters)
-		end
-	})
-	if not migrated then
-		return false, migrationError
+local function isValidId(value)
+	return type(value) == 'string' and #value >= 1 and #value <= 64
+end
+
+local function dbCall(method, query, params)
+	local ok, result, err = pcall(function()
+		return exports.coe_database[method](exports.coe_database, query, params)
+	end)
+	if not ok then
+		log('error', 'database_call_failed', { method = method, error = tostring(result) })
+		return nil, 'database_unavailable'
 	end
-	ready = true
-	return true
+	if result == nil then
+		return nil, err or 'database_error'
+	end
+	return result
 end
 
 function NeedsPersistence.IsReady()
 	return ready
 end
 
--- Retorna (state|false, errorCode): false sem erro quando o personagem ainda nao tem registro.
-function NeedsPersistence.Load(characterId)
-	local rows, errorCode = callDatabase('Query',
-		'SELECT hunger, thirst, stress FROM coe_needs_state WHERE character_id = ? LIMIT 1',
-		{ characterId })
-	if not rows then
-		return nil, errorCode
-	end
-	local row = rows[1]
-	if not row then
-		return false
-	end
-	return { hunger = row.hunger, thirst = row.thirst, stress = row.stress }
+function NeedsPersistence.Initialize()
+	local ok, err = CoeMigrations.Run(NeedsMigrations, dbCall, log)
+	ready = ok == true
+	return ready, err
 end
 
+function NeedsPersistence.Load(characterId)
+	if not ready then
+		return nil, 'persistence_not_ready'
+	end
+	if not isValidId(characterId) then
+		return nil, 'invalid_character_id'
+	end
+	local row, err = dbCall(
+		'Single',
+		'SELECT hunger, thirst, stress, alcohol, drugs FROM coe_needs_state WHERE character_id = ? LIMIT 1',
+		{ characterId }
+	)
+	if not row then
+		return nil, err
+	end
+	if row == false then
+		return false
+	end
+	return {
+		hunger = tonumber(row.hunger),
+		thirst = tonumber(row.thirst),
+		stress = tonumber(row.stress),
+		alcohol = tonumber(row.alcohol) or 0,
+		drugs = tonumber(row.drugs) or 0
+	}
+end
+
+local UPSERT_SQL = [=[
+	INSERT INTO coe_needs_state (character_id, hunger, thirst, stress, alcohol, drugs)
+	VALUES (?, ?, ?, ?, ?, ?)
+	ON DUPLICATE KEY UPDATE
+		hunger = VALUES(hunger),
+		thirst = VALUES(thirst),
+		stress = VALUES(stress),
+		alcohol = VALUES(alcohol),
+		drugs = VALUES(drugs)
+]=]
+
 function NeedsPersistence.Save(characterId, state)
-	local result, errorCode = callDatabase('Execute', [[
-		INSERT INTO coe_needs_state (character_id, hunger, thirst, stress)
-		VALUES (?, ?, ?, ?)
-		ON DUPLICATE KEY UPDATE hunger = VALUES(hunger), thirst = VALUES(thirst), stress = VALUES(stress)
-	]], { characterId, state.hunger, state.thirst, state.stress })
-	if result == nil then
-		return false, errorCode
+	if not ready then
+		return false, 'persistence_not_ready'
+	end
+	if not isValidId(characterId) or type(state) ~= 'table' then
+		return false, 'invalid_payload'
+	end
+	local affected, err = dbCall(
+		'Execute',
+		UPSERT_SQL,
+		{
+			characterId,
+			tonumber(state.hunger) or 0,
+			tonumber(state.thirst) or 0,
+			tonumber(state.stress) or 0,
+			tonumber(state.alcohol) or 0,
+			tonumber(state.drugs) or 0
+		}
+	)
+	if affected == nil then
+		return false, err
 	end
 	return true
 end
 
--- Grava varios personagens numa unica instrucao. rows = { { characterId, state }, ... }.
+-- Salva varios personagens em uma unica transacao (salvamento periodico).
+-- rows = { { characterId, state }, ... }
 function NeedsPersistence.SaveMany(rows)
+	if not ready then
+		return false, 'persistence_not_ready'
+	end
+	if type(rows) ~= 'table' then
+		return false, 'invalid_payload'
+	end
 	if #rows == 0 then
 		return true
 	end
-	local marks, parameters = {}, {}
-	for index, row in ipairs(rows) do
-		marks[index] = '(?, ?, ?, ?)'
-		local base = (index - 1) * 4
-		parameters[base + 1] = row[1]
-		parameters[base + 2] = row[2].hunger
-		parameters[base + 3] = row[2].thirst
-		parameters[base + 4] = row[2].stress
+	local queries = {}
+	for i = 1, #rows do
+		local entry = rows[i]
+		local id = type(entry) == 'table' and entry[1] or nil
+		local state = type(entry) == 'table' and entry[2] or nil
+		if not isValidId(id) or type(state) ~= 'table' then
+			return false, 'invalid_payload'
+		end
+		queries[i] = {
+			query = UPSERT_SQL,
+			values = {
+				id,
+				tonumber(state.hunger) or 0,
+				tonumber(state.thirst) or 0,
+				tonumber(state.stress) or 0,
+				tonumber(state.alcohol) or 0,
+				tonumber(state.drugs) or 0
+			}
+		}
 	end
-	local result, errorCode = callDatabase('Execute',
-		'INSERT INTO coe_needs_state (character_id, hunger, thirst, stress) VALUES ' .. table.concat(marks, ', ')
-			.. ' ON DUPLICATE KEY UPDATE hunger = VALUES(hunger), thirst = VALUES(thirst), stress = VALUES(stress)',
-		parameters)
-	if result == nil then
-		return false, errorCode
+	local ok, err = dbCall('Transaction', queries)
+	if not ok then
+		return false, err
 	end
 	return true
 end

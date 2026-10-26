@@ -19,8 +19,12 @@ local function text(default) return { kind = 'string', default = default } end
 local SCHEMA = {
 	Locale = text('pt-BR'),
 	Client = {
-		openKey = text('F2'),
+		openKey = text('I'),
+		hotbarKey = text('TAB'),
+		cancelKey = text('X'),
 		hotbarSlots = integer(5, 1, 9),
+		hotbarPreviewMs = integer(3000, 500, 30000),
+		defaultConsumeTimeMs = integer(3000, 200, 60000),
 		targetDistance = number(3.0, 0.5, 10.0),
 		placementRange = number(4.0, 1.0, 15.0),
 		placementPreviewAlpha = integer(150, 0, 255),
@@ -47,6 +51,38 @@ local SCHEMA = {
 			}
 		}
 	}
+}
+
+local DEFAULT_CONSUMABLE_TIMES = {
+	water = 2500,
+	bread = 2600,
+	burger = 3000,
+	burger_chicken = 3000,
+	sandwich = 2800,
+	pizza_ham = 3500,
+	pizza_ham_slice = 2600,
+	donut = 2400,
+	fries = 2500,
+	chips = 2400,
+	chocolate = 2200,
+	cereal_bar = 2200,
+	mustard = 2000,
+	sprunk = 2600,
+	ecola = 2600,
+	coffee = 2800,
+	energy_drink = 2800,
+	beer = 3000,
+	whiskey = 3200,
+	vodka = 3200,
+	cigarette = 3800,
+	cigarettes_redwood = 3800,
+	weed = 3800,
+	cocaine = 3200,
+	meth = 3200,
+	bandage = 3200,
+	medikit = 4000,
+	painkillers = 2400,
+	armour = 3500
 }
 
 local DEFAULT_STARTER_ITEMS = {
@@ -157,6 +193,32 @@ local function resolveStarterItems(given, issues)
 	return resolved
 end
 
+local function resolveConsumables(given, issues)
+	local result = copy(DEFAULT_CONSUMABLE_TIMES)
+	if given ~= nil and type(given) ~= 'table' then
+		issues[#issues + 1] = 'Config.Consumables deve ser uma tabela; usando os padrões'
+		return result
+	end
+	given = given or {}
+	warnUnknown(given, { items = true }, 'Config.Consumables', issues)
+
+	local items = given.items
+	if items ~= nil and type(items) ~= 'table' then
+		issues[#issues + 1] = 'Config.Consumables.items deve ser uma tabela; usando os padrões'
+		return result
+	end
+	local durationRule = integer(3000, 200, 60000)
+	for name, durationMs in pairs(items or {}) do
+		local path = 'Config.Consumables.items.' .. tostring(name)
+		if type(name) == 'string' and name ~= '' and isValid(durationRule, durationMs) then
+			result[name] = durationMs
+		else
+			issues[#issues + 1] = ('%s inválido (inteiro entre 200 e 60000)'):format(path)
+		end
+	end
+	return result
+end
+
 local XYZ = {
 	x = number(0.0, -10.0, 10.0),
 	y = number(0.0, -360.0, 360.0),
@@ -258,7 +320,7 @@ function Inventory.Settings.Apply(given)
 		given = nil
 	end
 	given = given or {}
-	warnUnknown(given, { Locale = true, Client = true, Server = true, Containers = true }, 'Config', issues)
+	warnUnknown(given, { Locale = true, Client = true, Consumables = true, Server = true, Containers = true }, 'Config', issues)
 
 	local serverGiven = type(given.Server) == 'table' and given.Server or nil
 	local starterGiven = serverGiven and serverGiven.starterItems
@@ -271,6 +333,7 @@ function Inventory.Settings.Apply(given)
 	local config = {
 		Locale = (type(given.Locale) == 'string' and given.Locale ~= '') and given.Locale or 'pt-BR',
 		Client = resolveGroup(SCHEMA.Client, given.Client, 'Config.Client', issues),
+		Consumables = { items = resolveConsumables(given.Consumables, issues) },
 		Server = resolveGroup(SCHEMA.Server, serverGiven or given.Server, 'Config.Server', issues),
 		Containers = { items = resolveContainers(given.Containers, issues) }
 	}

@@ -1,83 +1,96 @@
--- Regras puras das necessidades (sem natives nem banco), compartilhadas entre client e servidor.
 Needs = {}
 
-local function isNeed(name)
-	for _, candidate in ipairs(Config.Needs.Names) do
-		if candidate == name then
-			return true
-		end
-	end
-	return false
+local cfg = Config.Needs
+local validName = {}
+for _, name in ipairs(cfg.Names) do
+	validName[name] = true
 end
 
 local function clamp(value)
-	return math.max(0, math.min(100, value))
+	local num = tonumber(value)
+	if not num or num ~= num then
+		return 0
+	end
+	if num < 0 then
+		return 0
+	end
+	if num > 100 then
+		return 100
+	end
+	return num
 end
 
-function Needs.IsNeed(name)
-	return isNeed(name)
-end
-
-function Needs.IsActivity(name)
-	return type(name) == 'string' and Config.Needs.Rates[name] ~= nil
-end
-
-function Needs.New(source)
+function Needs.New(raw)
 	local state = {}
-	local initial = Config.Needs.Initial
-	local input = type(source) == 'table' and source or {}
-	for _, name in ipairs(Config.Needs.Names) do
-		local value = tonumber(input[name])
-		if not value or value ~= value then
-			value = initial[name]
+	for _, name in ipairs(cfg.Names) do
+		local value = type(raw) == 'table' and raw[name] or nil
+		if tonumber(value) == nil then
+			value = cfg.Initial[name]
 		end
 		state[name] = clamp(value)
 	end
 	return state
 end
 
--- Aplica a atividade por `seconds` segundos e devolve o mesmo estado (alterado).
+function Needs.Copy(state)
+	local copy = {}
+	for _, name in ipairs(cfg.Names) do
+		copy[name] = clamp(state and state[name] or cfg.Initial[name])
+	end
+	return copy
+end
+
+function Needs.IsActivity(activity)
+	return type(activity) == 'string' and cfg.Rates[activity] ~= nil
+end
+
+-- Aplica a variacao dos segundos decorridos na atividade informada.
 function Needs.Step(state, activity, seconds)
-	local rates = Config.Needs.Rates[activity]
-	if not rates or type(seconds) ~= 'number' or seconds <= 0 then
+	local rate = cfg.Rates[activity]
+	local dt = tonumber(seconds)
+	if not rate or not dt or dt <= 0 then
 		return state
 	end
-	for _, name in ipairs(Config.Needs.Names) do
-		state[name] = clamp(state[name] + (rates[name] or 0) * seconds / 60)
+	local minutes = dt / 60
+	for _, name in ipairs(cfg.Names) do
+		local delta = (rate[name] or 0) * minutes
+		state[name] = clamp(state[name] + delta)
 	end
 	return state
 end
 
-function Needs.Add(state, name, delta)
-	if not isNeed(name) or type(delta) ~= 'number' or delta ~= delta then
-		return false, 'invalid_need'
-	end
-	state[name] = clamp(state[name] + delta)
-	return true
-end
-
 function Needs.Set(state, name, value)
-	if not isNeed(name) or type(value) ~= 'number' or value ~= value then
+	local num = tonumber(value)
+	if not validName[name] or not num or num ~= num or math.abs(num) == math.huge then
 		return false, 'invalid_need'
 	end
-	state[name] = clamp(value)
+	state[name] = clamp(num)
 	return true
 end
 
--- Valores inteiros enviados ao client e ao HUD.
-function Needs.Snapshot(state)
-	local snapshot = {}
-	for _, name in ipairs(Config.Needs.Names) do
-		snapshot[name] = math.floor(state[name] + 0.5)
+function Needs.Add(state, name, delta)
+	local num = tonumber(delta)
+	if not validName[name] or not num or num ~= num or math.abs(num) == math.huge then
+		return false, 'invalid_need'
 	end
-	return snapshot
+	state[name] = clamp((state[name] or 0) + num)
+	return true
+end
+
+-- Inteiros de 0 a 100 para envio ao client e ao HUD.
+function Needs.Snapshot(state)
+	local snap = {}
+	for _, name in ipairs(cfg.Names) do
+		snap[name] = math.floor((state[name] or 0) + 0.5)
+	end
+	return snap
 end
 
 function Needs.SnapshotEquals(a, b)
 	if not a or not b then
 		return false
 	end
-	for _, name in ipairs(Config.Needs.Names) do
+	for _, name in ipairs(cfg.Names) do
 		if a[name] ~= b[name] then
 			return false
 		end

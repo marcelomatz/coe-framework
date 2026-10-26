@@ -9,6 +9,7 @@ AddEventHandler('playerDropped', function()
 	S.containerDropTimes[source] = nil
 	S.containerSyncTimes[source] = nil
 	S.weaponAmmoTimes[source] = nil
+	S.activeConsumptions[source] = nil
 	CreateThread(S.flushInventories)
 end)
 

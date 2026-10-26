@@ -42,7 +42,8 @@ local function attachAnimationProp(playerPed, propProfile, modelHash)
 end
 
 --- Dispara a animação (avançada, com posição fixa, ou comum).
-local function startAnimation(playerPed, animation)
+local function startAnimation(playerPed, animation, durationMs)
+	local duration = durationMs or animation.duration
 	if animation.advanced then
 		local coords = GetEntityCoords(playerPed, true)
 		TaskPlayAnimAdvanced(
@@ -52,7 +53,7 @@ local function startAnimation(playerPed, animation)
 			coords.x, coords.y, coords.z,
 			0.0, 0.0, GetEntityHeading(playerPed),
 			8.0, 3.0,
-			animation.duration,
+			duration,
 			animation.flag,
 			animation.startTime or 0.0,
 			0, 0
@@ -66,7 +67,7 @@ local function startAnimation(playerPed, animation)
 		animation.clip,
 		8.0,
 		-8.0,
-		animation.duration,
+		duration,
 		animation.flag,
 		1.0,
 		false,
@@ -75,19 +76,40 @@ local function startAnimation(playerPed, animation)
 	)
 end
 
+--- Espera por `ms` milissegundos em fatias curtas, interrompendo imediatamente se `shouldCancel()` retornar true.
+local function waitInterruptible(ms, shouldCancel)
+	if ms <= 0 then
+		return not (shouldCancel and shouldCancel())
+	end
+	if not shouldCancel then
+		Wait(ms)
+		return true
+	end
+	local remaining = ms
+	while remaining > 0 do
+		if shouldCancel() then
+			return false
+		end
+		local step = math.min(50, remaining)
+		Wait(step)
+		remaining = remaining - step
+	end
+	return not shouldCancel()
+end
+
 --- Lista, em ordem cronológica, os momentos da animação em que algo deve acontecer:
 --- criar o prop (`attachAt`) e equipar o item (`equipAt`). Os tempos são frações da duração.
-local function buildCheckpoints(animation, propProfile, hasEquipCallback)
+local function buildCheckpoints(duration, animation, propProfile, hasEquipCallback)
 	local checkpoints = {}
 	if propProfile then
 		checkpoints[#checkpoints + 1] = {
-			time = math.floor(animation.duration * (propProfile.attachAt or 0)),
+			time = math.floor(duration * (propProfile.attachAt or 0)),
 			action = 'prop'
 		}
 	end
 	if animation.equipAt ~= nil and hasEquipCallback then
 		checkpoints[#checkpoints + 1] = {
-			time = math.floor(animation.duration * animation.equipAt),
+			time = math.floor(duration * animation.equipAt),
 			action = 'equip'
 		}
 	end
@@ -97,13 +119,15 @@ local function buildCheckpoints(animation, propProfile, hasEquipCallback)
 	return checkpoints
 end
 
---- Executa a linha do tempo da animação e retorna o prop criado (se houver).
-local function runTimeline(playerPed, animation, propProfile, propModelHash, onEquip)
+--- Executa a linha do tempo da animação e retorna `propObject, completed`.
+local function runTimeline(playerPed, duration, animation, propProfile, propModelHash, onEquip, shouldCancel)
 	local propObject
 	local elapsed = 0
-	for _, checkpoint in ipairs(buildCheckpoints(animation, propProfile, onEquip ~= nil)) do
+	for _, checkpoint in ipairs(buildCheckpoints(duration, animation, propProfile, onEquip ~= nil)) do
 		local delay = math.max(0, checkpoint.time - elapsed)
-		if delay > 0 then Wait(delay) end
+		if delay > 0 and not waitInterruptible(delay, shouldCancel) then
+			return propObject, false
+		end
 		elapsed = checkpoint.time
 		if checkpoint.action == 'prop' then
 			propObject = attachAnimationProp(playerPed, propProfile, propModelHash)
@@ -111,31 +135,52 @@ local function runTimeline(playerPed, animation, propProfile, propModelHash, onE
 			onEquip()
 		end
 	end
-	if elapsed < animation.duration then
-		Wait(animation.duration - elapsed)
+	if elapsed < duration then
+		if not waitInterruptible(duration - elapsed, shouldCancel) then
+			return propObject, false
+		end
 	end
-	return propObject
+	return propObject, true
 end
 
---- Sem animação possível: aplica o equip imediatamente e conclui.
-local function finishWithoutAnimation(onComplete, onEquip)
+--- Sem animação possível: aguarda a duração configurada (se houver) ou conclui imediatamente.
+local function finishWithoutAnimation(onComplete, onEquip, options)
+	local durationMs = options and tonumber(options.durationMs) or 0
+	local shouldCancel = options and options.shouldCancel
+	local onCancel = options and options.onCancel
+	if durationMs > 0 and shouldCancel then
+		CreateThread(function()
+			if not waitInterruptible(durationMs, shouldCancel) then
+				if onCancel then onCancel() end
+				return
+			end
+			if onEquip then onEquip() end
+			onComplete()
+		end)
+		return
+	end
 	if onEquip then onEquip() end
 	onComplete()
 end
 
 --- Toca a animação `animationName` do item e chama `onComplete` ao final.
 --- `onEquip` (opcional) roda no instante `equipAt` da animação, ou imediatamente se ela não puder tocar.
-function C.playItemAnimation(animationName, onComplete, item, onEquip)
+--- `options` (opcional): `{ durationMs, shouldCancel, onCancel }`.
+function C.playItemAnimation(animationName, onComplete, item, onEquip, options)
 	local animation = animationName and Inventory.Items.Animations[animationName]
 	if not animation then
-		finishWithoutAnimation(onComplete, onEquip)
+		finishWithoutAnimation(onComplete, onEquip, options)
 		return
 	end
+
+	local duration = (options and tonumber(options.durationMs)) or animation.duration
+	local shouldCancel = options and options.shouldCancel
+	local onCancel = options and options.onCancel
 
 	CreateThread(function()
 		local playerPed = PlayerPedId()
 		if playerPed == 0 then
-			finishWithoutAnimation(onComplete, onEquip)
+			finishWithoutAnimation(onComplete, onEquip, options)
 			return
 		end
 
@@ -147,12 +192,14 @@ function C.playItemAnimation(animationName, onComplete, item, onEquip)
 
 		if not C.loadAnimDict(animation.dict) or not DoesEntityExist(playerPed) then
 			if propModelHash then SetModelAsNoLongerNeeded(propModelHash) end
-			finishWithoutAnimation(onComplete, onEquip)
+			finishWithoutAnimation(onComplete, onEquip, options)
 			return
 		end
 
-		startAnimation(playerPed, animation)
-		local propObject = runTimeline(playerPed, animation, propProfile, propModelHash, onEquip)
+		startAnimation(playerPed, animation, duration)
+		local propObject, completed = runTimeline(
+			playerPed, duration, animation, propProfile, propModelHash, onEquip, shouldCancel
+		)
 
 		if DoesEntityExist(playerPed) then
 			StopAnimTask(playerPed, animation.dict, animation.clip, 1.0)
@@ -164,6 +211,10 @@ function C.playItemAnimation(animationName, onComplete, item, onEquip)
 		RemoveAnimDict(animation.dict)
 		if propModelHash and HasModelLoaded(propModelHash) then
 			SetModelAsNoLongerNeeded(propModelHash)
+		end
+		if not completed then
+			if onCancel then onCancel() end
+			return
 		end
 		onComplete()
 	end)

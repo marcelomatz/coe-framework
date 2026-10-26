@@ -39,3 +39,4 @@ S.containerSyncTimes = {}
 
 S.inventoryActionTimes = {}
 S.containerDropTimes = {}
+S.activeConsumptions = {}

@@ -10,13 +10,52 @@ Config = {
 	Locale = 'pt-BR',
 	-- Interface e comportamento do jogador (lidos pelo cliente).
 	Client = {
-		openKey = 'F2', -- tecla padrão para abrir o inventário (o jogador pode remapear)
+		openKey = 'I', -- tecla padrão para abrir o inventário (o jogador pode remapear)
+		hotbarKey = 'TAB', -- tecla padrão para exibir a hotbar rápida (1..N) na tela
+		cancelKey = 'X', -- tecla padrão para cancelar o consumo de um item em andamento
 		hotbarSlots = 5, -- quantidade de atalhos de hotbar (teclas 1..N), de 1 a 9
+		hotbarPreviewMs = 3000, -- duração (ms) em que a hotbar fica visível ao pressionar TAB
+		defaultConsumeTimeMs = 3000, -- tempo padrão (ms) para consumir um item
 		targetDistance = 3.0, -- distância (m) para Abrir/Pegar no target (não passe de Server.worldInteractDistance)
 		placementRange = 4.0, -- alcance (m) da mira ao posicionar uma maleta no mundo
 		placementPreviewAlpha = 150, -- transparência do preview ao posicionar (0-255)
 		streamTimeoutMs = 5000, -- tempo máximo (ms) para carregar modelo/animação
 		networkControlTimeoutMs = 500 -- tempo máximo (ms) para assumir controle de rede de um prop
+	},
+
+	-- Tempo de consumo (ms) configurável por item consumível.
+	Consumables = {
+		items = {
+			water = 2500,
+			bread = 2600,
+			burger = 3000,
+			burger_chicken = 3000,
+			sandwich = 2800,
+			pizza_ham = 3500,
+			pizza_ham_slice = 2600,
+			donut = 2400,
+			fries = 2500,
+			chips = 2400,
+			chocolate = 2200,
+			cereal_bar = 2200,
+			mustard = 2000,
+			sprunk = 2600,
+			ecola = 2600,
+			coffee = 2800,
+			energy_drink = 2800,
+			beer = 3000,
+			whiskey = 3200,
+			vodka = 3200,
+			cigarette = 3800,
+			cigarettes_redwood = 3800,
+			weed = 3800,
+			cocaine = 3200,
+			meth = 3200,
+			bandage = 3200,
+			medikit = 4000,
+			painkillers = 2400,
+			armour = 3500
+		}
 	},
 
 	-- Regras e limites aplicados pelo servidor.
