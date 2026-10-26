@@ -644,22 +644,32 @@ function S.GetItem(id, itemName, metadata, strict)
 	return item
 end
 
-exports('RegisterItem', S.RegisterItem)
-exports('Items', S.GetItems)
-exports('GetItem', S.GetItem)
-exports('CreateInventory', S.CreateInventory)
-exports('DeleteInventory', S.DeleteInventory)
-exports('GetInventory', S.GetInventory)
-exports('GetSlot', S.GetSlot)
-exports('GetContainerInventory', S.GetContainerInventory)
-exports('SwapSlots', S.SwapSlots)
-exports('SplitItem', S.SplitItem)
-exports('AddItem', S.AddItem)
-exports('RemoveItem', S.RemoveItem)
-exports('UseItem', S.UseItem)
-exports('SetItemMetadata', S.SetItemMetadata)
-exports('GetItemCount', S.GetItemCount)
-exports('GetPersistenceStats', S.getPersistenceStats)
+local function unwrapExport(fn)
+	return function(...)
+		local args = table.pack(...)
+		if args.n > 0 and (type(args[1]) == 'table' or type(args[1]) == 'userdata') then
+			return fn(table.unpack(args, 2, args.n))
+		end
+		return fn(...)
+	end
+end
+
+exports('RegisterItem', unwrapExport(S.RegisterItem))
+exports('Items', unwrapExport(S.GetItems))
+exports('GetItem', unwrapExport(S.GetItem))
+exports('CreateInventory', unwrapExport(S.CreateInventory))
+exports('DeleteInventory', unwrapExport(S.DeleteInventory))
+exports('GetInventory', unwrapExport(S.GetInventory))
+exports('GetSlot', unwrapExport(S.GetSlot))
+exports('GetContainerInventory', unwrapExport(S.GetContainerInventory))
+exports('SwapSlots', unwrapExport(S.SwapSlots))
+exports('SplitItem', unwrapExport(S.SplitItem))
+exports('AddItem', unwrapExport(S.AddItem))
+exports('RemoveItem', unwrapExport(S.RemoveItem))
+exports('UseItem', unwrapExport(S.UseItem))
+exports('SetItemMetadata', unwrapExport(S.SetItemMetadata))
+exports('GetItemCount', unwrapExport(S.GetItemCount))
+exports('GetPersistenceStats', unwrapExport(S.getPersistenceStats))
 exports('GetInventoryObject', function()
 	return Inventory
 end)

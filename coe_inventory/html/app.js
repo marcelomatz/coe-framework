@@ -552,19 +552,22 @@ function createSlot(slotNumber, item, side) {
 		const baseName = rawImage.replace(/\.(webp|png|svg)$/i, '');
 		const requestedExt = (rawImage.match(/\.(webp|png|svg)$/i)?.[1] || 'webp').toLowerCase();
 		const candidates = [
-			`${baseName}.${requestedExt}`,
-			...(requestedExt !== 'webp' ? [`${baseName}.webp`] : []),
-			...(requestedExt !== 'png' ? [`${baseName}.png`] : [])
+			`nui://coe_inventory/data/images/${encodeURIComponent(baseName)}.${requestedExt}`,
+			...(requestedExt !== 'webp' ? [`nui://coe_inventory/data/images/${encodeURIComponent(baseName)}.webp`] : []),
+			...(requestedExt !== 'png' ? [`nui://coe_inventory/data/images/${encodeURIComponent(baseName)}.png`] : []),
+			`../data/images/${encodeURIComponent(baseName)}.${requestedExt}`,
+			`../data/images/${encodeURIComponent(baseName)}.webp`,
+			`../data/images/${encodeURIComponent(baseName)}.png`
 		];
 
 		let candidateIndex = 0;
 		function tryNextSource() {
 			if (candidateIndex >= candidates.length) {
-				itemIcon.remove();
+				itemIcon.style.opacity = '0';
 				return;
 			}
 			const nextCandidate = candidates[candidateIndex++];
-			itemIcon.src = `../data/images/${encodeURIComponent(nextCandidate)}`;
+			itemIcon.src = nextCandidate;
 		}
 
 		itemIcon.addEventListener('error', tryNextSource);
