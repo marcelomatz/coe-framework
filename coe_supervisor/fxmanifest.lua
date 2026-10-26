@@ -15,6 +15,7 @@ client_script 'client.lua'
 server_scripts {
 	'@coe_core/lib/access.lua',
 	'config.lua',
+	'fs_writer.js',
 	'plan.lua',
 	'replace.lua',
 	'ansi.lua',

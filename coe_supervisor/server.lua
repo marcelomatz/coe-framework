@@ -420,12 +420,26 @@ local function writeResourceFile(resName, relPath, content)
 		return false
 	end
 
-	-- 1. GetResourcePath + io.open grava DIRETAMENTE no disco físico para QUALQUER resource
-	-- (O SaveResourceFile nativo do FiveM tem restrição de sandbox e só grava no próprio resource chamador).
+	local currentRes = type(GetCurrentResourceName) == 'function' and GetCurrentResourceName() or 'coe_supervisor'
+
+	-- 1. GetResourcePath: caminho físico no host
 	if type(GetResourcePath) == 'function' then
 		local basePath = GetResourcePath(resName)
 		if type(basePath) == 'string' and basePath ~= '' then
 			local fullPath = basePath:gsub('\\', '/'):gsub('/+$', '') .. '/' .. safeRel
+
+			-- 1a. Tenta via fs_writer (Node.js nativo do FXServer - contorna o sandbox VFS entre resources)
+			local okNode, nodeRes = pcall(function()
+				if exports and exports[currentRes] and exports[currentRes].WriteFile then
+					return exports[currentRes]:WriteFile(fullPath, content)
+				end
+				return nil
+			end)
+			if okNode and nodeRes == true then
+				return true
+			end
+
+			-- 1b. Fallback para io.open nativo com criação de pasta pai
 			ensureParentDir(fullPath)
 			local handle = io.open(fullPath, 'wb')
 			if handle then
@@ -436,15 +450,58 @@ local function writeResourceFile(resName, relPath, content)
 		end
 	end
 
-	-- 2. Fallback para SaveResourceFile caso GetResourcePath não esteja disponível
-	if type(SaveResourceFile) == 'function' then
+	-- 2. Fallback para SaveResourceFile APENAS se for o próprio resource (pois FiveM restringe cross-resource)
+	if resName == currentRes and type(SaveResourceFile) == 'function' then
 		local ok = SaveResourceFile(resName, safeRel, content, -1)
 		if ok == true or ok == 1 then
 			return true
 		end
 	end
 
+	say('ERROR', 'file_write_failed', ('Falha ao gravar arquivo em disco: %s/%s'):format(tostring(resName), tostring(safeRel)))
 	return false
+end
+
+local function readResourceFile(resName, relPath)
+	local safeRel = Updater.SanitizeRelativePath(relPath)
+	if not safeRel then
+		return nil
+	end
+
+	local currentRes = type(GetCurrentResourceName) == 'function' and GetCurrentResourceName() or 'coe_supervisor'
+
+	if type(GetResourcePath) == 'function' then
+		local basePath = GetResourcePath(resName)
+		if type(basePath) == 'string' and basePath ~= '' then
+			local fullPath = basePath:gsub('\\', '/'):gsub('/+$', '') .. '/' .. safeRel
+
+			local okNode, nodeRes = pcall(function()
+				if exports and exports[currentRes] and exports[currentRes].ReadFile then
+					return exports[currentRes]:ReadFile(fullPath)
+				end
+				return nil
+			end)
+			if okNode and type(nodeRes) == 'string' then
+				return nodeRes
+			end
+
+			local handle = io.open(fullPath, 'rb')
+			if handle then
+				local content = handle:read('*a')
+				handle:close()
+				return content
+			end
+		end
+	end
+
+	if type(LoadResourceFile) == 'function' then
+		local c = LoadResourceFile(resName, safeRel)
+		if type(c) == 'string' then
+			return c
+		end
+	end
+
+	return nil
 end
 
 local function printUpdateBanner(plan)
@@ -577,10 +634,18 @@ local function runApplyUpdate(requester)
 	for _, item in ipairs(plan.downloads or {}) do
 		local resState = GetResourceState(item.resource)
 		if resState ~= 'missing' then
+			-- Tenta conceder permissão nativa de escrita no VFS do FXServer se suportado
+			if type(ExecuteCommand) == 'function' then
+				local currentRes = type(GetCurrentResourceName) == 'function' and GetCurrentResourceName() or 'coe_supervisor'
+				pcall(function()
+					ExecuteCommand(('add_filesystem_permission %s write %s'):format(currentRes, item.resource))
+				end)
+			end
+
 			local shouldSkip = false
 			-- Checagem diferencial: se o hash do arquivo local for idêntico ao remoto, dispensa o download
-			if item.hash and type(LoadResourceFile) == 'function' then
-				local localRaw = LoadResourceFile(item.resource, item.file)
+			if item.hash then
+				local localRaw = readResourceFile(item.resource, item.file)
 				if type(localRaw) == 'string' then
 					local localHash = Updater.Hash(localRaw, item.isBinary)
 					if localHash == item.hash then
