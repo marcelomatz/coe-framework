@@ -163,6 +163,16 @@ exports = setmetatable({}, {
 				end
 			}
 		end
+		if resource == 'coe_spawn' then
+			return {
+				GetStarterHotel = function()
+					return { name = 'Motel Pink Cage', enabled = true, blip = true, entrance = { x = 325.5, y = -212.8, z = 54.0 } }
+				end,
+				SetStarterHotel = function(_, data)
+					return true
+				end
+			}
+		end
 		if resource == 'coe_notify' then
 			return { Notify = function(_, id, kind, message) notices[#notices + 1] = { id = id, kind = kind, message = message } end }
 		end
@@ -349,6 +359,32 @@ eq(#act(1, 'businessDelete', { id = 'burger' }).data.businesses, 0, 'apaga')
 states.coe_businesses = 'stopped'
 eq(act(1, 'businesses').error, 'businesses_unavailable', 'sem coe_businesses')
 states.coe_businesses = nil
+
+-- Hotel e Garagens
+eq(act(1, 'hotel').ok, true, 'consulta hotel')
+eq(act(1, 'hotel').data.hotel.name, 'Motel Pink Cage', 'dados do hotel')
+eq(act(1, 'saveStarterHotel', { name = 'Novo Hotel', enabled = true, blip = true }).ok, true, 'salva hotel')
+
+eq(act(1, 'garages').error, 'garages_unavailable', 'sem provedor registrado')
+exported.RegisterGaragesProvider({
+	resource = 'test_garages',
+	List = function()
+		return {
+			{ id = 'garagem_central', label = 'Garagem Central', kind = 'public', spots = { { x = 10, y = 20, z = 30 } } }
+		}
+	end,
+	Save = function(raw)
+		return raw
+	end,
+	Delete = function(id)
+		return true
+	end
+})
+eq(act(1, 'garages').ok, true, 'consulta garagens')
+eq(#act(1, 'garages').data.garages, 1, 'garagem cadastrada')
+eq(act(1, 'garageSave', { id = 'nova', label = 'Nova' }).ok, true, 'salva garagem')
+eq(act(1, 'garageGoto', { id = 'garagem_central' }).ok, true, 'ir ate garagem')
+eq(act(1, 'garageDelete', { id = 'garagem_central' }).ok, true, 'remove garagem')
 
 -- Pacote assume o painel
 invoking = 'random'

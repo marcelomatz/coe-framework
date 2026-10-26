@@ -50,5 +50,12 @@ SpawnMigrations = {
 				VALUES (1, 'Motel Pink Cage', 1, 325.5, -212.8, 54.0, 160.0, 151.4, -1007.8, -99.0, 0.0, 151.3, -1004.8, -99.0, 180.0, 151.8, -1001.2, -99.0, 30, 50000, 0)
 			]]
 		}
+	},
+	{
+		version = 3,
+		name = 'starter_hotel_blip',
+		statements = {
+			'ALTER TABLE coe_starter_hotel ADD COLUMN IF NOT EXISTS blip_enabled TINYINT(1) NOT NULL DEFAULT 1'
+		}
 	}
 }

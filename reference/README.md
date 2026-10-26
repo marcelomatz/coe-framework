@@ -15,9 +15,10 @@
 | [coe_mobile](coe_mobile.md) | `Yield`, `Status`, `NumberOf` |
 | [coe_needs](coe_needs.md) | `GetNeeds`, `SetNeed`, `AddNeed` |
 | [coe_notify](coe_notify.md) | `Notify`, `Show` |
+| [coe_rentals](coe_rentals.md) | `GetActiveRental` |
 | [coe_shops](coe_shops.md) | `IsReady`, `GetShelves`, `IsStore`, `BusinessTablet`, `RegisterPaymentMethod` |
 | [coe_spawn](coe_spawn.md) | `GetStarterHotel`, `SetStarterHotel` |
-| [coe_staff](coe_staff.md) | `Yield`, `Status` |
+| [coe_staff](coe_staff.md) | `Yield`, `Status`, `RegisterGaragesProvider` |
 | [coe_supervisor](coe_supervisor.md) | `List`, `Restart`, `GetUpdateStatus`, `CheckForUpdates`, `WriteFile`, `ReadFile`, `ApplyUpdate` |
 | [coe_ui](coe_ui.md) | `GetTheme`, `GetThemes`, `SetTheme`, `GetAccent`, `SetAccent` |
 | [coe_vehicle_catalog](coe_vehicle_catalog.md) | `GetVehicleInfo`, `ListVehicles`, `GetBaseHandling`, `GetIssues`, `SetOverride`, `ClearOverride`, `Rescan`, `IsReady` |

@@ -28,7 +28,7 @@ local windows = package.config:sub(1, 1) == '\\'
 
 local function listFiles()
 	if windows then
-		return run('dir /s /b /a-d *.lua *.js *.html 2>nul')
+		return run('git ls-files "*.lua" "*.js" "*.html"')
 	end
 	return run("find . -type f \\( -name '*.lua' -o -name '*.js' -o -name '*.html' \\) 2>/dev/null")
 end

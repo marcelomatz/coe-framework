@@ -117,7 +117,31 @@ local function showHelp(text)
 end
 
 local hotelLoopRunning = false
+local hotelBlip = nil
+
+local function updateHotelBlip(hotel)
+	if type(DoesBlipExist) == 'function' and hotelBlip and DoesBlipExist(hotelBlip) then
+		RemoveBlip(hotelBlip)
+		hotelBlip = nil
+	end
+	if not hotel or hotel.enabled == false or hotel.blip == false or not hotel.entrance then
+		return
+	end
+	if type(AddBlipForCoord) == 'function' then
+		hotelBlip = AddBlipForCoord(hotel.entrance.x + 0.0, hotel.entrance.y + 0.0, hotel.entrance.z + 0.0)
+		SetBlipSprite(hotelBlip, 475)
+		SetBlipDisplay(hotelBlip, 4)
+		SetBlipScale(hotelBlip, 0.8)
+		SetBlipColour(hotelBlip, 3)
+		SetBlipAsShortRange(hotelBlip, true)
+		BeginTextCommandSetBlipName('STRING')
+		AddTextComponentSubstringPlayerName(hotel.name or 'Hotel de Início')
+		EndTextCommandSetBlipName(hotelBlip)
+	end
+end
+
 local function ensureHotelLoop()
+	updateHotelBlip(currentHotel)
 	if hotelLoopRunning or not NetworkIsPlayerActive or type(GetGameTimer) ~= 'function' then
 		return
 	end
@@ -230,6 +254,8 @@ Core.Events.OnNet('player.characterUnloaded', function()
 	awaitingPosition = nil
 	lastPosition = nil
 	currentAppearance = nil
+	currentHotel = nil
+	updateHotelBlip(nil)
 	freezeForSelection()
 end)
 

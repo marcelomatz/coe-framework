@@ -16,6 +16,8 @@ StaffConfig = {
 			self = 'coe.staff.self',           -- noclip, teleporte, curar, invisível, invencível, coordenadas
 			players = 'coe.staff.players',     -- lista online, ir até, trazer, congelar, expulsar, item, dinheiro, grupos
 			vehicles = 'coe.staff.vehicles',   -- criar, consertar, abastecer, limpar, desvirar, apagar
+			hotel = 'coe.staff.hotel',
+			garages = 'coe.staff.garages',
 			world = 'coe.staff.world',         -- hora, clima e aviso para todos
 			businesses = 'coe.staff.businesses' -- criar e editar negócios, dono, equipe e pontos
 		},
