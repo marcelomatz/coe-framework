@@ -3,7 +3,7 @@ game 'gta5'
 node_version '22'
 
 name 'coe_database'
-version '0.1.0-beta.1'
+version '0.1.0-beta.2'
 description 'Provider MariaDB do framework Coe'
 
 dependencies {
