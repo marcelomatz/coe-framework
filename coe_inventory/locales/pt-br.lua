@@ -17,9 +17,12 @@ Locales['pt-BR'] = {
 	error_action_failed = 'Não foi possível concluir essa ação.',
 	error_interact_failed = 'Não foi possível interagir com a maleta.',
 	error_closer_needed = 'Chegue mais perto da maleta.',
+	error_action_in_progress = 'Aguarde terminar de consumir o item atual.',
 	target_open = 'Abrir',
 	target_pickup = 'Pegar',
 	target_approach = 'Maleta: aproxime-se para usar',
 	target_place_here = 'Colocar aqui',
-	container_picked_up = 'Maleta recolhida.'
+	container_picked_up = 'Maleta recolhida.',
+	consume_cancelled = 'Consumo cancelado.',
+	consume_busy = 'Aguarde terminar de consumir o item atual.'
 }

@@ -84,7 +84,7 @@ assert(C and C.state, 'namespace Inventory.Client ausente')
 
 -- Registros de bootstrap
 assert(exportsRegistered.GetInventoryObject() == Inventory)
-for _, name in ipairs({ '+coe_core_inventory', '+coe_core_hotbar_1', '+coe_core_hotbar_5' }) do
+for _, name in ipairs({ '+coe_core_inventory', '+coe_core_hotbar_peek', '+coe_core_cancel_use', '+coe_core_hotbar_1', '+coe_core_hotbar_5' }) do
 	assert(commands[name], 'comando ausente: ' .. name)
 end
 assert(eventHandlers['coetarget:ready'] and eventHandlers['onResourceStop'])
@@ -155,8 +155,12 @@ C.state.pendingWorldActions[7] = 'inventory.containerWorldPickup'
 netHandlers['inventory.actionResult'](7, false, 'container_not_found')
 assert(C.state.pendingWorldActions[7] == nil)
 
--- Uso de item genérico e arma não devem estourar
-netHandlers['inventory.useItem']({ name = 'water', slot = 1 })
+-- Uso de item genérico, consumível com cancelamento no X, hotbar peek no TAB e arma não devem estourar
+commands['+coe_core_hotbar_peek']()
+netHandlers['inventory.useItem']({ name = 'water', slot = 1, consume = 1, consumeTime = 2500 })
+assert(C.state.consuming ~= nil, 'consumo ativo iniciado')
+commands['+coe_core_cancel_use']()
+assert(C.state.consuming == nil, 'consumo cancelado no X')
 netHandlers['inventory.useItem']({ name = 'WEAPON_PISTOL', slot = 2 })
 netHandlers['inventory.useItem']('lixo')
 

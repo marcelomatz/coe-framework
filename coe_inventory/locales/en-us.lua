@@ -17,9 +17,12 @@ Locales['en-US'] = {
 	error_action_failed = 'Could not complete this action.',
 	error_interact_failed = 'Could not interact with the container.',
 	error_closer_needed = 'Get closer to the container.',
+	error_action_in_progress = 'Wait until you finish consuming the current item.',
 	target_open = 'Open',
 	target_pickup = 'Pick up',
 	target_approach = 'Container: get closer to use',
 	target_place_here = 'Place here',
-	container_picked_up = 'Container picked up.'
+	container_picked_up = 'Container picked up.',
+	consume_cancelled = 'Consumption cancelled.',
+	consume_busy = 'Wait until you finish consuming the current item.'
 }

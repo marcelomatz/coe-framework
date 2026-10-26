@@ -125,8 +125,55 @@ Core.Events.OnNet('inventory.use', function(requestId, slot)
 	end
 	S.validateOpenedContainers(playerId, inventoryOrError)
 
+	if type(itemOrError) == 'table' and (tonumber(itemOrError.consume) or 0) > 0 then
+		S.activeConsumptions[playerId] = {
+			inventoryId = inventoryId,
+			slot = slot,
+			item = itemOrError,
+			startedAt = GetGameTimer(),
+			durationMs = tonumber(itemOrError.consumeTime) or 3000
+		}
+	end
+
 	S.sendActionResult(playerId, requestId, true)
 	Core.Events.ToClient(playerId, 'inventory.useItem', itemOrError)
+
+	local snapshot = S.GetInventory(inventoryId)
+	if snapshot then
+		Core.Events.ToClient(playerId, 'inventory.updated', snapshot)
+	end
+end)
+
+Core.Events.OnNet('inventory.cancelUse', function()
+	local playerId = source
+	local active = S.activeConsumptions[playerId]
+	if not active then
+		return
+	end
+	S.activeConsumptions[playerId] = nil
+
+	local now = GetGameTimer()
+	local maxWindow = (tonumber(active.durationMs) or 3000) + 1500
+	if now - active.startedAt > maxWindow then
+		return
+	end
+
+	local inventoryId = S.ensurePlayerInventory(playerId)
+	if not inventoryId or inventoryId ~= active.inventoryId then
+		return
+	end
+
+	local item = active.item
+	local refundCount = tonumber(item and item.consume) or 1
+	local added = S.AddItem(inventoryId, item.name, refundCount, item.metadata, active.slot)
+	if not added then
+		added = S.AddItem(inventoryId, item.name, refundCount, item.metadata)
+	end
+	if not added then
+		return
+	end
+
+	Core.Events.Emit('inventory.itemUseCancelled', inventoryId, active.slot, item)
 
 	local snapshot = S.GetInventory(inventoryId)
 	if snapshot then

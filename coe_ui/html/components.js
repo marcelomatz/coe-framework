@@ -166,8 +166,10 @@
 			'hud.settings.auto_scale': 'Escala automática pela resolução (1440p, 4K)',
 			'hud.settings.show_health': 'Vida e colete',
 			'hud.settings.show_percent': 'Mostrar porcentagem nos medidores',
-			'hud.settings.show_needs': 'Fome, sede e estresse',
+			'hud.settings.show_needs': 'Fome, sede, estresse, álcool e drogas',
 			'hud.settings.show_logo': 'Logotipo do servidor',
+			'hud.aria.alcohol': 'Álcool',
+			'hud.aria.drugs': 'Drogas',
 			'hud.settings.hint': 'Arraste a barra superior ou este painel para visualizar o HUD livremente.',
 			'hud.settings.reset': 'Restaurar tudo',
 			// Tablet
@@ -269,8 +271,10 @@
 			'hud.settings.auto_scale': 'Auto-scale by resolution (1440p, 4K)',
 			'hud.settings.show_health': 'Health & Armor',
 			'hud.settings.show_percent': 'Show percentage on gauges',
-			'hud.settings.show_needs': 'Hunger, thirst & stress',
+			'hud.settings.show_needs': 'Hunger, thirst, stress, alcohol & drugs',
 			'hud.settings.show_logo': 'Server logo',
+			'hud.aria.alcohol': 'Alcohol',
+			'hud.aria.drugs': 'Drugs',
 			'hud.settings.hint': 'Drag the top bar or this panel to view the HUD freely.',
 			'hud.settings.reset': 'Reset all',
 			// Tablet

@@ -65,6 +65,8 @@ local function buildSnapshot(ped)
 		snapshot.hunger = needs.hunger
 		snapshot.thirst = needs.thirst
 		snapshot.stress = needs.stress
+		snapshot.alcohol = needs.alcohol or 0
+		snapshot.drugs = needs.drugs or 0
 	end
 
 	pcall(function()
@@ -300,7 +302,7 @@ CreateThread(function()
 	loadPrefs()
 	applyPrefs()
 	local ok, current = pcall(function()
-		return exports.coe_needs:GetState()
+		return exports.coe_needs:GetNeeds()
 	end)
 	if ok and type(current) == 'table' then
 		needs = current

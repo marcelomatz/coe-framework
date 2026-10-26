@@ -155,9 +155,11 @@ s = messages[#messages].state
 eq(s.left, false, 'seta esquerda desliga ao ligar a direita')
 eq(s.right, true, 'seta direita ligada')
 
-handlers['coe_needs:changed']({ hunger = 40, thirst = 30, stress = 5 })
+handlers['coe_needs:changed']({ hunger = 40, thirst = 30, stress = 5, alcohol = 20, drugs = 15 })
 tick()
 eq(messages[#messages].state.thirst, 30, 'necessidades no estado do HUD')
+eq(messages[#messages].state.alcohol, 20, 'alcool no estado do HUD')
+eq(messages[#messages].state.drugs, 15, 'drogas no estado do HUD')
 
 natives.seatDriver = false
 tick()

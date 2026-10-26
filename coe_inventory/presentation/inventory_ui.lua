@@ -35,12 +35,32 @@ end
 
 --- Abre a UI com o inventário informado (resposta do servidor ou abertura de container do mundo).
 function C.openInventoryUi(inventory)
+	state.cachedInventory = inventory
 	state.inventoryOpen = true
 	SetNuiFocus(true, true)
 	SendNUIMessage({
 		action = 'open',
 		inventory = inventory,
-		openKey = Config.Client.openKey
+		openKey = Config.Client.openKey,
+		hotbarSlots = Config.Client.hotbarSlots
+	})
+end
+
+--- Exibe a barra rápida (Hotbar 1..N) flutuante na tela ao pressionar TAB.
+function C.showHotbarPeek()
+	if state.inventoryOpen or state.placement then
+		return
+	end
+	if not state.cachedInventory and not state.requestPending and not state.hotbarSyncRequestId then
+		state.requestSequence = state.requestSequence + 1
+		state.hotbarSyncRequestId = state.requestSequence
+		Core.Events.ToServer('inventory.request', state.hotbarSyncRequestId)
+	end
+	SendNUIMessage({
+		action = 'hotbarPeek',
+		inventory = state.cachedInventory,
+		hotbarSlots = Config.Client.hotbarSlots,
+		durationMs = Config.Client.hotbarPreviewMs
 	})
 end
 

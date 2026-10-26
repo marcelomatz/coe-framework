@@ -1,4 +1,4 @@
--- Uso de item vindo do servidor (`inventory.useItem`): containers portáteis, armas e demais itens.
+-- Uso de item vindo do servidor (`inventory.useItem`): containers portáteis, armas, consumíveis e demais itens.
 local C = Inventory.Client
 local state = C.state
 
@@ -40,6 +40,20 @@ local function useWeaponItem(item, onUsed)
 	return true
 end
 
+--- Cancela o consumo de item em andamento (tecla X).
+function C.cancelItemUse()
+	local session = state.consuming
+	if not session or session.cancelled then
+		return false
+	end
+	session.cancelled = true
+	state.consuming = nil
+	SendNUIMessage({ action = 'consumeEnd', cancelled = true })
+	Core.Events.ToServer('inventory.cancelUse')
+	C.feedback(C.t('consume_cancelled'), true)
+	return true
+end
+
 --- Ponto de entrada. Ao terminar a animação dispara os eventos locais `inventory.itemUsed`
 --- e `inventory.hotbarUsed`, que outros resources podem ouvir.
 function C.useItem(item)
@@ -62,5 +76,49 @@ function C.useItem(item)
 	if C.isWeaponItem(item.name) and useWeaponItem(item, onUsed) then
 		return
 	end
+
+	local isConsumable = (tonumber(item.consume) or 0) > 0
+	if isConsumable then
+		if item.close ~= false and state.inventoryOpen then
+			C.closeInventory()
+		end
+		local durationMs = tonumber(item.consumeTime)
+			or (Config.Consumables and Config.Consumables.items and Config.Consumables.items[item.name])
+			or (Config.Client and Config.Client.defaultConsumeTimeMs)
+			or 3000
+		local session = {
+			item = item,
+			cancelled = false,
+			durationMs = durationMs
+		}
+		state.consuming = session
+		local label = (type(item.metadata) == 'table' and item.metadata.label) or item.label or item.name
+		SendNUIMessage({
+			action = 'consumeStart',
+			label = label,
+			durationMs = durationMs,
+			cancelKey = (Config.Client and Config.Client.cancelKey) or 'X'
+		})
+		C.playItemAnimation(item.animation, function()
+			if state.consuming == session then
+				state.consuming = nil
+			end
+			SendNUIMessage({ action = 'consumeEnd', cancelled = false })
+			onUsed()
+		end, item, nil, {
+			durationMs = durationMs,
+			shouldCancel = function()
+				return session.cancelled == true
+			end,
+			onCancel = function()
+				if state.consuming == session then
+					state.consuming = nil
+				end
+				SendNUIMessage({ action = 'consumeEnd', cancelled = true })
+			end
+		})
+		return
+	end
+
 	C.playItemAnimation(item.animation, onUsed, item)
 end

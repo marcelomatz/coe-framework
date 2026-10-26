@@ -8,6 +8,15 @@ const freeSlots = document.getElementById('free-slots');
 const openKey = document.getElementById('open-key');
 const hotbarFeedback = document.getElementById('hotbar-feedback');
 const closeButton = document.getElementById('close-button');
+const hotbarPeek = document.getElementById('hotbar-peek');
+const hotbarPeekGrid = document.getElementById('hotbar-peek-grid');
+const consumeBar = document.getElementById('consume-bar');
+const consumeItemLabel = document.getElementById('consume-item-label');
+const consumeCancelKey = document.getElementById('consume-cancel-key');
+const consumeBarFill = document.getElementById('consume-bar-fill');
+let hotbarPeekTimer = null;
+let consumeTimer = null;
+let configuredOpenKey = 'I';
 const containerPanels = [
 	null,
 	{
@@ -583,6 +592,72 @@ function createSlot(slotNumber, item, side) {
 	return slot;
 }
 
+function renderHotbarPeekSlots(payload, hotbarSlots = 5) {
+	if (!hotbarPeekGrid) return;
+	const count = Math.max(1, Math.min(Number(hotbarSlots) || 5, 9));
+	const items = Array.isArray(payload?.items) ? payload.items : [];
+	hotbarPeekGrid.replaceChildren();
+	for (let slot = 1; slot <= count; slot += 1) {
+		const item = items[slot - 1];
+		hotbarPeekGrid.append(createSlot(slot, item, 'player'));
+	}
+}
+
+function hideHotbarPeek() {
+	if (hotbarPeekTimer) {
+		window.clearTimeout(hotbarPeekTimer);
+		hotbarPeekTimer = null;
+	}
+	if (hotbarPeek) {
+		hotbarPeek.classList.remove('is-visible');
+		hotbarPeek.setAttribute('aria-hidden', 'true');
+	}
+}
+
+function showHotbarPeek(payload, hotbarSlots = 5, durationMs = 3000) {
+	if (!hotbarPeek || inventory.classList.contains('is-open')) return;
+	renderHotbarPeekSlots(payload, hotbarSlots);
+	hotbarPeek.classList.add('is-visible');
+	hotbarPeek.setAttribute('aria-hidden', 'false');
+	if (hotbarPeekTimer) window.clearTimeout(hotbarPeekTimer);
+	hotbarPeekTimer = window.setTimeout(() => {
+		hotbarPeek.classList.remove('is-visible');
+		hotbarPeek.setAttribute('aria-hidden', 'true');
+		hotbarPeekTimer = null;
+	}, Math.max(500, Number(durationMs) || 3000));
+}
+
+function startConsumeBar(label, durationMs = 3000, cancelKey = 'X') {
+	if (!consumeBar || !consumeBarFill) return;
+	if (consumeTimer) {
+		window.clearTimeout(consumeTimer);
+		consumeTimer = null;
+	}
+	const duration = Math.max(200, Number(durationMs) || 3000);
+	if (consumeItemLabel) consumeItemLabel.textContent = label || 'Item';
+	if (consumeCancelKey) consumeCancelKey.textContent = String(cancelKey || 'X').toUpperCase();
+	consumeBarFill.style.transition = 'none';
+	consumeBarFill.style.transform = 'scaleX(0)';
+	consumeBar.classList.add('is-visible');
+	consumeBar.setAttribute('aria-hidden', 'false');
+	void consumeBarFill.offsetWidth;
+	consumeBarFill.style.transition = `transform ${duration}ms linear`;
+	consumeBarFill.style.transform = 'scaleX(1)';
+	consumeTimer = window.setTimeout(() => {
+		stopConsumeBar();
+	}, duration + 100);
+}
+
+function stopConsumeBar() {
+	if (consumeTimer) {
+		window.clearTimeout(consumeTimer);
+		consumeTimer = null;
+	}
+	if (!consumeBar) return;
+	consumeBar.classList.remove('is-visible');
+	consumeBar.setAttribute('aria-hidden', 'true');
+}
+
 function renderInventory(data) {
 	closeContextMenu();
 	const payload = data.inventory;
@@ -599,10 +674,13 @@ function renderInventory(data) {
 		(slot <= 5 ? hotbarGrid : slotGrid).append(slotElement);
 	}
 
+	renderHotbarPeekSlots(payload, data.hotbarSlots || 5);
+
 	occupiedSlots.textContent = String(occupied).padStart(2, '0');
 	totalSlots.textContent = String(capacity).padStart(2, '0');
 	freeSlots.textContent = `${capacity - occupied} espaços livres`;
-	const key = typeof data.openKey === 'string' ? data.openKey.toUpperCase() : 'F2';
+	const key = typeof data.openKey === 'string' && data.openKey.trim() !== '' ? data.openKey.toUpperCase() : 'I';
+	configuredOpenKey = key;
 	openKey.textContent = key;
 }
 
@@ -632,12 +710,21 @@ window.addEventListener('message', (event) => {
 	if (!data || typeof data !== 'object') return;
 
 	if (data.action === 'open') {
+		hideHotbarPeek();
 		hideContainerPanel();
 		renderInventory(data);
 		inventory.classList.add('is-open');
 		inventory.setAttribute('aria-hidden', 'false');
 	} else if (data.action === 'update') {
-		renderInventory({ inventory: data.inventory, openKey: data.openKey });
+		renderInventory({ inventory: data.inventory, openKey: data.openKey, hotbarSlots: data.hotbarSlots });
+	} else if (data.action === 'hotbarData') {
+		renderHotbarPeekSlots(data.inventory, data.hotbarSlots);
+	} else if (data.action === 'hotbarPeek') {
+		showHotbarPeek(data.inventory, data.hotbarSlots, data.durationMs);
+	} else if (data.action === 'consumeStart') {
+		startConsumeBar(data.label, data.durationMs, data.cancelKey);
+	} else if (data.action === 'consumeEnd') {
+		stopConsumeBar();
 	} else if (data.action === 'containerOpen') {
 		renderContainer(data.inventory, data.index);
 		const container = containerPanels[data.index];
@@ -708,7 +795,10 @@ window.addEventListener('keydown', (event) => {
 		}
 		return;
 	}
-	if (event.key === 'Escape' || event.key === 'F2') {
+	const pressedKey = typeof event.key === 'string' ? event.key.toUpperCase() : '';
+	const isOpenKey = !(event.target instanceof HTMLInputElement)
+		&& (event.key === 'F2' || pressedKey === configuredOpenKey);
+	if (event.key === 'Escape' || isOpenKey) {
 		event.preventDefault();
 		const openContainerIndex = [2, 1].find((index) => containerPanels[index].panel.classList.contains('is-visible'));
 		if (event.key === 'Escape' && openContainerIndex) {

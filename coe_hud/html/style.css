@@ -151,6 +151,8 @@ body.tint-status .gauge[data-stat="armor"] { --g: var(--coe-text); }
 body.tint-status .gauge[data-stat="hunger"] { --g: var(--coe-success); }
 body.tint-status .gauge[data-stat="thirst"] { --g: #7fd6e6; }
 body.tint-status .gauge[data-stat="stress"] { --g: var(--coe-warning); }
+body.tint-status .gauge[data-stat="alcohol"] { --g: #f59e0b; }
+body.tint-status .gauge[data-stat="drugs"] { --g: #c084fc; }
 .gauge.low { --g: var(--coe-danger) !important; }
 .gauge.low .gauge-shape { animation: gauge-pulse 1.2s ease-in-out infinite; }
 @keyframes gauge-pulse { 50% { opacity: 0.55; } }

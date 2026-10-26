@@ -24,8 +24,11 @@ end
 for _, given in ipairs({ {}, false }) do
 	local config, issues = Apply(given or nil)
 	assertEqual(#issues, 0, 'config vazio sem avisos')
-	assertEqual(config.Client.openKey, 'F2', 'padrão openKey')
+	assertEqual(config.Client.openKey, 'I', 'padrão openKey')
+	assertEqual(config.Client.hotbarKey, 'TAB', 'padrão hotbarKey')
+	assertEqual(config.Client.cancelKey, 'X', 'padrão cancelKey')
 	assertEqual(config.Client.hotbarSlots, 5, 'padrão hotbarSlots')
+	assertEqual(config.Consumables.items.water, 2500, 'padrão tempo consumo water')
 	assertEqual(config.Server.defaultSlots, 30, 'padrão defaultSlots')
 	assertEqual(config.Server.rateLimits.syncMs, 1000, 'padrão rateLimits.syncMs')
 	assertEqual(#config.Server.starterItems, 4, 'padrão starterItems')
@@ -36,11 +39,14 @@ assertEqual(#printed, 0, 'carga de Config vazio não imprime nada')
 
 -- Valores válidos do administrador prevalecem; o restante segue o padrão.
 local config, issues = Apply({
-	Client = { openKey = 'I', targetDistance = 4 },
+	Client = { openKey = 'F2', hotbarKey = 'TAB', cancelKey = 'X', targetDistance = 4 },
+	Consumables = { items = { water = 1800 } },
 	Server = { maxSlots = 80, defaultSlots = 20, rateLimits = { swapMs = 0 } }
 })
 assertEqual(#issues, 0, 'config válida sem avisos')
-assertEqual(config.Client.openKey, 'I', 'override openKey')
+assertEqual(config.Client.openKey, 'F2', 'override openKey')
+assertEqual(config.Consumables.items.water, 1800, 'override tempo consumo water')
+assertEqual(config.Consumables.items.burger, 3000, 'padrão tempo consumo burger preservado')
 assertEqual(config.Client.targetDistance, 4, 'override targetDistance')
 assertEqual(config.Client.placementRange, 4.0, 'padrão preservado')
 assertEqual(config.Server.maxSlots, 80, 'override maxSlots')
@@ -52,7 +58,7 @@ config, issues = Apply({
 	Client = { openKey = 42, hotbarSlots = 0, targetDistance = 'perto', placementPreviewAlpha = 300, streamTimeoutMs = 1.5 },
 	Server = { giveDistance = -1, maxSlots = 0 / 0, rateLimits = { requestMs = '300' } }
 })
-assertEqual(config.Client.openKey, 'F2', 'openKey inválida cai no padrão')
+assertEqual(config.Client.openKey, 'I', 'openKey inválida cai no padrão')
 assertEqual(config.Client.hotbarSlots, 5, 'hotbarSlots fora da faixa')
 assertEqual(config.Client.targetDistance, 3.0, 'tipo errado')
 assertEqual(config.Client.placementPreviewAlpha, 150, 'alpha acima de 255')

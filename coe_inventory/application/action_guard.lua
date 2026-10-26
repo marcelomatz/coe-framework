@@ -17,6 +17,7 @@ Core.Events.On('player.characterUnloaded', function(event)
 	S.containerDropTimes[event.source] = nil
 	S.containerSyncTimes[event.source] = nil
 	S.weaponAmmoTimes[event.source] = nil
+	S.activeConsumptions[event.source] = nil
 	CreateThread(S.flushInventories)
 end)
 

@@ -68,6 +68,24 @@ local function mergeMetadata(defaults, metadata)
 	return result
 end
 
+local function resolveConsumeTime(definition)
+	if (definition.consume or 0) <= 0 then
+		return 0
+	end
+	local byConfig = Config and Config.Consumables and Config.Consumables.items and Config.Consumables.items[definition.name]
+	if type(byConfig) == 'number' and byConfig > 0 then
+		return byConfig
+	end
+	if type(definition.consumeTime) == 'number' and definition.consumeTime > 0 then
+		return definition.consumeTime
+	end
+	local anim = definition.animation and Inventory.Items.Animations[definition.animation]
+	if anim and type(anim.duration) == 'number' and anim.duration > 0 then
+		return anim.duration
+	end
+	return (Config and Config.Client and Config.Client.defaultConsumeTimeMs) or 3000
+end
+
 function ItemDefinition:init(name, data)
 	self.name = name
 	self.label = data.label or name
@@ -77,6 +95,7 @@ function ItemDefinition:init(name, data)
 	self.image = data.image or (name .. '.png')
 	self.usable = data.usable ~= false
 	self.consume = data.consume or 0
+	self.consumeTime = data.consumeTime
 	self.animation = data.animation
 	self.attachment = data.attachment == true
 	self.category = data.category or 'misc'
@@ -99,6 +118,7 @@ function ItemDefinition:toTable()
 		image = self.image,
 		usable = self.usable,
 		consume = self.consume,
+		consumeTime = resolveConsumeTime(self),
 		animation = self.animation,
 		attachment = self.attachment,
 		category = self.category,
@@ -141,6 +161,7 @@ function InventoryItem:toTable()
 		image = self.definition.image,
 		usable = self.definition.usable,
 		consume = self.definition.consume,
+		consumeTime = resolveConsumeTime(self.definition),
 		animation = self.definition.animation,
 		attachment = self.definition.attachment,
 		category = self.definition.category,
@@ -228,6 +249,7 @@ function Inventory.Items.Register(name, data)
 	if consume == nil then
 		consume = 0
 	end
+	local consumeTime = data.consumeTime
 	local animation = data.animation
 	local attachment = data.attachment
 	local category = data.category or 'misc'
@@ -259,6 +281,9 @@ function Inventory.Items.Register(name, data)
 	end
 	if not Core.Functions.IsInteger(consume) or consume < 0 then
 		return nil, 'invalid_consume_count'
+	end
+	if consumeTime ~= nil and (not Core.Functions.IsInteger(consumeTime) or consumeTime < 0) then
+		return nil, 'invalid_consume_time'
 	end
 	if animation ~= nil
 		and (type(animation) ~= 'string' or not Inventory.Items.Animations[animation]) then
@@ -313,6 +338,7 @@ function Inventory.Items.Register(name, data)
 		image = image,
 		usable = usable,
 		consume = consume,
+		consumeTime = consumeTime,
 		animation = animation,
 		attachment = attachment,
 		category = category,

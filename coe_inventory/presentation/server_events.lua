@@ -8,6 +8,19 @@ local function isPanelIndex(index)
 end
 
 Core.Events.OnNet('inventory.response', function(requestId, inventory)
+	if state.hotbarSyncRequestId and requestId == state.hotbarSyncRequestId then
+		state.hotbarSyncRequestId = nil
+		if type(inventory) == 'table' then
+			state.cachedInventory = inventory
+			SendNUIMessage({
+				action = 'hotbarPeek',
+				inventory = inventory,
+				hotbarSlots = Config.Client.hotbarSlots,
+				durationMs = Config.Client.hotbarPreviewMs
+			})
+		end
+		return
+	end
 	if requestId ~= state.activeRequestId then
 		return
 	end
@@ -18,6 +31,7 @@ Core.Events.OnNet('inventory.response', function(requestId, inventory)
 		return
 	end
 
+	state.cachedInventory = inventory
 	C.reconcileContainerProps(inventory)
 	C.syncCarriedState()
 	C.openInventoryUi(inventory)
@@ -28,13 +42,22 @@ Core.Events.OnNet('inventory.updated', function(inventory)
 		return
 	end
 
+	state.cachedInventory = inventory
 	C.reconcileContainerProps(inventory)
 	C.reconcileTrackedWeapon(inventory)
-	if not state.inventoryOpen then return end
+	if not state.inventoryOpen then
+		SendNUIMessage({
+			action = 'hotbarData',
+			inventory = inventory,
+			hotbarSlots = Config.Client.hotbarSlots
+		})
+		return
+	end
 	SendNUIMessage({
 		action = 'update',
 		inventory = inventory,
-		openKey = Config.Client.openKey
+		openKey = Config.Client.openKey,
+		hotbarSlots = Config.Client.hotbarSlots
 	})
 end)
 

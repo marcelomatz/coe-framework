@@ -14,7 +14,7 @@
 	// Escala automática: 1080p = 100%; 1440p ≈ 133%, 4K = 200%.
 	const REFERENCE_HEIGHT = 1080;
 	// Estado de exemplo do modo de edição: o jogador vê todos os componentes mesmo a pé.
-	const DEMO = { health: 100, armor: 50, hunger: 80, thirst: 70, stress: 10, dir: 'N', street: 'Vinewood Blvd', zone: 'Vinewood', clock: '12:00' };
+	const DEMO = { health: 100, armor: 50, hunger: 80, thirst: 70, stress: 10, alcohol: 25, drugs: 15, dir: 'N', street: 'Vinewood Blvd', zone: 'Vinewood', clock: '12:00' };
 	const DEMO_VEHICLE = { vehicle: true, kind: 'car', speed: 88, rpm: 62, gear: 3, fuel: 70, engine: 95, lights: 1, left: false, right: false, belt: true, engineOn: true };
 
 	const $ = (sel, root = document) => root.querySelector(sel);
@@ -195,7 +195,9 @@
 		if (!el) return;
 		el.style.setProperty('--v', value / 100);
 		$('.gauge-val', el).textContent = value;
-		const bad = name === 'stress' ? value >= 70 : (name === 'hunger' || name === 'thirst' || name === 'health') && value <= 25;
+		const bad = (name === 'stress' && value >= 70)
+			|| ((name === 'alcohol' || name === 'drugs') && value >= 60)
+			|| ((name === 'hunger' || name === 'thirst' || name === 'health') && value <= 25);
 		el.classList.toggle('low', bad);
 	}
 	function setChip(name, value) {
@@ -288,6 +290,8 @@
 			setStat('hunger', view.hunger);
 			setStat('thirst', view.thirst);
 			setStat('stress', view.stress);
+			setStat('alcohol', view.alcohol || 0);
+			setStat('drugs', view.drugs || 0);
 		}
 
 		const driving = !!view.vehicle;

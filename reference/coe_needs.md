@@ -4,62 +4,58 @@
 
 ## Exports
 
-### `GetNeeds(source)`
+### `GetNeeds(playerSource)`
 
-Estado atual do jogador. Server.
+[shared] No servidor recebe `playerSource`; no cliente nao recebe argumentos e retorna o snapshot local.
 
 | Parâmetro | Tipo | Descrição |
 |---|---|---|
-| `source` | `integer` |  |
+| `playerSource?` | `integer` |  |
 
 **Retorno**
 
-- `CoeNeedsState|nil` `snapshot` — `nil` se o personagem não está carregado
+- `CoeNeedsSnapshot|nil`
 
-### `AddNeed(source, name, delta)`
+### `SetNeed(playerSource, needName, value)`
 
-Soma `delta` a uma necessidade (limitada a 0-100). Server; só resources em `AllowedResources`. Gravação em lote periódico.
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `source` | `integer` |  |
-| `name` | `CoeNeedName` |  |
-| `delta` | `number` |  |
-
-**Retorno**
-
-- `true|string` `result` — `true` ou `caller_not_allowed`, `needs_not_loaded`, `invalid_need`
-
-### `SetNeed(source, name, value)`
-
-Define o valor de uma necessidade. Mesmas regras de `AddNeed`.
+[server] Define o valor absoluto (0..100) de uma necessidade. Requer ACE `coe.needs`.
 
 | Parâmetro | Tipo | Descrição |
 |---|---|---|
-| `source` | `integer` |  |
-| `name` | `CoeNeedName` |  |
+| `playerSource` | `integer` |  |
+| `needName` | `CoeNeedName` |  |
 | `value` | `number` |  |
 
 **Retorno**
 
-- `true|string` `result` — `true` ou `caller_not_allowed`, `needs_not_loaded`, `invalid_need`
+- `boolean|'caller_not_allowed'|'character_not_loaded'|'invalid_need'`
 
-### `GetState()`
+### `AddNeed(playerSource, needName, delta)`
 
-Último estado recebido do servidor. Client.
+[server] Soma `delta` (positivo ou negativo) a uma necessidade. Requer ACE `coe.needs`.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `playerSource` | `integer` |  |
+| `needName` | `CoeNeedName` |  |
+| `delta` | `number` |  |
 
 **Retorno**
 
-- `CoeNeedsState|nil`
+- `boolean|'caller_not_allowed'|'character_not_loaded'|'invalid_need'`
 
 ## Tipos
 
 ```lua
----@alias CoeNeedName 'hunger'|'thirst'|'stress'
+---@alias CoeNeedName 'hunger'|'thirst'|'stress'|'alcohol'|'drugs'
 
----@class CoeNeedsState
----@field hunger integer 0-100
----@field thirst integer 0-100
----@field stress integer 0-100
+---@class CoeNeedsSnapshot
+---@field hunger integer # 0..100 (100 = saciado, 0 = faminto)
+---@field thirst integer # 0..100 (100 = hidratado, 0 = desidratado)
+---@field stress integer # 0..100 (0 = calmo, 100 = estressado)
+---@field alcohol integer # 0..100 (0 = sobrio, 100 = alcoolizado)
+---@field drugs integer # 0..100 (0 = limpo, 100 = sob efeito de substancias)
+
+---@class exports_coe_needs
 ```
 

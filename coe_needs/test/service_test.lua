@@ -27,10 +27,13 @@ NeedsPersistence = {
 	SaveMany = function(rows)
 		if failBatch then return false, 'database_error' end
 		batches[#batches + 1] = #rows
-		for _, row in ipairs(rows) do saved[row[1]] = { hunger = row[2].hunger } end
+		for _, row in ipairs(rows) do saved[row[1]] = { hunger = row[2].hunger, alcohol = row[2].alcohol, drugs = row[2].drugs } end
 		return true
 	end,
-	Save = function(id, s) saved[id] = { hunger = s.hunger, thirst = s.thirst, stress = s.stress }; return true end
+	Save = function(id, s)
+		saved[id] = { hunger = s.hunger, thirst = s.thirst, stress = s.stress, alcohol = s.alcohol, drugs = s.drugs }
+		return true
+	end
 }
 
 dofile('../coe_core/lib/access.lua')
@@ -58,6 +61,8 @@ end
 coreEvents['player.characterLoaded']({ source = 7, character = { characterId = 'c1' } })
 runThreads()
 eq(last('coe_needs:state').hunger, 90, 'estado inicial enviado')
+eq(last('coe_needs:state').alcohol, 0, 'alcool inicial enviado')
+eq(last('coe_needs:state').drugs, 0, 'drogas inicial enviado')
 eq(exportsMap.GetNeeds(7).thirst, 90, 'GetNeeds')
 eq(exportsMap.GetNeeds(99), nil, 'sem personagem')
 
@@ -89,9 +94,20 @@ eq(exportsMap.AddNeed(7, 'thirst', 'x'), 'invalid_need', 'delta invalido')
 eq(exportsMap.AddNeed(7, 'sede', 1), 'invalid_need', 'nome invalido')
 eq(last('coe_needs:state').hunger, 50, 'mudanca enviada ao client')
 
--- consumo de item
+-- consumo de item (alimento, alcool, drogas, energetico) e cancelamento (X)
 coreEvents['inventory.itemUsed']('character:c1', 1, { name = 'burger' })
 eq(exportsMap.GetNeeds(7).hunger, 85, 'burger sacia')
+coreEvents['inventory.itemUsed']('character:c1', 1, { name = 'whiskey' })
+eq(exportsMap.GetNeeds(7).alcohol, 35, 'whiskey aumenta alcool')
+coreEvents['inventory.itemUseCancelled']('character:c1', 1, { name = 'whiskey' })
+eq(exportsMap.GetNeeds(7).alcohol, 0, 'cancelamento de consumo reverte alcool')
+coreEvents['inventory.itemUsed']('character:c1', 1, { name = 'energy_drink' })
+eq(last('coe_needs:effect').energy, 30, 'energetico dispara coe_needs:effect')
+coreEvents['inventory.itemUsed']('character:c1', 1, { name = 'weed' })
+eq(exportsMap.GetNeeds(7).drugs, 25, 'maconha aumenta drogas')
+coreEvents['inventory.itemUseCancelled']('character:c1', 1, { name = 'weed' })
+eq(exportsMap.GetNeeds(7).drugs, 0, 'cancelamento reverte drogas')
+
 coreEvents['inventory.itemUsed']('character:c1', 1, { name = 'sem_efeito' })
 coreEvents['inventory.itemUsed']('character:zzz', 1, { name = 'burger' })
 eq(exportsMap.GetNeeds(7).hunger, 85, 'item sem efeito ou outro personagem ignorado')

@@ -1,36 +1,33 @@
 ---@meta
--- Contrato público de coe_needs para LuaLS. Não é carregado pelo servidor. Ver docs/ANNOTATIONS.md.
+--- Contratos LuaLS de `coe_needs`. Gerado para IDE/autocomplete; nao carregado em runtime.
 
----@alias CoeNeedName 'hunger'|'thirst'|'stress'
+---@alias CoeNeedName 'hunger'|'thirst'|'stress'|'alcohol'|'drugs'
 
----@class CoeNeedsState
----@field hunger integer 0-100
----@field thirst integer 0-100
----@field stress integer 0-100
+---@class CoeNeedsSnapshot
+---@field hunger integer # 0..100 (100 = saciado, 0 = faminto)
+---@field thirst integer # 0..100 (100 = hidratado, 0 = desidratado)
+---@field stress integer # 0..100 (0 = calmo, 100 = estressado)
+---@field alcohol integer # 0..100 (0 = sobrio, 100 = alcoolizado)
+---@field drugs integer # 0..100 (0 = limpo, 100 = sob efeito de substancias)
 
----@class CoeNeedsExports
+---@class exports_coe_needs
 local exports_coe_needs = {}
 
----Estado atual do jogador. Server.
----@param source integer
----@return CoeNeedsState|nil snapshot `nil` se o personagem não está carregado
-function exports_coe_needs:GetNeeds(source) end
+--- [shared] No servidor recebe `playerSource`; no cliente nao recebe argumentos e retorna o snapshot local.
+---@param playerSource? integer
+---@return CoeNeedsSnapshot|nil
+function exports_coe_needs:GetNeeds(playerSource) end
 
----Soma `delta` a uma necessidade (limitada a 0-100). Server; só resources em `AllowedResources`.
----Gravação em lote periódico.
----@param source integer
----@param name CoeNeedName
----@param delta number
----@return true|string result `true` ou `caller_not_allowed`, `needs_not_loaded`, `invalid_need`
-function exports_coe_needs:AddNeed(source, name, delta) end
-
----Define o valor de uma necessidade. Mesmas regras de `AddNeed`.
----@param source integer
----@param name CoeNeedName
+--- [server] Define o valor absoluto (0..100) de uma necessidade. Requer ACE `coe.needs`.
+---@param playerSource integer
+---@param needName CoeNeedName
 ---@param value number
----@return true|string result `true` ou `caller_not_allowed`, `needs_not_loaded`, `invalid_need`
-function exports_coe_needs:SetNeed(source, name, value) end
+---@return boolean|'caller_not_allowed'|'character_not_loaded'|'invalid_need'
+function exports_coe_needs:SetNeed(playerSource, needName, value) end
 
----Último estado recebido do servidor. Client.
----@return CoeNeedsState|nil
-function exports_coe_needs:GetState() end
+--- [server] Soma `delta` (positivo ou negativo) a uma necessidade. Requer ACE `coe.needs`.
+---@param playerSource integer
+---@param needName CoeNeedName
+---@param delta number
+---@return boolean|'caller_not_allowed'|'character_not_loaded'|'invalid_need'
+function exports_coe_needs:AddNeed(playerSource, needName, delta) end

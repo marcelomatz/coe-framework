@@ -13,7 +13,7 @@
 | [coe_logging](coe_logging.md) | `Log` |
 | [coe_map](coe_map.md) | `GetMode`, `OpenFull` |
 | [coe_mobile](coe_mobile.md) | `Yield`, `Status`, `NumberOf` |
-| [coe_needs](coe_needs.md) | `GetNeeds`, `AddNeed`, `SetNeed`, `GetState` |
+| [coe_needs](coe_needs.md) | `GetNeeds`, `SetNeed`, `AddNeed` |
 | [coe_notify](coe_notify.md) | `Notify`, `Show` |
 | [coe_shops](coe_shops.md) | `IsReady`, `GetShelves`, `IsStore`, `BusinessTablet`, `RegisterPaymentMethod` |
 | [coe_staff](coe_staff.md) | `Yield`, `Status` |
