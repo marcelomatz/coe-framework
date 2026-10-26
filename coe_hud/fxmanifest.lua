@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_hud'
-version '0.1.0-beta.5'
+version '0.1.0-beta.6'
 description 'HUD do jogador (vida, veiculos) com preferencias e layout pessoais via /hud'
 
 dependencies {
