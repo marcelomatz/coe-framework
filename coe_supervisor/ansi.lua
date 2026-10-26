@@ -129,6 +129,10 @@ function SupervisorAnsi.PrintUpdateAvailable(plan)
 	local hLine = C.coeBorder .. string.rep('═', W) .. C.reset
 	local sepLine = C.coeBorder .. string.rep('─', W) .. C.reset
 
+	local pendingCount = tonumber(plan.pendingCount) or 0
+	local isCumulative = plan.isCumulative == true or pendingCount >= 2
+	local pendingReleases = plan.pendingReleases or {}
+
 	print(hLine)
 	print(string.format('%s  %sCOE FRAMEWORK%s  •  %sSUPERVISOR%s', C.coeBorder, C.bold .. C.coeBrand, C.reset, C.bold .. C.brightWhite, C.reset))
 	print(string.format('  %s%sNOVA VERSÃO DISPONÍVEL NO REPOSITÓRIO (%s)%s', C.bold, C.brightYellow, channel, C.reset))
@@ -136,9 +140,26 @@ function SupervisorAnsi.PrintUpdateAvailable(plan)
 	print(string.format('  %sVersão instalada :%s %sv%s%s', C.brightWhite, C.reset, C.gray, localVer, C.reset))
 	print(string.format('  %sNova versão      :%s %sv%s%s %s(%s)%s', C.brightWhite, C.reset, C.bold .. C.brightGreen, remoteVer, C.reset, C.brightCyan, tag, C.reset))
 	print(string.format('  %sCanal de release :%s %s%s%s', C.brightWhite, C.reset, C.yellow, channel:lower(), C.reset))
-	if notes ~= '' then
+
+	if isCumulative and #pendingReleases > 0 then
+		print(string.format('  %sAtraso de release:%s %s%d release(s) pendente(s) acumulada(s)!%s', C.brightWhite, C.reset, C.bold .. C.brightYellow, pendingCount, C.reset))
+		print(string.format('  %sReleases no plano:%s', C.brightWhite, C.reset))
+		for idx, rel in ipairs(pendingReleases) do
+			local relNote = SupervisorAnsi.SanitizeUtf8(rel.notes or '')
+			if #relNote > 54 then
+				relNote = relNote:sub(1, 51) .. '...'
+			end
+			print(string.format('    %s[%d/%d]%s %s%-14s%s %s%s%s',
+				C.coeMuted, idx, pendingCount, C.reset,
+				C.bold .. C.brightCyan, tostring(rel.tag), C.reset,
+				C.brightWhite, relNote ~= '' and relNote or 'Atualizações acumuladas', C.reset))
+		end
+		print(string.format('  %sPlano de update  :%s %sAtualização cumulativa segura (%sv%s → %s)%s',
+			C.brightWhite, C.reset, C.bold .. C.brightGreen, C.reset .. C.gray, localVer, tag, C.reset))
+	elseif notes ~= '' then
 		print(string.format('  %sNotas da release :%s %s%s%s', C.brightWhite, C.reset, C.brightWhite, notes, C.reset))
 	end
+
 	print(string.format('  %sScripts pendentes:%s %s%d resource(s)%s %s(%d arquivo(s))%s', C.brightWhite, C.reset, C.bold .. C.brightCyan, outdated, C.reset, C.coeMuted, files, C.reset))
 	print(sepLine)
 	print(string.format('  %sComo atualizar   :%s %sdigite "coe_update apply" no console do servidor%s', C.brightWhite, C.reset, C.bold .. C.brightYellow, C.reset))
@@ -162,10 +183,17 @@ function SupervisorAnsi.PrintVersion(st)
 		C.coeMuted, branch, C.reset))
 
 	if st.available then
-		print(string.format('  %s➜ Atualização disponível:%s %sv%s%s %s(%d resource(s) pendente(s))%s',
+		local pCount = tonumber(st.pendingCount) or 1
+		local pType = (pCount >= 2) and string.format(' (%d releases atrasadas)', pCount) or ''
+		print(string.format('  %s➜ Atualização disponível:%s %sv%s%s%s %s(%d resource(s) pendente(s))%s',
 			C.bold .. C.brightYellow, C.reset,
 			C.bold .. C.brightGreen, tostring(st.remoteVersion), C.reset,
+			C.brightYellow .. pType .. C.reset,
 			C.brightCyan, st.outdatedCount or 0, C.reset))
+		if pCount >= 2 and type(st.pendingVersions) == 'table' and #st.pendingVersions > 0 then
+			print(string.format('    %sCadeia de releases:%s %s%s%s',
+				C.brightWhite, C.reset, C.brightCyan, table.concat(st.pendingVersions, ' → '), C.reset))
+		end
 		print(string.format('    %sExecute %s"coe_update apply"%s para atualizar.%s',
 			C.coeMuted, C.bold .. C.brightYellow, C.reset .. C.coeMuted, C.reset))
 	elseif st.remoteVersion then

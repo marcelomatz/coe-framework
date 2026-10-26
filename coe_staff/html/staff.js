@@ -290,11 +290,30 @@
 			startUpdatePolling();
 		} else if (isAvail) {
 			details.push('Versão atual: v' + (upd.localVersion || '—') + '  →  Nova versão: v' + (upd.remoteVersion || '—'));
+			if (upd.pendingCount && upd.pendingCount >= 2) {
+				details.push('⚠️ ' + upd.pendingCount + ' releases atrasadas acumuladas (' + (upd.pendingVersions || []).join(' → ') + ')');
+				if (upd.planSummary) { details.push('Plano: ' + upd.planSummary); }
+			}
 			if (upd.outdatedCount) { details.push('Resources a atualizar: ' + upd.outdatedCount + ' (' + (upd.outdatedResources || []).join(', ') + ')'); }
 			if (upd.filesCount) { details.push('Arquivos a baixar: ' + upd.filesCount); }
 			if (upd.requiresFullRestart) { details.push('Aviso: requer reinício do servidor após aplicar.'); }
-			if (upd.notes) { details.push('Notas: ' + upd.notes); }
+			if (upd.notes) { details.push('Notas da release: ' + upd.notes); }
 			info.append(el('p', 'sf-hint', details.join('\n')));
+
+			if (upd.pendingCount && upd.pendingCount >= 2 && Array.isArray(upd.pendingReleases) && upd.pendingReleases.length > 0) {
+				const chainList = el('div', 'sf-pending-chain');
+				const chainTitle = el('small', 'sf-hint--busy', 'Histórico de releases contempladas no plano cumulativo:');
+				chainList.append(chainTitle);
+				upd.pendingReleases.forEach(function (r) {
+					const item = el('div', 'sf-pending-item');
+					const strong = el('strong', '', (r.tag || ('v' + r.version)) + ': ');
+					const span = el('span', '', r.notes || 'Atualizações acumuladas');
+					item.append(strong);
+					item.append(span);
+					chainList.append(item);
+				});
+				info.append(chainList);
+			}
 		} else {
 			details.push('Todos os scripts do COE Framework estão sincronizados com a versão mais recente.');
 			info.append(el('p', 'sf-hint', details.join('\n')));

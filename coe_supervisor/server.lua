@@ -264,6 +264,12 @@ local updateState = {
 	outdatedCount = 0,
 	outdatedResources = {},
 	filesCount = 0,
+	pendingCount = 0,
+	pendingReleases = {},
+	pendingVersions = {},
+	isCumulative = false,
+	planType = 'direct',
+	planSummary = nil,
 	requiresFullRestart = false,
 	needsRestart = false,
 	lastError = nil
@@ -288,6 +294,12 @@ local function publishUpdateState()
 		filesCount = updateState.filesCount or 0,
 		filesWritten = updateState.filesWritten or 0,
 		currentResource = updateState.currentResource,
+		pendingCount = updateState.pendingCount or 0,
+		pendingReleases = updateState.pendingReleases or {},
+		pendingVersions = updateState.pendingVersions or {},
+		isCumulative = updateState.isCumulative == true,
+		planType = updateState.planType or 'direct',
+		planSummary = updateState.planSummary,
 		requiresFullRestart = updateState.requiresFullRestart == true,
 		needsRestart = updateState.needsRestart == true,
 		lastError = updateState.lastError
@@ -427,6 +439,12 @@ local function runCheckForUpdates(announceConsole)
 	updateState.outdatedCount = plan.outdatedCount
 	updateState.outdatedResources = plan.outdatedResources
 	updateState.filesCount = plan.filesCount
+	updateState.pendingCount = plan.pendingCount or 0
+	updateState.pendingReleases = plan.pendingReleases or {}
+	updateState.pendingVersions = plan.pendingVersions or {}
+	updateState.isCumulative = plan.isCumulative == true
+	updateState.planType = plan.planType or 'direct'
+	updateState.planSummary = plan.planSummary
 	updateState.requiresFullRestart = plan.requiresFullRestart
 	updateState.lastError = nil
 

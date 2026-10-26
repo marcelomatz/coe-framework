@@ -84,5 +84,50 @@ eq(planNewer.remoteVersion, '0.1.0-beta.2', 'remoteVersion correta')
 eq(planNewer.outdatedCount, 2, '2 resources para atualizar')
 eq(planNewer.filesCount, 4, '4 arquivos válidos (o ../hack.lua foi filtrado)')
 eq(planNewer.requiresFullRestart, true, 'coe_core marca requiresFullRestart')
+eq(planNewer.isCumulative, false, '1 release pendente não é cumulativa')
+eq(planNewer.pendingCount, 1, '1 release pendente')
+
+-- 4. Testes de 2 ou mais releases atrasadas (plano cumulativo)
+local localBeta3 = {
+	version = '0.1.0-beta.3',
+	channel = 'beta',
+	repository = 'marcelomatz/coe-framework',
+	branch = 'main',
+	resources = {
+		coe_staff = { version = '0.1.0-beta.3', files = { 'fxmanifest.lua' } },
+		coe_spawn = { version = '0.1.0-beta.3', files = { 'fxmanifest.lua' } }
+	}
+}
+
+local remoteWithHistory = {
+	version = '0.1.0-beta.5',
+	tag = 'v0.1.0-beta.5',
+	channel = 'beta',
+	repository = 'marcelomatz/coe-framework',
+	branch = 'main',
+	notes = 'Notas da beta.5',
+	releases = {
+		{ version = '0.1.0-beta.5', tag = 'v0.1.0-beta.5', channel = 'beta', notes = 'Correção em coe_staff' },
+		{ version = '0.1.0-beta.4', tag = 'v0.1.0-beta.4', channel = 'beta', notes = 'Hotel de nascimento em coe_spawn' },
+		{ version = '0.1.0-beta.3', tag = 'v0.1.0-beta.3', channel = 'beta', notes = 'Release beta.3' },
+		{ version = '0.1.0-beta.2', tag = 'v0.1.0-beta.2', channel = 'beta', notes = 'Release beta.2' },
+		{ version = '0.1.0-beta.1', tag = 'v0.1.0-beta.1', channel = 'beta', notes = 'Release beta.1' }
+	},
+	resources = {
+		coe_staff = { version = '0.1.0-beta.5', files = { 'fxmanifest.lua', 'client/main.lua' } },
+		coe_spawn = { version = '0.1.0-beta.5', files = { 'fxmanifest.lua', 'client.lua' } }
+	}
+}
+
+local planCumulative = SupervisorUpdater.BuildUpdatePlan(localBeta3, remoteWithHistory, {}, {})
+eq(planCumulative.available, true, 'atualização disponível no plano cumulativo')
+eq(planCumulative.isCumulative, true, 'detecta 2 ou mais releases atrasadas como cumulativo')
+eq(planCumulative.pendingCount, 2, 'exatamente 2 releases pendentes (beta.4 e beta.5)')
+eq(planCumulative.pendingReleases[1].version, '0.1.0-beta.4', 'primeira pendente é beta.4')
+eq(planCumulative.pendingReleases[2].version, '0.1.0-beta.5', 'segunda pendente é beta.5')
+eq(planCumulative.pendingVersions[1], 'v0.1.0-beta.4', 'tag beta.4')
+eq(planCumulative.pendingVersions[2], 'v0.1.0-beta.5', 'tag beta.5')
+eq(planCumulative.outdatedCount, 2, '2 resources precisam de atualização')
+eq(planCumulative.filesCount, 4, '4 arquivos baixados para levar à versão final')
 
 io.write('coe_supervisor updater_test: ok\n')

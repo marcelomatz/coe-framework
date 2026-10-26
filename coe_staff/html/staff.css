@@ -346,3 +346,24 @@ input[type=number]::-webkit-inner-spin-button { opacity: 0.5; }
 	color: var(--coe-accent);
 	font-weight: 500;
 }
+
+/* Cadeia de releases pendentes */
+.sf-pending-chain {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: var(--coe-space-2);
+	padding: var(--coe-space-2);
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px dashed var(--coe-line);
+	border-radius: var(--coe-radius-sm, 4px);
+}
+.sf-pending-item {
+	font-size: var(--coe-text-xs, 11px);
+	color: var(--coe-muted);
+	line-height: 1.4;
+}
+.sf-pending-item strong {
+	color: var(--coe-accent);
+	font-weight: 600;
+}

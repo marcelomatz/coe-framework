@@ -244,6 +244,59 @@ function SupervisorUpdater.BuildUpdatePlan(localManifest, remoteManifest, instal
 
 	local available = frameworkNewer or (#outdatedResources > 0)
 
+	-- Identificação e validação de releases pendentes / atrasadas
+	local pendingReleases = {}
+	local pendingVersions = {}
+	local seenPending = {}
+
+	if type(remoteManifest.releases) == 'table' then
+		for _, rel in ipairs(remoteManifest.releases) do
+			if type(rel) == 'table' and type(rel.version) == 'string' then
+				local relVerStr = rel.version:gsub('^[vV]', '')
+				if not seenPending[relVerStr] and SupervisorUpdater.IsNewer(localVersionStr, relVerStr) then
+					seenPending[relVerStr] = true
+					local pRel = SupervisorUpdater.ParseVersion(relVerStr)
+					pendingReleases[#pendingReleases + 1] = {
+						version = relVerStr,
+						tag = rel.tag or ('v' .. relVerStr),
+						channel = rel.channel or (pRel and pRel.channel) or 'beta',
+						date = rel.date or '',
+						notes = rel.notes or ''
+					}
+				end
+			end
+		end
+	end
+
+	-- Se a lista de releases não mapeou a versão remota alvo mas o framework é mais novo, inclui a versão remota
+	if not seenPending[remoteVersionStr] and frameworkNewer then
+		seenPending[remoteVersionStr] = true
+		pendingReleases[#pendingReleases + 1] = {
+			version = remoteVersionStr,
+			tag = type(remoteManifest.tag) == 'string' and remoteManifest.tag or ('v' .. remoteVersionStr),
+			channel = type(remoteManifest.channel) == 'string' and remoteManifest.channel or parsedRemote.channel,
+			date = type(remoteManifest.date) == 'string' and remoteManifest.date or '',
+			notes = type(remoteManifest.notes) == 'string' and remoteManifest.notes or ''
+		}
+	end
+
+	-- Ordena em ordem cronológica de aplicação (da versão mais antiga para a mais recente)
+	table.sort(pendingReleases, function(a, b)
+		local cmp = SupervisorUpdater.CompareVersions(a.version, b.version)
+		return (cmp or 0) < 0
+	end)
+
+	for _, rel in ipairs(pendingReleases) do
+		pendingVersions[#pendingVersions + 1] = rel.tag
+	end
+
+	local pendingCount = #pendingReleases
+	local isCumulative = pendingCount >= 2
+	local planType = isCumulative and 'cumulative' or 'direct'
+	local planSummary = isCumulative
+		and string.format('Plano de atualização cumulativo: %d releases pendentes (%s)', pendingCount, table.concat(pendingVersions, ' → '))
+		or (pendingCount == 1 and ('Atualização direta para ' .. pendingReleases[1].tag) or 'Atualização direta')
+
 	return {
 		available = available,
 		localVersion = localVersionStr,
@@ -257,6 +310,13 @@ function SupervisorUpdater.BuildUpdatePlan(localManifest, remoteManifest, instal
 		outdatedCount = #outdatedResources,
 		downloads = downloads,
 		filesCount = #downloads,
-		requiresFullRestart = requiresFullRestart
+		requiresFullRestart = requiresFullRestart,
+		-- Múltiplas releases e plano cumulativo de atualização
+		pendingReleases = pendingReleases,
+		pendingVersions = pendingVersions,
+		pendingCount = pendingCount,
+		isCumulative = isCumulative,
+		planType = planType,
+		planSummary = planSummary
 	}, nil
 end

@@ -183,6 +183,64 @@ local function updateRecipeVersion(recipeContent, newVersion)
 	return norm
 end
 
+local function loadReleasesHistory(targetVersion, targetNotes)
+	local list = {}
+	local seen = {}
+	local today = os.date('!%Y-%m-%d')
+
+	list[#list + 1] = {
+		version = targetVersion,
+		tag = 'v' .. targetVersion,
+		channel = parseChannel(targetVersion),
+		date = today,
+		notes = toUtf8(targetNotes or '')
+	}
+	seen[targetVersion] = true
+
+	local function addCandidate(ver, tag, ch, dt, sm)
+		if ver and not seen[ver] then
+			seen[ver] = true
+			list[#list + 1] = {
+				version = ver,
+				tag = tag or ('v' .. ver),
+				channel = ch or parseChannel(ver),
+				date = dt or today,
+				notes = toUtf8(sm or '')
+			}
+		end
+	end
+
+	local webRel = readFile('../website/assets/data/releases.json') or readFile('website/assets/data/releases.json')
+	if webRel then
+		for block in webRel:gmatch('{([^{}]+)}') do
+			local ver = block:match('"version"%s*:%s*"([^"]+)"')
+			local tag = block:match('"tag"%s*:%s*"([^"]+)"')
+			local ch = block:match('"channel"%s*:%s*"([^"]+)"')
+			local dt = block:match('"date"%s*:%s*"([^"]+)"')
+			local sm = block:match('"summaryPt"%s*:%s*"([^"]+)"') or block:match('"notes"%s*:%s*"([^"]+)"')
+			if ver then
+				addCandidate(ver, tag, ch, dt, sm)
+			end
+		end
+	end
+
+	local existRel = readFile('version.json')
+	if existRel and existRel:find('"releases"%s*:', 1, true) then
+		for block in existRel:gmatch('{([^{}]+)}') do
+			local ver = block:match('"version"%s*:%s*"([^"]+)"')
+			local tag = block:match('"tag"%s*:%s*"([^"]+)"')
+			local ch = block:match('"channel"%s*:%s*"([^"]+)"')
+			local dt = block:match('"date"%s*:%s*"([^"]+)"')
+			local sm = block:match('"notes"%s*:%s*"([^"]+)"')
+			if ver then
+				addCandidate(ver, tag, ch, dt, sm)
+			end
+		end
+	end
+
+	return list
+end
+
 local function buildVersionJson(version, notes, resources)
 	local channel = parseChannel(version)
 	local lines = {}
@@ -193,6 +251,23 @@ local function buildVersionJson(version, notes, resources)
 	lines[#lines + 1] = '\t"repository": "marcelomatz/coe-framework",'
 	lines[#lines + 1] = '\t"branch": "main",'
 	lines[#lines + 1] = '\t"notes": "' .. jsonEscape(notes) .. '",'
+
+	local rels = loadReleasesHistory(version, notes)
+	if #rels > 0 then
+		lines[#lines + 1] = '\t"releases": ['
+		for rIdx, r in ipairs(rels) do
+			lines[#lines + 1] = '\t\t{'
+			lines[#lines + 1] = '\t\t\t"version": "' .. jsonEscape(r.version) .. '",'
+			lines[#lines + 1] = '\t\t\t"tag": "' .. jsonEscape(r.tag) .. '",'
+			lines[#lines + 1] = '\t\t\t"channel": "' .. jsonEscape(r.channel) .. '",'
+			lines[#lines + 1] = '\t\t\t"date": "' .. jsonEscape(r.date) .. '",'
+			lines[#lines + 1] = '\t\t\t"notes": "' .. jsonEscape(r.notes) .. '"'
+			local rComma = rIdx < #rels and ',' or ''
+			lines[#lines + 1] = '\t\t}' .. rComma
+		end
+		lines[#lines + 1] = '\t],'
+	end
+
 	lines[#lines + 1] = '\t"resources": {'
 	for idx, res in ipairs(resources) do
 		local files = listRuntimeFiles(res)

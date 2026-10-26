@@ -38,6 +38,43 @@ local okBanner = pcall(function()
 end)
 eq(okBanner, true, 'PrintUpdateAvailable executa sem erro')
 
+-- 4. Teste de banner com 2 ou mais releases pendentes acumuladas (plano cumulativo)
+local cumulativePlan = {
+	channel = 'beta',
+	localVersion = '0.1.0-beta.3',
+	remoteVersion = '0.1.0-beta.5',
+	tag = 'v0.1.0-beta.5',
+	pendingCount = 2,
+	isCumulative = true,
+	pendingVersions = { 'v0.1.0-beta.4', 'v0.1.0-beta.5' },
+	pendingReleases = {
+		{ tag = 'v0.1.0-beta.4', version = '0.1.0-beta.4', notes = 'Hotel de nascimento e ajustes de spawn' },
+		{ tag = 'v0.1.0-beta.5', version = '0.1.0-beta.5', notes = 'Sincronização de versão e melhorias de update' }
+	},
+	outdatedCount = 27,
+	filesCount = 817
+}
+
+local okCumulativeBanner = pcall(function()
+	SupervisorAnsi.PrintUpdateAvailable(cumulativePlan)
+end)
+eq(okCumulativeBanner, true, 'PrintUpdateAvailable cumulativo executa sem erro')
+
+local okVersionWithPending = pcall(function()
+	SupervisorAnsi.PrintVersion({
+		localVersion = '0.1.0-beta.3',
+		channel = 'beta',
+		repository = 'marcelomatz/coe-framework',
+		branch = 'main',
+		available = true,
+		remoteVersion = '0.1.0-beta.5',
+		pendingCount = 2,
+		pendingVersions = { 'v0.1.0-beta.4', 'v0.1.0-beta.5' },
+		outdatedCount = 27
+	})
+end)
+eq(okVersionWithPending, true, 'PrintVersion com múltiplas pendentes executa sem erro')
+
 local okVersion = pcall(function()
 	SupervisorAnsi.PrintVersion({
 		localVersion = '0.1.0-beta.4',
