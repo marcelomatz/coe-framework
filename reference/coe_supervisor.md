@@ -48,6 +48,31 @@ Consulta o repositório oficial por novas versões do COE Framework.
 
 - `CoeSupervisorUpdateStatus|nil` `status` — `nil` para chamador não autorizado
 
+### `WriteFile(filePath, content)`
+
+Grava um arquivo em disco diretamente via Node.js nativo do FXServer.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `filePath` | `string` | Caminho físico absoluto no host |
+| `content` | `string` | Conteúdo do arquivo |
+
+**Retorno**
+
+- `boolean` `ok`
+
+### `ReadFile(filePath)`
+
+Lê um arquivo do disco diretamente via Node.js nativo do FXServer.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `filePath` | `string` | Caminho físico absoluto no host |
+
+**Retorno**
+
+- `string|nil` `content`
+
 ### `ApplyUpdate(requester)`
 
 Baixa e aplica a última versão dos scripts do repositório oficial nos resources instalados.

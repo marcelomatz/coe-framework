@@ -58,6 +58,17 @@ function exports_coe_supervisor:GetUpdateStatus() end
 ---@return CoeSupervisorUpdateStatus|nil status `nil` para chamador não autorizado
 function exports_coe_supervisor:CheckForUpdates(requester) end
 
+---Grava um arquivo em disco diretamente via Node.js nativo do FXServer.
+---@param filePath string Caminho físico absoluto no host
+---@param content string Conteúdo do arquivo
+---@return boolean ok
+function exports_coe_supervisor:WriteFile(filePath, content) end
+
+---Lê um arquivo do disco diretamente via Node.js nativo do FXServer.
+---@param filePath string Caminho físico absoluto no host
+---@return string|nil content
+function exports_coe_supervisor:ReadFile(filePath) end
+
 ---Baixa e aplica a última versão dos scripts do repositório oficial nos resources instalados.
 ---@param requester integer|nil Jogador que pediu (auditoria)
 ---@return boolean ok
