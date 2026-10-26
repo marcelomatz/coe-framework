@@ -5,6 +5,36 @@
 	"repository": "marcelomatz/coe-framework",
 	"branch": "main",
 	"notes": "COE Framework v0.1.0-beta.5 (beta): 1 atualização(ões). Destaque: Sincroniza versão e manifesto em coe_staff, coe_supervisor, tools, version.json.",
+	"releases": [
+		{
+			"version": "0.1.0-beta.5",
+			"tag": "v0.1.0-beta.5",
+			"channel": "beta",
+			"date": "2026-10-26",
+			"notes": "COE Framework v0.1.0-beta.5 (beta): 1 atualização(ões). Destaque: Sincroniza versão e manifesto em coe_staff, coe_supervisor, tools, version.json."
+		},
+		{
+			"version": "0.1.0-beta.4",
+			"tag": "v0.1.0-beta.4",
+			"channel": "beta",
+			"date": "2026-10-26",
+			"notes": "COE Framework v0.1.0-beta.4 (beta): 2 atualização(ões). Destaque: Atualiza coe_spawn, reference."
+		},
+		{
+			"version": "0.1.0-beta.3",
+			"tag": "v0.1.0-beta.3",
+			"channel": "beta",
+			"date": "2026-10-26",
+			"notes": "COE Framework v0.1.0-beta.3 (beta): 3 atualização(ões) em coetarget, coe_appearance, coe_audit, coe_bank, coe_businesses e +22 resources. Destaque: **[release]** Prepara release v0.1.0-beta.2."
+		},
+		{
+			"version": "0.1.0-beta.2",
+			"tag": "v0.1.0-beta.2",
+			"channel": "beta",
+			"date": "2026-10-26",
+			"notes": "COE Framework v0.1.0-beta.2 (beta): 2 atualização(ões) em coetarget, coe_appearance, coe_audit, coe_bank, coe_businesses e +22 resources. Destaque: **[staff]** Atualiza coe_staff."
+		}
+	],
 	"resources": {
 		"coe_appearance": {
 			"version": "0.1.0-beta.5",
