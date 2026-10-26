@@ -372,15 +372,45 @@ local function httpGet(url, timeoutMs, maxRetries)
 	return nil, 'max_retries_exceeded'
 end
 
-local function ensureParentDir(filePath)
-	local dir = filePath:match('^(.*)/[^/]+$')
-	if dir and dir ~= '' then
-		local isWin = package.config:sub(1, 1) == '\\'
-		if isWin then
-			os.execute('if not exist "' .. dir:gsub('/', '\\') .. '" mkdir "' .. dir:gsub('/', '\\') .. '" >nul 2>nul')
-		else
-			os.execute('mkdir -p "' .. dir .. '" >/dev/null 2>&1')
+local function isWindowsHost()
+	if type(package) == 'table' and type(package.config) == 'string' then
+		return package.config:sub(1, 1) == '\\'
+	end
+	if type(os.getenv) == 'function' then
+		local osName = os.getenv('OS')
+		if type(osName) == 'string' and osName:find('Windows') then
+			return true
 		end
+		if os.getenv('WINDIR') or os.getenv('SystemRoot') then
+			return true
+		end
+	end
+	if type(GetResourcePath) == 'function' and type(GetCurrentResourceName) == 'function' then
+		local p = GetResourcePath(GetCurrentResourceName()) or ''
+		if p:find('^[A-Za-z]:') or p:find('\\', 1, true) then
+			return true
+		end
+	end
+	return true
+end
+
+local function ensureParentDir(filePath)
+	if type(filePath) ~= 'string' then
+		return
+	end
+	local dir = filePath:match('^(.*)/[^/]+$') or filePath:match('^(.*)\\[^\\]+$')
+	if not dir or dir == '' then
+		return
+	end
+	if type(os.execute) == 'function' then
+		pcall(function()
+			local isWin = isWindowsHost()
+			if isWin then
+				os.execute('if not exist "' .. dir:gsub('/', '\\') .. '" mkdir "' .. dir:gsub('/', '\\') .. '" >nul 2>nul')
+			else
+				os.execute('mkdir -p "' .. dir .. '" >/dev/null 2>&1')
+			end
+		end)
 	end
 end
 
