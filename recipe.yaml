@@ -24,10 +24,17 @@ tasks:
     ref: main
     dest: ./resources/[coe-framework]
 
-  # 4. Connect to Database (auto creates the database if not existing)
+  # 4. Remove pastas de documentação e CLI para evitar ruído no scanner de resources do FXServer
+  - action: remove_path
+    path: ./resources/[coe-framework]/reference
+
+  - action: remove_path
+    path: ./resources/[coe-framework]/tools
+
+  # 5. Connect to Database (auto creates the database if not existing)
   - action: connect_database
 
-  # 5. Generate optimized server.cfg
+  # 6. Generate optimized server.cfg
   - action: write_file
     file: server.cfg
     data: |

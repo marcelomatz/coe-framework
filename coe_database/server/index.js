@@ -135,8 +135,19 @@ const database = createDatabaseProvider({
 	onReady: () => logStructured('info', 'database', 'database_connection_ready')
 })
 
+function parseQueryArgs(args) {
+	if (typeof args[0] === 'string') {
+		return { sql: args[0], parameters: args[1], callback: args[2] }
+	}
+	if (typeof args[1] === 'string') {
+		return { sql: args[1], parameters: args[2], callback: args[3] }
+	}
+	return { sql: args[0], parameters: args[1], callback: args[2] }
+}
+
 function registerQueryExport(name, execute, operation) {
-	exports(name, (sql, parameters, callback) => {
+	exports(name, (...args) => {
+		const { sql, parameters, callback } = parseQueryArgs(args)
 		if (typeof callback !== 'function') {
 			complete(callback, false, null, 'callback_required')
 			return
@@ -148,9 +159,12 @@ function registerQueryExport(name, execute, operation) {
 
 		const validationError = validateStatement(sql, parameters)
 		if (validationError) {
+			const caller = typeof getInvokingResource === 'function' ? getInvokingResource() : 'unknown'
 			logStructured('warn', 'validation', `${operation}_validation_failed`, {
 				error_code: validationError,
-				operation
+				operation,
+				caller,
+				sql: typeof sql === 'string' ? sql.slice(0, 80) : typeof sql
 			})
 			complete(callback, false, null, validationError)
 			return
