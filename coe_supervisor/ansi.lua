@@ -1,0 +1,215 @@
+-- Módulo de formatação ANSI e sanitização UTF-8 para o coe_supervisor.
+-- Suporta sequências de escape ANSI padrão de terminais e códigos de cor nativos do FiveM/FXServer.
+SupervisorAnsi = {}
+
+local ESC = '\27['
+local C = {
+	reset = ESC .. '0m',
+	bold = ESC .. '1m',
+	dim = ESC .. '2m',
+	underline = ESC .. '4m',
+
+	-- Cores de texto padrão
+	black = ESC .. '30m',
+	red = ESC .. '31m',
+	green = ESC .. '32m',
+	yellow = ESC .. '33m',
+	blue = ESC .. '34m',
+	magenta = ESC .. '35m',
+	cyan = ESC .. '36m',
+	white = ESC .. '37m',
+	gray = ESC .. '90m',
+
+	-- Cores de texto brilhantes
+	brightRed = ESC .. '91m',
+	brightGreen = ESC .. '92m',
+	brightYellow = ESC .. '93m',
+	brightBlue = ESC .. '94m',
+	brightMagenta = ESC .. '95m',
+	brightCyan = ESC .. '96m',
+	brightWhite = ESC .. '97m',
+
+	-- Cores personalizadas do COE
+	coeBrand = ESC .. '38;5;39m',      -- Azul/ciano vibrante COE
+	coeAccent = ESC .. '38;5;214m',    -- Âmbar de destaque
+	coeBorder = ESC .. '38;5;242m',    -- Cinza elegante para bordas
+	coeSuccess = ESC .. '38;5;42m',     -- Verde sucesso
+	coeWarning = ESC .. '38;5;220m',    -- Amarelo aviso
+	coeMuted = ESC .. '38;5;245m'       -- Texto secundário
+}
+SupervisorAnsi.Colors = C
+
+-- Tabela de substituição de bytes Windows-1252 / ISO-8859-1 para caracteres UTF-8
+local CP1252_MAP = {
+	[0xC0] = 'À', [0xC1] = 'Á', [0xC2] = 'Â', [0xC3] = 'Ã', [0xC7] = 'Ç', [0xC9] = 'É', [0xCA] = 'Ê',
+	[0xCD] = 'Í', [0xD3] = 'Ó', [0xD4] = 'Ô', [0xD5] = 'Õ', [0xDA] = 'Ú',
+	[0xE0] = 'à', [0xE1] = 'á', [0xE2] = 'â', [0xE3] = 'ã', [0xE7] = 'ç', [0xE9] = 'é', [0xEA] = 'ê',
+	[0xED] = 'í', [0xF3] = 'ó', [0xF4] = 'ô', [0xF5] = 'õ', [0xFA] = 'ú'
+}
+
+---Sanitiza e garante codificação UTF-8 válida para strings lidas de arquivos, HTTP ou entrada de usuário.
+---@param str string|any
+---@return string
+function SupervisorAnsi.SanitizeUtf8(str)
+	if type(str) ~= 'string' or str == '' then
+		return type(str) == 'string' and str or tostring(str or '')
+	end
+
+	-- Corrige padrão conhecido de dupla interrogação proveniente de conversão CP1252 truncada
+	local text = str:gsub('atualiza%?%?o%(%?es%)', 'atualização(ões)')
+	text = text:gsub('atualiza%?%?o', 'atualização')
+	text = text:gsub('atualiza%?es', 'atualizações')
+	text = text:gsub('vers%?%?o', 'versão')
+	text = text:gsub('configura%?%?o', 'configuração')
+	text = text:gsub('opera%?%?o', 'operação')
+
+	-- Se utf8.len validar a string como UTF-8 legítimo, retorna diretamente
+	if pcall(utf8.len, text) and utf8.len(text) ~= nil then
+		return text
+	end
+
+	-- Se houver bytes avulsos no range Windows-1252/ISO-8859-1 (128..255), converte para UTF-8
+	local out = {}
+	local i = 1
+	local len = #text
+	while i <= len do
+		local b = text:byte(i)
+		if b < 128 then
+			out[#out + 1] = string.char(b)
+			i = i + 1
+		elseif b >= 192 and b <= 223 and i + 1 <= len and text:byte(i + 1) >= 128 and text:byte(i + 1) <= 191 then
+			out[#out + 1] = text:sub(i, i + 1)
+			i = i + 2
+		elseif b >= 224 and b <= 239 and i + 2 <= len and text:byte(i + 1) >= 128 and text:byte(i + 1) <= 191 and text:byte(i + 2) >= 128 and text:byte(i + 2) <= 191 then
+			out[#out + 1] = text:sub(i, i + 2)
+			i = i + 3
+		elseif b >= 240 and b <= 247 and i + 3 <= len and text:byte(i + 1) >= 128 and text:byte(i + 1) <= 191 and text:byte(i + 2) >= 128 and text:byte(i + 2) <= 191 and text:byte(i + 3) >= 128 and text:byte(i + 3) <= 191 then
+			out[#out + 1] = text:sub(i, i + 3)
+			i = i + 4
+		else
+			local mapped = CP1252_MAP[b]
+			if mapped then
+				out[#out + 1] = mapped
+			elseif b >= 128 and b <= 255 then
+				pcall(function()
+					out[#out + 1] = utf8.char(b)
+				end)
+			else
+				out[#out + 1] = string.char(b)
+			end
+			i = i + 1
+		end
+	end
+	return table.concat(out)
+end
+
+---Calcula o comprimento visual de uma string sem contar as sequências de escape ANSI.
+---@param str string
+---@return integer
+function SupervisorAnsi.VisibleLength(str)
+	if type(str) ~= 'string' then return 0 end
+	local clean = str:gsub('\27%[[%d;]*m', ''):gsub('%^%d', '')
+	local ok, len = pcall(utf8.len, clean)
+	return (ok and len) or #clean
+end
+
+---Exibe o banner estruturado de atualização disponível com sequências ANSI e bordas modernas.
+---@param plan table
+function SupervisorAnsi.PrintUpdateAvailable(plan)
+	local notes = SupervisorAnsi.SanitizeUtf8(plan.notes or '')
+	local channel = tostring(plan.channel or 'beta'):upper()
+	local localVer = tostring(plan.localVersion or '?')
+	local remoteVer = tostring(plan.remoteVersion or '?')
+	local tag = tostring(plan.tag or ('v' .. remoteVer))
+	local outdated = tonumber(plan.outdatedCount) or 0
+	local files = tonumber(plan.filesCount) or 0
+
+	local W = 74
+	local border = C.coeBorder .. '═' .. C.reset
+	local hLine = C.coeBorder .. string.rep('═', W) .. C.reset
+	local sepLine = C.coeBorder .. string.rep('─', W) .. C.reset
+
+	print(hLine)
+	print(string.format('%s  %sCOE FRAMEWORK%s  •  %sSUPERVISOR%s', C.coeBorder, C.bold .. C.coeBrand, C.reset, C.bold .. C.brightWhite, C.reset))
+	print(string.format('  %s%sNOVA VERSÃO DISPONÍVEL NO REPOSITÓRIO (%s)%s', C.bold, C.brightYellow, channel, C.reset))
+	print(sepLine)
+	print(string.format('  %sVersão instalada :%s %sv%s%s', C.brightWhite, C.reset, C.gray, localVer, C.reset))
+	print(string.format('  %sNova versão      :%s %sv%s%s %s(%s)%s', C.brightWhite, C.reset, C.bold .. C.brightGreen, remoteVer, C.reset, C.brightCyan, tag, C.reset))
+	print(string.format('  %sCanal de release :%s %s%s%s', C.brightWhite, C.reset, C.yellow, channel:lower(), C.reset))
+	if notes ~= '' then
+		print(string.format('  %sNotas da release :%s %s%s%s', C.brightWhite, C.reset, C.brightWhite, notes, C.reset))
+	end
+	print(string.format('  %sScripts pendentes:%s %s%d resource(s)%s %s(%d arquivo(s))%s', C.brightWhite, C.reset, C.bold .. C.brightCyan, outdated, C.reset, C.coeMuted, files, C.reset))
+	print(sepLine)
+	print(string.format('  %sComo atualizar   :%s %sdigite "coe_update apply" no console do servidor%s', C.brightWhite, C.reset, C.bold .. C.brightYellow, C.reset))
+	print(string.format('  %sOu via Staff     :%s %spainel F10 -> aba Sistema / Updates%s', C.brightWhite, C.reset, C.brightCyan, C.reset))
+	print(hLine)
+end
+
+---Exibe as informações estruturadas de versão (comando coe_version).
+---@param st table
+function SupervisorAnsi.PrintVersion(st)
+	local localVer = tostring(st.localVersion or '?')
+	local channel = tostring(st.channel or 'beta')
+	local repo = tostring(st.repository or 'marcelomatz/coe-framework')
+	local branch = tostring(st.branch or 'main')
+
+	print(string.format('%s[COE Framework]%s v%s%s%s (canal: %s%s%s) • Repositório: %s%s%s (%s%s%s)',
+		C.bold .. C.coeBrand, C.reset,
+		C.bold .. C.brightWhite, localVer, C.reset,
+		C.brightYellow, channel, C.reset,
+		C.brightCyan, repo, C.reset,
+		C.coeMuted, branch, C.reset))
+
+	if st.available then
+		print(string.format('  %s➜ Atualização disponível:%s %sv%s%s %s(%d resource(s) pendente(s))%s',
+			C.bold .. C.brightYellow, C.reset,
+			C.bold .. C.brightGreen, tostring(st.remoteVersion), C.reset,
+			C.brightCyan, st.outdatedCount or 0, C.reset))
+		print(string.format('    %sExecute %s"coe_update apply"%s para atualizar.%s',
+			C.coeMuted, C.bold .. C.brightYellow, C.reset .. C.coeMuted, C.reset))
+	elseif st.remoteVersion then
+		print(string.format('  %s✔ Todos os scripts e resources estão na versão mais recente.%s',
+			C.bold .. C.brightGreen, C.reset))
+	end
+end
+
+---Exibe o banner estruturado de conclusão de atualização.
+---@param result table
+function SupervisorAnsi.PrintUpdateCompleted(result)
+	local W = 74
+	local hLine = C.coeBorder .. string.rep('═', W) .. C.reset
+	local sepLine = C.coeBorder .. string.rep('─', W) .. C.reset
+
+	print(hLine)
+	print(string.format('  %s%s✔ ATUALIZAÇÃO DO COE FRAMEWORK APLICADA COM SUCESSO!%s', C.bold, C.brightGreen, C.reset))
+	print(sepLine)
+	print(string.format('  %sVersão instalada :%s %sv%s%s', C.brightWhite, C.reset, C.bold .. C.brightGreen, tostring(result.version), C.reset))
+	print(string.format('  %sResources salvos :%s %s%d atualizado(s)%s', C.brightWhite, C.reset, C.brightCyan, result.updatedResources or 0, C.reset))
+	print(string.format('  %sArquivos salvos  :%s %s%d arquivo(s)%s', C.brightWhite, C.reset, C.brightCyan, result.filesUpdated or 0, C.reset))
+	if result.requiresFullRestart then
+		print(string.format('  %sAtenção          :%s %sRecomendado reiniciar o FXServer (restart do binário/txAdmin).%s', C.bold .. C.brightYellow, C.reset, C.brightYellow, C.reset))
+	else
+		print(string.format('  %sPróximo passo    :%s %sResources recarregados. Execute "restart <nome>" se necessário.%s', C.brightWhite, C.reset, C.coeMuted, C.reset))
+	end
+	print(hLine)
+end
+
+---Exibe o progresso de atualização de um arquivo/resource.
+---@param current integer
+---@param total integer
+---@param resourceName string
+function SupervisorAnsi.PrintProgress(current, total, resourceName)
+	local pct = total > 0 and math.floor((current / total) * 100) or 100
+	local barWidth = 24
+	local filled = math.floor((pct / 100) * barWidth)
+	local empty = barWidth - filled
+	local bar = C.brightGreen .. string.rep('█', filled) .. C.coeBorder .. string.rep('░', empty) .. C.reset
+
+	print(string.format('%s[coe_updater]%s [%s] %s%3d%%%s (%d/%d) %s%s%s',
+		C.bold .. C.coeBrand, C.reset,
+		bar,
+		C.bold .. C.brightWhite, pct, C.reset,
+		current, total,
+		C.brightCyan, resourceName, C.reset))
+end

@@ -17,6 +17,7 @@ server_scripts {
 	'config.lua',
 	'plan.lua',
 	'replace.lua',
+	'ansi.lua',
 	'updater.lua',
 	'server.lua'
 }

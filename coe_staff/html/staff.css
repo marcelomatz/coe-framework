@@ -317,3 +317,32 @@ input[type=number]::-webkit-inner-spin-button { opacity: 0.5; }
 	width: 80px;
 	text-align: right;
 }
+
+/* Barra de progresso e estados de atualização */
+.sf-progress-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: var(--coe-space-2);
+}
+.sf-progress-bar {
+	width: 100%;
+	height: 8px;
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid var(--coe-line);
+	border-radius: var(--coe-radius-sm, 4px);
+	overflow: hidden;
+}
+.sf-progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, var(--coe-accent), var(--coe-success));
+	transition: width 0.3s ease;
+}
+.card.is-updating {
+	border-color: var(--coe-accent);
+	box-shadow: 0 0 16px rgba(0, 180, 255, 0.15);
+}
+.sf-hint--busy {
+	color: var(--coe-accent);
+	font-weight: 500;
+}
