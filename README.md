@@ -6,7 +6,7 @@
 
 > **The Next Generation of FiveM Engineering** — Strict Server-Authoritative Architecture, Hardware Abstraction Layer (`Core.Platform`), 0.00ms Idle Resmon, and End-to-End Type Safety.
 
-[![FiveM](https://img.shields.io/badge/FiveM-FXServer%20b3407+-blue.svg)](https://fivem.net)
+[![FiveM Enhanced](https://img.shields.io/badge/FiveM_Enhanced-Build_b170%2B-f97316.svg)](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows)
 [![Lua](https://img.shields.io/badge/Lua-5.4-blue.svg)](https://www.lua.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Architecture](https://img.shields.io/badge/Architecture-Server--Authoritative-orange.svg)](#architecture--engineering-principles)
@@ -96,12 +96,19 @@ The primary and immediate focus of this project is to consolidate and support th
 
 ## 🚀 Quickstart
 
-### Prerequisites
-* FiveM Server Artifacts **b3407+** or recommended production build (Windows or Linux).
-* MariaDB Server **10.6+** or MySQL **8.0+** with `utf8mb4_unicode_ci`.
-* Lua **5.4** runtime enabled (`lua54 'yes'`).
+### Prerequisites (FiveM for GTAV Enhanced)
+* **Cfx Server (FiveM for GTAV Enhanced)**: **Build 170+ (`b170`)** ? Windows (`cfx-server_win_x64.zip`) or Linux (`cfx-server_linux_x64.tar.xz`) at [docs.fivem.net/docs/server-download/?platform=enhanced](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows).
+* **GTA V Enhanced Game Build**: **Gen9 / Native DirectX 12** (all DLCs enabled natively; do not use legacy `sv_enforceGameBuild` numbers).
+* **MariaDB Server 11.x+** (collation `utf8mb4_unicode_ci`).
+* **Lua 5.4** runtime enabled (`lua54 'yes'`).
 
-### 1. Installation
+### Option 1: 1-Click Automated Setup (txAdmin Recipe ? Recommended for Beginners)
+In the **txAdmin** setup wizard (`http://localhost:40120`), choose **Remote URL Template** and paste:
+```text
+https://www.coeroleplay.app/recipe.yaml
+```
+
+### Option 2: Manual Clone & Installation
 ```bash
 # Clone the repository into your server resources directory
 cd txData/YOUR_SERVER/resources
