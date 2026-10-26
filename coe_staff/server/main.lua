@@ -208,6 +208,45 @@ function A.tpCoords(_, data)
 	return { ok = true, data = at }
 end
 
+function A.updateStatus()
+	return { ok = true, data = { update = remote('coe_supervisor', 'GetUpdateStatus') } }
+end
+
+function A.checkUpdate(admin)
+	local status = remote('coe_supervisor', 'CheckForUpdates', admin)
+	audit('staff_check_update', { source = admin })
+	return { ok = true, data = { update = status } }
+end
+
+function A.applyUpdate(admin)
+	if not started('coe_supervisor') then
+		return { ok = false, error = 'unavailable' }
+	end
+	local callOk, applied, detail = pcall(function()
+		return exports.coe_supervisor:ApplyUpdate(admin)
+	end)
+	if not callOk or not applied then
+		return { ok = false, error = type(detail) == 'string' and detail or 'update_download_failed' }
+	end
+	audit('staff_apply_update', {
+		source = admin,
+		operation = type(detail) == 'table' and tostring(detail.version or '') or 'update'
+	})
+	if type(detail) == 'table' and detail.version then
+		notify(admin, 'success', _t('update_applied_notify', {
+			version = tostring(detail.version),
+			files = tostring(detail.filesUpdated or 0)
+		}))
+	end
+	return {
+		ok = true,
+		data = {
+			result = detail,
+			update = remote('coe_supervisor', 'GetUpdateStatus')
+		}
+	}
+end
+
 -- Jogadores ---------------------------------------------------------------------------------------------------
 
 function A.players()
@@ -711,7 +750,7 @@ RegisterNetEvent('coe_staff:request', function(requestId, action, data)
 	TriggerClientEvent('coe_staff:response', admin, requestId, result)
 end)
 
--- Abrir: só quem tem algum módulo. A tela recebe os módulos liberados.
+-- Abrir: só quem tem algum módulo. A tela recebe os módulos liberados e o estado de atualização.
 RegisterNetEvent('coe_staff:open', function()
 	local admin = source
 	if yieldedBy then
@@ -723,7 +762,12 @@ RegisterNetEvent('coe_staff:open', function()
 		return
 	end
 	log('info', 'security', 'staff_panel_opened', { player_id = admin })
-	TriggerClientEvent('coe_staff:opened', admin, { modules = modules, limits = config.Limits, speeds = config.Noclip.Speeds })
+	TriggerClientEvent('coe_staff:opened', admin, {
+		modules = modules,
+		limits = config.Limits,
+		speeds = config.Noclip.Speeds,
+		update = remote('coe_supervisor', 'GetUpdateStatus')
+	})
 end)
 
 AddEventHandler('playerDropped', function()
@@ -773,3 +817,30 @@ end)
 
 GlobalState.coeStaffYielded = false
 GlobalState.coeStaffWorld = false
+
+local lastNotifiedVersion = nil
+
+local function notifyAdminsOfUpdate(status)
+	if yieldedBy or type(status) ~= 'table' or not status.available or type(status.remoteVersion) ~= 'string' then
+		return
+	end
+	if lastNotifiedVersion == status.remoteVersion then
+		return
+	end
+	lastNotifiedVersion = status.remoteVersion
+	for _, id in ipairs(GetPlayers()) do
+		local playerId = tonumber(id)
+		if playerId then
+			local _, any = modulesOf(playerId)
+			if any then
+				notify(playerId, 'info', _t('update_available_notify', { version = status.remoteVersion }))
+			end
+		end
+	end
+end
+
+if type(AddStateBagChangeHandler) == 'function' then
+	AddStateBagChangeHandler('coeFrameworkUpdate', 'global', function(_, _, value)
+		notifyAdminsOfUpdate(value)
+	end)
+end

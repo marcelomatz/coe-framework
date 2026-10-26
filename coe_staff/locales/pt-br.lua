@@ -51,5 +51,10 @@ Locales['pt-BR'] = {
 	kick_default = 'Removido pela staff.',
 	kick_message = 'Você foi removido do servidor: %{reason}',
 	item_received = 'Você recebeu %{count}x %{item} da staff.',
-	announcement = 'Aviso da staff: %{text}'
+	announcement = 'Aviso da staff: %{text}',
+	already_up_to_date = 'O servidor já está na versão mais recente.',
+	update_in_progress = 'Uma atualização já está em andamento.',
+	update_download_failed = 'Não foi possível baixar os arquivos da atualização.',
+	update_available_notify = 'Nova versão do COE Framework disponível (v%{version}). Abra o painel F10 para atualizar.',
+	update_applied_notify = 'COE Framework atualizado para v%{version} (%{files} arquivos).'
 }

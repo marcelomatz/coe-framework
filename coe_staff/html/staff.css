@@ -33,6 +33,29 @@ body {
 	border-bottom: 1px solid var(--coe-line);
 }
 .sf-brand { display: flex; align-items: center; gap: var(--coe-space-4); }
+.sf-head-actions { display: flex; align-items: center; gap: var(--coe-space-3); }
+.sf-version-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	font-size: var(--coe-text-xs);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--coe-accent);
+	background: var(--coe-accent-soft);
+	border: 1px solid rgba(var(--coe-accent-rgb), 0.35);
+}
+.sf-version-badge.is-outdated {
+	color: var(--coe-warning);
+	background: rgba(230, 182, 92, 0.14);
+	border-color: rgba(230, 182, 92, 0.55);
+}
+.sf-card.is-update {
+	box-shadow: inset 3px 0 var(--coe-warning);
+	background: rgba(230, 182, 92, 0.08);
+}
 .sf-logo {
 	display: grid;
 	place-items: center;

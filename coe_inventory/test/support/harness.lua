@@ -289,7 +289,7 @@ end
 -- Carrega os arquivos `application/*` do server_scripts do fxmanifest, na ordem declarada.
 local manifestFiles = {}
 local manifestNames = {
-	'fx_version', 'game', 'lua54', 'name', 'description', 'dependencies', 'ui_page',
+	'fx_version', 'game', 'lua54', 'name', 'version', 'description', 'dependencies', 'ui_page',
 	'files', 'client_scripts'
 }
 local savedGlobals = {}

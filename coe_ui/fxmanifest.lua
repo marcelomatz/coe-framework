@@ -3,6 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_ui'
+version '0.1.0-beta.1'
 description 'Biblioteca de UI do framework Coe: tokens, componentes e guia de estilos'
 
 -- Sem dependências: as NUIs dos outros resources carregam estes arquivos via nui://coe_ui/...

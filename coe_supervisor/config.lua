@@ -1,7 +1,20 @@
 SupervisorConfig = {
-	-- Quem pede reinícios (a autorização do operador é de quem chama): ACE no server.cfg, ex.:
+	-- Quem pede reinícios e atualizações (a autorização do operador é de quem chama): ACE no server.cfg, ex.:
 	--   add_ace resource.coe_admin coe.supervisor allow
 	Ace = 'coe.supervisor',
+	Defaults = {
+		coe_staff = true
+	},
+	-- Sistema de verificação de versão e atualização de scripts via repositório oficial.
+	Updater = {
+		Enabled = true,
+		CheckOnStartup = true,
+		Repository = 'marcelomatz/coe-framework',
+		Branch = 'main',
+		ManifestUrl = 'https://raw.githubusercontent.com/marcelomatz/coe-framework/main/version.json',
+		RawBaseUrl = 'https://raw.githubusercontent.com/marcelomatz/coe-framework/main',
+		TimeoutMs = 10000
+	},
 	-- Resources do framework que podem ser reiniciados. Pacotes e scripts de terceiros entram declarando no próprio
 	-- fxmanifest a categoria: coe_supervisor 'business' (e coe_supervisor_critical 'yes' se derrubar o servidor).
 	Managed = {

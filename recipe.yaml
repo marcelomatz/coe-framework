@@ -2,7 +2,7 @@ $engine: 3
 $onesync: on
 
 name: "COE Framework - FiveM Enhanced Gen9"
-version: "1.0.3"
+version: "0.1.0-beta.1"
 author: "COE Roleplay Team"
 description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 27 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
 
