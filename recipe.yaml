@@ -100,6 +100,37 @@ tasks:
       ensure baseevents
 
       ## --------------------------------------------------------------------
+      ## Permissões de Sistema de Arquivos (COE Auto-Updater / Supervisor)
+      ## Permite ao coe_supervisor aplicar atualizações diretamente nos resources
+      ## --------------------------------------------------------------------
+      add_filesystem_permission coe_supervisor write coetarget
+      add_filesystem_permission coe_supervisor write coe_appearance
+      add_filesystem_permission coe_supervisor write coe_audit
+      add_filesystem_permission coe_supervisor write coe_bank
+      add_filesystem_permission coe_supervisor write coe_businesses
+      add_filesystem_permission coe_supervisor write coe_characters
+      add_filesystem_permission coe_supervisor write coe_core
+      add_filesystem_permission coe_supervisor write coe_database
+      add_filesystem_permission coe_supervisor write coe_economy
+      add_filesystem_permission coe_supervisor write coe_hud
+      add_filesystem_permission coe_supervisor write coe_inventory
+      add_filesystem_permission coe_supervisor write coe_jobs
+      add_filesystem_permission coe_supervisor write coe_loadscreen
+      add_filesystem_permission coe_supervisor write coe_logging
+      add_filesystem_permission coe_supervisor write coe_map
+      add_filesystem_permission coe_supervisor write coe_mobile
+      add_filesystem_permission coe_supervisor write coe_needs
+      add_filesystem_permission coe_supervisor write coe_notify
+      add_filesystem_permission coe_supervisor write coe_shops
+      add_filesystem_permission coe_supervisor write coe_spawn
+      add_filesystem_permission coe_supervisor write coe_staff
+      add_filesystem_permission coe_supervisor write coe_talk
+      add_filesystem_permission coe_supervisor write coe_ui
+      add_filesystem_permission coe_supervisor write coe_vehicles
+      add_filesystem_permission coe_supervisor write coe_vehicle_catalog
+      add_filesystem_permission coe_supervisor write coe_workpad
+
+      ## --------------------------------------------------------------------
       ## Ordem Estrita de Boot - COE Framework
       ## Supervisor e Core devem iniciar antes dos subsistemas
       ## --------------------------------------------------------------------

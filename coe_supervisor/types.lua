@@ -61,8 +61,9 @@ function exports_coe_supervisor:CheckForUpdates(requester) end
 ---Grava um arquivo em disco diretamente via Node.js nativo do FXServer.
 ---@param filePath string Caminho físico absoluto no host
 ---@param content string Conteúdo do arquivo
+---@param isBinary boolean|nil Se o arquivo é binário (ex.: imagem/áudio)
 ---@return boolean ok
-function exports_coe_supervisor:WriteFile(filePath, content) end
+function exports_coe_supervisor:WriteFile(filePath, content, isBinary) end
 
 ---Lê um arquivo do disco diretamente via Node.js nativo do FXServer.
 ---@param filePath string Caminho físico absoluto no host

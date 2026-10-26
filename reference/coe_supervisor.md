@@ -48,7 +48,7 @@ Consulta o repositório oficial por novas versões do COE Framework.
 
 - `CoeSupervisorUpdateStatus|nil` `status` — `nil` para chamador não autorizado
 
-### `WriteFile(filePath, content)`
+### `WriteFile(filePath, content, isBinary)`
 
 Grava um arquivo em disco diretamente via Node.js nativo do FXServer.
 
@@ -56,6 +56,7 @@ Grava um arquivo em disco diretamente via Node.js nativo do FXServer.
 |---|---|---|
 | `filePath` | `string` | Caminho físico absoluto no host |
 | `content` | `string` | Conteúdo do arquivo |
+| `isBinary` | `boolean\|nil` | Se o arquivo é binário (ex.: imagem/áudio) |
 
 **Retorno**
 

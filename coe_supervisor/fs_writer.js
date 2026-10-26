@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-exports('WriteFile', (filePath, content) => {
+exports('WriteFile', (filePath, content, isBinary) => {
 	try {
 		if (typeof filePath !== 'string' || filePath === '') {
 			return false;
@@ -16,7 +16,11 @@ exports('WriteFile', (filePath, content) => {
 		if (!fs.existsSync(parentDir)) {
 			fs.mkdirSync(parentDir, { recursive: true });
 		}
-		fs.writeFileSync(normalized, content, 'utf8');
+		if (isBinary) {
+			fs.writeFileSync(normalized, Buffer.from(content, 'binary'));
+		} else {
+			fs.writeFileSync(normalized, content, 'utf8');
+		}
 		return true;
 	} catch (err) {
 		console.error('[coe_supervisor:fs_writer] Falha ao gravar arquivo:', filePath, err && err.message ? err.message : err);
