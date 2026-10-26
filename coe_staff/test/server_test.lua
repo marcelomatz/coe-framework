@@ -140,7 +140,7 @@ exports = setmetatable({}, {
 					return { restaurant = { label = 'Restaurantes', stations = { 'stashes', 'clocks' }, rules = { 'clockRequired' } } }
 				end,
 				RuleSchema = function() return { clockRequired = { type = 'boolean' } } end,
-				Permissions = function() return { { name = 'business.staff', label = 'Equipe' } } end,
+				Permissions = function() return { ['business.staff'] = 'Equipe', ['business.funds'] = 'Caixa' } end,
 				Save = function(_, raw, by)
 					if raw.label == 'Recusado' then return { error = 'invalid_label' } end
 					saved[#saved + 1] = { id = raw.id, by = by }
@@ -328,7 +328,8 @@ eq(act(1, 'businessCreate', { id = 'burger', label = 'X', category = 'restaurant
 local data = act(1, 'businesses').data
 eq(#data.businesses, 1, 'lista')
 eq(data.categories[1].id, 'restaurant', 'categorias')
-eq(data.permissions[1].name, 'business.staff', 'permissoes')
+eq(data.permissions[1].name, 'business.funds', 'permissoes normalizadas do mapa')
+eq(data.permissions[2].name, 'business.staff', 'segunda permissao')
 positions[1] = { x = 50, y = 60, z = 70 }
 r = act(1, 'stationAdd', { id = 'burger', kind = 'clocks', label = 'Relógio' })
 eq(r.data.business.stations.clocks[1].x, 50, 'relogio na posicao do admin')

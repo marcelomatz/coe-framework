@@ -53,6 +53,12 @@ function EconomyPersistence.Initialize()
 	local rows = callDatabase('Query', 'SELECT @@SESSION.sql_mode AS mode', {})
 	local mode = rows and rows[1] and rows[1].mode or ''
 	if not tostring(mode):find('STRICT', 1, true) then
+		callDatabase('Execute', "SET GLOBAL sql_mode = CONCAT_WS(',', @@GLOBAL.sql_mode, 'STRICT_TRANS_TABLES')", {})
+		callDatabase('Execute', "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, 'STRICT_TRANS_TABLES')", {})
+		rows = callDatabase('Query', 'SELECT @@SESSION.sql_mode AS mode', {})
+		mode = rows and rows[1] and rows[1].mode or ''
+	end
+	if not tostring(mode):find('STRICT', 1, true) then
 		return false, 'sql_mode_not_strict'
 	end
 	return true

@@ -69,13 +69,25 @@ function configurationError(code) {
 }
 
 function readConnectionOptions() {
-	const host = GetConvar('coe_database_host', '127.0.0.1').trim()
+	let host = GetConvar('coe_database_host', '127.0.0.1').trim()
 	const user = GetConvar('coe_database_user', '').trim()
 	const password = GetConvar('coe_database_password', '')
 	const database = GetConvar('coe_database_name', '').trim()
-	const portValue = GetConvar('coe_database_port', '3306')
+	let portValue = GetConvar('coe_database_port', '3306').trim()
 	const connectionLimitValue = GetConvar('coe_database_connection_limit', '10')
 	const sslValue = GetConvar('coe_database_ssl', 'false')
+
+	const hostPortMatch = /^([^:]+):(\d+)$/.exec(host)
+	if (hostPortMatch) {
+		host = hostPortMatch[1]
+		if (!/^\d+$/.test(portValue) || portValue === '3306') {
+			portValue = hostPortMatch[2]
+		}
+	}
+	if (!portValue || /^\{\{.*\}\}$/.test(portValue)) {
+		portValue = '3306'
+	}
+
 	const port = Number(portValue)
 	const connectionLimit = Number(connectionLimitValue)
 

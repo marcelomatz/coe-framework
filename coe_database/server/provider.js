@@ -47,6 +47,13 @@ function createDatabaseProvider({
 			let candidatePool
 			try {
 				candidatePool = driver.createPool(options)
+				if (candidatePool && typeof candidatePool.on === 'function') {
+					candidatePool.on('connection', (connection) => {
+						if (connection && typeof connection.query === 'function') {
+							connection.query("SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, 'STRICT_TRANS_TABLES')", () => {})
+						}
+					})
+				}
 				await candidatePool.query('SELECT 1')
 				if (stopping) {
 					await candidatePool.end()

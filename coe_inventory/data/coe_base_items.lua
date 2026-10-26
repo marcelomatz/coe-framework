@@ -178,7 +178,7 @@ local definitions = {
 		maxStack = 1,
 		consume = 0,
 		close = true,
-		image = 'phone.png',
+		image = 'business_tablet.png',
 		animation = 'phone',
 		category = 'misc'
 	},

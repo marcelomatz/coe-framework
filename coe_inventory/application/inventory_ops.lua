@@ -419,6 +419,10 @@ function S.AddItem(id, itemName, count, metadata, requestedSlot)
 		return false, 'persistence_failed'
 	end
 
+	if type(GetInvokingResource) == 'function' and GetInvokingResource() ~= nil and S.notifyInventoryOwner then
+		S.notifyInventoryOwner(id)
+	end
+
 	return true, slot
 end
 
@@ -503,6 +507,10 @@ function S.RemoveItem(id, slot, count)
 		return false, 'persistence_failed'
 	end
 
+	if type(GetInvokingResource) == 'function' and GetInvokingResource() ~= nil and S.notifyInventoryOwner then
+		S.notifyInventoryOwner(id)
+	end
+
 	return true
 end
 
@@ -569,6 +577,10 @@ function S.SetItemMetadata(id, slot, patch)
 	if not S.persistInventory(inventory) then
 		inventory.items[slot] = item
 		return false, 'persistence_failed'
+	end
+
+	if type(GetInvokingResource) == 'function' and GetInvokingResource() ~= nil and S.notifyInventoryOwner then
+		S.notifyInventoryOwner(id)
 	end
 
 	return true

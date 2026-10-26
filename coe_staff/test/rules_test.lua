@@ -141,4 +141,10 @@ eq(StaffRules.Slug('1º Turno'), 'g_1_turno', 'slug comeca com letra')
 local summary = StaffRules.BusinessSummary({ id = 'a', label = 'A', category = 'shop', owner = { name = 'Ana' }, staff = { {}, {} } })
 eq(summary.owner, 'Ana', 'resumo dono'); eq(summary.staff, 2, 'resumo equipe'); eq(summary.enabled, true, 'resumo ativo')
 
+local permsFromMap = StaffRules.PermissionsList({ ['business.staff'] = 'Equipe', ['business.funds'] = 'Caixa' })
+eq(#permsFromMap, 2, 'permissoes do mapa')
+eq(permsFromMap[1].name, 'business.funds', 'primeira permissao ordenada')
+eq(permsFromMap[1].label, 'Caixa', 'rotulo da permissao')
+eq(permsFromMap[2].name, 'business.staff', 'segunda permissao ordenada')
+
 print('coe_staff rules: ok')
