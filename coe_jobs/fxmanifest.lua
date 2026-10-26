@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_jobs'
-version '0.1.0-beta.7'
+version '0.1.0-beta.8'
 description 'Empregos livres do Coe (coleta e rotas), com carreira (XP, habilidades e reputação compartilhadas entre empregos)'
 
 dependencies {

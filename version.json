@@ -1,11 +1,18 @@
 {
-	"version": "0.1.0-beta.7",
-	"tag": "v0.1.0-beta.7",
+	"version": "0.1.0-beta.8",
+	"tag": "v0.1.0-beta.8",
 	"channel": "beta",
 	"repository": "marcelomatz/coe-framework",
 	"branch": "main",
-	"notes": "COE Framework v0.1.0-beta.7 (beta): 2 atualização(ões). Destaque: Sincroniza versão e manifesto em coe_supervisor, tools, version.json.",
+	"notes": "COE Framework v0.1.0-beta.8 (beta): 4 atualização(ões). Destaque: Atualiza coe_database, coe_inventory, coe_spawn, recipe.yaml.",
 	"releases": [
+		{
+			"version": "0.1.0-beta.8",
+			"tag": "v0.1.0-beta.8",
+			"channel": "beta",
+			"date": "2026-10-26",
+			"notes": "COE Framework v0.1.0-beta.8 (beta): 4 atualização(ões). Destaque: Atualiza coe_database, coe_inventory, coe_spawn, recipe.yaml."
+		},
 		{
 			"version": "0.1.0-beta.7",
 			"tag": "v0.1.0-beta.7",
@@ -51,7 +58,7 @@
 	],
 	"resources": {
 		"coe_appearance": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/apply.lua",
 				"client/creator.lua",
@@ -69,7 +76,7 @@
 				"client/creator.lua": "49c13074",
 				"client/thumbs.lua": "b7e503cf",
 				"config.lua": "b081ecf3",
-				"fxmanifest.lua": "990292f9",
+				"fxmanifest.lua": "abbaac6c",
 				"html/app.js": "53931ed6",
 				"html/index.html": "4379e87d",
 				"html/style.css": "22582212",
@@ -78,7 +85,7 @@
 			}
 		},
 		"coe_audit": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"config.lua",
 				"fxmanifest.lua",
@@ -90,7 +97,7 @@
 			],
 			"hashes": {
 				"config.lua": "92af6a9b",
-				"fxmanifest.lua": "6aac8967",
+				"fxmanifest.lua": "c359779c",
 				"server/entry.lua": "1637ee1d",
 				"server/main.lua": "511b89b7",
 				"server/migrations.lua": "ad931575",
@@ -99,7 +106,7 @@
 			}
 		},
 		"coe_bank": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -115,7 +122,7 @@
 			"hashes": {
 				"client/main.lua": "8b07f876",
 				"config.lua": "4ac97d7c",
-				"fxmanifest.lua": "b7da4bae",
+				"fxmanifest.lua": "dacab17b",
 				"html/bank.css": "ca754bb6",
 				"html/bank.js": "a51b7416",
 				"html/index.html": "c5388fd9",
@@ -126,7 +133,7 @@
 			}
 		},
 		"coe_businesses": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -150,7 +157,7 @@
 			"hashes": {
 				"client/main.lua": "ab266217",
 				"config.lua": "cdfdc8bd",
-				"fxmanifest.lua": "6e4f510b",
+				"fxmanifest.lua": "e34d9e68",
 				"html/index.html": "74a3b3ea",
 				"html/offer.js": "51b09136",
 				"html/tablet_app.js": "a19fe2c0",
@@ -169,7 +176,7 @@
 			}
 		},
 		"coe_characters": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client.lua",
 				"client/scene.lua",
@@ -183,14 +190,14 @@
 				"client.lua": "5503dae2",
 				"client/scene.lua": "4d3c9f2c",
 				"config.lua": "720457b6",
-				"fxmanifest.lua": "deb511f4",
+				"fxmanifest.lua": "57c7cc81",
 				"html/app.js": "2b9b8fd8",
 				"html/index.html": "95813bb8",
 				"html/style.css": "409a5788"
 			}
 		},
 		"coe_core": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"config/groups.lua",
 				"core/application/player_service.lua",
@@ -242,7 +249,7 @@
 				"core/shared/functions.lua": "5f4823a6",
 				"core/shared/identity.lua": "537df0dc",
 				"core/shared/states.lua": "8e6f5705",
-				"fxmanifest.lua": "fa225f6f",
+				"fxmanifest.lua": "56f1c12e",
 				"lib/access.lua": "feccd880",
 				"lib/hash.lua": "1b19c8ce",
 				"lib/init.lua": "6b932d4d",
@@ -255,7 +262,7 @@
 			}
 		},
 		"coe_database": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"fxmanifest.lua",
 				"package.json",
@@ -265,16 +272,16 @@
 				"server/validation.js"
 			],
 			"hashes": {
-				"fxmanifest.lua": "e5ab299c",
+				"fxmanifest.lua": "f721e275",
 				"package.json": "eace074c",
 				"server/access.js": "08b1c58e",
-				"server/index.js": "b0d162ff",
+				"server/index.js": "38a597fb",
 				"server/provider.js": "0cb527d6",
 				"server/validation.js": "a5aed4e9"
 			}
 		},
 		"coe_economy": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"config.lua",
 				"fxmanifest.lua",
@@ -287,7 +294,7 @@
 			],
 			"hashes": {
 				"config.lua": "849b590f",
-				"fxmanifest.lua": "c305c80c",
+				"fxmanifest.lua": "2e424a61",
 				"locales/en-us.lua": "0952d7b7",
 				"locales/pt-br.lua": "f4d7e50b",
 				"server/main.lua": "486e171b",
@@ -297,7 +304,7 @@
 			}
 		},
 		"coe_hud": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -320,7 +327,7 @@
 			"hashes": {
 				"client.lua": "6cdcf687",
 				"config.lua": "f418e36e",
-				"fxmanifest.lua": "16fc9fdd",
+				"fxmanifest.lua": "e4a9e5b0",
 				"html/app.js": "9ef70271",
 				"html/editor.css": "bbd74f3c",
 				"html/editor.js": "7eba4432",
@@ -338,7 +345,7 @@
 			}
 		},
 		"coe_inventory": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"adapters/migrations.lua",
 				"adapters/persistence.lua",
@@ -1378,8 +1385,8 @@
 				"data/images/ziptie.webp": "d6194857",
 				"domain/config_schema.lua": "fa557084",
 				"domain/items.lua": "be3db9db",
-				"fxmanifest.lua": "f9341dd3",
-				"html/app.js": "1e846ede",
+				"fxmanifest.lua": "f46d5f96",
+				"html/app.js": "16f4dbdf",
 				"html/index.html": "69458a82",
 				"html/style.css": "4f0a8daa",
 				"lib/init.lua": "c01442f9",
@@ -1401,7 +1408,7 @@
 			}
 		},
 		"coe_jobs": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -1431,7 +1438,7 @@
 			"hashes": {
 				"client/main.lua": "0267fc28",
 				"config.lua": "8e0234b4",
-				"fxmanifest.lua": "d6bd45a9",
+				"fxmanifest.lua": "2080a546",
 				"html/career.js": "f589d623",
 				"html/guide-view.js": "8f31692e",
 				"html/guide.css": "10d77738",
@@ -1456,7 +1463,7 @@
 			}
 		},
 		"coe_loadscreen": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client.lua",
 				"fxmanifest.lua",
@@ -1466,14 +1473,14 @@
 			],
 			"hashes": {
 				"client.lua": "5dab6855",
-				"fxmanifest.lua": "bebd4e8d",
+				"fxmanifest.lua": "5efc181c",
 				"html/app.js": "ef22827b",
 				"html/index.html": "60e4d321",
 				"html/style.css": "a7627956"
 			}
 		},
 		"coe_logging": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"config.lua",
 				"fxmanifest.lua",
@@ -1481,12 +1488,12 @@
 			],
 			"hashes": {
 				"config.lua": "6578e6b8",
-				"fxmanifest.lua": "65c049b5",
+				"fxmanifest.lua": "3f2702ce",
 				"server.lua": "5aa76a1a"
 			}
 		},
 		"coe_map": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"anchor.lua",
 				"client.lua",
@@ -1500,14 +1507,14 @@
 				"anchor.lua": "be4e42ee",
 				"client.lua": "bf467198",
 				"config.lua": "e4e0b424",
-				"fxmanifest.lua": "daa72dd2",
+				"fxmanifest.lua": "ddc7d703",
 				"html/app.js": "b2e5d97a",
 				"html/index.html": "e7c167cf",
 				"html/style.css": "66c2e165"
 			}
 		},
 		"coe_mobile": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -1525,7 +1532,7 @@
 			"hashes": {
 				"client/main.lua": "dafedb22",
 				"config.lua": "01471c63",
-				"fxmanifest.lua": "95e158b8",
+				"fxmanifest.lua": "33a395fd",
 				"html/index.html": "2ec96fd1",
 				"html/mobile.css": "cdcf7acf",
 				"html/mobile.js": "4c70609c",
@@ -1538,7 +1545,7 @@
 			}
 		},
 		"coe_needs": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"adapters/migrations.lua",
 				"adapters/persistence.lua",
@@ -1557,13 +1564,13 @@
 				"client.lua": "c9863908",
 				"config.lua": "a01c7d78",
 				"domain/needs.lua": "751ccb3f",
-				"fxmanifest.lua": "bd95db75",
+				"fxmanifest.lua": "d57d768e",
 				"locales/en-us.lua": "a25daaaa",
 				"locales/pt-br.lua": "add4650d"
 			}
 		},
 		"coe_notify": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client.lua",
 				"fxmanifest.lua",
@@ -1574,7 +1581,7 @@
 			],
 			"hashes": {
 				"client.lua": "d73d97f5",
-				"fxmanifest.lua": "07ef617b",
+				"fxmanifest.lua": "b043783c",
 				"html/app.js": "ab297ed3",
 				"html/index.html": "06191492",
 				"html/style.css": "75bf52ee",
@@ -1582,7 +1589,7 @@
 			}
 		},
 		"coe_shops": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -1601,7 +1608,7 @@
 			"hashes": {
 				"client/main.lua": "9c5bbcb4",
 				"config.lua": "2705c19e",
-				"fxmanifest.lua": "1ef24249",
+				"fxmanifest.lua": "2298aef6",
 				"html/business.css": "348f7c37",
 				"html/business.js": "fd5a7a91",
 				"html/index.html": "bb973a7f",
@@ -1615,7 +1622,7 @@
 			}
 		},
 		"coe_spawn": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -1626,9 +1633,9 @@
 				"shared/positions.lua"
 			],
 			"hashes": {
-				"client.lua": "4e406cce",
+				"client.lua": "0de39f70",
 				"config.lua": "57316801",
-				"fxmanifest.lua": "6c3d82fb",
+				"fxmanifest.lua": "bfa337fe",
 				"server/main.lua": "d1558016",
 				"server/migrations.lua": "1309f957",
 				"server/persistence.lua": "acbe010d",
@@ -1636,7 +1643,7 @@
 			}
 		},
 		"coe_staff": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/main.lua",
 				"client/noclip.lua",
@@ -1654,7 +1661,7 @@
 				"client/main.lua": "52d6f59e",
 				"client/noclip.lua": "fe0e2ada",
 				"config.lua": "f97e394a",
-				"fxmanifest.lua": "c66aa0cc",
+				"fxmanifest.lua": "5f34d72f",
 				"html/index.html": "d2614986",
 				"html/staff.css": "9ec881ec",
 				"html/staff.js": "ffec3676",
@@ -1665,11 +1672,12 @@
 			}
 		},
 		"coe_supervisor": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"ansi.lua",
 				"client.lua",
 				"config.lua",
+				"fs_writer.js",
 				"fxmanifest.lua",
 				"plan.lua",
 				"replace.lua",
@@ -1678,19 +1686,20 @@
 				"version.json"
 			],
 			"hashes": {
-				"ansi.lua": "e64f0ed5",
+				"ansi.lua": "b40af227",
 				"client.lua": "f277035a",
 				"config.lua": "d3308346",
-				"fxmanifest.lua": "eaa62e72",
+				"fs_writer.js": "f8e002c0",
+				"fxmanifest.lua": "0d7ea940",
 				"plan.lua": "cda7dbb8",
 				"replace.lua": "178b65eb",
-				"server.lua": "dcd27de9",
+				"server.lua": "1a44a2c1",
 				"updater.lua": "9b44c8b3",
-				"version.json": "45c32ab4"
+				"version.json": "6fdc7cb9"
 			}
 		},
 		"coe_talk": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/main.lua",
 				"client/phone.lua",
@@ -1713,7 +1722,7 @@
 				"client/radio.lua": "5f7bfc1a",
 				"client/submix.lua": "aecc1da4",
 				"config.lua": "2c0c115e",
-				"fxmanifest.lua": "a84a5669",
+				"fxmanifest.lua": "80d4fda0",
 				"html/app.js": "236ac73c",
 				"html/index.html": "d515646c",
 				"html/style.css": "686f52a8",
@@ -1725,7 +1734,7 @@
 			}
 		},
 		"coe_ui": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -1748,7 +1757,7 @@
 			"hashes": {
 				"client.lua": "11890ed4",
 				"config.lua": "e494f55f",
-				"fxmanifest.lua": "71eeba32",
+				"fxmanifest.lua": "ede386cf",
 				"html/apps.css": "7af8f0a6",
 				"html/callout.css": "153e10ab",
 				"html/components.css": "3814aa1d",
@@ -1766,7 +1775,7 @@
 			}
 		},
 		"coe_vehicle_catalog": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"config.lua",
 				"data/native_vehicles.lua",
@@ -1781,7 +1790,7 @@
 			"hashes": {
 				"config.lua": "d1ae0b55",
 				"data/native_vehicles.lua": "b6825772",
-				"fxmanifest.lua": "4e5f6658",
+				"fxmanifest.lua": "3da642bd",
 				"server/catalog.lua": "873b33ff",
 				"server/main.lua": "5bc0f98f",
 				"server/migrations.lua": "cf70c3a2",
@@ -1791,7 +1800,7 @@
 			}
 		},
 		"coe_vehicles": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/keys.lua",
 				"client/mileage.lua",
@@ -1811,7 +1820,7 @@
 				"client/keys.lua": "7fdef6e1",
 				"client/mileage.lua": "a364ea92",
 				"config.lua": "928c9384",
-				"fxmanifest.lua": "04aba6ec",
+				"fxmanifest.lua": "730a0f31",
 				"locales/en-us.lua": "b065fc55",
 				"locales/pt-br.lua": "4a33b5a3",
 				"server/keys.lua": "1d721ffc",
@@ -1824,7 +1833,7 @@
 			}
 		},
 		"coe_workpad": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -1842,7 +1851,7 @@
 			"hashes": {
 				"client/main.lua": "339b489c",
 				"config.lua": "3c282dcb",
-				"fxmanifest.lua": "ae45b1d9",
+				"fxmanifest.lua": "da179416",
 				"html/duty.js": "3fbead3b",
 				"html/freejobs.js": "a31742c1",
 				"html/index.html": "78bd0bc8",
@@ -1855,7 +1864,7 @@
 			}
 		},
 		"coetarget": {
-			"version": "0.1.0-beta.7",
+			"version": "0.1.0-beta.8",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -1867,7 +1876,7 @@
 			"hashes": {
 				"client.lua": "996e8201",
 				"config.lua": "d1b94f35",
-				"fxmanifest.lua": "898ffb5a",
+				"fxmanifest.lua": "8bed6259",
 				"html/app.js": "4ad7324a",
 				"html/index.html": "c8789ece",
 				"html/style.css": "222d2579"
