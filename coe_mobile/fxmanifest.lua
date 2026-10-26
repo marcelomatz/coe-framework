@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_mobile'
-version '0.1.0-beta.5'
+version '0.1.0-beta.6'
 description 'Telefone básico do Coe: número do personagem, ligações com voz, contatos, mensagens e ajustes simples'
 
 -- Pacotes completos podem assumir este papel: declaram coe_supervisor_replaces 'coe_mobile' e o coe_supervisor não

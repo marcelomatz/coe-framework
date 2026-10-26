@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_characters'
-version '0.1.0-beta.5'
+version '0.1.0-beta.6'
 description 'Seleção de personagem com cena 3D e integração com o criador (coe_appearance)'
 
 dependencies {

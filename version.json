@@ -1,11 +1,18 @@
 {
-	"version": "0.1.0-beta.5",
-	"tag": "v0.1.0-beta.5",
+	"version": "0.1.0-beta.6",
+	"tag": "v0.1.0-beta.6",
 	"channel": "beta",
 	"repository": "marcelomatz/coe-framework",
 	"branch": "main",
-	"notes": "COE Framework v0.1.0-beta.5 (beta): 1 atualização(ões). Destaque: Sincroniza versão e manifesto em coe_staff, coe_supervisor, tools, version.json.",
+	"notes": "COE Framework v0.1.0-beta.6 (beta): 1 atualização(ões). Destaque: Sincroniza versão e manifesto em coe_staff, coe_supervisor, tools, version.json.",
 	"releases": [
+		{
+			"version": "0.1.0-beta.6",
+			"tag": "v0.1.0-beta.6",
+			"channel": "beta",
+			"date": "2026-10-26",
+			"notes": "COE Framework v0.1.0-beta.6 (beta): 1 atualização(ões). Destaque: Sincroniza versão e manifesto em coe_staff, coe_supervisor, tools, version.json."
+		},
 		{
 			"version": "0.1.0-beta.5",
 			"tag": "v0.1.0-beta.5",
@@ -37,7 +44,7 @@
 	],
 	"resources": {
 		"coe_appearance": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/apply.lua",
 				"client/creator.lua",
@@ -52,7 +59,7 @@
 			]
 		},
 		"coe_audit": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"config.lua",
 				"fxmanifest.lua",
@@ -64,7 +71,7 @@
 			]
 		},
 		"coe_bank": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -79,7 +86,7 @@
 			]
 		},
 		"coe_businesses": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -102,7 +109,7 @@
 			]
 		},
 		"coe_characters": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client.lua",
 				"client/scene.lua",
@@ -114,7 +121,7 @@
 			]
 		},
 		"coe_core": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"config/groups.lua",
 				"core/application/player_service.lua",
@@ -148,7 +155,7 @@
 			]
 		},
 		"coe_database": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"fxmanifest.lua",
 				"package.json",
@@ -159,7 +166,7 @@
 			]
 		},
 		"coe_economy": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"config.lua",
 				"fxmanifest.lua",
@@ -172,7 +179,7 @@
 			]
 		},
 		"coe_hud": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -194,7 +201,7 @@
 			]
 		},
 		"coe_inventory": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"adapters/migrations.lua",
 				"adapters/persistence.lua",
@@ -727,7 +734,7 @@
 			]
 		},
 		"coe_jobs": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -756,7 +763,7 @@
 			]
 		},
 		"coe_loadscreen": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client.lua",
 				"fxmanifest.lua",
@@ -766,7 +773,7 @@
 			]
 		},
 		"coe_logging": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"config.lua",
 				"fxmanifest.lua",
@@ -774,7 +781,7 @@
 			]
 		},
 		"coe_map": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"anchor.lua",
 				"client.lua",
@@ -786,7 +793,7 @@
 			]
 		},
 		"coe_mobile": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -803,7 +810,7 @@
 			]
 		},
 		"coe_needs": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"adapters/migrations.lua",
 				"adapters/persistence.lua",
@@ -817,7 +824,7 @@
 			]
 		},
 		"coe_notify": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client.lua",
 				"fxmanifest.lua",
@@ -828,7 +835,7 @@
 			]
 		},
 		"coe_shops": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -846,7 +853,7 @@
 			]
 		},
 		"coe_spawn": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -858,7 +865,7 @@
 			]
 		},
 		"coe_staff": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/main.lua",
 				"client/noclip.lua",
@@ -874,7 +881,7 @@
 			]
 		},
 		"coe_supervisor": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"ansi.lua",
 				"client.lua",
@@ -888,7 +895,7 @@
 			]
 		},
 		"coe_talk": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/main.lua",
 				"client/phone.lua",
@@ -907,7 +914,7 @@
 			]
 		},
 		"coe_ui": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -929,7 +936,7 @@
 			]
 		},
 		"coe_vehicle_catalog": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"config.lua",
 				"data/native_vehicles.lua",
@@ -943,7 +950,7 @@
 			]
 		},
 		"coe_vehicles": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/keys.lua",
 				"client/mileage.lua",
@@ -961,7 +968,7 @@
 			]
 		},
 		"coe_workpad": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -978,7 +985,7 @@
 			]
 		},
 		"coetarget": {
-			"version": "0.1.0-beta.5",
+			"version": "0.1.0-beta.6",
 			"files": [
 				"client.lua",
 				"config.lua",

@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_appearance'
-version '0.1.0-beta.5'
+version '0.1.0-beta.6'
 description 'Aparência de personagem: formato, aplicação no ped e criador de personagem'
 
 dependencies {
