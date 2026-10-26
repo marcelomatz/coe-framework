@@ -163,21 +163,6 @@ exports = setmetatable({}, {
 				end
 			}
 		end
-		if resource == 'coe_garages' then
-			return {
-				ListGarages = function()
-					return {
-						{ id = 'garagem_central', label = 'Garagem Central', kind = 'public', spots = { { x = 10, y = 20, z = 30 } } }
-					}
-				end,
-				SaveGarage = function(_, raw)
-					return raw
-				end,
-				DeleteGarage = function(_, id)
-					return true
-				end
-			}
-		end
 		if resource == 'coe_spawn' then
 			return {
 				GetStarterHotel = function()
@@ -380,6 +365,21 @@ eq(act(1, 'hotel').ok, true, 'consulta hotel')
 eq(act(1, 'hotel').data.hotel.name, 'Motel Pink Cage', 'dados do hotel')
 eq(act(1, 'saveStarterHotel', { name = 'Novo Hotel', enabled = true, blip = true }).ok, true, 'salva hotel')
 
+eq(act(1, 'garages').error, 'garages_unavailable', 'sem provedor registrado')
+exported.RegisterGaragesProvider({
+	resource = 'test_garages',
+	List = function()
+		return {
+			{ id = 'garagem_central', label = 'Garagem Central', kind = 'public', spots = { { x = 10, y = 20, z = 30 } } }
+		}
+	end,
+	Save = function(raw)
+		return raw
+	end,
+	Delete = function(id)
+		return true
+	end
+})
 eq(act(1, 'garages').ok, true, 'consulta garagens')
 eq(#act(1, 'garages').data.garages, 1, 'garagem cadastrada')
 eq(act(1, 'garageSave', { id = 'nova', label = 'Nova' }).ok, true, 'salva garagem')

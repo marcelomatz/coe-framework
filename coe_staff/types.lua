@@ -17,3 +17,8 @@ function exports_coe_staff:Yield() end
 ---Situação do painel básico.
 ---@return CoeStaffStatus status
 function exports_coe_staff:Status() end
+
+---Registra um provedor de garagens para administração pelo painel staff.
+---@param provider table Provedor com funções List, Save e Delete
+---@return boolean ok
+function exports_coe_staff:RegisterGaragesProvider(provider) end

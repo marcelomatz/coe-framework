@@ -574,15 +574,43 @@ function A.teleportToHotel(admin, data)
 	return { ok = true }
 end
 
+-- Provedor de garagens (registrado dinamicamente em runtime por pacotes de garagens via export).
+local garageProvider = nil
+
+exports('RegisterGaragesProvider', function(provider)
+	if type(provider) ~= 'table' then
+		return false, 'invalid_provider'
+	end
+	garageProvider = {
+		resource = provider.resource or GetInvokingResource(),
+		List = provider.List,
+		Save = provider.Save,
+		Delete = provider.Delete
+	}
+	return true
+end)
+
+AddEventHandler('onResourceStop', function(resName)
+	if garageProvider and garageProvider.resource == resName then
+		garageProvider = nil
+	end
+end)
+
 local function garagesReady()
-	return started('coe_garages')
+	return garageProvider ~= nil
 end
 
 function A.garages()
 	if not garagesReady() then
 		return { ok = false, error = 'garages_unavailable' }
 	end
-	local list = remote('coe_garages', 'ListGarages') or {}
+	local list = {}
+	if type(garageProvider.List) == 'function' then
+		local ok, res = pcall(garageProvider.List)
+		if ok and type(res) == 'table' then
+			list = res
+		end
+	end
 	return { ok = true, data = { garages = list } }
 end
 
@@ -590,7 +618,13 @@ function A.garageSave(admin, data)
 	if not garagesReady() then
 		return { ok = false, error = 'garages_unavailable' }
 	end
-	local result = remote('coe_garages', 'SaveGarage', data)
+	local result = nil
+	if type(garageProvider.Save) == 'function' then
+		local ok, res = pcall(garageProvider.Save, data)
+		if ok then
+			result = res
+		end
+	end
 	if type(result) == 'table' and result.error then
 		return { ok = false, error = tostring(result.error) }
 	end
@@ -602,7 +636,13 @@ function A.garageDelete(admin, data)
 	if not garagesReady() then
 		return { ok = false, error = 'garages_unavailable' }
 	end
-	local result = remote('coe_garages', 'DeleteGarage', data.id)
+	local result = nil
+	if type(garageProvider.Delete) == 'function' then
+		local ok, res = pcall(garageProvider.Delete, data.id)
+		if ok then
+			result = res
+		end
+	end
 	if type(result) == 'table' and result.error then
 		return { ok = false, error = tostring(result.error) }
 	end
@@ -614,7 +654,13 @@ function A.garageGoto(admin, data)
 	if not garagesReady() then
 		return { ok = false, error = 'garages_unavailable' }
 	end
-	local list = remote('coe_garages', 'ListGarages') or {}
+	local list = {}
+	if type(garageProvider.List) == 'function' then
+		local ok, res = pcall(garageProvider.List)
+		if ok and type(res) == 'table' then
+			list = res
+		end
+	end
 	local target = nil
 	for _, g in ipairs(list) do
 		if g.id == data.id then
