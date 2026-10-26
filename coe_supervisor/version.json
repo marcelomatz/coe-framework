@@ -4,7 +4,7 @@
 	"channel": "beta",
 	"repository": "marcelomatz/coe-framework",
 	"branch": "main",
-	"notes": "Release inicial Beta do COE Framework (FiveM Enhanced Gen9 / Build 170+): 27 resources modulares, supervisor de boot com auto-updater integrado, HUD e necessidades consumíveis, painel F10 e banco assíncrono.",
+	"notes": "COE Framework v0.1.0-beta.1 (beta): 8 novidade(s), 5 correção(ões) em coetarget, coe_appearance, coe_audit, coe_bank, coe_businesses e +23 resources. Destaque: **[coe_staff]** Add native txAdmin adminAuth integration for zero-config staf...",
 	"resources": {
 		"coe_appearance": {
 			"version": "0.1.0-beta.1",
