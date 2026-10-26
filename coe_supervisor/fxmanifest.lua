@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_supervisor'
-version '0.1.0-beta.3'
+version '0.1.0-beta.4'
 description 'Reinício ordenado dos resources do framework Coe'
 
 files {
