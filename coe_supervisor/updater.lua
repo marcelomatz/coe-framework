@@ -185,6 +185,66 @@ function SupervisorUpdater.IsBinaryFile(relPath)
 		or ext == 'ttf' or ext == 'woff' or ext == 'woff2' or ext == 'ytd' or ext == 'ydr'
 end
 
+---Verifica se o caminho relativo corresponde a um arquivo de configuração que requer preservação.
+---@param relPath string|nil
+---@return boolean
+function SupervisorUpdater.IsConfigFile(relPath)
+	if type(relPath) ~= 'string' then
+		return false
+	end
+	local clean = relPath:gsub('\\', '/')
+	if clean:match('%.dist%.lua$') or clean:match('%.bak$') or clean:match('%.new%.lua$') then
+		return false
+	end
+	if clean:match('^config%.lua$') or clean:match('/config%.lua$') then
+		return true
+	end
+	if clean:match('^config/') or clean:match('/config/') then
+		return true
+	end
+	return false
+end
+
+---Detecta novas chaves de configuração presentes na versão remota que não existem no arquivo local.
+---@param localContent string|nil
+---@param remoteContent string|nil
+---@return string[] novasChaves
+function SupervisorUpdater.DetectNewConfigKeys(localContent, remoteContent)
+	if type(remoteContent) ~= 'string' then
+		return {}
+	end
+	local localStr = type(localContent) == 'string' and localContent or ''
+
+	local function extractKeys(content)
+		local keys = {}
+		for key in content:gmatch('Config%.([%a_][%w_]*)%s*=') do
+			keys[key] = true
+		end
+		for key in content:gmatch('Config%s*%[%s*[\'"]([%a_][%w_]*)[\'"]%s*%]%s*=') do
+			keys[key] = true
+		end
+		local body = content:match('Config%s*=%s*%{([^%}]+)%}')
+		if body then
+			for key in body:gmatch('([%a_][%w_]*)%s*=') do
+				keys[key] = true
+			end
+		end
+		return keys
+	end
+
+	local localKeys = extractKeys(localStr)
+	local remoteKeys = extractKeys(remoteContent)
+
+	local newKeys = {}
+	for key in pairs(remoteKeys) do
+		if not localKeys[key] then
+			table.insert(newKeys, 'Config.' .. key)
+		end
+	end
+	table.sort(newKeys)
+	return newKeys
+end
+
 ---Calcula hash FNV-1a de 32 bits em hexadecimal para uma string.
 ---Para arquivos de texto, normaliza CRLF para LF antes de calcular para evitar divergência de checkout Windows/Linux.
 ---@param content string|nil

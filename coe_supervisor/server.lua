@@ -667,12 +667,42 @@ local function runApplyUpdate(requester)
 				-- Pacing preventivo de 35ms para evitar acionar burst limiter do GitHub/Fastly
 				Wait(35)
 
+				local isConfig = type(Updater.IsConfigFile) == 'function' and Updater.IsConfigFile(item.file)
+				local existingLocalRaw = isConfig and readResourceFile(item.resource, item.file) or nil
+
 				local content, dlErr = httpGet(item.url, updaterConfig.TimeoutMs, 3)
 				if not content then
 					failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(dlErr))
 					break
 				end
-				if not writeResourceFile(item.resource, item.file, content, item.isBinary) then
+
+				-- Se for um arquivo de configuração já existente e customizado pelo administrador:
+				-- Preserva o arquivo do usuário, faz backup e grava a versão da release como .dist.lua
+				local wroteTarget = true
+				if isConfig and type(existingLocalRaw) == 'string' and existingLocalRaw ~= '' then
+					local localHash = Updater.Hash(existingLocalRaw, false)
+					if item.hash and localHash ~= item.hash then
+						local bakFile = item.file .. '.bak'
+						writeResourceFile(item.resource, bakFile, existingLocalRaw, false)
+
+						local distFile = item.file:gsub('%.lua$', '.dist.lua')
+						if distFile == item.file then
+							distFile = item.file .. '.dist'
+						end
+						writeResourceFile(item.resource, distFile, content, false)
+
+						local newKeys = type(Updater.DetectNewConfigKeys) == 'function' and Updater.DetectNewConfigKeys(existingLocalRaw, content) or {}
+						local newKeysMsg = #newKeys > 0 and (' (novas chaves: ' .. table.concat(newKeys, ', ') .. ')') or ''
+
+						say('WARN', 'config_preserved', ('%s/%s customizado localmente; preservado! Referencia upstream salva em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
+						if requester then
+							notify(requester, true, ('Config mantida: %s/%s. Referência nova em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
+						end
+						wroteTarget = false
+					end
+				end
+
+				if wroteTarget and not writeResourceFile(item.resource, item.file, content, item.isBinary) then
 					failedFile = ('%s/%s (write_failed)'):format(item.resource, item.file)
 					break
 				end
