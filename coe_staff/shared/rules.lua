@@ -7,7 +7,7 @@ StaffRules.ModuleOrder = { 'self', 'players', 'vehicles', 'world', 'businesses' 
 StaffRules.Actions = {
 	-- Ferramentas pessoais (o efeito acontece no client do próprio admin, depois da autorização)
 	noclip = 'self', invisible = 'self', godmode = 'self', heal = 'self', revive = 'self',
-	tpWaypoint = 'self', tpCoords = 'self',
+	tpWaypoint = 'self', tpCoords = 'self', updateStatus = 'self', checkUpdate = 'self', applyUpdate = 'self',
 	-- Jogadores
 	players = 'players', items = 'players', gotoPlayer = 'players', bringPlayer = 'players', freezePlayer = 'players',
 	kickPlayer = 'players', healPlayer = 'players', revivePlayer = 'players', giveItem = 'players', money = 'players',

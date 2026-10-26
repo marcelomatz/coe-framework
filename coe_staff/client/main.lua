@@ -172,7 +172,16 @@ RegisterNetEvent('coe_staff:opened', function(payload)
 	speeds = payload.speeds or speeds
 	isOpen = true
 	SetNuiFocus(true, true)
-	send({ action = 'open', data = { modules = modules, limits = payload.limits, toggles = toggles, noclip = StaffNoclip.active } })
+	send({
+		action = 'open',
+		data = {
+			modules = modules,
+			limits = payload.limits,
+			toggles = toggles,
+			noclip = StaffNoclip.active,
+			update = payload.update
+		}
+	})
 end)
 
 RegisterNetEvent('coe_staff:close', function()

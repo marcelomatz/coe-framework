@@ -226,6 +226,8 @@
 		);
 		here.append(out, copies);
 		refresh();
+		const upd = renderUpdateCard(false);
+		if (upd) { els.body.append(upd); }
 		els.body.append(tools, tp, here);
 	}
 
@@ -837,6 +839,7 @@
 		state.modules = data.modules || {};
 		state.toggles = data.toggles || {};
 		state.noclip = data.noclip === true;
+		state.update = data.update || state.update;
 		state.players = null;
 		state.businesses = null;
 		state.business = null;

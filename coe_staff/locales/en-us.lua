@@ -51,5 +51,10 @@ Locales['en-US'] = {
 	kick_default = 'Removed by staff.',
 	kick_message = 'You were removed from the server: %{reason}',
 	item_received = 'You received %{count}x %{item} from staff.',
-	announcement = 'Staff notice: %{text}'
+	announcement = 'Staff notice: %{text}',
+	already_up_to_date = 'The server is already on the latest version.',
+	update_in_progress = 'An update is already in progress.',
+	update_download_failed = 'Could not download the update files.',
+	update_available_notify = 'New COE Framework version available (v%{version}). Open the F10 panel to update.',
+	update_applied_notify = 'COE Framework updated to v%{version} (%{files} files).'
 }

@@ -1,0 +1,139 @@
+name: COE Framework Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag da release (ex.: v0.1.0-beta.1)"
+        required: true
+        default: "v0.1.0-beta.1"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.4"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate Version Sync
+        shell: pwsh
+        run: lua tools/bump_version.lua --check
+
+      - name: Unit Tests
+        shell: pwsh
+        run: |
+          $failed = @()
+          foreach ($resource in Get-ChildItem -Directory | Where-Object { Test-Path "$($_.FullName)/test" }) {
+            foreach ($test in Get-ChildItem "$($resource.FullName)/test" -Filter *.lua) {
+              Push-Location $resource.FullName
+              lua "test/$($test.Name)"
+              if ($LASTEXITCODE -ne 0) { $failed += "$($resource.Name)/$($test.Name)" }
+              Pop-Location
+            }
+          }
+          if ($failed) { throw "Falharam: $($failed -join ', ')" }
+
+      - name: Validate Contracts and Platform HAL
+        shell: pwsh
+        run: lua tools/check_contracts.lua --strict --audit-natives --audit-locales
+
+      - name: Run Smoke Boot Suite
+        shell: pwsh
+        run: lua tools/smoke_boot_test.lua
+
+      - name: Open-core Boundary
+        shell: pwsh
+        run: lua tools/check_boundary.lua
+
+      - name: Database Provider Tests
+        shell: pwsh
+        working-directory: coe_database
+        run: node --test test/access.test.js test/provider.test.js test/validation.test.js
+
+      - name: Build Release Package (coe-framework-dist.zip)
+        id: pkg
+        shell: pwsh
+        run: |
+          $verJson = Get-Content -Raw -Path "version.json" | ConvertFrom-Json
+          $version = $verJson.version
+          $tag = if ("${{ github.event.inputs.tag }}" -ne "") { "${{ github.event.inputs.tag }}" } elseif ($env:GITHUB_REF_NAME -like "v*") { $env:GITHUB_REF_NAME } else { "v$version" }
+          $isPrerelease = if ($tag -match "-(alpha|beta|rc)") { "true" } else { "false" }
+
+          $stageRoot = Join-Path $env:RUNNER_TEMP "coe-release-stage"
+          $outGroup = Join-Path $stageRoot "[coe-framework]"
+          if (Test-Path $stageRoot) { Remove-Item -Recurse -Force $stageRoot }
+          New-Item -ItemType Directory -Path $outGroup -Force | Out-Null
+
+          foreach ($resProp in $verJson.resources.PSObject.Properties) {
+            $resName = $resProp.Name
+            $files = $resProp.Value.files
+            foreach ($rel in $files) {
+              $srcFile = Join-Path $resName $rel
+              if (Test-Path $srcFile) {
+                $dstFile = Join-Path (Join-Path $outGroup $resName) $rel
+                $dstDir = Split-Path -Parent $dstFile
+                if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+                Copy-Item -Path $srcFile -Destination $dstFile -Force
+              }
+            }
+          }
+
+          Copy-Item -Path "version.json" -Destination (Join-Path $stageRoot "version.json") -Force
+          Copy-Item -Path "recipe.yaml" -Destination (Join-Path $stageRoot "recipe.yaml") -Force
+
+          $zipPath = Join-Path $PWD "coe-framework-dist.zip"
+          if (Test-Path $zipPath) { Remove-Item -Force $zipPath }
+          Compress-Archive -Path (Join-Path $stageRoot "*") -DestinationPath $zipPath -CompressionLevel Optimal
+
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "prerelease=$isPrerelease" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+          $notesFile = Join-Path $PWD "RELEASE_NOTES.md"
+          @(
+            "## COE Framework ${{ steps.pkg.outputs.tag }}",
+            "",
+            "**Canal:** ``$($verJson.channel)`` | **Versão:** ``$version``",
+            "",
+            $verJson.notes,
+            "",
+            "### Como instalar ou atualizar",
+            "- **Em um servidor já instalado:** abra o painel **F10** (`coe_staff`) e clique em **Atualizar scripts agora**, ou execute `coe_update apply` no console do FXServer.",
+            "- **Nova instalação via txAdmin Recipe:** utilize a URL do `recipe.yaml` deste repositório.",
+            "- **Instalação manual:** baixe o `coe-framework-dist.zip` abaixo e extraia em `resources/`."
+          ) | Set-Content -Path $notesFile -Encoding UTF8
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.pkg.outputs.tag }}
+          name: "COE Framework ${{ steps.pkg.outputs.tag }}"
+          body_path: RELEASE_NOTES.md
+          prerelease: ${{ steps.pkg.outputs.prerelease == 'true' }}
+          generate_release_notes: true
+          files: |
+            coe-framework-dist.zip
+            version.json
+            recipe.yaml
