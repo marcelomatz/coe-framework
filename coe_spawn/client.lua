@@ -4,6 +4,7 @@ local lastPosition = nil
 local awaitingPosition = nil
 -- Aparência salva do personagem carregado (coe_appearance); vale para o spawn e para os respawns.
 local currentAppearance = nil
+local currentHotel = nil
 
 local function debugPrint(text)
 	if CoeSpawnConfig.Debug then
@@ -139,11 +140,20 @@ Core.Events.OnNet('player.characterLoaded', function(character)
 	end)
 end)
 
-RegisterNetEvent('coe_spawn:position', function(position)
+RegisterNetEvent('coe_spawn:position', function(position, hotelConfig)
+	if hotelConfig then
+		currentHotel = hotelConfig
+		ensureHotelLoop()
+	end
 	if not awaitingPosition or not characterLoaded then
 		return
 	end
 	beginSpawn(SpawnPositions.Normalize(position, CoeSpawnConfig.LastPosition.Bounds))
+end)
+
+RegisterNetEvent('coe_spawn:syncHotel', function(hotelConfig)
+	currentHotel = hotelConfig
+	ensureHotelLoop()
 end)
 
 Core.Events.OnNet('player.characterUnloaded', function()
@@ -171,3 +181,69 @@ AddEventHandler('onClientResourceStart', function(resourceName)
 		end)
 	end
 end)
+
+
+-- Interações do Hotel de Nascimento (0.00 ms em idle).
+local function showHelp(text)
+	BeginTextCommandDisplayHelp('STRING')
+	AddTextComponentSubstringPlayerName(text)
+	EndTextCommandDisplayHelp(0, false, true, -1)
+end
+
+local hotelLoopRunning = false
+local function ensureHotelLoop()
+	if hotelLoopRunning or not NetworkIsPlayerActive or type(GetGameTimer) ~= 'function' then
+		return
+	end
+	hotelLoopRunning = true
+	CreateThread(function()
+		while true do
+			local sleep = 1000
+			if characterLoaded and currentHotel and currentHotel.enabled then
+			local ped = PlayerPedId()
+			if ped > 0 and DoesEntityExist(ped) and not IsEntityDead(ped) then
+				local coords = GetEntityCoords(ped)
+				local h = currentHotel
+
+				-- 1. Entrada na rua
+				local dEntrance = #(coords - vector3(h.entrance.x, h.entrance.y, h.entrance.z))
+				-- 2. Saída do quarto
+				local dExit = #(coords - vector3(h.exit.x, h.exit.y, h.exit.z))
+				-- 3. Baú do quarto
+				local dStash = #(coords - vector3(h.stash.x, h.stash.y, h.stash.z))
+
+				if dEntrance < 15.0 or dExit < 15.0 or dStash < 15.0 then
+					sleep = 0
+					if dEntrance <= 1.8 then
+						showHelp('Pressione ~INPUT_CONTEXT~ para entrar no quarto do hotel')
+						if IsControlJustReleased(0, 38) then
+							DoScreenFadeOut(400)
+							Wait(450)
+							SetEntityCoords(ped, h.room.x, h.room.y, h.room.z, false, false, false, false)
+							SetEntityHeading(ped, h.room.h or 0.0)
+							Wait(150)
+							DoScreenFadeIn(400)
+						end
+					elseif dExit <= 1.8 then
+						showHelp('Pressione ~INPUT_CONTEXT~ para sair para a rua')
+						if IsControlJustReleased(0, 38) then
+							DoScreenFadeOut(400)
+							Wait(450)
+							SetEntityCoords(ped, h.entrance.x, h.entrance.y, h.entrance.z, false, false, false, false)
+							SetEntityHeading(ped, h.entrance.h or 0.0)
+							Wait(150)
+							DoScreenFadeIn(400)
+						end
+					elseif dStash <= 1.8 then
+						showHelp('Pressione ~INPUT_CONTEXT~ para abrir o baú do quarto')
+						if IsControlJustReleased(0, 38) then
+							TriggerServerEvent('coe_spawn:openHotelStash')
+						end
+					end
+				end
+			end
+		end
+		Wait(sleep)
+	end
+end)
+end

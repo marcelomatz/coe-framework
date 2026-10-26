@@ -33,6 +33,8 @@ EconomyConfig = {
 		coe_shops = true,
 		-- Banco básico: saque, depósito, transferência e extrato da conta do personagem.
 		coe_bank = true,
+		-- Telefone móvel: app bancário e transferências PIX.
+		coe_mobile = true,
 		-- Painel básico da staff: dar e retirar dinheiro da conta (motivo admin_adjustment).
 		coe_staff = true
 	},

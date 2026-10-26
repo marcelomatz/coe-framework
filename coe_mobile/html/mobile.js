@@ -12,6 +12,7 @@
 		invalid_name: 'Nome inválido.', invalid_message: 'Mensagem vazia ou longa demais.',
 		contacts_full: 'A agenda está cheia.', duplicate_contact: 'Esse número já está na agenda.',
 		contact_not_found: 'Contato não encontrado.', database_error: 'Falha ao consultar. Tente de novo.',
+		invalid_amount: 'Valor inválido.', invalid_target: 'Informe o número ou ID do destinatário.', recipient_not_found: 'Destinatário não encontrado.', same_account: 'Não é possível transferir para você mesmo.', insufficient_funds: 'Saldo bancário insuficiente.', transfer_failed: 'Falha ao realizar transferência.',
 		timeout: 'Sem resposta do servidor.', closed: 'Telefone fechado.'
 	};
 	const ENDED = {
@@ -27,6 +28,7 @@
 		phone: '<path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2"/>',
 		contacts: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
 		messages: '<path d="M4 4h16v12H8l-4 4z"/>',
+		bank: '<path d="M3 21h18M3 10h18M5 10v7M9 10v7M15 10v7M19 10v7M12 3l10 5H2z"/>',
 		settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
 		back: '<path d="M15 5l-7 7 7 7"/>',
 		plus: '<path d="M12 5v14M5 12h14"/>',
@@ -51,7 +53,7 @@
 	};
 
 	const state = {
-		profile: null, route: { app: 'home' }, contacts: null, threads: null, recents: null, thread: null,
+		profile: null, route: { app: 'home' }, bank: null, contacts: null, threads: null, recents: null, thread: null,
 		call: null, unread: 0, missed: 0, dial: '', focused: false
 	};
 	let toastTimer = null;
@@ -238,7 +240,7 @@
 		const renderers = {
 			home: renderHome, phone: renderPhone, contacts: renderContacts, contact: renderContact,
 			contact_edit: renderContactEdit, messages: renderThreads, thread: renderThread, compose: renderCompose,
-			settings: renderSettings
+			bank: renderBank, settings: renderSettings
 		};
 		(renderers[route.app] || renderHome)(route);
 	}
@@ -260,6 +262,7 @@
 			{ id: 'phone', label: 'Telefone', badge: state.missed },
 			{ id: 'contacts', label: 'Contatos' },
 			{ id: 'messages', label: 'Mensagens', badge: state.unread },
+			{ id: 'bank', label: 'Banco' },
 			{ id: 'settings', label: 'Ajustes' }
 		].forEach(function (app) {
 			const tile = el('button', 'mb-app mb-app--' + app.id);
@@ -278,6 +281,7 @@
 		if (app === 'phone') { state.missed = 0; go({ app: 'phone', tab: 'keypad' }); loadContacts(); return; }
 		if (app === 'contacts') { go({ app: 'contacts' }); loadContacts(); return; }
 		if (app === 'messages') { go({ app: 'messages' }); loadThreads(); loadContacts(); return; }
+		if (app === 'bank') { go({ app: 'bank' }); loadBank(); return; }
 		go({ app: app });
 	}
 
@@ -301,6 +305,118 @@
 	}
 	function rerender(apps) {
 		if (apps.indexOf(state.route.app) !== -1) { render(); }
+	}
+
+
+	// Banco ----------------------------------------------------------------------------------------------------
+
+	function loadBank() {
+		return act('bank_info').then(function (data) {
+			if (data) {
+				state.bank = data;
+				rerender(['bank']);
+			}
+		});
+	}
+
+	function renderBank() {
+		const head = el('div', 'mb-head');
+		head.append(button('Voltar', 'mb-iconbtn', function () { go({ app: 'home' }); }, 'back'));
+		head.append(el('h1', 'mb-head-title', 'Banco Coe'));
+		head.append(el('span', 'mb-head-action'));
+
+		const content = el('div', 'mb-bank-content');
+
+		const balanceCard = el('div', 'mb-bank-card');
+		balanceCard.append(el('span', 'mb-bank-card-label', 'Saldo em Conta'));
+		const balVal = state.bank ? Number(state.bank.balance || 0).toLocaleString('pt-BR') : '...';
+		balanceCard.append(el('strong', 'mb-bank-card-value', '$ ' + balVal));
+
+		const cashRow = el('div', 'mb-bank-cashrow');
+		cashRow.append(el('span', 'mb-bank-cashrow-label', 'Dinheiro Vivo'));
+		const cashVal = state.bank ? Number(state.bank.cash || 0).toLocaleString('pt-BR') : '...';
+		cashRow.append(el('strong', 'mb-bank-cashrow-value', '$ ' + cashVal));
+		balanceCard.append(cashRow);
+		content.append(balanceCard);
+
+		const transferSec = el('div', 'mb-bank-section');
+		transferSec.append(el('h2', 'mb-bank-section-title', 'Transferência / PIX'));
+
+		const form = el('form', 'mb-bank-form');
+		form.addEventListener('submit', function (e) { e.preventDefault(); });
+
+		const targetGroup = el('div', 'mb-form-field');
+		targetGroup.append(el('label', 'mb-form-label', 'Destinatário (PIX ou ID)'));
+		const targetInput = el('input', 'mb-form-input');
+		targetInput.type = 'text';
+		targetInput.placeholder = 'Número ou ID do cidadão';
+		targetGroup.append(targetInput);
+
+		const amountGroup = el('div', 'mb-form-field');
+		amountGroup.append(el('label', 'mb-form-label', 'Valor ($)'));
+		const amountInput = el('input', 'mb-form-input');
+		amountInput.type = 'number';
+		amountInput.placeholder = '0';
+		amountInput.min = '1';
+		amountGroup.append(amountInput);
+
+		const sendBtn = el('button', 'mb-btn mb-btn--primary mb-bank-submit', 'Transferir');
+		sendBtn.type = 'button';
+		sendBtn.addEventListener('click', function () {
+			const target = targetInput.value.trim();
+			const amount = parseInt(amountInput.value, 10);
+			if (!target) {
+				toast('Informe o destinatário.', 'error');
+				targetInput.focus();
+				return;
+			}
+			if (!amount || amount <= 0) {
+				toast('Informe um valor válido.', 'error');
+				amountInput.focus();
+				return;
+			}
+			sendBtn.disabled = true;
+			act('bank_transfer', { target: target, amount: amount }).then(function (res) {
+				sendBtn.disabled = false;
+				if (res) {
+					targetInput.value = '';
+					amountInput.value = '';
+					loadBank();
+				}
+			});
+		});
+
+		form.append(targetGroup, amountGroup, sendBtn);
+		transferSec.append(form);
+		content.append(transferSec);
+
+		const ledgerSec = el('div', 'mb-bank-section');
+		ledgerSec.append(el('h2', 'mb-bank-section-title', 'Últimas Transações'));
+
+		const ledgerList = el('div', 'mb-bank-ledger');
+		const items = (state.bank && Array.isArray(state.bank.ledger)) ? state.bank.ledger : [];
+		if (!items.length) {
+			ledgerList.append(el('p', 'mb-empty', 'Nenhuma movimentação recente.'));
+		} else {
+			items.forEach(function (tx) {
+				const row = el('div', 'mb-bank-tx');
+				const isPositive = Number(tx.delta) > 0;
+				row.classList.add(isPositive ? 'is-in' : 'is-out');
+
+				const info = el('div', 'mb-bank-tx-info');
+				info.append(el('span', 'mb-bank-tx-reason', tx.reason || 'Transação'));
+				if (tx.created_at) {
+					info.append(el('span', 'mb-bank-tx-date', when(tx.created_at)));
+				}
+				const val = el('strong', 'mb-bank-tx-value', (isPositive ? '+ $' : '- $') + Math.abs(Number(tx.delta)).toLocaleString('pt-BR'));
+				row.append(info, val);
+				ledgerList.append(row);
+			});
+		}
+		ledgerSec.append(ledgerList);
+		content.append(ledgerSec);
+
+		els.view.append(head, content);
 	}
 
 	// Telefone -------------------------------------------------------------------------------------------------

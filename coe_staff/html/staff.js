@@ -659,6 +659,179 @@
 		}));
 		weather.append(reset);
 
+		// Hotel de Nascimento
+		const hotel = world.hotel || {
+			name: 'Motel Pink Cage',
+			enabled: true,
+			entrance: { x: 325.5, y: -212.8, z: 54.0, h: 160.0 },
+			room: { x: 151.4, y: -1007.8, z: -99.0, h: 0.0 },
+			exit: { x: 151.3, y: -1004.8, z: -99.0, h: 180.0 },
+			stash: { x: 151.8, y: -1001.2, z: -99.0, slots: 30, maxWeight: 50000 }
+		};
+
+		const hotelCard = card('Hotel de Nascimento (Starter Spawn)', 'Configuração de nascimento para novos cidadãos, porta de entrada, interior do quarto e baú.');
+
+		const hotelActive = el('input');
+		hotelActive.type = 'checkbox';
+		hotelActive.checked = hotel.enabled === true;
+		const hotelActiveLabel = el('label', 'sf-check');
+		hotelActiveLabel.append(hotelActive, el('span', null, 'Ativar nascimento no hotel'));
+
+		const nameInput = input('Nome do Hotel', 'text', hotel.name || 'Motel Pink Cage');
+		nameInput.maxLength = 64;
+
+		const topConfigRow = row();
+		topConfigRow.append(nameInput, hotelActiveLabel);
+		hotelCard.append(topConfigRow);
+
+		function createCoordInputs(initCoords, includeHeading) {
+			const x = input('X', 'number', initCoords.x !== undefined ? initCoords.x : 0);
+			const y = input('Y', 'number', initCoords.y !== undefined ? initCoords.y : 0);
+			const z = input('Z', 'number', initCoords.z !== undefined ? initCoords.z : 0);
+			x.step = '0.01'; y.step = '0.01'; z.step = '0.01';
+			x.className += ' sf-coord-input'; y.className += ' sf-coord-input'; z.className += ' sf-coord-input';
+			let h = null;
+			if (includeHeading) {
+				h = input('Heading', 'number', initCoords.h !== undefined ? initCoords.h : 0);
+				h.step = '0.1';
+				h.className += ' sf-coord-input';
+			}
+			return { x: x, y: y, z: z, h: h };
+		}
+
+		// 1. Entrada na rua
+		const entranceSection = el('div', 'sf-hotel-point');
+		entranceSection.append(el('strong', 'sf-hotel-point-title', 'Porta de Entrada (Rua / Fachada)'));
+		const entranceInputs = createCoordInputs(hotel.entrance || {}, true);
+		const entranceRow = row();
+		entranceRow.append(
+			entranceInputs.x, entranceInputs.y, entranceInputs.z, entranceInputs.h,
+			button('Minhas Coords', 'sf-small', function () {
+				act('getMyCoords', {}, null, function (c) {
+					if (c) {
+						entranceInputs.x.value = c.x;
+						entranceInputs.y.value = c.y;
+						entranceInputs.z.value = c.z;
+						entranceInputs.h.value = c.h;
+					}
+				});
+			}),
+			button('Ir até lá', 'sf-small', function () {
+				act('teleportToHotel', { point: 'entrance' }, 'Teleportado para a entrada.');
+			})
+		);
+		entranceSection.append(entranceRow);
+		hotelCard.append(entranceSection);
+
+		// 2. Quarto / Interior (Nascimento)
+		const roomSection = el('div', 'sf-hotel-point');
+		roomSection.append(el('strong', 'sf-hotel-point-title', 'Quarto / Interior (Nascimento)'));
+		const roomInputs = createCoordInputs(hotel.room || {}, true);
+		const roomRow = row();
+		roomRow.append(
+			roomInputs.x, roomInputs.y, roomInputs.z, roomInputs.h,
+			button('Minhas Coords', 'sf-small', function () {
+				act('getMyCoords', {}, null, function (c) {
+					if (c) {
+						roomInputs.x.value = c.x;
+						roomInputs.y.value = c.y;
+						roomInputs.z.value = c.z;
+						roomInputs.h.value = c.h;
+					}
+				});
+			}),
+			button('Ir até lá', 'sf-small', function () {
+				act('teleportToHotel', { point: 'room' }, 'Teleportado para o quarto.');
+			})
+		);
+		roomSection.append(roomRow);
+		hotelCard.append(roomSection);
+
+		// 3. Saída do Quarto
+		const exitSection = el('div', 'sf-hotel-point');
+		exitSection.append(el('strong', 'sf-hotel-point-title', 'Porta de Saída do Quarto (Voltar para a rua)'));
+		const exitInputs = createCoordInputs(hotel.exit || {}, true);
+		const exitRow = row();
+		exitRow.append(
+			exitInputs.x, exitInputs.y, exitInputs.z, exitInputs.h,
+			button('Minhas Coords', 'sf-small', function () {
+				act('getMyCoords', {}, null, function (c) {
+					if (c) {
+						exitInputs.x.value = c.x;
+						exitInputs.y.value = c.y;
+						exitInputs.z.value = c.z;
+						exitInputs.h.value = c.h;
+					}
+				});
+			})
+		);
+		exitSection.append(exitRow);
+		hotelCard.append(exitSection);
+
+		// 4. Baú do Quarto
+		const stashSection = el('div', 'sf-hotel-point');
+		stashSection.append(el('strong', 'sf-hotel-point-title', 'Baú do Quarto (Stash Privativo)'));
+		const stashInputs = createCoordInputs(hotel.stash || {}, false);
+		const stashSlots = input('Slots', 'number', (hotel.stash && hotel.stash.slots) || 30);
+		stashSlots.min = '1'; stashSlots.max = '100'; stashSlots.className += ' sf-narrow';
+		const stashWeight = input('Peso (kg)', 'number', Math.floor(((hotel.stash && hotel.stash.maxWeight) || 50000) / 1000));
+		stashWeight.min = '1'; stashWeight.max = '500'; stashWeight.className += ' sf-narrow';
+
+		const stashRow = row();
+		stashRow.append(
+			stashInputs.x, stashInputs.y, stashInputs.z, stashSlots, stashWeight,
+			button('Minhas Coords', 'sf-small', function () {
+				act('getMyCoords', {}, null, function (c) {
+					if (c) {
+						stashInputs.x.value = c.x;
+						stashInputs.y.value = c.y;
+						stashInputs.z.value = c.z;
+					}
+				});
+			})
+		);
+		stashSection.append(stashRow);
+		hotelCard.append(stashSection);
+
+		// Botão Salvar
+		const saveHotelRow = row();
+		saveHotelRow.append(button('Salvar Configurações do Hotel', 'coe-button--primary', function () {
+			const payload = {
+				name: nameInput.value.trim() || 'Motel Pink Cage',
+				enabled: hotelActive.checked === true,
+				entrance: {
+					x: parseFloat(entranceInputs.x.value) || 0,
+					y: parseFloat(entranceInputs.y.value) || 0,
+					z: parseFloat(entranceInputs.z.value) || 0,
+					h: parseFloat(entranceInputs.h.value) || 0
+				},
+				room: {
+					x: parseFloat(roomInputs.x.value) || 0,
+					y: parseFloat(roomInputs.y.value) || 0,
+					z: parseFloat(roomInputs.z.value) || 0,
+					h: parseFloat(roomInputs.h.value) || 0
+				},
+				exit: {
+					x: parseFloat(exitInputs.x.value) || 0,
+					y: parseFloat(exitInputs.y.value) || 0,
+					z: parseFloat(exitInputs.z.value) || 0,
+					h: parseFloat(exitInputs.h.value) || 0
+				},
+				stash: {
+					x: parseFloat(stashInputs.x.value) || 0,
+					y: parseFloat(stashInputs.y.value) || 0,
+					z: parseFloat(stashInputs.z.value) || 0,
+					slots: parseInt(stashSlots.value, 10) || 30,
+					maxWeight: (parseInt(stashWeight.value, 10) || 50) * 1000
+				}
+			};
+			act('saveStarterHotel', payload, 'Hotel de nascimento salvo com sucesso.', function (data) {
+				state.world = data;
+				render();
+			});
+		}));
+		hotelCard.append(saveHotelRow);
+
 		const notice = card('Aviso para todos', 'Aparece como notificação para quem está online.');
 		const text = input('Ex.: Reinício do servidor em 5 minutos');
 		text.maxLength = 200;
@@ -667,7 +840,7 @@
 			act('announce', { text: text.value }, 'Aviso enviado.', function () { text.value = ''; });
 		}));
 		notice.append(noticeRow);
-		els.body.append(clock, weather, notice);
+		els.body.append(clock, weather, hotelCard, notice);
 	}
 
 	// Negócios -------------------------------------------------------------------------------------------------

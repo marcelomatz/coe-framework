@@ -298,3 +298,22 @@ select.coe-field.sf-narrow { flex-basis: 140px; width: 140px; }
 
 select.coe-field { appearance: auto; }
 input[type=number]::-webkit-inner-spin-button { opacity: 0.5; }
+
+/* Hotel de Nascimento */
+.sf-hotel-point {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: var(--coe-space-2) 0;
+	border-top: 1px dashed var(--coe-line);
+}
+.sf-hotel-point-title {
+	font-size: var(--coe-text-xs);
+	color: var(--coe-accent);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+.sf-coord-input {
+	width: 80px;
+	text-align: right;
+}

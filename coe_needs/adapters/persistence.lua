@@ -4,7 +4,7 @@ local ready = false
 local logger = CoeLogger.Create('coe_needs')
 
 local function log(level, event, fields)
-	logger:log(level, 'database', event, fields)
+	logger.log(level, 'database', event, fields or {})
 end
 
 local function isValidId(value)
@@ -12,6 +12,9 @@ local function isValidId(value)
 end
 
 local function dbCall(method, query, params)
+	if GetResourceState('coe_database') ~= 'started' then
+		return nil, 'database_unavailable'
+	end
 	local ok, result, err = pcall(function()
 		return exports.coe_database[method](exports.coe_database, query, params)
 	end)
@@ -42,15 +45,16 @@ function NeedsPersistence.Load(characterId)
 	if not isValidId(characterId) then
 		return nil, 'invalid_character_id'
 	end
-	local row, err = dbCall(
-		'Single',
+	local rows, err = dbCall(
+		'Query',
 		'SELECT hunger, thirst, stress, alcohol, drugs FROM coe_needs_state WHERE character_id = ? LIMIT 1',
 		{ characterId }
 	)
-	if not row then
+	if not rows then
 		return nil, err
 	end
-	if row == false then
+	local row = rows[1]
+	if not row then
 		return false
 	end
 	return {

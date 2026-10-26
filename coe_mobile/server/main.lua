@@ -443,6 +443,92 @@ function ACTIONS.settings_save(_playerId, me, data)
 	return nil, nil, { settings = settings }
 end
 
+function ACTIONS.bank_info(playerId, me)
+	local balance = remote('coe_economy', 'GetBalance', me.characterId) or 0
+	local cash = 0
+	local inv = remote('coe_inventory', 'GetPlayerInventory', playerId)
+	if inv then
+		cash = remote('coe_inventory', 'GetItemCount', inv, 'money') or 0
+	end
+	local ledgerRaw = remote('coe_economy', 'Ledger', me.characterId, 10)
+	local ledger = {}
+	if type(ledgerRaw) == 'table' and not ledgerRaw.error then
+		ledger = ledgerRaw
+	end
+	return nil, nil, {
+		balance = balance,
+		cash = cash,
+		ledger = ledger
+	}
+end
+
+function ACTIONS.bank_transfer(playerId, me, data)
+	local rawTarget = type(data.target) == 'string' and data.target:gsub('%s+', '') or tostring(data.target or '')
+	local amount = math.tointeger(tonumber(data.amount))
+	if not amount or amount <= 0 then
+		return 'invalid_amount'
+	end
+	if #rawTarget < 1 then
+		return 'invalid_target'
+	end
+
+	local targetCharId = nil
+	local targetPlayerId = nil
+
+	local formattedNumber = MobileRules.Number(rawTarget, config)
+	if formattedNumber then
+		targetCharId = Store.CharacterOf(formattedNumber)
+	end
+
+	if not targetCharId and rawTarget:match('^%d+$') then
+		local candidateSource = tonumber(rawTarget)
+		if candidateSource and candidateSource > 0 and candidateSource <= 65535 and GetPlayerPing(candidateSource) > 0 then
+			local activeChar = Core.Players.GetActiveCharacterId(candidateSource)
+			if activeChar then
+				targetCharId = activeChar
+				targetPlayerId = candidateSource
+			end
+		end
+	end
+
+	if not targetCharId and rawTarget:match('^%d+$') then
+		targetCharId = tonumber(rawTarget)
+	end
+
+	if not targetCharId then
+		return 'recipient_not_found'
+	end
+
+	if tostring(targetCharId) == tostring(me.characterId) then
+		return 'same_account'
+	end
+
+	if not targetPlayerId then
+		targetPlayerId = playerOfCharacter(targetCharId)
+	end
+
+	local currentBalance = remote('coe_economy', 'GetBalance', me.characterId) or 0
+	if currentBalance < amount then
+		return 'insufficient_funds'
+	end
+
+	local success, err = remote('coe_economy', 'Transfer', me.characterId, targetCharId, amount, 'mobile_pix', 'PIX App')
+	if not success then
+		return err or 'transfer_failed'
+	end
+
+	if targetPlayerId then
+		pcall(function()
+			exports.coe_notify:Show(targetPlayerId, 'info', _t('pix_received', { amount = amount, sender = me.name }), 6000)
+		end)
+	end
+
+	local newBalance = remote('coe_economy', 'GetBalance', me.characterId) or 0
+	return nil, _t('transfer_success', { amount = amount }), {
+		balance = newBalance
+	}
+end
+
 -- Abertura ---------------------------------------------------------------------------------------------------
 
 local function profile(playerId, me)

@@ -47,10 +47,10 @@ eq(export('GetSlot')('stash:bennys', 1).name, 'water', 'item no baú')
 
 -- Outro jogador perto vê a mudança; longe perde o acesso.
 eq((export('OpenStash')(2, 'stash:bennys', stash)), true, 'segundo jogador abre')
-call(2, 'inventory.containerMove', 2, 'container-1', 'player', 1, 5)
+call(2, 'inventory.containerMove', 2, 'container-1', 'player', 1, 20)
 eq((lastResult()), true, 'retirar do baú')
 H.placePlayer(2, 40.0, 0.0, 0.0)
-call(2, 'inventory.containerMove', 3, 'player', 'container-1', 5, 1)
+call(2, 'inventory.containerMove', 3, 'player', 'container-1', 20, 1)
 eq(select(2, lastResult()), 'container_not_open', 'longe do baú fecha o painel')
 eq(Inventory.Service.openedContainers[2], nil, 'painel removido')
 

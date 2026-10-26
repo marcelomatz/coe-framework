@@ -20,6 +20,14 @@ Locales['pt-BR'] = {
 	contact_not_found = 'Contato não encontrado.',
 	database_error = 'Falha ao consultar. Tente de novo.',
 	generic_error = 'Não foi possível concluir.',
+	invalid_amount = 'Valor inválido.',
+	invalid_target = 'Informe o número ou ID do destinatário.',
+	recipient_not_found = 'Destinatário não encontrado.',
+	same_account = 'Não é possível transferir para você mesmo.',
+	insufficient_funds = 'Saldo bancário insuficiente.',
+	transfer_failed = 'Falha ao realizar transferência.',
+	transfer_success = 'Transferência de $%{amount} realizada com sucesso.',
+	pix_received = 'Você recebeu um PIX de $%{amount} de %{sender}.',
 	incoming_call = 'Ligação de %{name}.',
 	missed_call = 'Chamada perdida de %{name}.'
 }

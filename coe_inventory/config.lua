@@ -80,10 +80,16 @@ Config = {
 		},
 		-- Itens entregues na criação de um inventário de personagem.
 		starterItems = {
-			{ name = 'water', count = 2 },
+			{ name = 'money', count = 500 },
+			{ name = 'phone', count = 1 },
+			{ name = 'business_tablet', count = 1 },
+			{ name = 'water', count = 3 },
+			{ name = 'sprunk', count = 2 },
+			{ name = 'sandwich', count = 3 },
 			{ name = 'bread', count = 2 },
-			{ name = 'bandage', count = 1 },
-			{ name = 'phone', count = 1 }
+			{ name = 'chips', count = 2 },
+			{ name = 'chocolate', count = 2 },
+			{ name = 'bandage', count = 2 }
 		}
 	},
 

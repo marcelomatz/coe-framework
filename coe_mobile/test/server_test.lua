@@ -36,6 +36,9 @@ local online = {
 	[3] = { characterId = 33, stateId = 'CCCC4444', firstName = 'Caio', lastName = 'Melo' }
 }
 local phones = { inv1 = 1, inv2 = 1, inv3 = 0 }
+local bankBalances = { [11] = 5000, [22] = 2000 }
+local bankLedgers = { [11] = { { delta = 5000, reason = 'initial_balance', created_at = 1000 } } }
+
 function GetPlayers() local list = {}; for id in pairs(online) do list[#list + 1] = tostring(id) end; return list end
 Core = {
 	Players = { GetActiveCharacter = function(id) return online[id] end },
@@ -49,6 +52,18 @@ exports = setmetatable({}, {
 			return {
 				GetPlayerInventory = function(_, id) return 'inv' .. id end,
 				GetItemCount = function(_, inv, item) return item == 'phone' and (phones[inv] or 0) or 0 end
+			}
+		end
+		if resource == 'coe_economy' then
+			return {
+				GetBalance = function(_, charId) return bankBalances[charId] or 5000 end,
+				Ledger = function(_, charId, limit) return bankLedgers[charId] or {} end,
+				Transfer = function(_, fromId, toId, amount, reason, ref)
+					if (bankBalances[fromId] or 5000) < amount then return nil, 'insufficient_funds' end
+					bankBalances[fromId] = (bankBalances[fromId] or 5000) - amount
+					bankBalances[toId] = (bankBalances[toId] or 5000) + amount
+					return true
+				end
 			}
 		end
 		if resource == 'coe_talk' then
@@ -424,5 +439,27 @@ eq(exported.Status().active, false, 'outro resource parando nao muda nada')
 handlers.onResourceStop('pack_phone')
 eq(GlobalState.coeMobileYielded, false, 'pacote parou: telefone volta')
 eq(request(1, 'open', {}).ok, true, 'volta a abrir')
+
+
+-- Banco e PIX
+now = now + 1000
+local bankRes = act(1, 'bank_info')
+eq(bankRes.ok, true, 'consulta dados bancarios')
+eq(bankRes.data.balance, 5000, 'saldo inicial')
+
+now = now + 1000
+local transferRes = act(1, 'bank_transfer', { target = '555-2222', amount = 1000 })
+eq(transferRes.ok, true, 'pix para numero')
+eq(transferRes.data.balance, 4000, 'saldo atualizado apos pix')
+
+now = now + 1000
+local failSelf = act(1, 'bank_transfer', { target = '555-5555', amount = 500 })
+eq(failSelf.ok, false, 'pix para si mesmo falha')
+eq(failSelf.error, 'same_account', 'mesma conta')
+
+now = now + 1000
+local failFunds = act(1, 'bank_transfer', { target = '555-2222', amount = 999999 })
+eq(failFunds.ok, false, 'saldo insuficiente')
+eq(failFunds.error, 'insufficient_funds', 'erro saldo')
 
 print('coe_mobile server: ok')

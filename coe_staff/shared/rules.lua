@@ -16,6 +16,7 @@ StaffRules.Actions = {
 	catalog = 'vehicles', spawnVehicle = 'vehicles', deleteVehicle = 'vehicles', vehicleFix = 'vehicles',
 	-- Mundo
 	world = 'world', setTime = 'world', setWeather = 'world', resetWorld = 'world', announce = 'world',
+	getMyCoords = 'world', saveStarterHotel = 'world', teleportToHotel = 'world',
 	-- Negócios
 	businesses = 'businesses', business = 'businesses', businessCreate = 'businesses', businessInfo = 'businesses',
 	businessArea = 'businesses', stationAdd = 'businesses', stationRemove = 'businesses', businessOwner = 'businesses',
