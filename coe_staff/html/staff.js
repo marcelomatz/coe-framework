@@ -328,8 +328,14 @@
 				node.type = 'button';
 				const img = el('img');
 				img.alt = '';
-				const sources = ['nui://coe_inventory/data/images/' + item.name + '.webp'];
-				if (item.image) { sources.push('nui://coe_inventory/data/images/' + item.image); }
+				const rawImg = (typeof item.image === 'string' && item.image.trim()) ? item.image.trim() : (item.name + '.webp');
+				const baseImg = rawImg.replace(/\.(webp|png|svg)$/i, '');
+				const sources = [
+					'nui://coe_inventory/data/images/' + baseImg + '.webp',
+					'nui://coe_inventory/data/images/' + rawImg,
+					'nui://coe_inventory/data/images/' + item.name + '.webp',
+					'nui://coe_inventory/data/images/' + item.name + '.png'
+				];
 				let index = 0;
 				img.addEventListener('error', function () { index += 1; if (index < sources.length) { img.src = sources[index]; } else { img.remove(); } });
 				img.src = sources[0];
@@ -741,7 +747,13 @@
 		salary.className += ' sf-narrow';
 		const perms = el('div', 'sf-perms');
 		const checks = [];
-		(state.businesses.permissions || []).forEach(function (permission) {
+		const rawPerms = state.businesses.permissions;
+		const permList = Array.isArray(rawPerms)
+			? rawPerms
+			: (rawPerms && typeof rawPerms === 'object'
+				? Object.keys(rawPerms).sort().map(function (k) { return { name: k, label: rawPerms[k] }; })
+				: []);
+		permList.forEach(function (permission) {
 			const check = el('input');
 			check.type = 'checkbox';
 			check.value = permission.name;

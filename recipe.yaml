@@ -67,7 +67,7 @@ tasks:
       ## Configuração do Banco de Dados MySQL / MariaDB
       set mysql_connection_string "{{dbConnectionString}}"
       set coe_database_host "{{dbHost}}"
-      set coe_database_port {{dbPort}}
+      set coe_database_port 3306
       set coe_database_user "{{dbUsername}}"
       set coe_database_password "{{dbPassword}}"
       set coe_database_name "{{dbName}}"

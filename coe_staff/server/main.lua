@@ -177,11 +177,24 @@ end
 
 local A = {}
 
+local function restorePlayerNeeds(target)
+	if not started('coe_needs') then
+		return
+	end
+	remote('coe_needs', 'SetNeed', target, 'hunger', 100)
+	remote('coe_needs', 'SetNeed', target, 'thirst', 100)
+	remote('coe_needs', 'SetNeed', target, 'stress', 0)
+	remote('coe_needs', 'SetNeed', target, 'alcohol', 0)
+	remote('coe_needs', 'SetNeed', target, 'drugs', 0)
+end
+
 -- Ferramentas pessoais: o servidor só autoriza (e audita as que importam); o client do admin aplica.
 for _, name in ipairs({ 'noclip', 'invisible', 'godmode', 'heal', 'revive', 'tpWaypoint' }) do
 	A[name] = function(admin, data)
 		if name == 'noclip' or name == 'invisible' or name == 'godmode' then
 			audit('staff_' .. name, { source = admin, result = data.on == true and 'on' or 'off' })
+		elseif name == 'heal' or name == 'revive' then
+			restorePlayerNeeds(admin)
 		end
 		return { ok = true }
 	end
@@ -268,6 +281,7 @@ end
 function A.healPlayer(admin, data)
 	local target, err = targetOf(data)
 	if not target then return err end
+	restorePlayerNeeds(target)
 	effect(target, 'heal')
 	audit('staff_heal', { source = admin, target = target })
 	return { ok = true }
@@ -276,6 +290,7 @@ end
 function A.revivePlayer(admin, data)
 	local target, err = targetOf(data)
 	if not target then return err end
+	restorePlayerNeeds(target)
 	effect(target, 'revive')
 	audit('staff_revive', { source = admin, target = target })
 	return { ok = true }
@@ -527,7 +542,7 @@ function A.businesses()
 	table.sort(categories, function(a, b) return a.label < b.label end)
 	return { ok = true, data = {
 		businesses = list, categories = categories, rules = remote('coe_businesses', 'RuleSchema') or {},
-		permissions = remote('coe_businesses', 'Permissions') or {}
+		permissions = StaffRules.PermissionsList(remote('coe_businesses', 'Permissions'))
 	} }
 end
 
@@ -657,10 +672,15 @@ local function handle(admin, action, data)
 		return fail('forbidden')
 	end
 	local now = GetGameTimer()
-	if lastAction[admin] and now - lastAction[admin] < config.ActionIntervalMs then
+	local byAction = lastAction[admin]
+	if not byAction then
+		byAction = {}
+		lastAction[admin] = byAction
+	end
+	if byAction[action] and now - byAction[action] < config.ActionIntervalMs then
 		return fail('busy')
 	end
-	lastAction[admin] = now
+	byAction[action] = now
 	local result = A[action](admin, data)
 	if type(result) ~= 'table' then
 		return fail('generic_error')

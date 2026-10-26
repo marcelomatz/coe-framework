@@ -61,7 +61,15 @@ function BusinessesPersistence.List()
 end
 
 function BusinessesPersistence.Save(business)
-	local data = json.encode({ area = business.area, stations = business.stations, rules = business.rules, owner = business.owner, staff = business.staff, partners = business.partners })
+	local data = json.encode({
+		area = business.area,
+		stations = business.stations,
+		rules = business.rules,
+		owner = business.owner,
+		staff = business.staff,
+		partners = business.partners,
+		grades = business.grades
+	})
 	local result, errorCode = callDatabase('Execute', [[
 		INSERT INTO coe_businesses (id, category, label, enabled, data)
 		VALUES (?, ?, ?, ?, ?)

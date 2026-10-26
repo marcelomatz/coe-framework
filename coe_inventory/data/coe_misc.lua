@@ -7,13 +7,13 @@ trash_chips usb_black water ziptie
 local registered, errorMessage = Inventory.Items.RegisterImageGroup('misc', items, {
 	items = {
 		advancedkit = { usable = true, animation = 'repair' },
-		black_money = { maxStack = 50000 },
+		black_money = { weight = 0, maxStack = 1000000000 },
 		card_bank = { stack = false, maxStack = 1 },
 		card_id = { stack = false, maxStack = 1 },
 		carkey = { stack = false, maxStack = 1 },
 		key = { stack = false, maxStack = 1 },
-		-- Espécie: cada unidade é $1; sem peso e em pilha grande para saques do banco caberem.
-		money = { weight = 0, maxStack = 1000000 },
+		-- Espécie: cada unidade é $1; sem peso e em pilha grande para saques do banco e ajustes caberem.
+		money = { weight = 0, maxStack = 1000000000 },
 		oldkey = { stack = false, maxStack = 1 },
 		parachute = { stack = false, maxStack = 1 },
 		phone = { stack = false, maxStack = 1 },

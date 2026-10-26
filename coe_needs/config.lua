@@ -95,6 +95,7 @@ Config.Needs = {
 	AllowedResources = {
 		coe_needs = true,
 		coe_inventory = true,
-		coe_shops = true
+		coe_shops = true,
+		coe_staff = true
 	}
 }

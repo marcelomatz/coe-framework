@@ -430,3 +430,26 @@ function StaffRules.BusinessSummary(business)
 		owner = business.owner and business.owner.name or nil, staff = #(business.staff or {})
 	}
 end
+
+---Normaliza permissões de negócio ({ [name] = label } ou { { name, label } }) em lista ordenada { name, label }[].
+function StaffRules.PermissionsList(raw)
+	local list = {}
+	if type(raw) ~= 'table' then
+		return list
+	end
+	if #raw > 0 then
+		for _, entry in ipairs(raw) do
+			if type(entry) == 'table' and type(entry.name) == 'string' then
+				list[#list + 1] = { name = entry.name, label = tostring(entry.label or entry.name) }
+			end
+		end
+	else
+		for name, label in pairs(raw) do
+			if type(name) == 'string' then
+				list[#list + 1] = { name = name, label = tostring(label or name) }
+			end
+		end
+	end
+	table.sort(list, function(a, b) return a.name < b.name end)
+	return list
+end

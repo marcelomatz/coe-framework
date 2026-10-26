@@ -35,6 +35,26 @@ function S.ensurePlayerInventory(playerId)
 	return inventoryId, inventory
 end
 
+function S.notifyInventoryOwner(id)
+	if type(id) ~= 'string' then
+		return
+	end
+	local characterId = id:match('^character:(.+)$')
+	if not characterId or type(GetPlayers) ~= 'function' or not (Core and Core.Players and Core.Players.GetActiveCharacterId) then
+		return
+	end
+	for _, rawId in ipairs(GetPlayers()) do
+		local playerId = tonumber(rawId)
+		if playerId and tostring(Core.Players.GetActiveCharacterId(playerId) or '') == characterId then
+			local snapshot = S.GetInventory(id)
+			if snapshot and Core.Events and Core.Events.ToClient then
+				Core.Events.ToClient(playerId, 'inventory.updated', snapshot)
+			end
+			return
+		end
+	end
+end
+
 exports('GetPlayerInventory', function(playerId)
 	local inventoryId, inventoryOrError = S.ensurePlayerInventory(playerId)
 	if not inventoryId then
