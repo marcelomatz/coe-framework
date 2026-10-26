@@ -414,7 +414,7 @@ local function ensureParentDir(filePath)
 	end
 end
 
-local function writeResourceFile(resName, relPath, content)
+local function writeResourceFile(resName, relPath, content, isBinary)
 	local safeRel = Updater.SanitizeRelativePath(relPath)
 	if not safeRel or type(content) ~= 'string' then
 		return false
@@ -428,10 +428,10 @@ local function writeResourceFile(resName, relPath, content)
 		if type(basePath) == 'string' and basePath ~= '' then
 			local fullPath = basePath:gsub('\\', '/'):gsub('/+$', '') .. '/' .. safeRel
 
-			-- 1a. Tenta via fs_writer (Node.js nativo do FXServer - contorna o sandbox VFS entre resources)
+			-- 1a. Tenta via fs_writer (Node.js nativo do FXServer)
 			local okNode, nodeRes = pcall(function()
 				if exports and exports[currentRes] and exports[currentRes].WriteFile then
-					return exports[currentRes]:WriteFile(fullPath, content)
+					return exports[currentRes]:WriteFile(fullPath, content, isBinary)
 				end
 				return nil
 			end)
@@ -450,15 +450,16 @@ local function writeResourceFile(resName, relPath, content)
 		end
 	end
 
-	-- 2. Fallback para SaveResourceFile APENAS se for o próprio resource (pois FiveM restringe cross-resource)
-	if resName == currentRes and type(SaveResourceFile) == 'function' then
+	-- 2. Tenta SaveResourceFile (permitido pelo VFS quando add_filesystem_permission estiver no server.cfg)
+	if type(SaveResourceFile) == 'function' then
 		local ok = SaveResourceFile(resName, safeRel, content, -1)
 		if ok == true or ok == 1 then
 			return true
 		end
 	end
 
-	say('ERROR', 'file_write_failed', ('Falha ao gravar arquivo em disco: %s/%s'):format(tostring(resName), tostring(safeRel)))
+	say('ERROR', 'file_write_failed', ('Falha ao gravar arquivo: %s/%s. Certifique-se de que "add_filesystem_permission %s write %s" está no server.cfg e reinicie o FXServer.'):format(
+		tostring(resName), tostring(safeRel), tostring(currentRes), tostring(resName)))
 	return false
 end
 
@@ -671,7 +672,7 @@ local function runApplyUpdate(requester)
 					failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(dlErr))
 					break
 				end
-				if not writeResourceFile(item.resource, item.file, content) then
+				if not writeResourceFile(item.resource, item.file, content, item.isBinary) then
 					failedFile = ('%s/%s (write_failed)'):format(item.resource, item.file)
 					break
 				end
