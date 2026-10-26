@@ -20,6 +20,14 @@ Locales['en-US'] = {
 	contact_not_found = 'Contact not found.',
 	database_error = 'Lookup failed. Try again.',
 	generic_error = 'Could not complete.',
+	invalid_amount = 'Invalid amount.',
+	invalid_target = 'Enter recipient number or ID.',
+	recipient_not_found = 'Recipient not found.',
+	same_account = 'Cannot transfer to yourself.',
+	insufficient_funds = 'Insufficient funds.',
+	transfer_failed = 'Transfer failed.',
+	transfer_success = 'Transfer of $%{amount} completed successfully.',
+	pix_received = 'You received a transfer of $%{amount} from %{sender}.',
 	incoming_call = 'Call from %{name}.',
 	missed_call = 'Missed call from %{name}.'
 }

@@ -12,7 +12,7 @@ local function isAllowed()
 end
 
 local function log(level, category, event, fields)
-	logger:log(level, category, event, fields)
+	logger.log(level, category, event, fields)
 end
 
 local function normalizeCharacterId(value)

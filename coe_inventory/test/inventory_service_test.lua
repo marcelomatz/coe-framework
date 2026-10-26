@@ -24,7 +24,19 @@ dofile([=[domain/items.lua]=])
 dofile([=[config.lua]=])
 dofile([=[domain/config_schema.lua]=])
 dofile([=[data/coe_animations.lua]=])
+dofile([=[data/coe_weapon_profiles.lua]=])
 dofile([=[data/coe_base_items.lua]=])
+dofile([=[data/coe_catalog.lua]=])
+dofile([=[data/coe_weapons.lua]=])
+dofile([=[data/coe_ammo.lua]=])
+dofile([=[data/coe_attachments.lua]=])
+dofile([=[data/coe_food.lua]=])
+dofile([=[data/coe_consumables.lua]=])
+dofile([=[data/coe_containers.lua]=])
+dofile([=[data/coe_misc.lua]=])
+dofile([=[data/coe_parts.lua]=])
+dofile([=[data/coe_ingredients.lua]=])
+dofile([=[data/coe_shop_items.lua]=])
 
 local storage = {
 	['inventory:player:license:legacy'] = 'untouched legacy value'
@@ -187,12 +199,12 @@ local inventory
 inventoryId, inventory = exported.GetPlayerInventory(42)
 assertEqual(inventoryId, 'character:71', 'inventory is keyed by active character')
 assertEqual(inventory.id, 'character:71', 'snapshot uses character key')
-assertEqual(exported.GetItemCount(inventoryId, 'water'), 2, 'starter items granted')
+assertEqual(exported.GetItemCount(inventoryId, 'water'), 3, 'starter items granted')
 assertEqual(storage['inventory:player:license:legacy'], 'untouched legacy value', 'legacy data is not associated')
 
 local added, waterSlot = exported.AddItem(inventoryId, 'water', 3)
 assertEqual(added, true, 'add stackable items')
-assertEqual(exported.GetItemCount(inventoryId, 'water'), 5, 'matching items stack')
+assertEqual(exported.GetItemCount(inventoryId, 'water'), 6, 'matching items stack')
 
 local metadataAdded, metadataSlot = exported.AddItem(inventoryId, 'water', 1, { quality = 80 })
 assertEqual(metadataAdded, true, 'add item with metadata')
@@ -202,13 +214,13 @@ assertEqual(exported.GetItemCount(inventoryId, 'water', { quality = 80 }), 1, 'm
 local split, splitSlot = exported.SplitItem(inventoryId, waterSlot, 2)
 assertEqual(split, true, 'split item stack')
 assertEqual(splitSlot ~= waterSlot, true, 'split uses an empty slot')
-assertEqual(exported.GetItemCount(inventoryId, 'water'), 6, 'split preserves total count')
+assertEqual(exported.GetItemCount(inventoryId, 'water'), 7, 'split preserves total count')
 
 for _, badCount in ipairs({ 0, -1, 1.5, 1e9, '2', true }) do
 	local ok = exported.SplitItem(inventoryId, waterSlot, badCount)
 	assertEqual(ok, false, 'split rejects count ' .. tostring(badCount))
 end
-assertEqual(exported.GetItemCount(inventoryId, 'water'), 6, 'rejected splits do not change totals')
+assertEqual(exported.GetItemCount(inventoryId, 'water'), 7, 'rejected splits do not change totals')
 
 local beforeFailedWrite = exported.GetItemCount(inventoryId, 'water')
 failNextSet = true
@@ -221,7 +233,7 @@ activeCharacters[42] = '72'
 local secondInventoryId, secondInventory = exported.GetPlayerInventory(42)
 assertEqual(secondInventoryId, 'character:72', 'switching characters changes inventory identity')
 assertEqual(secondInventory.id, 'character:72', 'second character has separate inventory')
-assertEqual(exported.GetItemCount(secondInventoryId, 'water'), 2, 'second character gets independent starter items')
+assertEqual(exported.GetItemCount(secondInventoryId, 'water'), 3, 'second character gets independent starter items')
 assertEqual(exported.GetItemCount('character:71', 'water'), beforeFailedWrite, 'first character inventory is unchanged')
 
 activeCharacters[43] = '73'

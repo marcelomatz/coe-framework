@@ -4,6 +4,16 @@ local settings = CoeSpawnConfig.LastPosition
 local ready = false
 -- tracked[playerId] = { characterId, loaded, active, position, dirty, answered }
 local tracked = {}
+local defaultHotel = {
+	name = 'Motel Pink Cage',
+	enabled = true,
+	entrance = { x = 325.5, y = -212.8, z = 54.0, h = 160.0 },
+	room = { x = 151.4, y = -1007.8, z = -99.0, h = 0.0 },
+	exit = { x = 151.3, y = -1004.8, z = -99.0, h = 180.0 },
+	stash = { x = 151.8, y = -1001.2, z = -99.0, slots = 30, maxWeight = 50000 }
+}
+local starterHotel = defaultHotel
+
 
 local function log(level, event, context)
 	pcall(function()
@@ -78,7 +88,7 @@ RegisterNetEvent('coe_spawn:requestPosition', function()
 	local playerId = source
 	local entry = tracked[playerId]
 	if not entry or entry.answered then
-		TriggerClientEvent('coe_spawn:position', playerId, nil)
+		TriggerClientEvent('coe_spawn:position', playerId, nil, starterHotel)
 		return
 	end
 	entry.answered = true
@@ -86,7 +96,85 @@ RegisterNetEvent('coe_spawn:requestPosition', function()
 	while not entry.loaded and GetGameTimer() < deadline do
 		Wait(100)
 	end
-	TriggerClientEvent('coe_spawn:position', playerId, tracked[playerId] == entry and entry.position or nil)
+	local pos = tracked[playerId] == entry and entry.position or nil
+	local isFirstSpawn = (pos == nil)
+	if isFirstSpawn and starterHotel.enabled then
+		pos = {
+			x = starterHotel.room.x,
+			y = starterHotel.room.y,
+			z = starterHotel.room.z,
+			heading = starterHotel.room.h
+		}
+	end
+	TriggerClientEvent('coe_spawn:position', playerId, pos, starterHotel)
+end)
+
+RegisterNetEvent('coe_spawn:openHotelStash', function()
+	local playerId = source
+	local charId = Core.Players.GetActiveCharacterId(playerId)
+	if not charId then return end
+	local ped = GetPlayerPed(playerId)
+	if not ped or ped == 0 then return end
+	local coords = GetEntityCoords(ped)
+	local dx = coords.x - starterHotel.stash.x
+	local dy = coords.y - starterHotel.stash.y
+	local dz = coords.z - starterHotel.stash.z
+	local distSq = dx * dx + dy * dy + dz * dz
+	if distSq > 16.0 then return end
+
+	pcall(function()
+		exports.coe_inventory:OpenStash(playerId, 'stash:hotel:' .. charId, {
+			label = starterHotel.name .. ' - Quarto',
+			slots = starterHotel.stash.slots,
+			maxWeight = starterHotel.stash.maxWeight,
+			position = { x = starterHotel.stash.x, y = starterHotel.stash.y, z = starterHotel.stash.z },
+			radius = 4.0
+		})
+	end)
+end)
+
+exports('GetStarterHotel', function()
+	return starterHotel
+end)
+
+exports('SetStarterHotel', function(data)
+	if type(data) ~= 'table' then
+		return false, 'invalid_payload'
+	end
+	starterHotel = {
+		name = tostring(data.name or starterHotel.name):sub(1, 64),
+		enabled = data.enabled == true,
+		entrance = {
+			x = tonumber(data.entrance and data.entrance.x) or starterHotel.entrance.x,
+			y = tonumber(data.entrance and data.entrance.y) or starterHotel.entrance.y,
+			z = tonumber(data.entrance and data.entrance.z) or starterHotel.entrance.z,
+			h = tonumber(data.entrance and data.entrance.h) or starterHotel.entrance.h
+		},
+		room = {
+			x = tonumber(data.room and data.room.x) or starterHotel.room.x,
+			y = tonumber(data.room and data.room.y) or starterHotel.room.y,
+			z = tonumber(data.room and data.room.z) or starterHotel.room.z,
+			h = tonumber(data.room and data.room.h) or starterHotel.room.h
+		},
+		exit = {
+			x = tonumber(data.exit and data.exit.x) or starterHotel.exit.x,
+			y = tonumber(data.exit and data.exit.y) or starterHotel.exit.y,
+			z = tonumber(data.exit and data.exit.z) or starterHotel.exit.z,
+			h = tonumber(data.exit and data.exit.h) or starterHotel.exit.h
+		},
+		stash = {
+			x = tonumber(data.stash and data.stash.x) or starterHotel.stash.x,
+			y = tonumber(data.stash and data.stash.y) or starterHotel.stash.y,
+			z = tonumber(data.stash and data.stash.z) or starterHotel.stash.z,
+			slots = math.tointeger(data.stash and data.stash.slots) or starterHotel.stash.slots,
+			maxWeight = math.tointeger(data.stash and data.stash.maxWeight) or starterHotel.stash.maxWeight
+		}
+	}
+	if ready then
+		SpawnPersistence.SaveStarterHotel(starterHotel)
+	end
+	TriggerClientEvent('coe_spawn:syncHotel', -1, starterHotel)
+	return true
 end)
 
 -- Só depois do spawn a posição do ped é a do personagem (antes ele está parado na seleção).
@@ -137,4 +225,8 @@ CreateThread(function()
 		end
 	end
 	ready = true
+	local loadedHotel = SpawnPersistence.LoadStarterHotel()
+	if loadedHotel then
+		starterHotel = loadedHotel
+	end
 end)

@@ -516,7 +516,58 @@ local function publishWorld()
 end
 
 function A.world()
-	return { ok = true, data = { time = world.time, weather = world.weather, weathers = config.Weathers } }
+	local hotel = nil
+	if started('coe_spawn') then
+		pcall(function()
+			hotel = exports.coe_spawn:GetStarterHotel()
+		end)
+	end
+	return { ok = true, data = { time = world.time, weather = world.weather, weathers = config.Weathers, hotel = hotel } }
+end
+
+function A.getMyCoords(admin)
+	local ped = GetPlayerPed(admin)
+	if not ped or ped == 0 then return { ok = false, error = 'player_ped_missing' } end
+	local c = GetEntityCoords(ped)
+	local h = GetEntityHeading(ped)
+	return {
+		ok = true,
+		data = {
+			x = math.floor(c.x * 100 + 0.5) / 100,
+			y = math.floor(c.y * 100 + 0.5) / 100,
+			z = math.floor(c.z * 100 + 0.5) / 100,
+			h = math.floor(h * 100 + 0.5) / 100
+		}
+	}
+end
+
+function A.saveStarterHotel(admin, data)
+	if not started('coe_spawn') then
+		return { ok = false, error = 'spawn_unavailable' }
+	end
+	local ok, err = pcall(function()
+		return exports.coe_spawn:SetStarterHotel(data)
+	end)
+	if not ok or not err then
+		return { ok = false, error = 'hotel_save_failed' }
+	end
+	audit('staff_hotel_saved', { source = admin, name = data and data.name, enabled = data and data.enabled })
+	return A.world()
+end
+
+function A.teleportToHotel(admin, data)
+	local point = data and data.point
+	local hotel = nil
+	if started('coe_spawn') then
+		pcall(function()
+			hotel = exports.coe_spawn:GetStarterHotel()
+		end)
+	end
+	if not hotel then return { ok = false, error = 'hotel_unavailable' } end
+	local target = (point == 'room') and hotel.room or hotel.entrance
+	effect(admin, 'teleport', { x = target.x, y = target.y, z = target.z, heading = target.h or 0.0 })
+	audit('staff_hotel_teleport', { source = admin, point = point })
+	return { ok = true }
 end
 
 function A.setTime(admin, data)

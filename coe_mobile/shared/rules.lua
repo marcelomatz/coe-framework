@@ -6,6 +6,7 @@ MobileRules.Actions = {
 	contacts = 'read', contact_save = 'write', contact_delete = 'write',
 	threads = 'read', thread = 'read', thread_delete = 'write', message_send = 'message',
 	recents = 'read', call_start = 'write', call_answer = 'call', call_decline = 'call', call_end = 'call',
+	bank_info = 'read', bank_transfer = 'write',
 	settings_save = 'write'
 }
 
