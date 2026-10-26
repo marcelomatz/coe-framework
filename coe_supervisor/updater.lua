@@ -168,6 +168,40 @@ function SupervisorUpdater.SanitizeRelativePath(relPath)
 	return norm
 end
 
+---Verifica se a extensão do arquivo é de tipo binário.
+---@param relPath string|nil
+---@return boolean
+function SupervisorUpdater.IsBinaryFile(relPath)
+	if type(relPath) ~= 'string' then
+		return false
+	end
+	local ext = relPath:match('%.([^%.]+)$')
+	if not ext then
+		return false
+	end
+	ext = ext:lower()
+	return ext == 'webp' or ext == 'png' or ext == 'jpg' or ext == 'jpeg'
+		or ext == 'gif' or ext == 'ogg' or ext == 'wav' or ext == 'mp3'
+		or ext == 'ttf' or ext == 'woff' or ext == 'woff2' or ext == 'ytd' or ext == 'ydr'
+end
+
+---Calcula hash FNV-1a de 32 bits em hexadecimal para uma string.
+---Para arquivos de texto, normaliza CRLF para LF antes de calcular para evitar divergência de checkout Windows/Linux.
+---@param content string|nil
+---@param isBinary boolean|nil
+---@return string
+function SupervisorUpdater.Hash(content, isBinary)
+	if type(content) ~= 'string' then
+		return '00000000'
+	end
+	local data = isBinary and content or content:gsub('\r\n', '\n')
+	local hash = 0x811c9dc5
+	for i = 1, #data do
+		hash = ((hash ~ data:byte(i)) * 0x01000193) & 0xffffffff
+	end
+	return string.format('%08x', hash)
+end
+
 ---Monta o plano de atualização comparando manifesto local, versões instaladas e manifesto remoto.
 ---@param localManifest table|nil
 ---@param remoteManifest table|nil
@@ -229,18 +263,34 @@ function SupervisorUpdater.BuildUpdatePlan(localManifest, remoteManifest, instal
 				requiresFullRestart = true
 			end
 			local files = type(remoteEntry) == 'table' and type(remoteEntry.files) == 'table' and remoteEntry.files or { 'fxmanifest.lua' }
+			local hashes = type(remoteEntry) == 'table' and type(remoteEntry.hashes) == 'table' and remoteEntry.hashes or nil
 			for _, rel in ipairs(files) do
 				local safeRel = SupervisorUpdater.SanitizeRelativePath(rel)
 				if safeRel then
 					downloads[#downloads + 1] = {
 						resource = resName,
 						file = safeRel,
-						url = string.format('%s/%s/%s', base, resName, safeRel)
+						url = string.format('%s/%s/%s', base, resName, safeRel),
+						hash = hashes and hashes[safeRel] or nil,
+						isBinary = SupervisorUpdater.IsBinaryFile(safeRel)
 					}
 				end
 			end
 		end
 	end
+
+	-- Ordena para priorizar coe_supervisor no topo da fila (atualizador atualiza a si mesmo primeiro)
+	table.sort(downloads, function(a, b)
+		if a.resource == 'coe_supervisor' and b.resource ~= 'coe_supervisor' then
+			return true
+		elseif b.resource == 'coe_supervisor' and a.resource ~= 'coe_supervisor' then
+			return false
+		end
+		if a.resource ~= b.resource then
+			return a.resource < b.resource
+		end
+		return a.file < b.file
+	end)
 
 	local available = frameworkNewer or (#outdatedResources > 0)
 
