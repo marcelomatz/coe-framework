@@ -25,5 +25,7 @@ server_scripts {
 dependencies {
 	'coe_core',
 	'coe_economy',
-	'coe_vehicles'
+	'coe_vehicles',
+	'coe_logging',
+	'coe_notify'
 }
