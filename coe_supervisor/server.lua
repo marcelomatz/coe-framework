@@ -264,6 +264,8 @@ local updateState = {
 	outdatedCount = 0,
 	outdatedResources = {},
 	filesCount = 0,
+	filesWritten = 0,
+	filesSkipped = 0,
 	pendingCount = 0,
 	pendingReleases = {},
 	pendingVersions = {},
@@ -296,6 +298,7 @@ local function publishUpdateState()
 		outdatedResources = updateState.outdatedResources or {},
 		filesCount = updateState.filesCount or 0,
 		filesWritten = updateState.filesWritten or 0,
+		filesSkipped = updateState.filesSkipped or 0,
 		currentResource = updateState.currentResource,
 		pendingCount = updateState.pendingCount or 0,
 		pendingReleases = updateState.pendingReleases or {},
@@ -318,32 +321,55 @@ local function publishUpdateState()
 	return snapshot
 end
 
-local function httpGet(url, timeoutMs)
+local function httpGet(url, timeoutMs, maxRetries)
 	if type(PerformHttpRequest) ~= 'function' or type(promise) ~= 'table' or type(Citizen) ~= 'table' then
 		return nil, 'http_unavailable'
 	end
-	local p = promise.new()
-	local settledHttp = false
-	SetTimeout(timeoutMs or updaterConfig.TimeoutMs or 10000, function()
-		if not settledHttp then
-			settledHttp = true
-			p:resolve({ status = 0, body = nil, error = 'timeout' })
+	local retries = tonumber(maxRetries) or 3
+	local attempt = 0
+
+	while attempt <= retries do
+		attempt = attempt + 1
+		local p = promise.new()
+		local settledHttp = false
+		SetTimeout(timeoutMs or updaterConfig.TimeoutMs or 10000, function()
+			if not settledHttp then
+				settledHttp = true
+				p:resolve({ status = 0, body = nil, error = 'timeout' })
+			end
+		end)
+		PerformHttpRequest(url, function(statusCode, responseBody)
+			if not settledHttp then
+				settledHttp = true
+				p:resolve({ status = tonumber(statusCode) or 0, body = responseBody })
+			end
+		end, 'GET', '', {
+			['User-Agent'] = 'COE-Framework-Supervisor/' .. tostring(updateState.localVersion),
+			['Accept'] = 'application/json, text/plain, */*'
+		})
+		local res = Citizen.Await(p)
+		if res and res.status == 200 and type(res.body) == 'string' and res.body ~= '' then
+			return res.body, nil
 		end
-	end)
-	PerformHttpRequest(url, function(statusCode, responseBody)
-		if not settledHttp then
-			settledHttp = true
-			p:resolve({ status = tonumber(statusCode) or 0, body = responseBody })
+
+		local status = res and res.status or 0
+		local isRateLimit = (status == 429)
+		local isTimeout = (res and res.error == 'timeout')
+
+		if (isRateLimit or isTimeout) and attempt <= retries then
+			local backoffMs = isRateLimit and (attempt * 2500) or 1500
+			if Ansi and Ansi.PrintRateLimitWait then
+				Ansi.PrintRateLimitWait(attempt, retries, backoffMs, isRateLimit)
+			else
+				say('WARN', 'http_retry', ('Aguardando %dms para tentar novamente após %s (tentativa %d/%d)...'):format(
+					backoffMs, isRateLimit and 'HTTP 429 Rate Limit' or 'timeout', attempt, retries))
+			end
+			Wait(backoffMs)
+		else
+			return nil, res and res.error or ('http_' .. tostring(status))
 		end
-	end, 'GET', '', {
-		['User-Agent'] = 'COE-Framework-Supervisor/' .. tostring(updateState.localVersion),
-		['Accept'] = 'application/json, text/plain, */*'
-	})
-	local res = Citizen.Await(p)
-	if not res or res.status ~= 200 or type(res.body) ~= 'string' or res.body == '' then
-		return nil, res and res.error or ('http_' .. tostring(res and res.status or 0))
 	end
-	return res.body, nil
+	return nil, 'max_retries_exceeded'
 end
 
 local function writeResourceFile(resName, relPath, content)
@@ -476,6 +502,7 @@ local function runApplyUpdate(requester)
 
 	updateState.updating = true
 	updateState.filesWritten = 0
+	updateState.filesSkipped = 0
 	updateState.currentResource = nil
 	updateState.lastError = nil
 	updateState.startTime = os.time()
@@ -493,34 +520,61 @@ local function runApplyUpdate(requester)
 
 	local updatedResources = {}
 	local filesWritten = 0
+	local filesSkipped = 0
 	local failedFile = nil
 	local lastPrintedRes = nil
+	local totalDl = #(plan.downloads or {})
 
 	for _, item in ipairs(plan.downloads or {}) do
 		local resState = GetResourceState(item.resource)
 		if resState ~= 'missing' then
-			local content, dlErr = httpGet(item.url, updaterConfig.TimeoutMs)
-			if not content then
-				failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(dlErr))
-				break
+			local shouldSkip = false
+			-- Checagem diferencial: se o hash do arquivo local for idêntico ao remoto, dispensa o download
+			if item.hash and type(LoadResourceFile) == 'function' then
+				local localRaw = LoadResourceFile(item.resource, item.file)
+				if type(localRaw) == 'string' then
+					local localHash = Updater.Hash(localRaw, item.isBinary)
+					if localHash == item.hash then
+						shouldSkip = true
+					end
+				end
 			end
-			if not writeResourceFile(item.resource, item.file, content) then
-				failedFile = ('%s/%s (write_failed)'):format(item.resource, item.file)
-				break
-			end
-			updatedResources[item.resource] = true
-			filesWritten = filesWritten + 1
-			updateState.filesWritten = filesWritten
-			updateState.currentResource = item.resource
-			updateState.lastProgressTime = os.time()
 
-			local totalDl = #(plan.downloads or {})
-			if filesWritten % 5 == 0 or filesWritten == totalDl then
+			if shouldSkip then
+				filesSkipped = filesSkipped + 1
+				filesWritten = filesWritten + 1
+				updatedResources[item.resource] = true
+				updateState.filesWritten = filesWritten
+				updateState.filesSkipped = filesSkipped
+				updateState.currentResource = item.resource
+				updateState.lastProgressTime = os.time()
+			else
+				-- Pacing preventivo de 35ms para evitar acionar burst limiter do GitHub/Fastly
+				Wait(35)
+
+				local content, dlErr = httpGet(item.url, updaterConfig.TimeoutMs, 3)
+				if not content then
+					failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(dlErr))
+					break
+				end
+				if not writeResourceFile(item.resource, item.file, content) then
+					failedFile = ('%s/%s (write_failed)'):format(item.resource, item.file)
+					break
+				end
+				updatedResources[item.resource] = true
+				filesWritten = filesWritten + 1
+				updateState.filesWritten = filesWritten
+				updateState.filesSkipped = filesSkipped
+				updateState.currentResource = item.resource
+				updateState.lastProgressTime = os.time()
+			end
+
+			if filesWritten % 10 == 0 or filesWritten == totalDl then
 				publishUpdateState()
 			end
 			if Ansi and Ansi.PrintProgress and totalDl > 0 then
 				local resChanged = (lastPrintedRes ~= item.resource)
-				if filesWritten == 1 or filesWritten % 10 == 0 or filesWritten == totalDl or resChanged then
+				if filesWritten == 1 or filesWritten % 15 == 0 or filesWritten == totalDl or resChanged then
 					lastPrintedRes = item.resource
 					Ansi.PrintProgress(filesWritten, totalDl, item.resource)
 				end
@@ -558,6 +612,7 @@ local function runApplyUpdate(requester)
 	updateState.outdatedResources = {}
 	updateState.filesCount = 0
 	updateState.filesWritten = filesWritten
+	updateState.filesSkipped = filesSkipped
 	updateState.currentResource = nil
 	updateState.startTime = nil
 	updateState.lastProgressTime = nil
@@ -572,17 +627,19 @@ local function runApplyUpdate(requester)
 			version = plan.remoteVersion,
 			updatedResources = updatedCount,
 			filesUpdated = filesWritten,
+			filesSkipped = filesSkipped,
 			requiresFullRestart = plan.requiresFullRestart == true
 		})
 	else
-		say('INFO', 'update_completed', ('version=v%s resources=%d files=%d'):format(
-			tostring(plan.remoteVersion), updatedCount, filesWritten))
+		say('INFO', 'update_completed', ('version=v%s resources=%d files=%d skipped=%d'):format(
+			tostring(plan.remoteVersion), updatedCount, filesWritten, filesSkipped))
 	end
 
 	return true, {
 		version = plan.remoteVersion,
 		updatedResources = updatedCount,
 		filesUpdated = filesWritten,
+		filesSkipped = filesSkipped,
 		requiresFullRestart = plan.requiresFullRestart == true
 	}
 end

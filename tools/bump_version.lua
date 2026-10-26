@@ -241,6 +241,28 @@ local function loadReleasesHistory(targetVersion, targetNotes)
 	return list
 end
 
+local function fnv1a(content, isBinary)
+	if type(content) ~= 'string' then
+		return '00000000'
+	end
+	local data = isBinary and content or content:gsub('\r\n', '\n')
+	local hash = 0x811c9dc5
+	for i = 1, #data do
+		hash = ((hash ~ data:byte(i)) * 0x01000193) & 0xffffffff
+	end
+	return string.format('%08x', hash)
+end
+
+local function isBinaryFile(relPath)
+	if not relPath then return false end
+	local ext = relPath:match('%.([^%.]+)$')
+	if not ext then return false end
+	ext = ext:lower()
+	return ext == 'webp' or ext == 'png' or ext == 'jpg' or ext == 'jpeg'
+		or ext == 'gif' or ext == 'ogg' or ext == 'wav' or ext == 'mp3'
+		or ext == 'ttf' or ext == 'woff' or ext == 'woff2' or ext == 'ytd' or ext == 'ydr'
+end
+
 local function buildVersionJson(version, notes, resources)
 	local channel = parseChannel(version)
 	local lines = {}
@@ -278,7 +300,18 @@ local function buildVersionJson(version, notes, resources)
 			local comma = fIdx < #files and ',' or ''
 			lines[#lines + 1] = '\t\t\t\t"' .. jsonEscape(rel) .. '"' .. comma
 		end
-		lines[#lines + 1] = '\t\t\t]'
+		lines[#lines + 1] = '\t\t\t],'
+		lines[#lines + 1] = '\t\t\t"hashes": {'
+		for fIdx, rel in ipairs(files) do
+			local filePath = res .. '/' .. rel
+			local f = io.open(filePath, 'rb')
+			local fileContent = f and f:read('*a') or ''
+			if f then f:close() end
+			local h = fnv1a(fileContent, isBinaryFile(rel))
+			local comma = fIdx < #files and ',' or ''
+			lines[#lines + 1] = '\t\t\t\t"' .. jsonEscape(rel) .. '": "' .. h .. '"' .. comma
+		end
+		lines[#lines + 1] = '\t\t\t}'
 		local resComma = idx < #resources and ',' or ''
 		lines[#lines + 1] = '\t\t}' .. resComma
 	end

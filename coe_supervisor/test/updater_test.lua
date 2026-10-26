@@ -130,4 +130,37 @@ eq(planCumulative.pendingVersions[2], 'v0.1.0-beta.5', 'tag beta.5')
 eq(planCumulative.outdatedCount, 2, '2 resources precisam de atualização')
 eq(planCumulative.filesCount, 4, '4 arquivos baixados para levar à versão final')
 
+-- 5. Testes de integridade de hash e detecção de arquivos binários
+eq(SupervisorUpdater.IsBinaryFile('data/images/WEAPON_COMBATPDW.webp'), true, 'webp é binário')
+eq(SupervisorUpdater.IsBinaryFile('html/ui.png'), true, 'png é binário')
+eq(SupervisorUpdater.IsBinaryFile('server/main.lua'), false, 'lua não é binário')
+eq(SupervisorUpdater.IsBinaryFile('html/app.js'), false, 'js não é binário')
+
+-- Hash normaliza CRLF para LF em texto (garante consistência Windows vs Linux)
+local textLf = 'local a = 1\nlocal b = 2\n'
+local textCrlf = 'local a = 1\r\nlocal b = 2\r\n'
+eq(SupervisorUpdater.Hash(textLf, false), SupervisorUpdater.Hash(textCrlf, false), 'hash texto ignora diferenca CRLF/LF')
+
+-- Teste de ordenação de downloads com coe_supervisor no topo e hashes anexados
+local remoteWithSupervisor = {
+	version = '0.1.0-beta.6',
+	resources = {
+		coe_inventory = {
+			version = '0.1.0-beta.6',
+			files = { 'data/images/gun.webp', 'server/main.lua' },
+			hashes = { ['data/images/gun.webp'] = '11223344', ['server/main.lua'] = '55667788' }
+		},
+		coe_supervisor = {
+			version = '0.1.0-beta.6',
+			files = { 'fxmanifest.lua', 'updater.lua' },
+			hashes = { ['fxmanifest.lua'] = 'aabbccdd', ['updater.lua'] = 'eeff0011' }
+		}
+	}
+}
+
+local planSorted = SupervisorUpdater.BuildUpdatePlan(localBeta3, remoteWithSupervisor, {}, {})
+eq(planSorted.downloads[1].resource, 'coe_supervisor', 'coe_supervisor vem primeiro na fila de download')
+eq(planSorted.downloads[2].resource, 'coe_supervisor', 'segundo item também é coe_supervisor')
+eq(planSorted.downloads[1].hash ~= nil, true, 'hash é propagado para o item de download')
+
 io.write('coe_supervisor updater_test: ok\n')

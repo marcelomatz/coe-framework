@@ -209,18 +209,43 @@ function SupervisorAnsi.PrintUpdateCompleted(result)
 	local hLine = C.coeBorder .. string.rep('═', W) .. C.reset
 	local sepLine = C.coeBorder .. string.rep('─', W) .. C.reset
 
+	local written = tonumber(result.filesUpdated) or 0
+	local skipped = tonumber(result.filesSkipped) or 0
+	local downloaded = written - skipped
+	if downloaded < 0 then downloaded = 0 end
+
 	print(hLine)
 	print(string.format('  %s%s✔ ATUALIZAÇÃO DO COE FRAMEWORK APLICADA COM SUCESSO!%s', C.bold, C.brightGreen, C.reset))
 	print(sepLine)
 	print(string.format('  %sVersão instalada :%s %sv%s%s', C.brightWhite, C.reset, C.bold .. C.brightGreen, tostring(result.version), C.reset))
 	print(string.format('  %sResources salvos :%s %s%d atualizado(s)%s', C.brightWhite, C.reset, C.brightCyan, result.updatedResources or 0, C.reset))
-	print(string.format('  %sArquivos salvos  :%s %s%d arquivo(s)%s', C.brightWhite, C.reset, C.brightCyan, result.filesUpdated or 0, C.reset))
+	if skipped > 0 then
+		print(string.format('  %sArquivos salvos  :%s %s%d arquivo(s)%s (%s%d baixados%s, %s%d já idênticos%s)',
+			C.brightWhite, C.reset, C.brightCyan, written, C.reset,
+			C.brightYellow, downloaded, C.reset,
+			C.brightGreen, skipped, C.reset))
+	else
+		print(string.format('  %sArquivos salvos  :%s %s%d arquivo(s)%s', C.brightWhite, C.reset, C.brightCyan, written, C.reset))
+	end
 	if result.requiresFullRestart then
 		print(string.format('  %sAtenção          :%s %sRecomendado reiniciar o FXServer (restart do binário/txAdmin).%s', C.bold .. C.brightYellow, C.reset, C.brightYellow, C.reset))
 	else
 		print(string.format('  %sPróximo passo    :%s %sResources recarregados. Execute "restart <nome>" se necessário.%s', C.brightWhite, C.reset, C.coeMuted, C.reset))
 	end
 	print(hLine)
+end
+
+---Exibe aviso estruturado de pausa para respeitar o limite de requisições do GitHub (HTTP 429 ou timeout).
+---@param attempt integer
+---@param maxRetries integer
+---@param backoffMs integer
+---@param isRateLimit boolean
+function SupervisorAnsi.PrintRateLimitWait(attempt, maxRetries, backoffMs, isRateLimit)
+	local reason = isRateLimit and 'Limite de requisições atingido (HTTP 429 Rate Limit)' or 'Timeout na resposta do servidor'
+	print(string.format('  %s%s[!] %s%s - pausando %s%.1fs%s para retomar (%d/%d)...',
+		C.bold, C.brightYellow, reason, C.reset,
+		C.bold .. C.brightWhite, backoffMs / 1000, C.reset,
+		attempt, maxRetries))
 end
 
 ---Exibe o banner estruturado de início de atualização.
