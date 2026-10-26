@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_economy'
-version '0.1.0-beta.3'
+version '0.1.0-beta.4'
 description 'Economia: saldo por personagem, extrato e operações atômicas de crédito, débito e transferência'
 
 dependencies {
