@@ -372,21 +372,31 @@ local function httpGet(url, timeoutMs, maxRetries)
 	return nil, 'max_retries_exceeded'
 end
 
+local function ensureParentDir(filePath)
+	local dir = filePath:match('^(.*)/[^/]+$')
+	if dir and dir ~= '' then
+		local isWin = package.config:sub(1, 1) == '\\'
+		if isWin then
+			os.execute('if not exist "' .. dir:gsub('/', '\\') .. '" mkdir "' .. dir:gsub('/', '\\') .. '" >nul 2>nul')
+		else
+			os.execute('mkdir -p "' .. dir .. '" >/dev/null 2>&1')
+		end
+	end
+end
+
 local function writeResourceFile(resName, relPath, content)
 	local safeRel = Updater.SanitizeRelativePath(relPath)
 	if not safeRel or type(content) ~= 'string' then
 		return false
 	end
-	if type(SaveResourceFile) == 'function' then
-		local ok = SaveResourceFile(resName, safeRel, content, -1)
-		if ok == true or ok == 1 then
-			return true
-		end
-	end
+
+	-- 1. GetResourcePath + io.open grava DIRETAMENTE no disco físico para QUALQUER resource
+	-- (O SaveResourceFile nativo do FiveM tem restrição de sandbox e só grava no próprio resource chamador).
 	if type(GetResourcePath) == 'function' then
 		local basePath = GetResourcePath(resName)
 		if type(basePath) == 'string' and basePath ~= '' then
 			local fullPath = basePath:gsub('\\', '/'):gsub('/+$', '') .. '/' .. safeRel
+			ensureParentDir(fullPath)
 			local handle = io.open(fullPath, 'wb')
 			if handle then
 				handle:write(content)
@@ -395,6 +405,15 @@ local function writeResourceFile(resName, relPath, content)
 			end
 		end
 	end
+
+	-- 2. Fallback para SaveResourceFile caso GetResourcePath não esteja disponível
+	if type(SaveResourceFile) == 'function' then
+		local ok = SaveResourceFile(resName, safeRel, content, -1)
+		if ok == true or ok == 1 then
+			return true
+		end
+	end
+
 	return false
 end
 
