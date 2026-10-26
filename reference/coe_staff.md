@@ -22,6 +22,18 @@ Situação do painel básico.
 
 - `CoeStaffStatus` `status`
 
+### `RegisterGaragesProvider(provider)`
+
+Registra um provedor de garagens para administração pelo painel staff.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `provider` | `table` | Provedor com funções List, Save e Delete |
+
+**Retorno**
+
+- `boolean` `ok`
+
 ## Tipos
 
 ```lua

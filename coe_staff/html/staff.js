@@ -8,6 +8,8 @@
 		{ id: 'self', label: 'Pessoal' },
 		{ id: 'players', label: 'Jogadores' },
 		{ id: 'vehicles', label: 'Veículos' },
+		{ id: 'hotel', label: 'Hotel' },
+		{ id: 'garages', label: 'Garagens' },
 		{ id: 'world', label: 'Mundo' },
 		{ id: 'businesses', label: 'Negócios' }
 	];
@@ -33,7 +35,7 @@
 	const state = {
 		modules: {}, toggles: {}, noclip: false, tab: null, update: null,
 		players: null, selected: null, groups: null, itemSearch: '', items: null, itemsLoading: false, itemRequestId: 0,
-		vehicles: null, vehicleSearch: '', world: null,
+		vehicles: null, vehicleSearch: '', hotel: null, garages: null, garageEdit: null, world: null,
 		businesses: null, business: null
 	};
 	let statusTimer = null;
@@ -153,12 +155,22 @@
 		render();
 		if (tab === 'players' && !state.players) { loadPlayers(); }
 		if (tab === 'vehicles' && !state.vehicles) { searchVehicles(''); }
+		if (tab === 'hotel' && !state.hotel) { act('hotel', {}, null, function (data) { state.hotel = data; render(); }); }
+		if (tab === 'garages' && !state.garages) { act('garages', {}, null, function (data) { state.garages = data; render(); }); }
 		if (tab === 'world' && !state.world) { act('world', {}, null, function (data) { state.world = data; render(); }); }
 		if (tab === 'businesses' && !state.businesses) { loadBusinesses(); }
 	}
 	function render() {
 		els.body.replaceChildren();
-		const views = { self: renderSelf, players: renderPlayers, vehicles: renderVehicles, world: renderWorld, businesses: renderBusinesses };
+		const views = {
+			self: renderSelf,
+			players: renderPlayers,
+			vehicles: renderVehicles,
+			hotel: renderHotel,
+			garages: renderGarages,
+			world: renderWorld,
+			businesses: renderBusinesses
+		};
 		(views[state.tab] || function () {})();
 	}
 
@@ -783,17 +795,32 @@
 		}));
 		weather.append(reset);
 
-		// Hotel de Nascimento
-		const hotel = world.hotel || {
+		const notice = card('Aviso para todos', 'Aparece como notificação para quem está online.');
+		const text = input('Ex.: Reinício do servidor em 5 minutos');
+		text.maxLength = 200;
+		const noticeRow = row();
+		noticeRow.append(text, button('Enviar', 'coe-button--primary', function () {
+			act('announce', { text: text.value }, 'Aviso enviado.', function () { text.value = ''; });
+		}));
+		notice.append(noticeRow);
+		els.body.append(clock, weather, notice);
+	}
+
+	// Hotel de Nascimento --------------------------------------------------------------------------------------
+
+	function renderHotel() {
+		const data = state.hotel || {};
+		const hotel = data.hotel || {
 			name: 'Motel Pink Cage',
 			enabled: true,
+			blip: true,
 			entrance: { x: 325.5, y: -212.8, z: 54.0, h: 160.0 },
 			room: { x: 151.4, y: -1007.8, z: -99.0, h: 0.0 },
 			exit: { x: 151.3, y: -1004.8, z: -99.0, h: 180.0 },
 			stash: { x: 151.8, y: -1001.2, z: -99.0, slots: 30, maxWeight: 50000 }
 		};
 
-		const hotelCard = card('Hotel de Nascimento (Starter Spawn)', 'Configuração de nascimento para novos cidadãos, porta de entrada, interior do quarto e baú.');
+		const hotelCard = card('Hotel de Nascimento (Starter Spawn)', 'Configuração de nascimento para novos cidadãos, porta de entrada, interior do quarto, baú privativo e blip no mapa.');
 
 		const hotelActive = el('input');
 		hotelActive.type = 'checkbox';
@@ -801,11 +828,17 @@
 		const hotelActiveLabel = el('label', 'sf-check');
 		hotelActiveLabel.append(hotelActive, el('span', null, 'Ativar nascimento no hotel'));
 
+		const hotelBlip = el('input');
+		hotelBlip.type = 'checkbox';
+		hotelBlip.checked = hotel.blip !== false;
+		const hotelBlipLabel = el('label', 'sf-check');
+		hotelBlipLabel.append(hotelBlip, el('span', null, 'Exibir Blip no mapa'));
+
 		const nameInput = input('Nome do Hotel', 'text', hotel.name || 'Motel Pink Cage');
 		nameInput.maxLength = 64;
 
 		const topConfigRow = row();
-		topConfigRow.append(nameInput, hotelActiveLabel);
+		topConfigRow.append(nameInput, hotelActiveLabel, hotelBlipLabel);
 		hotelCard.append(topConfigRow);
 
 		function createCoordInputs(initCoords, includeHeading) {
@@ -923,6 +956,7 @@
 			const payload = {
 				name: nameInput.value.trim() || 'Motel Pink Cage',
 				enabled: hotelActive.checked === true,
+				blip: hotelBlip.checked === true,
 				entrance: {
 					x: parseFloat(entranceInputs.x.value) || 0,
 					y: parseFloat(entranceInputs.y.value) || 0,
@@ -950,21 +984,189 @@
 				}
 			};
 			act('saveStarterHotel', payload, 'Hotel de nascimento salvo com sucesso.', function (data) {
-				state.world = data;
+				state.hotel = data;
 				render();
 			});
 		}));
 		hotelCard.append(saveHotelRow);
+		els.body.append(hotelCard);
+	}
 
-		const notice = card('Aviso para todos', 'Aparece como notificação para quem está online.');
-		const text = input('Ex.: Reinício do servidor em 5 minutos');
-		text.maxLength = 200;
-		const noticeRow = row();
-		noticeRow.append(text, button('Enviar', 'coe-button--primary', function () {
-			act('announce', { text: text.value }, 'Aviso enviado.', function () { text.value = ''; });
+	// Garagens -------------------------------------------------------------------------------------------------
+
+	function renderGarages() {
+		const data = state.garages || {};
+		const garagesList = Array.isArray(data.garages) ? data.garages : [];
+
+		const top = card('Gerenciador de Garagens', 'Cadastre, edite ou remova garagens públicas e frotas de Los Santos.');
+		const topRow = row();
+		topRow.append(button('+ Nova Garagem Pública', 'coe-button--primary', function () {
+			act('getMyCoords', {}, null, function (c) {
+				if (!c) return;
+				const autoId = 'garagem_' + Math.random().toString(36).substring(2, 8);
+				state.garageEdit = {
+					id: autoId,
+					kind: 'public',
+					label: 'Nova Garagem Pública',
+					enabled: true,
+					spots: [
+						{ id: 'vaga_1', label: 'Vaga 1', x: c.x, y: c.y, z: c.z, radius: 3.5, heading: c.h || 0.0 }
+					],
+					blip: { enabled: true, sprite: 357, color: 3, scale: 0.8 }
+				};
+				render();
+			});
 		}));
-		notice.append(noticeRow);
-		els.body.append(clock, weather, hotelCard, notice);
+		top.append(topRow);
+
+		if (state.garageEdit) {
+			const ed = state.garageEdit;
+			const editCard = card('Configurar Garagem: ' + ed.label, 'Defina o nome, vagas e blip da garagem.');
+			
+			const idInput = input('ID único', 'text', ed.id);
+			idInput.disabled = true;
+			const labelInput = input('Nome da Garagem', 'text', ed.label);
+			
+			const kindSelect = el('select', 'coe-field');
+			[
+				{ val: 'public', label: 'Pública (Cidadãos)' },
+				{ val: 'business', label: 'Negócio (Frota)' },
+				{ val: 'job', label: 'Corporação (Polícia/EMS)' }
+			].forEach(function (opt) {
+				const o = el('option', null, opt.label);
+				o.value = opt.val;
+				if (opt.val === ed.kind) o.selected = true;
+				kindSelect.append(o);
+			});
+
+			const activeCb = el('input');
+			activeCb.type = 'checkbox';
+			activeCb.checked = ed.enabled !== false;
+			const activeLabel = el('label', 'sf-check');
+			activeLabel.append(activeCb, el('span', null, 'Garagem Ativa'));
+
+			const blipCb = el('input');
+			blipCb.type = 'checkbox';
+			blipCb.checked = (ed.blip && ed.blip.enabled) !== false;
+			const blipLabel = el('label', 'sf-check');
+			blipLabel.append(blipCb, el('span', null, 'Exibir Blip no Mapa'));
+
+			const r1 = row();
+			r1.append(idInput, labelInput, kindSelect, activeLabel, blipLabel);
+			editCard.append(r1);
+
+			// Vagas
+			const spotsBox = el('div', 'sf-hotel-point');
+			spotsBox.append(el('strong', 'sf-hotel-point-title', 'Vagas / Pontos de Abertura e Saída (' + ed.spots.length + ')'));
+			
+			ed.spots.forEach(function (spot, idx) {
+				const spotRow = row();
+				const sLabel = input('Rótulo', 'text', spot.label || ('Vaga ' + (idx + 1)));
+				sLabel.className += ' sf-narrow';
+				const sx = input('X', 'number', spot.x); sx.className += ' sf-coord-input';
+				const sy = input('Y', 'number', spot.y); sy.className += ' sf-coord-input';
+				const sz = input('Z', 'number', spot.z); sz.className += ' sf-coord-input';
+				const sh = input('Heading', 'number', spot.heading || 0); sh.className += ' sf-coord-input';
+				
+				spotRow.append(
+					sLabel, sx, sy, sz, sh,
+					button('Minhas Coords', 'sf-small', function () {
+						act('getMyCoords', {}, null, function (c) {
+							if (c) {
+								sx.value = c.x; sy.value = c.y; sz.value = c.z; sh.value = c.h;
+								spot.x = c.x; spot.y = c.y; spot.z = c.z; spot.heading = c.h;
+							}
+						});
+					})
+				);
+				spotsBox.append(spotRow);
+			});
+
+			const spotActions = row();
+			if (ed.spots.length < 8) {
+				spotActions.append(button('+ Adicionar Vaga', 'sf-small', function () {
+					act('getMyCoords', {}, null, function (c) {
+						const coords = c || { x: 0, y: 0, z: 0, h: 0 };
+						ed.spots.push({
+							id: 'vaga_' + (ed.spots.length + 1),
+							label: 'Vaga ' + (ed.spots.length + 1),
+							x: coords.x, y: coords.y, z: coords.z,
+							radius: 3.5, heading: coords.h || 0.0
+						});
+						render();
+					});
+				}));
+			}
+			spotsBox.append(spotActions);
+			editCard.append(spotsBox);
+
+			const saveRow = row();
+			saveRow.append(
+				button('Salvar Garagem', 'coe-button--primary', function () {
+					ed.label = labelInput.value.trim() || 'Garagem Pública';
+					ed.kind = kindSelect.value;
+					ed.enabled = activeCb.checked === true;
+					ed.blip = {
+						enabled: blipCb.checked === true,
+						sprite: (ed.blip && ed.blip.sprite) || 357,
+						color: (ed.blip && ed.blip.color) || 3,
+						scale: (ed.blip && ed.blip.scale) || 0.8
+					};
+					act('garageSave', ed, 'Garagem salva com sucesso.', function (res) {
+						state.garages = res;
+						state.garageEdit = null;
+						render();
+					});
+				}),
+				button('Cancelar', '', function () {
+					state.garageEdit = null;
+					render();
+				})
+			);
+			editCard.append(saveRow);
+			els.body.append(top, editCard);
+			return;
+		}
+
+		// Lista de Garagens
+		const listCard = card('Garagens Existentes (' + garagesList.length + ')', 'Garagens cadastradas no servidor.');
+		if (!garagesList.length) {
+			listCard.append(empty('Nenhuma garagem cadastrada no momento.'));
+		} else {
+			const kindNames = { public: 'Pública', business: 'Negócio', job: 'Corporação' };
+			garagesList.forEach(function (g) {
+				const gRow = row();
+				const badge = el('span', 'sf-version-badge', kindNames[g.kind] || g.kind);
+				const title = el('strong', null, g.label + ' (' + (g.spots ? g.spots.length : 0) + ' vagas)');
+				const sub = el('small', null, 'ID: ' + g.id + (g.blip && g.blip.enabled ? ' • Blip On' : ' • Blip Off'));
+				
+				const infoBox = el('div', 'sf-inline');
+				infoBox.append(badge, title, sub);
+
+				gRow.append(
+					infoBox,
+					button('Ir até lá', 'sf-small', function () {
+						act('garageGoto', { id: g.id }, 'Teleportado para a garagem.');
+					}),
+					button('Editar', 'sf-small', function () {
+						state.garageEdit = JSON.parse(JSON.stringify(g));
+						render();
+					}),
+					button('Remover', 'sf-small coe-button--danger', function () {
+						if (confirm('Deseja realmente remover a garagem ' + g.label + '?')) {
+							act('garageDelete', { id: g.id }, 'Garagem removida.', function (res) {
+								state.garages = res;
+								render();
+							});
+						}
+					})
+				);
+				listCard.append(gRow);
+			});
+		}
+
+		els.body.append(top, listCard);
+	}
 	}
 
 	// Negócios -------------------------------------------------------------------------------------------------
