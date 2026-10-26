@@ -1,0 +1,18 @@
+Locales = Locales or {}
+Locales['pt-BR'] = {
+	['prompt_open_garage'] = 'Pressione ~INPUT_CONTEXT~ para abrir a garagem',
+	['prompt_store_vehicle'] = 'Pressione ~INPUT_CONTEXT~ para guardar o veículo',
+	['no_vehicles_stored'] = 'Você não tem nenhum veículo guardado nesta garagem.',
+	['vehicle_stored'] = 'Veículo guardado com sucesso.',
+	['vehicle_retrieved'] = 'Veículo retirado com sucesso.',
+	['garage_not_found'] = 'Garagem não encontrada.',
+	['spot_not_found'] = 'Vaga não encontrada.',
+	['too_far'] = 'Você está muito longe da vaga.',
+	['not_your_vehicle'] = 'Este veículo não pertence a você.',
+	['vehicle_not_stored'] = 'O veículo não está guardado nesta garagem.',
+	['spawn_failed'] = 'Não foi possível retirar o veículo.',
+	['store_failed'] = 'Não foi possível guardar o veículo.',
+	['garage_saved'] = 'Garagem salva com sucesso.',
+	['garage_deleted'] = 'Garagem removida com sucesso.',
+	['cooldown'] = 'Aguarde um momento antes de realizar outra ação.'
+}

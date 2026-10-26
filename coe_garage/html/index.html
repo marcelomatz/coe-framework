@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Garagem Pública</title>
+	<link rel="stylesheet" href="nui://coe_ui/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/components.css">
+	<link rel="stylesheet" href="garage.css">
+</head>
+<body>
+	<div id="garage-modal" class="coe-modal-overlay" hidden>
+		<div class="coe-modal garage-card">
+			<header class="coe-modal-header">
+				<div class="garage-header-info">
+					<h2 class="coe-modal-title">Garagem Pública</h2>
+					<p class="garage-subtitle">Selecione o veículo que deseja retirar da vaga</p>
+				</div>
+				<button id="garage-close" class="coe-button coe-button--ghost coe-button--icon" aria-label="Fechar">✕</button>
+			</header>
+			<div class="coe-modal-body">
+				<div id="vehicle-list" class="garage-vehicle-list">
+					<!-- Veículos injetados via JS -->
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="nui://coe_ui/theme_bridge.js"></script>
+	<script src="garage.js"></script>
+</body>
+</html>
