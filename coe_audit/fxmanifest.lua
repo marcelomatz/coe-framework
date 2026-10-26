@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_audit'
-version '0.1.0-beta.2'
+version '0.1.0-beta.3'
 description 'Trilha de auditoria durável (MariaDB) dos resources Coe'
 
 dependencies {
