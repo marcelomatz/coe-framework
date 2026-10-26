@@ -136,6 +136,33 @@ eq(SupervisorUpdater.IsBinaryFile('html/ui.png'), true, 'png é binário')
 eq(SupervisorUpdater.IsBinaryFile('server/main.lua'), false, 'lua não é binário')
 eq(SupervisorUpdater.IsBinaryFile('html/app.js'), false, 'js não é binário')
 
+-- 6. Testes de detecção de arquivos de configuração e proteção de chaves
+eq(SupervisorUpdater.IsConfigFile('config.lua'), true, 'config.lua na raiz é arquivo de config')
+eq(SupervisorUpdater.IsConfigFile('shared/config.lua'), true, 'config.lua em subpasta')
+eq(SupervisorUpdater.IsConfigFile('config/hotels.lua'), true, 'arquivo em config/ é config')
+eq(SupervisorUpdater.IsConfigFile('server/main.lua'), false, 'server/main.lua não é config')
+eq(SupervisorUpdater.IsConfigFile('config.dist.lua'), false, 'config.dist.lua não é tratado como config ativo')
+eq(SupervisorUpdater.IsConfigFile('config.lua.bak'), false, 'backup .bak não é tratado como config ativo')
+
+local localCfg = [[
+Config = {}
+Config.HotelName = 'Meu Hotel Personalizado'
+Config.HotelPrice = 150
+]]
+
+local remoteCfg = [[
+Config = {}
+Config.HotelName = 'Motel Pink Cage'
+Config.HotelPrice = 50
+Config.AllowStash = true
+Config.StashWeight = 50000
+]]
+
+local newKeys = SupervisorUpdater.DetectNewConfigKeys(localCfg, remoteCfg)
+eq(#newKeys, 2, 'detectou exatamente 2 novas chaves')
+eq(newKeys[1], 'Config.AllowStash', 'primeira nova chave')
+eq(newKeys[2], 'Config.StashWeight', 'segunda nova chave')
+
 -- Hash normaliza CRLF para LF em texto (garante consistência Windows vs Linux)
 local textLf = 'local a = 1\nlocal b = 2\n'
 local textCrlf = 'local a = 1\r\nlocal b = 2\r\n'
