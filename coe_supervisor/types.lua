@@ -65,6 +65,13 @@ function exports_coe_supervisor:CheckForUpdates(requester) end
 ---@return boolean ok
 function exports_coe_supervisor:WriteFile(filePath, content, isBinary) end
 
+---Baixa um arquivo da rede diretamente para o disco via stream binário Node.js nativo do FXServer.
+---@param url string URL do arquivo remoto
+---@param filePath string Caminho físico absoluto de destino no host
+---@param cb fun(ok: boolean, err: string|nil)|nil Callback assíncrono de conclusão
+---@return boolean ok Se o download foi iniciado
+function exports_coe_supervisor:DownloadFile(url, filePath, cb) end
+
 ---Lê um arquivo do disco diretamente via Node.js nativo do FXServer.
 ---@param filePath string Caminho físico absoluto no host
 ---@return string|nil content

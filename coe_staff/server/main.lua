@@ -54,7 +54,12 @@ local function remote(resource, name, ...)
 	end
 	local args = table.pack(...)
 	local ok, result = pcall(function()
-		return exports[resource][name](exports[resource], table.unpack(args, 1, args.n))
+		local target = exports[resource]
+		local fn = target and target[name]
+		if type(fn) ~= 'function' then
+			error('export_not_found')
+		end
+		return fn(target, table.unpack(args, 1, args.n))
 	end)
 	if not ok then
 		log('warn', 'system', 'staff_remote_failed', { action = resource .. ':' .. name, error_code = tostring(result):sub(1, 96) })

@@ -669,42 +669,72 @@ local function runApplyUpdate(requester)
 
 				local isConfig = type(Updater.IsConfigFile) == 'function' and Updater.IsConfigFile(item.file)
 				local existingLocalRaw = isConfig and readResourceFile(item.resource, item.file) or nil
-
-				local content, dlErr = httpGet(item.url, updaterConfig.TimeoutMs, 3)
-				if not content then
-					failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(dlErr))
-					break
-				end
-
-				-- Se for um arquivo de configuração já existente e customizado pelo administrador:
-				-- Preserva o arquivo do usuário, faz backup e grava a versão da release como .dist.lua
 				local wroteTarget = true
-				if isConfig and type(existingLocalRaw) == 'string' and existingLocalRaw ~= '' then
-					local localHash = Updater.Hash(existingLocalRaw, false)
-					if item.hash and localHash ~= item.hash then
-						local bakFile = item.file .. '.bak'
-						writeResourceFile(item.resource, bakFile, existingLocalRaw, false)
 
-						local distFile = item.file:gsub('%.lua$', '.dist.lua')
-						if distFile == item.file then
-							distFile = item.file .. '.dist'
+				-- Para arquivos binários (imagens webp/png, fontes, etc.), usa download nativo via stream Node.js
+				-- para evitar corrupção de bytes na conversão de string UTF-8 do runtime Lua do FXServer.
+				if item.isBinary and exports and exports[currentRes] and exports[currentRes].DownloadFile and type(GetResourcePath) == 'function' then
+					local basePath = GetResourcePath(item.resource)
+					if type(basePath) == 'string' and basePath ~= '' then
+						local safeRel = Updater.SanitizeRelativePath(item.file)
+						if safeRel then
+							local fullPath = basePath:gsub('\\', '/'):gsub('/+$', '') .. '/' .. safeRel
+							local pDl = promise.new()
+							local triggered = false
+							pcall(function()
+								triggered = exports[currentRes]:DownloadFile(item.url, fullPath, function(ok, err)
+									pDl:resolve({ ok = ok == true, err = err })
+								end)
+							end)
+							if triggered then
+								local dlRes = Citizen.Await(pDl)
+								if dlRes and dlRes.ok then
+									wroteTarget = false
+								else
+									failedFile = ('%s/%s (dl_binary_failed: %s)'):format(item.resource, item.file, tostring(dlRes and dlRes.err or 'unknown'))
+									break
+								end
+							end
 						end
-						writeResourceFile(item.resource, distFile, content, false)
-
-						local newKeys = type(Updater.DetectNewConfigKeys) == 'function' and Updater.DetectNewConfigKeys(existingLocalRaw, content) or {}
-						local newKeysMsg = #newKeys > 0 and (' (novas chaves: ' .. table.concat(newKeys, ', ') .. ')') or ''
-
-						say('WARN', 'config_preserved', ('%s/%s customizado localmente; preservado! Referencia upstream salva em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
-						if requester then
-							notify(requester, true, ('Config mantida: %s/%s. Referência nova em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
-						end
-						wroteTarget = false
 					end
 				end
 
-				if wroteTarget and not writeResourceFile(item.resource, item.file, content, item.isBinary) then
-					failedFile = ('%s/%s (write_failed)'):format(item.resource, item.file)
-					break
+				if wroteTarget then
+					local content, dlErr = httpGet(item.url, updaterConfig.TimeoutMs, 3)
+					if not content then
+						failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(dlErr))
+						break
+					end
+
+					-- Se for um arquivo de configuração já existente e customizado pelo administrador:
+					-- Preserva o arquivo do usuário, faz backup e grava a versão da release como .dist.lua
+					if isConfig and type(existingLocalRaw) == 'string' and existingLocalRaw ~= '' then
+						local localHash = Updater.Hash(existingLocalRaw, false)
+						if item.hash and localHash ~= item.hash then
+							local bakFile = item.file .. '.bak'
+							writeResourceFile(item.resource, bakFile, existingLocalRaw, false)
+
+							local distFile = item.file:gsub('%.lua$', '.dist.lua')
+							if distFile == item.file then
+								distFile = item.file .. '.dist'
+							end
+							writeResourceFile(item.resource, distFile, content, false)
+
+							local newKeys = type(Updater.DetectNewConfigKeys) == 'function' and Updater.DetectNewConfigKeys(existingLocalRaw, content) or {}
+							local newKeysMsg = #newKeys > 0 and (' (novas chaves: ' .. table.concat(newKeys, ', ') .. ')') or ''
+
+							say('WARN', 'config_preserved', ('%s/%s customizado localmente; preservado! Referencia upstream salva em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
+							if requester then
+								notify(requester, true, ('Config mantida: %s/%s. Referência nova em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
+							end
+							wroteTarget = false
+						end
+					end
+
+					if wroteTarget and not writeResourceFile(item.resource, item.file, content, item.isBinary) then
+						failedFile = ('%s/%s (write_failed)'):format(item.resource, item.file)
+						break
+					end
 				end
 				updatedResources[item.resource] = true
 				filesWritten = filesWritten + 1

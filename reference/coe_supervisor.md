@@ -62,6 +62,20 @@ Grava um arquivo em disco diretamente via Node.js nativo do FXServer.
 
 - `boolean` `ok`
 
+### `DownloadFile(url, filePath, cb)`
+
+Baixa um arquivo da rede diretamente para o disco via stream binário Node.js nativo do FXServer.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `url` | `string` | URL do arquivo remoto |
+| `filePath` | `string` | Caminho físico absoluto de destino no host |
+| `cb` | `fun(ok:` | boolean, err: string\|nil)\|nil Callback assíncrono de conclusão |
+
+**Retorno**
+
+- `boolean` `ok` — Se o download foi iniciado
+
 ### `ReadFile(filePath)`
 
 Lê um arquivo do disco diretamente via Node.js nativo do FXServer.

@@ -348,4 +348,32 @@ do
 	assertEqual(errBmp, 'invalid_item_image', 'erro correto para formato não suportado')
 end
 
+-- Teste de compatibilidade de invocação de exports (chamadas com '.' e chamadas com ':' passando self)
+do
+	local fakeSelf = { _resource = 'coe_inventory' }
+
+	-- 1. Items() com self e sem self
+	local allItemsDot = exported.Items()
+	assertEqual(type(allItemsDot), 'table', 'Items() sem self retorna catalogo')
+	assertEqual(allItemsDot.water ~= nil, true, 'catalogo contem water')
+
+	local allItemsColon = exported.Items(fakeSelf)
+	assertEqual(type(allItemsColon), 'table', 'Items() com self retorna catalogo completo')
+	assertEqual(allItemsColon.water ~= nil, true, 'catalogo com self contem water')
+
+	-- 2. Items(name) com self e sem self
+	local waterDot = exported.Items('water')
+	assertEqual(type(waterDot), 'table', 'Items(name) sem self')
+	assertEqual(waterDot.name, 'water', 'retorna water')
+
+	local waterColon = exported.Items(fakeSelf, 'water')
+	assertEqual(type(waterColon), 'table', 'Items(fakeSelf, name) com self')
+	assertEqual(waterColon.name, 'water', 'retorna water')
+
+	-- 3. GetPlayerInventory(playerId) com self e sem self
+	local idColon, invColon = exported.GetPlayerInventory(fakeSelf, 42)
+	assertEqual(idColon, 'character:71', 'GetPlayerInventory com self resolve ID correto')
+	assertEqual(type(invColon), 'table', 'GetPlayerInventory com self retorna snapshot')
+end
+
 print('inventory service tests passed')
