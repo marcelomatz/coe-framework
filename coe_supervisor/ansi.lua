@@ -223,6 +223,60 @@ function SupervisorAnsi.PrintUpdateCompleted(result)
 	print(hLine)
 end
 
+---Exibe o banner estruturado de início de atualização.
+---@param plan table
+---@param requester string|integer|nil
+function SupervisorAnsi.PrintUpdateStart(plan, requester)
+	local W = 74
+	local hLine = C.coeBorder .. string.rep('═', W) .. C.reset
+	local sepLine = C.coeBorder .. string.rep('─', W) .. C.reset
+	local req = (type(requester) == 'number' and requester > 0) and ('Staff (ID ' .. requester .. ')') or tostring(requester or 'console')
+	local localVer = tostring(plan.localVersion or '?')
+	local targetTag = tostring(plan.tag or ('v' .. (plan.remoteVersion or '?')))
+
+	print(hLine)
+	print(string.format('%s  %sCOE FRAMEWORK%s  •  %sSUPERVISOR%s', C.coeBorder, C.bold .. C.coeBrand, C.reset, C.bold .. C.brightWhite, C.reset))
+	print(string.format('  %s%sINICIANDO APLICAÇÃO DE ATUALIZAÇÃO (%sv%s → %s)%s', C.bold, C.brightCyan, C.reset .. C.gray, localVer, C.bold .. C.brightGreen .. targetTag, C.reset))
+	print(sepLine)
+	print(string.format('  %sArquivos a gravar :%s %s%d arquivo(s)%s em %s%d resource(s)%s',
+		C.brightWhite, C.reset, C.bold .. C.brightCyan, tonumber(plan.filesCount) or 0, C.reset, C.brightYellow, tonumber(plan.outdatedCount) or 0, C.reset))
+	print(string.format('  %sSolicitado por    :%s %s%s%s', C.brightWhite, C.reset, C.brightWhite, req, C.reset))
+	print(string.format('  %sStatus            :%s %sBaixando scripts e gravando no servidor...%s', C.brightWhite, C.reset, C.bold .. C.brightYellow, C.reset))
+	print(sepLine)
+	print(string.format('  %sAcompanhe o progresso abaixo ou digite "coe_update status"%s', C.coeMuted, C.reset))
+	print(hLine)
+end
+
+---Exibe o banner estruturado de atualização que já está em andamento.
+---@param st table
+function SupervisorAnsi.PrintUpdateInProgress(st)
+	local W = 74
+	local hLine = C.coeBorder .. string.rep('═', W) .. C.reset
+	local sepLine = C.coeBorder .. string.rep('─', W) .. C.reset
+	local written = tonumber(st.filesWritten) or 0
+	local total = tonumber(st.filesCount) or 0
+	local pct = total > 0 and math.floor((written / total) * 100) or 0
+	local req = (type(st.requester) == 'number' and st.requester > 0) and ('Staff (ID ' .. st.requester .. ')') or tostring(st.requester or 'console/automático')
+	local elapsed = st.startTime and (os.time() - st.startTime) or 0
+	local targetVer = tostring(st.remoteVersion or st.tag or '?')
+
+	print(hLine)
+	print(string.format('  %s%s[!] UMA ATUALIZAÇÃO JÁ ESTÁ EM ANDAMENTO NO SERVIDOR%s', C.bold, C.brightYellow, C.reset))
+	print(sepLine)
+	print(string.format('  %sVersão de destino :%s %sv%s%s', C.brightWhite, C.reset, C.bold .. C.brightGreen, targetVer:gsub('^v', ''), C.reset))
+	print(string.format('  %sProgresso atual   :%s %s%d / %d arquivo(s) gravados (%d%%)%s',
+		C.brightWhite, C.reset, C.bold .. C.brightCyan, written, total, pct, C.reset))
+	if st.currentResource then
+		print(string.format('  %sResource atual    :%s %s%s%s', C.brightWhite, C.reset, C.bold .. C.brightYellow, st.currentResource, C.reset))
+	end
+	print(string.format('  %sSolicitado por    :%s %s%s%s (há %ds)', C.brightWhite, C.reset, C.brightWhite, req, C.reset, elapsed))
+	print(string.format('  %sStatus            :%s %sDownload e gravação em execução em segundo plano...%s', C.brightWhite, C.reset, C.brightYellow, C.reset))
+	print(sepLine)
+	SupervisorAnsi.PrintProgress(written, total, st.currentResource or 'preparando...')
+	print(string.format('  %sDica: "coe_update status" para acompanhar | "coe_update reset" para destravar%s', C.coeMuted, C.reset))
+	print(hLine)
+end
+
 ---Exibe o progresso de atualização de um arquivo/resource.
 ---@param current integer
 ---@param total integer

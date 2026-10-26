@@ -270,6 +270,9 @@ local updateState = {
 	isCumulative = false,
 	planType = 'direct',
 	planSummary = nil,
+	startTime = nil,
+	lastProgressTime = nil,
+	requester = nil,
 	requiresFullRestart = false,
 	needsRestart = false,
 	lastError = nil
@@ -300,6 +303,9 @@ local function publishUpdateState()
 		isCumulative = updateState.isCumulative == true,
 		planType = updateState.planType or 'direct',
 		planSummary = updateState.planSummary,
+		startTime = updateState.startTime,
+		lastProgressTime = updateState.lastProgressTime,
+		requester = updateState.requester,
 		requiresFullRestart = updateState.requiresFullRestart == true,
 		needsRestart = updateState.needsRestart == true,
 		lastError = updateState.lastError
@@ -472,15 +478,23 @@ local function runApplyUpdate(requester)
 	updateState.filesWritten = 0
 	updateState.currentResource = nil
 	updateState.lastError = nil
+	updateState.startTime = os.time()
+	updateState.lastProgressTime = os.time()
+	updateState.requester = requester or 'console'
 	publishUpdateState()
 
 	local plan = lastUpdatePlan
-	say('INFO', 'update_started', ('from=v%s to=v%s resources=%d files=%d requester=%s'):format(
-		tostring(plan.localVersion), tostring(plan.remoteVersion), plan.outdatedCount or 0, plan.filesCount or 0, tostring(requester or 'console')))
+	if Ansi and Ansi.PrintUpdateStart then
+		Ansi.PrintUpdateStart(plan, requester)
+	else
+		say('INFO', 'update_started', ('from=v%s to=v%s resources=%d files=%d requester=%s'):format(
+			tostring(plan.localVersion), tostring(plan.remoteVersion), plan.outdatedCount or 0, plan.filesCount or 0, tostring(requester or 'console')))
+	end
 
 	local updatedResources = {}
 	local filesWritten = 0
 	local failedFile = nil
+	local lastPrintedRes = nil
 
 	for _, item in ipairs(plan.downloads or {}) do
 		local resState = GetResourceState(item.resource)
@@ -498,12 +512,16 @@ local function runApplyUpdate(requester)
 			filesWritten = filesWritten + 1
 			updateState.filesWritten = filesWritten
 			updateState.currentResource = item.resource
+			updateState.lastProgressTime = os.time()
+
 			local totalDl = #(plan.downloads or {})
 			if filesWritten % 5 == 0 or filesWritten == totalDl then
 				publishUpdateState()
 			end
 			if Ansi and Ansi.PrintProgress and totalDl > 0 then
-				if filesWritten % 20 == 0 or filesWritten == totalDl then
+				local resChanged = (lastPrintedRes ~= item.resource)
+				if filesWritten == 1 or filesWritten % 10 == 0 or filesWritten == totalDl or resChanged then
+					lastPrintedRes = item.resource
 					Ansi.PrintProgress(filesWritten, totalDl, item.resource)
 				end
 			end
@@ -512,6 +530,9 @@ local function runApplyUpdate(requester)
 
 	if failedFile then
 		updateState.updating = false
+		updateState.startTime = nil
+		updateState.lastProgressTime = nil
+		updateState.requester = nil
 		updateState.lastError = 'download_failed'
 		publishUpdateState()
 		say('ERROR', 'update_failed', 'file=' .. failedFile)
@@ -538,6 +559,9 @@ local function runApplyUpdate(requester)
 	updateState.filesCount = 0
 	updateState.filesWritten = filesWritten
 	updateState.currentResource = nil
+	updateState.startTime = nil
+	updateState.lastProgressTime = nil
+	updateState.requester = nil
 	updateState.needsRestart = true
 	updateState.lastError = nil
 	lastUpdatePlan = nil
@@ -645,6 +669,18 @@ CreateThread(function()
 	publishUpdateState()
 	while true do
 		Wait(1000)
+
+		-- Watchdog: se uma atualização estiver ativa há mais de 300 segundos sem nenhum arquivo novo ser gravado
+		if updateState.updating and updateState.lastProgressTime and (os.time() - updateState.lastProgressTime > 300) then
+			say('WARN', 'update_watchdog_timeout', 'Processo de atualização travado há mais de 300s sem progresso. Redefinindo estado.')
+			updateState.updating = false
+			updateState.startTime = nil
+			updateState.lastProgressTime = nil
+			updateState.requester = nil
+			updateState.lastError = 'watchdog_timeout'
+			publishUpdateState()
+		end
+
 		if replaceConfig.Enabled ~= false and not running and GetGameTimer() - lastChange >= (replaceConfig.SettleMs or 4000) then
 			settled = true
 			if dirty then
@@ -758,15 +794,65 @@ RegisterCommand('coe_update', function(playerId, args)
 	if playerId ~= 0 and not IsPlayerAceAllowed(playerId, 'command.coe_update') and not IsPlayerAceAllowed(playerId, 'coe.staff.all') then
 		return
 	end
-	local sub = type(args) == 'table' and type(args[1]) == 'string' and args[1]:lower() or 'check'
+	local sub = type(args) == 'table' and type(args[1]) == 'string' and args[1]:lower() or 'status'
 	CreateThread(function()
 		if sub == 'apply' or sub == 'install' or sub == 'now' then
+			if updateState.updating then
+				if Ansi and Ansi.PrintUpdateInProgress then
+					Ansi.PrintUpdateInProgress(updateState)
+				else
+					say('WARN', 'update_in_progress', ('Progresso: %d/%d arquivos em %s'):format(
+						updateState.filesWritten or 0, updateState.filesCount or 0, tostring(updateState.currentResource or 'preparando')))
+				end
+				return
+			end
+
 			local ok, result = runApplyUpdate(playerId ~= 0 and playerId or nil)
 			if not ok then
-				say('WARN', 'coe_update_apply', tostring(result))
+				if result == 'update_in_progress' then
+					if Ansi and Ansi.PrintUpdateInProgress then
+						Ansi.PrintUpdateInProgress(updateState)
+					else
+						say('WARN', 'coe_update_apply', 'update_in_progress')
+					end
+				elseif result == 'already_up_to_date' then
+					print('[coe_supervisor] O servidor já está na versão mais recente.')
+				else
+					say('WARN', 'coe_update_apply', tostring(result))
+				end
+			end
+		elseif sub == 'status' or sub == 'progress' or sub == 'info' then
+			if updateState.updating then
+				if Ansi and Ansi.PrintUpdateInProgress then
+					Ansi.PrintUpdateInProgress(updateState)
+				else
+					print(('[coe_supervisor] Atualização em andamento: %d/%d arquivos (%s)'):format(
+						updateState.filesWritten or 0, updateState.filesCount or 0, tostring(updateState.currentResource or 'preparando')))
+				end
+			elseif updateState.available then
+				local plan = lastUpdatePlan or updateState
+				printUpdateBanner(plan)
 			else
-				say('INFO', 'coe_update_applied', ('v%s (%d resources, %d arquivos)'):format(
-					tostring(result.version), result.updatedResources or 0, result.filesUpdated or 0))
+				local st = publishUpdateState()
+				if Ansi and Ansi.PrintVersion then
+					Ansi.PrintVersion(st)
+				else
+					print('[coe_supervisor] Todos os scripts estão atualizados. Versão instalada: v' .. tostring(st.localVersion))
+				end
+			end
+		elseif sub == 'reset' or sub == 'abort' or sub == 'cancel' then
+			if updateState.updating then
+				updateState.updating = false
+				updateState.filesWritten = 0
+				updateState.currentResource = nil
+				updateState.startTime = nil
+				updateState.lastProgressTime = nil
+				updateState.requester = nil
+				updateState.lastError = 'cancelled_by_admin'
+				publishUpdateState()
+				print('[coe_supervisor] Trava de atualização redefinida com sucesso. O processo foi cancelado.')
+			else
+				print('[coe_supervisor] Nenhuma atualização estava em andamento no momento.')
 			end
 		else
 			runCheckForUpdates(true)
