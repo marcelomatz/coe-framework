@@ -1,5 +1,5 @@
 ---@meta
----@diagnostic disable
+-- Contrato público de coe_spawn para LuaLS. Não é carregado pelo servidor. Ver docs/ANNOTATIONS.md.
 
 ---@class StarterHotelCoords
 ---@field x number
@@ -22,11 +22,14 @@
 ---@field exit StarterHotelCoords
 ---@field stash StarterHotelStash
 
+---@class CoeSpawnExports
+local exports_coe_spawn = {}
+
 ---Retorna a configuração atual do hotel de nascimento dos jogadores.
 ---@return StarterHotel
-function exports.coe_spawn:GetStarterHotel() end
+function exports_coe_spawn:GetStarterHotel() end
 
 ---Salva e atualiza as configurações do hotel de nascimento, sincronizando com os jogadores conectados.
 ---@param data StarterHotel|table
 ---@return boolean success, string? errorCode
-function exports.coe_spawn:SetStarterHotel(data) end
+function exports_coe_spawn:SetStarterHotel(data) end

@@ -4,6 +4,26 @@
 
 ## Exports
 
+### `GetStarterHotel()`
+
+Retorna a configuração atual do hotel de nascimento dos jogadores.
+
+**Retorno**
+
+- `StarterHotel`
+
+### `SetStarterHotel(data)`
+
+Salva e atualiza as configurações do hotel de nascimento, sincronizando com os jogadores conectados.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `data` | `StarterHotel\|table` |  |
+
+**Retorno**
+
+- `boolean` `success,` — string? errorCode
+
 ## Tipos
 
 ```lua

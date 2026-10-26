@@ -16,7 +16,7 @@
 | [coe_needs](coe_needs.md) | `GetNeeds`, `SetNeed`, `AddNeed` |
 | [coe_notify](coe_notify.md) | `Notify`, `Show` |
 | [coe_shops](coe_shops.md) | `IsReady`, `GetShelves`, `IsStore`, `BusinessTablet`, `RegisterPaymentMethod` |
-| [coe_spawn](coe_spawn.md) |  |
+| [coe_spawn](coe_spawn.md) | `GetStarterHotel`, `SetStarterHotel` |
 | [coe_staff](coe_staff.md) | `Yield`, `Status` |
 | [coe_supervisor](coe_supervisor.md) | `List`, `Restart`, `GetUpdateStatus`, `CheckForUpdates`, `ApplyUpdate` |
 | [coe_ui](coe_ui.md) | `GetTheme`, `GetThemes`, `SetTheme`, `GetAccent`, `SetAccent` |
