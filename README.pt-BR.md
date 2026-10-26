@@ -6,7 +6,7 @@
 
 > **A Nova Geração da Engenharia FiveM** — Arquitetura Server-Authoritative, desacoplamento nativo via Camada de Plataforma (`Core.Platform`), 0.00ms de resmon em repouso e tipagem estrita.
 
-[![FiveM](https://img.shields.io/badge/FiveM-FXServer%20b3407+-blue.svg)](https://fivem.net)
+[![FiveM Enhanced](https://img.shields.io/badge/FiveM_Enhanced-Build_b170%2B-f97316.svg)](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows)
 [![Lua](https://img.shields.io/badge/Lua-5.4-blue.svg)](https://www.lua.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Architecture](https://img.shields.io/badge/Architecture-Server--Authoritative-orange.svg)](#arquitetura-e-padroes-de-engenharia)
@@ -96,12 +96,19 @@ O foco absoluto e prioritário deste projeto é fornecer e aprimorar continuamen
 
 ## 🚀 Como Iniciar
 
-### Pré-requisitos
-* FiveM Server Artifacts **b3407** ou superior (Windows ou Linux).
-* MariaDB Server **10.6+** ou MySQL **8.0+**.
-* Lua **5.4** habilitado no `fxmanifest.lua` (`lua54 'yes'`).
+### Pré-requisitos (FiveM for GTAV Enhanced)
+* **Cfx Server (FiveM for GTAV Enhanced)**: **Build 170+ (`b170`)** — Windows (`cfx-server_win_x64.zip`) ou Linux (`cfx-server_linux_x64.tar.xz`) em [docs.fivem.net/docs/server-download/?platform=enhanced](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows).
+* **GTA V Enhanced Game Build**: **Gen9 / DirectX 12 Nativo** (todas as DLCs habilitadas nativamente; não utilize `sv_enforceGameBuild` legado).
+* **MariaDB Server 11.x+** (collation `utf8mb4_unicode_ci`).
+* **Lua 5.4** habilitado no `fxmanifest.lua` (`lua54 'yes'`).
 
-### 1. Clonagem e Configuração
+### Opção 1: Instalação Automática em 1 Clique (txAdmin Recipe — Recomendado para Iniciantes)
+No assistente de criação do **txAdmin** (`http://localhost:40120`), selecione **Remote URL Template** e cole:
+```text
+https://www.coeroleplay.app/recipe.yaml
+```
+
+### Opção 2: Clonagem Manual e Configuração
 ```bash
 # Clone o repositório dentro do diretório de resources do seu servidor
 cd txData/YOUR_SERVER/resources
@@ -133,6 +140,10 @@ cd [coe-framework]
 lua tools/check_contracts.lua
 lua tools/smoke_boot_test.lua
 ```
+
+### 4. Conectando os Agentes de IA do COE (`.agents/`)
+O workspace do COE inclui **5 Rules** (`.agents/rules/`) e **8 Skills** (`.agents/skills/`) prontas para assistentes de IA (**Google Antigravity**, **Cursor**, **Windsurf**, **GitHub Copilot** e **Claude Code**). Abra a pasta raiz do workspace na sua IDE e peça em português:
+> *"Usando a skill `coe-novo-resource`, crie um resource chamado `coe_fishing` com loja de varas de pesca, validação server-authoritative de distância, textos em pt-BR/en-US e testes unitários."*
 
 ---
 
