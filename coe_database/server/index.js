@@ -136,13 +136,27 @@ const database = createDatabaseProvider({
 })
 
 function parseQueryArgs(args) {
-	if (typeof args[0] === 'string') {
-		return { sql: args[0], parameters: args[1], callback: args[2] }
+	let actualArgs = args
+	if (typeof actualArgs[0] !== 'string' && typeof actualArgs[1] === 'string') {
+		actualArgs = actualArgs.slice(1)
 	}
-	if (typeof args[1] === 'string') {
-		return { sql: args[1], parameters: args[2], callback: args[3] }
+
+	let sql = ''
+	let parameters = []
+	let callback = null
+
+	if (typeof actualArgs[0] === 'string') {
+		sql = actualArgs[0]
+		if (typeof actualArgs[1] === 'function') {
+			parameters = []
+			callback = actualArgs[1]
+		} else {
+			parameters = Array.isArray(actualArgs[1]) ? actualArgs[1] : (actualArgs[1] == null ? [] : actualArgs[1])
+			callback = typeof actualArgs[2] === 'function' ? actualArgs[2] : null
+		}
 	}
-	return { sql: args[0], parameters: args[1], callback: args[2] }
+
+	return { sql, parameters, callback }
 }
 
 function registerQueryExport(name, execute, operation) {
