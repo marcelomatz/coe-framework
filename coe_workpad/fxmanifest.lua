@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_workpad'
-version '0.1.0-beta.8'
+version '0.1.0-beta.10'
 description 'Tablet de trabalho básico do Coe: ponto, empregos livres, carreira e um app por negócio'
 
 -- Pacotes completos podem assumir este papel: declaram coe_supervisor_replaces 'coe_workpad' e o coe_supervisor não
