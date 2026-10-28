@@ -15,5 +15,6 @@ Core = {
 	SessionRegistry = {},
 	Repositories = {},
 	Platform = CoePlatform or {},
-	Locale = CoeLocale or {}
+	Locale = CoeLocale or {},
+	SemVer = CoeSemVer or {}
 }

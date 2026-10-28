@@ -18,12 +18,14 @@ files {
 	'lib/logger.lua',
 	'lib/migrations.lua',
 	'lib/platform.lua',
-	'lib/locale.lua'
+	'lib/locale.lua',
+	'lib/semver.lua'
 }
 
 shared_scripts {
 	'lib/platform.lua',
 	'lib/locale.lua',
+	'lib/semver.lua',
 	'locales/pt-br.lua',
 	'locales/en-us.lua',
 	'core/shared/bootstrap.lua',

@@ -138,6 +138,18 @@ for _, res in ipairs(resources) do
 			addError('manifest', res, 'Declaração de game/games ausente no fxmanifest.lua')
 		end
 
+		local verStr = content:match('[\r\n]%s*version%s+[\'"]([^\'"]+)[\'"]') or content:match('^version%s+[\'"]([^\'"]+)[\'"]')
+		if not verStr then
+			addError('manifest-semver', res, 'Campo "version" ausente no fxmanifest.lua')
+		else
+			local cleanVer = verStr:gsub('^v', '')
+			local withoutBuild = cleanVer:match('^([^%+]+)%+') or cleanVer
+			local withoutPre = withoutBuild:match('^([^-]+)%-') or withoutBuild
+			if not withoutPre:match('^%d+%.%d+%.%d+$') then
+				addError('manifest-semver', res, string.format('Versão "%s" não segue o padrão SemVer 2.0 (ex: 1.0.0 ou 0.1.0-beta.10)', verStr))
+			end
+		end
+
 		for exp in content:gmatch('(?:server_)?export%s+[\'"]([%w_]+)[\'"]') do
 			data.manifestExports[exp] = true
 			data.allExports[exp] = true

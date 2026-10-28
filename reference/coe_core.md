@@ -257,5 +257,31 @@ Remove o vínculo de grupo do jogador. Só `coe_admin` pode chamar. Server.
 ---@field FormatMoney fun(amount: number, lang?: string): string
 ---@field ExportForNui fun(lang?: string): table
 ---@field New fun(opts?: { default?: string, fallback?: string, locales?: table }): CoeLocaleInstance
+
+---@class CoeSemVerData
+---@field major integer
+---@field minor integer
+---@field patch integer
+---@field prerelease string|nil
+---@field build string|nil
+
+---@class CoeSemVerModule
+---@field Parse fun(versionStr: string): CoeSemVerData|nil, string|nil
+---@field Format fun(data: CoeSemVerData): string
+---@field Compare fun(v1: string|CoeSemVerData, v2: string|CoeSemVerData): integer|nil, string|nil
+---@field Satisfies fun(version: string|CoeSemVerData, rangeStr: string): boolean
+---@field Bump fun(currentVersion: string|CoeSemVerData, bumpType: 'major'|'minor'|'patch'): string|nil, string|nil
+
+---@class CoeCoreInstance
+---@field Name string
+---@field Prefix string
+---@field Version string
+---@field Platform CoePlatform
+---@field Locale CoeLocaleModule
+---@field SemVer CoeSemVerModule
+---@field RequireVersion fun(resourceName: string, requiredRange: string): boolean, string|nil
+---@field Functions table
+---@field Events table
+---@field Classes table
 ```
 
