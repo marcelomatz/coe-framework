@@ -312,12 +312,28 @@ function main() {
 			fs.writeFileSync(webRecipePath, rec, 'utf8');
 		}
 
-		// Regenera o website bilíngue (index.html, en/index.html, scripts/*.html)
-		const genScript = path.join(WEBSITE_ROOT, 'tools', 'generate_site.js');
-		if (fs.existsSync(genScript)) {
-			execFileSync(process.execPath, [genScript], { cwd: WEBSITE_ROOT, stdio: 'inherit' });
+		// Sincroniza versão cirurgicamente nos arquivos HTML do website sem sobrescrever o layout e dobras vivas
+		const prevTag = existingEntry ? null : (relData.releases[1] ? relData.releases[1].tag : null);
+		if (prevTag && prevTag !== tag) {
+			const globHtml = (dir) => fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.html')).map(f => path.join(dir, f)) : [];
+			const htmlTargets = [
+				path.join(WEBSITE_ROOT, 'index.html'),
+				path.join(WEBSITE_ROOT, 'en', 'index.html'),
+				path.join(WEBSITE_ROOT, 'ui.html'),
+				path.join(WEBSITE_ROOT, 'en', 'ui.html'),
+				...globHtml(path.join(WEBSITE_ROOT, 'scripts')),
+				...globHtml(path.join(WEBSITE_ROOT, 'en', 'scripts'))
+			];
+			for (const hf of htmlTargets) {
+				if (!fs.existsSync(hf)) continue;
+				let content = fs.readFileSync(hf, 'utf8');
+				if (content.includes(prevTag)) {
+					content = content.split(prevTag).join(tag);
+					fs.writeFileSync(hf, content, 'utf8');
+				}
+			}
 		}
-		console.log(`[WEBSITE] releases.json, recipe.yaml e páginas HTML atualizados para ${tag}.`);
+		console.log(`[WEBSITE] releases.json, recipe.yaml e tags de versão sincronizados cirurgicamente para ${tag}.`);
 	}
 }
 
