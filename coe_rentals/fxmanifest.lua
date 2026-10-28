@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_rentals'
-version '0.1.0-beta.8'
+version '0.1.0'
 description 'Sistema de aluguel de veículos para cidadãos iniciantes com caução e devolução'
 
 shared_scripts {
@@ -25,7 +25,5 @@ server_scripts {
 dependencies {
 	'coe_core',
 	'coe_economy',
-	'coe_vehicles',
-	'coe_logging',
-	'coe_notify'
+	'coe_vehicles'
 }

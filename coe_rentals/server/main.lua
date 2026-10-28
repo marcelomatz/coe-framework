@@ -1,25 +1,6 @@
 -- Servidor de aluguel de veículos populares com caução e devolução.
 local activeRentals = {} -- characterId -> { entity, netId, plate, model, deposit, stationId }
-
-local _t_inst = (Core and Core.Locale and Core.Locale.New) and Core.Locale.New({
-	default = (RentalsConfig and RentalsConfig.Locale) or (Core and Core.Locale and Core.Locale.GetDefaultLang()) or 'pt-BR',
-	locales = Locales
-})
-local function _t(key, params)
-	if _t_inst then
-		if type(_t_inst) == 'function' then
-			local ok, res = pcall(_t_inst, key, params)
-			if ok and res ~= nil then return res end
-		elseif type(_t_inst) == 'table' and type(_t_inst.T) == 'function' then
-			local ok, res = pcall(_t_inst.T, _t_inst, key, params)
-			if ok and res ~= nil then return res end
-		end
-	end
-	if Locales and Locales['pt-BR'] and Locales['pt-BR'][key] then
-		return Locales['pt-BR'][key]
-	end
-	return key
-end
+local _t = Core.Locale.Init('coe_rentals', RentalsConfig.Locale or 'pt-BR')
 
 local function log(level, action, ctx)
 	if exports and exports.coe_logging and exports.coe_logging.Log then
@@ -81,14 +62,9 @@ Core.Events.OnNet('rentals.rent', function(stationId, model)
 
 	local plate = RentalsRules.GenerateRentalPlate()
 	local spawnPoint = station.spawn
-	local modelHash = (type(joaat) == 'function' and joaat(vehicleDef.model)) or (type(GetHashKey) == 'function' and GetHashKey(vehicleDef.model)) or vehicleDef.model
+	local modelHash = joaat(vehicleDef.model)
 
-	local entity = nil
-	if type(CreateVehicleServerSetter) == 'function' then
-		entity = CreateVehicleServerSetter(modelHash, vehicleDef.type or 'automobile', spawnPoint.x, spawnPoint.y, spawnPoint.z, spawnPoint.h or 0.0)
-	elseif type(CreateVehicle) == 'function' then
-		entity = CreateVehicle(modelHash, spawnPoint.x, spawnPoint.y, spawnPoint.z, spawnPoint.h or 0.0, true, true)
-	end
+	local entity = CreateVehicle(modelHash, spawnPoint.x, spawnPoint.y, spawnPoint.z, spawnPoint.h or 0.0, true, true)
 	if not DoesEntityExist(entity) then
 		-- Reembolso de segurança caso o spawn falhe
 		if exports and exports.coe_economy and exports.coe_economy.Credit then
@@ -139,17 +115,14 @@ Core.Events.OnNet('rentals.return', function(stationId)
 	end
 
 	local ped = GetPlayerPed(playerId)
-	local pedCoords = GetEntityCoords(ped)
-	local veh = rental.entity
-
-	if DoesEntityExist(veh) then
-		local vehCoords = GetEntityCoords(veh)
-		if RentalsRules.CalculateDistance(pedCoords, vehCoords) > 20.0 then
-			notify(playerId, 'warning', _t('not_in_vehicle'))
-			return
-		end
-		DeleteEntity(veh)
+	local veh = GetVehiclePedIsIn(ped, false)
+	if veh == 0 or veh ~= rental.entity then
+		notify(playerId, 'warning', _t('not_in_vehicle'))
+		return
 	end
+
+	-- Deleta a entidade do veículo com segurança
+	DeleteEntity(veh)
 	local depositAmount = rental.deposit or 0
 
 	-- Reembolsa o caução ao jogador

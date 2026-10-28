@@ -55,7 +55,17 @@ function S.notifyInventoryOwner(id)
 	end
 end
 
-exports('GetPlayerInventory', function(playerId)
+local function unwrapExport(fn)
+	return function(...)
+		local args = table.pack(...)
+		if args.n > 0 and (type(args[1]) == 'table' or type(args[1]) == 'userdata') then
+			return fn(table.unpack(args, 2, args.n))
+		end
+		return fn(...)
+	end
+end
+
+exports('GetPlayerInventory', unwrapExport(function(playerId)
 	local inventoryId, inventoryOrError = S.ensurePlayerInventory(playerId)
 	if not inventoryId then
 		return nil, inventoryOrError
@@ -65,4 +75,4 @@ exports('GetPlayerInventory', function(playerId)
 		return nil, snapshotError
 	end
 	return inventoryId, snapshot
-end)
+end))

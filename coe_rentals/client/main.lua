@@ -1,23 +1,5 @@
 -- Cliente de aluguel de veículos populares com blips e interações (0.00 ms em idle).
-local _t_inst = (Core and Core.Locale and Core.Locale.New) and Core.Locale.New({
-	default = (RentalsConfig and RentalsConfig.Locale) or (Core and Core.Locale and Core.Locale.GetDefaultLang()) or 'pt-BR',
-	locales = Locales
-})
-local function _t(key, params)
-	if _t_inst then
-		if type(_t_inst) == 'function' then
-			local ok, res = pcall(_t_inst, key, params)
-			if ok and res ~= nil then return res end
-		elseif type(_t_inst) == 'table' and type(_t_inst.T) == 'function' then
-			local ok, res = pcall(_t_inst.T, _t_inst, key, params)
-			if ok and res ~= nil then return res end
-		end
-	end
-	if Locales and Locales['pt-BR'] and Locales['pt-BR'][key] then
-		return Locales['pt-BR'][key]
-	end
-	return key
-end
+local _t = Core.Locale.Init('coe_rentals', RentalsConfig.Locale or 'pt-BR')
 local blips = {}
 local activeRentalPlate = nil
 local activeRentalDeposit = 0

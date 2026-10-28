@@ -53,13 +53,3 @@ function RentalsRules.CanRent(characterId, activeRentals)
 	end
 	return true
 end
-
-function RentalsRules.CalculateDistance(c1, c2)
-	if not c1 or not c2 then
-		return 999999.0
-	end
-	local dx = (c1.x or 0) - (c2.x or 0)
-	local dy = (c1.y or 0) - (c2.y or 0)
-	local dz = (c1.z or 0) - (c2.z or 0)
-	return math.sqrt(dx * dx + dy * dy + dz * dz)
-end

@@ -141,7 +141,17 @@ function S.RemoveItemByName(id, itemName, count)
 	return true
 end
 
-exports('OpenStash', S.OpenStash)
-exports('RemoveItemByName', S.RemoveItemByName)
+local function unwrapExport(fn)
+	return function(...)
+		local args = table.pack(...)
+		if args.n > 0 and (type(args[1]) == 'table' or type(args[1]) == 'userdata') then
+			return fn(table.unpack(args, 2, args.n))
+		end
+		return fn(...)
+	end
+end
+
+exports('OpenStash', unwrapExport(S.OpenStash))
+exports('RemoveItemByName', unwrapExport(S.RemoveItemByName))
 
 S.STASH_TOLERANCE = STASH_TOLERANCE
