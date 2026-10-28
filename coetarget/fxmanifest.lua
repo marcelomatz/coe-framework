@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coetarget'
-version '0.1.0-beta.10'
+version '0.1.0-beta.11'
 description 'Configurable entity targeting system'
 
 dependencies {
