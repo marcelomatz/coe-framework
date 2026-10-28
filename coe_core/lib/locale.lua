@@ -296,4 +296,15 @@ function Locale.New(opts)
 	return setmetatable(instance, LocaleInstance)
 end
 
+---Inicializa uma instância de tradução usando os dicionários globais _G.Locales.
+---@param resourceName string|nil Nome do resource (para identificação/log)
+---@param defaultLang string|nil Idioma padrão (default do servidor ou pt-BR)
+---@return table LocaleInstance Instância chamável como função _t('chave')
+function Locale.Init(resourceName, defaultLang)
+	return Locale.New({
+		default = defaultLang or Locale.GetDefaultLang(),
+		locales = _G.Locales
+	})
+end
+
 return Locale

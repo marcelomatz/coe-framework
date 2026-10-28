@@ -8,6 +8,7 @@
 | [coe_bank](coe_bank.md) | `Yield`, `Status` |
 | [coe_core](coe_core.md) | `GetCoreObject`, `GetCharacterByStateId`, `GetActiveCharacter`, `GetPlayerByStateId`, `GetGroupDefinitions`, `GetPlayerGroups`, `SetPlayerGroup`, `RemovePlayerGroup` |
 | [coe_database](coe_database.md) | `Query`, `Execute`, `Transaction`, `IsReady` |
+| [coe_garage](coe_garage.md) | `IsReady`, `ListGarages`, `GetGarage`, `GetVehicleGarage`, `SaveGarage`, `DeleteGarage` |
 | [coe_inventory](coe_inventory.md) | `CreateInventory`, `DeleteInventory`, `GetInventory`, `GetSlot`, `SwapSlots`, `SplitItem`, `AddItem`, `RemoveItem`, `UseItem`, `SetItemMetadata`, `GetItemCount`, `GetPersistenceStats`, `OpenStash`, `RemoveItemByName`, `RegisterItem`, `Items`, `GetItem`, `GetContainerInventory`, `GetPlayerInventory`, `GetInventoryObject` |
 | [coe_jobs](coe_jobs.md) | `RegisterJob`, `UnregisterJob`, `ListJobs`, `IsReady`, `GetSession`, `GetProgress`, `GetCareer`, `TabletVisible`, `TabletCall` |
 | [coe_logging](coe_logging.md) | `Log` |

@@ -139,6 +139,20 @@ ${fixList}
 	return true;
 }
 
+// Link para a camada de documentação do portal (hash #doc=), já na seção da versão.
+// O slug replica `renderer.heading` de docs/public/js/app.js; o título segue o formato de updateDocsChangelog.
+// Links com ?doc= abrem a camada website do portal e não mostram a doc.
+function changelogDocsUrl(file, tag, date, channel) {
+	const heading = `[${tag}] — ${date} · \`${channel.toUpperCase()}\``;
+	const anchor = heading
+		.toLowerCase()
+		.replace(/<[^>]+>/g, '')
+		.replace(/[^\w\s-]/g, '')
+		.replace(/\s+/g, '-')
+		.replace(/^-+|-+$/g, '');
+	return `https://docs.coeroleplay.app/#doc=${file}#${anchor}`;
+}
+
 function updateDocsReadmeBadge(filePath, tag, channel, isEn) {
 	if (!fs.existsSync(filePath)) return false;
 	let content = fs.readFileSync(filePath, 'utf8');
@@ -264,8 +278,8 @@ function main() {
 			date,
 			resourcesCount,
 			githubUrl: `https://github.com/marcelomatz/coe-framework/releases/tag/${tag}`,
-			docsUrlPt: 'https://docs.coeroleplay.app/?doc=CHANGELOG.md',
-			docsUrlEn: 'https://docs.coeroleplay.app/?doc=CHANGELOG.en-US.md',
+			docsUrlPt: changelogDocsUrl('CHANGELOG.md', tag, date, channel),
+			docsUrlEn: changelogDocsUrl('CHANGELOG.en-US.md', tag, date, channel),
 			titlePt: existingEntry && !opts.title ? existingEntry.titlePt : titlePt,
 			titleEn: existingEntry && !opts.title ? existingEntry.titleEn : titleEn,
 			summaryPt: opts.summary ? summaryPt : (existingEntry ? existingEntry.summaryPt : summaryPt),

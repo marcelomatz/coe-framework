@@ -345,6 +345,72 @@ test("coe_staff: inicialização do servidor e do client com _t defensivo", func
 	assertTrue(okClient, "coe_staff/client/main.lua deve carregar sem erro: " .. tostring(errClient))
 end)
 
+test("coe_rentals: inicialização do servidor e do client com _t defensivo", function()
+	setupFiveMEnvironment()
+	dofile('coe_core/lib/init.lua')
+	_G.Locales = {}
+	dofile('coe_rentals/config.lua')
+	dofile('coe_rentals/locales/pt-br.lua')
+	dofile('coe_rentals/locales/en-us.lua')
+	dofile('coe_rentals/domain/rules.lua')
+
+	_G.exports.coe_economy = { Debit = function() return true end, Credit = function() return true end }
+	_G.exports.coe_vehicles = { Spawn = function() return 1 end, Store = function() return true end }
+
+	local okServer, errServer = pcall(dofile, 'coe_rentals/server/main.lua')
+	assertTrue(okServer, "coe_rentals/server/main.lua deve carregar sem erro: " .. tostring(errServer))
+
+	_G.BeginTextCommandDisplayHelp = function() end
+	_G.AddTextComponentSubstringPlayerName = function() end
+	_G.EndTextCommandDisplayHelp = function() end
+	_G.AddBlipForCoord = function() return 1 end
+	_G.SetBlipSprite = function() end
+	_G.SetBlipDisplay = function() end
+	_G.SetBlipScale = function() end
+	_G.SetBlipColour = function() end
+	_G.SetBlipAsShortRange = function() end
+	_G.BeginTextCommandSetBlipName = function() end
+	_G.EndTextCommandSetBlipName = function() end
+
+	local okClient, errClient = pcall(dofile, 'coe_rentals/client/main.lua')
+	assertTrue(okClient, "coe_rentals/client/main.lua deve carregar sem erro: " .. tostring(errClient))
+end)
+
+test("coe_garage: inicialização do servidor e do client com _t defensivo", function()
+	setupFiveMEnvironment()
+	dofile('coe_core/lib/init.lua')
+	_G.Locales = {}
+	dofile('coe_garage/config.lua')
+	dofile('coe_garage/locales/pt-br.lua')
+	dofile('coe_garage/locales/en-us.lua')
+	dofile('coe_garage/domain/garage.lua')
+	dofile('coe_core/lib/access.lua')
+	dofile('coe_core/lib/migrations.lua')
+	dofile('coe_garage/adapters/migrations.lua')
+	dofile('coe_garage/adapters/persistence.lua')
+
+	_G.exports.coe_staff = { RegisterGaragesProvider = function() return true end }
+	_G.exports.coe_vehicles = { ListByOwner = function() return {} end, Get = function() return nil end, Spawn = function() return 1 end, Store = function() return true end, GiveKey = function() return true end }
+
+	local okServer, errServer = pcall(dofile, 'coe_garage/application/service.lua')
+	assertTrue(okServer, "coe_garage/application/service.lua deve carregar sem erro: " .. tostring(errServer))
+
+	_G.RegisterNUICallback = function() end
+	_G.BeginTextCommandDisplayHelp = function() end
+	_G.AddTextComponentSubstringPlayerName = function() end
+	_G.EndTextCommandDisplayHelp = function() end
+	_G.AddBlipForCoord = function() return 1 end
+	_G.SetBlipSprite = function() end
+	_G.SetBlipColour = function() end
+	_G.SetBlipScale = function() end
+	_G.SetBlipAsShortRange = function() end
+	_G.BeginTextCommandSetBlipName = function() end
+	_G.EndTextCommandSetBlipName = function() end
+
+	local okClient, errClient = pcall(dofile, 'coe_garage/client.lua')
+	assertTrue(okClient, "coe_garage/client.lua deve carregar sem erro: " .. tostring(errClient))
+end)
+
 -- ---------------------------------------------------------------------------
 -- 4. TESTE DE CONFORMIDADE DOS RECURSOS DO FRAMEWORK COM I18N
 -- ---------------------------------------------------------------------------
@@ -352,7 +418,8 @@ print("\n[4/4] Validação de Recursos do Framework com i18n...")
 
 local frameworkLocales = {
 	'coe_core', 'coe_businesses', 'coe_economy', 'coe_inventory',
-	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_bank', 'coe_mobile', 'coe_workpad', 'coe_staff'
+	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_bank', 'coe_mobile', 'coe_workpad', 'coe_staff',
+	'coe_rentals', 'coe_garage'
 }
 for _, res in ipairs(frameworkLocales) do
 	test(res .. ": locales e instanciação de _t sem falhas", function()
