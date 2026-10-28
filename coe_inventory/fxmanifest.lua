@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_inventory'
-version '0.1.0-beta.8'
+version '0.1.0-beta.10'
 description 'Inventário e catálogo como módulo independente do coe_core'
 
 dependencies {

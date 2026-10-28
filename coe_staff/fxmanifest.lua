@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_staff'
-version '0.1.0-beta.8'
+version '0.1.0-beta.10'
 description 'Painel básico da staff do Coe: ferramentas pessoais, jogadores, veículos, mundo e negócios'
 
 -- Pacotes completos podem assumir este papel: declaram coe_supervisor_replaces 'coe_staff' e o coe_supervisor não
