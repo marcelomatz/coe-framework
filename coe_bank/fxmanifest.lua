@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_bank'
-version '0.1.0-beta.10'
+version '0.1.0-beta.11'
 description 'Banco básico do Coe: saldo, saque, depósito, transferência por ID de cidadão e extrato, em agências e caixas eletrônicos'
 
 -- Pacotes completos podem assumir este papel: declaram coe_supervisor_replaces 'coe_bank' e o coe_supervisor não
