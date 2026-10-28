@@ -95,4 +95,27 @@ assert(duplicate == nil and duplicateError == 'class_already_registered')
 local missing, missingError = Core.Classes.Register('Other', 'Missing')
 assert(missing == nil and missingError == 'parent_class_not_found')
 
+-- Validação de SemVer e RequireVersion integrados a Core
+assert(type(Core.SemVer) == 'table', 'Core.SemVer deve estar presente')
+assert(type(Core.SemVer.Compare) == 'function', 'Core.SemVer.Compare deve ser uma função')
+assert(type(Core.RequireVersion) == 'function', 'Core.RequireVersion deve ser uma função')
+
+function GetResourceMetadata(res, field)
+	if res == 'coe_inventory' and field == 'version' then
+		return '1.2.4'
+	elseif res == 'coe_legacy' and field == 'version' then
+		return '0.9.0'
+	end
+	return nil
+end
+
+local okReq, errReq = Core.RequireVersion('coe_inventory', '>= 1.2.0')
+assert(okReq == true and errReq == nil, 'RequireVersion deve passar para coe_inventory')
+
+local okFail, errFail = Core.RequireVersion('coe_legacy', '>= 1.0.0')
+assert(okFail == false and errFail ~= nil, 'RequireVersion deve falhar para coe_legacy')
+
+local okMissing, errMissing = Core.RequireVersion('coe_nonexistent', '>= 1.0.0')
+assert(okMissing == false and errMissing ~= nil, 'RequireVersion deve falhar para resource inexistente')
+
 print('lib init tests passed')

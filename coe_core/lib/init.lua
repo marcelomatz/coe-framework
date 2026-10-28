@@ -38,6 +38,58 @@ if okLocale and type(localeMod) == 'table' then
 	Core.Locale = localeMod
 end
 
+-- Garante que o subsistema SemVer execute SEMPRE localmente no resource consumidor
+local okSemVer, semverMod = pcall(function()
+	if type(CoeSemVer) == 'table' then
+		return CoeSemVer
+	end
+	if type(LoadResourceFile) == 'function' then
+		local content = LoadResourceFile('coe_core', 'lib/semver.lua')
+		if content then
+			local fn = load(content, '@coe_core/lib/semver.lua')
+			if fn then return fn() end
+		end
+	end
+	return dofile('lib/semver.lua')
+end)
+if okSemVer and type(semverMod) == 'table' then
+	Core.SemVer = semverMod
+end
+
+---Verifica se outro resource atende a uma faixa de versão SemVer requerida.
+---@param resourceName string
+---@param requiredRange string Ex: '>=1.1.0' ou '^1.2.0'
+---@return boolean, string|nil
+function Core.RequireVersion(resourceName, requiredRange)
+	if type(resourceName) ~= 'string' or type(requiredRange) ~= 'string' then
+		return false, 'invalid_arguments'
+	end
+
+	local actualVersion
+	if type(GetResourceMetadata) == 'function' then
+		actualVersion = GetResourceMetadata(resourceName, 'version', 0)
+	end
+
+	if not actualVersion or actualVersion == '' then
+		local errMsg = string.format('Resource [%s] não encontrado ou sem campo "version" no fxmanifest', resourceName)
+		if Core.Logger and Core.Logger.Fatal then
+			Core.Logger.Fatal(errMsg)
+		end
+		return false, errMsg
+	end
+
+	local semver = Core.SemVer or semverMod
+	if not semver or not semver.Satisfies(actualVersion, requiredRange) then
+		local errMsg = string.format('Incompatibilidade de versão: [%s] está na versão %s, mas requer %s', resourceName, actualVersion, requiredRange)
+		if Core.Logger and Core.Logger.Fatal then
+			Core.Logger.Fatal(errMsg)
+		end
+		return false, errMsg
+	end
+
+	return true, nil
+end
+
 -- Funções recebidas via export executam no coe_core. Registrar handlers lá faria
 -- `source` e o contexto do evento não pertencerem ao resource chamador, então
 -- o registro de handlers é refeito localmente em cada resource consumidor.
