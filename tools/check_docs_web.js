@@ -436,7 +436,7 @@ function checkGeneratorParity(tools) {
 		const refDir = exists(path.join(DOCS, 'reference')) ? path.join(DOCS, 'reference') : path.join(FRAMEWORK_ROOT, 'reference');
 		if (exists(refDir)) fs.cpSync(refDir, path.join(tmp, 'docs', 'reference'), { recursive: true });
 		for (const f of ['CHANGELOG.md', 'CHANGELOG.en-US.md']) {
-			const cf = exists(path.join(DOCS, f)) ? path.join(DOCS, f) : (f === 'CHANGELOG.md' && exists(path.join(FRAMEWORK_ROOT, f)) ? path.join(FRAMEWORK_ROOT, f) : null);
+			const cf = exists(path.join(DOCS, f)) ? path.join(DOCS, f) : (exists(path.join(FRAMEWORK_ROOT, f)) ? path.join(FRAMEWORK_ROOT, f) : null);
 			if (cf) fs.cpSync(cf, path.join(tmp, 'docs', f));
 		}
 		fs.writeFileSync(path.join(tmpSite, 'tools', 'framework_facts.json'), JSON.stringify(facts, null, 2) + '\n');
