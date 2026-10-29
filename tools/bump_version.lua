@@ -431,9 +431,16 @@ for i = 2, #(arg or {}) do
 	end
 end
 if not notes or notes == '' then
+	-- Reaproveita as notas só quando é a mesma versão (re-sincronização); versão nova sem notas não herda
+	-- o texto da release anterior.
 	local existing = readFile('version.json')
+	local existingVersion = existing and existing:match('"version"%s*:%s*"([^"]+)"')
 	local existingNotes = existing and existing:match('"notes"%s*:%s*"([^"]*)"')
-	notes = existingNotes or ('COE Framework v' .. targetVersion .. ' — FiveM Enhanced Gen9 (Build 170+)')
+	if existingVersion == targetVersion and existingNotes and existingNotes ~= '' then
+		notes = existingNotes
+	else
+		notes = 'COE Framework v' .. targetVersion .. ' — FiveM Enhanced Gen9 (Build 170+)'
+	end
 end
 notes = toUtf8(notes)
 
@@ -467,8 +474,17 @@ if not skipDocsSync and fileExists('tools/sync_release_docs_web.js') then
 	if notesFile and notesFile ~= '' then
 		syncCmd = syncCmd .. ' --notes-file "' .. notesFile:gsub('"', '\\"') .. '"'
 	end
+	-- O resumo vai por arquivo UTF-8: pela linha de comando do Windows os acentos se perdem.
+	local summaryFile = nil
 	if notes and notes ~= '' then
-		syncCmd = syncCmd .. ' --summary "' .. notes:gsub('"', '\\"') .. '"'
+		local tmpDir = os.getenv('TEMP') or os.getenv('TMP') or os.getenv('TMPDIR') or '/tmp'
+		summaryFile = tmpDir .. (isWin and '\\' or '/') .. 'coe_release_summary_' .. os.time() .. '.txt'
+		writeFile(summaryFile, notes)
+		syncCmd = syncCmd .. ' --summary-file "' .. summaryFile .. '"'
 	end
-	os.execute(syncCmd)
+	local ok = os.execute(syncCmd)
+	if summaryFile then os.remove(summaryFile) end
+	if not ok then
+		print('[AVISO] Site e docs ainda divergem do framework (veja os [ERRO] acima): corrija antes de publicar.')
+	end
 end
