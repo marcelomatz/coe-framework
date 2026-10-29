@@ -45,14 +45,20 @@ AddEventHandler = function(name, callback)
 	localHandlers[name] = callback
 end
 local creatorCalls = {}
-exports = setmetatable({}, { __index = function(_, resource)
-	return setmetatable({}, { __index = function(_, name)
-		return function(_, ...)
-			creatorCalls[#creatorCalls + 1] = { resource = resource, name = name, args = { ... } }
-			return true
-		end
-	end })
-end })
+local registeredExports = {}
+exports = setmetatable({}, {
+	__call = function(_, name, fn)
+		registeredExports[name] = fn
+	end,
+	__index = function(_, resource)
+		return setmetatable({}, { __index = function(_, name)
+			return function(_, ...)
+				creatorCalls[#creatorCalls + 1] = { resource = resource, name = name, args = { ... } }
+				return true
+			end
+		end })
+	end
+})
 NetworkIsPlayerActive = function()
 	return true
 end
@@ -253,16 +259,21 @@ CreateThread = function(callback)
 	assert(coroutine.resume(coroutine.create(callback)))
 end
 
-exports = setmetatable({}, { __index = function(_, resource)
-	return setmetatable({}, { __index = function(_, name)
-		return function(_, ...)
-			if resource == 'coe_appearance' and name == 'CreatePed' and onCreatePed then
-				return onCreatePed(...)
+exports = setmetatable({}, {
+	__call = function(_, name, fn)
+		registeredExports[name] = fn
+	end,
+	__index = function(_, resource)
+		return setmetatable({}, { __index = function(_, name)
+			return function(_, ...)
+				if resource == 'coe_appearance' and name == 'CreatePed' and onCreatePed then
+					return onCreatePed(...)
+				end
+				return 501
 			end
-			return 501
-		end
-	end })
-end })
+		end })
+	end
+})
 
 dofile('client/scene.lua')
 
