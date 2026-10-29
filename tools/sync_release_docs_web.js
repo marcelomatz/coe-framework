@@ -8,17 +8,21 @@
  *   3. docs/reference/*.md (espelhando coe-framework/reference/*.md)
  *   4. website/tools/releases.json e website/assets/data/releases.json
  *   5. website/recipe.yaml (cópia integral do recipe.yaml do framework)
- *   6. website/index.html, website/en/index.html e website/scripts/*.html (via tools/generate_site.js)
+ *   6. website/tools/framework_facts.json, páginas de scripts e seções #scripts/#releases da home
+ *      (via tools/check_docs_web.js --fix, que roda website/tools/generate_site.js)
+ *
+ * No fim roda tools/check_docs_web.js --fix e sai com 1 se site e docs ainda divergirem do framework.
  *
  * Uso:
- *   node tools/sync_release_docs_web.js [--notes-file <caminho.md>] [--summary <texto>]
+ *   node tools/sync_release_docs_web.js [--notes-file <caminho.md>] [--summary <texto> | --summary-file <arquivo>] [--no-check]
  */
 
 'use strict';
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawnSync } = require('node:child_process');
+const { collect } = require('./framework_facts.js');
 
 const FRAMEWORK_ROOT = path.resolve(__dirname, '..');
 const WORKSPACE_ROOT = path.resolve(FRAMEWORK_ROOT, '..');
@@ -29,7 +33,8 @@ function parseArgs(argv) {
 	const opts = {
 		notesFile: null,
 		summary: null,
-		title: null
+		title: null,
+		noCheck: false
 	};
 	for (let i = 2; i < argv.length; i++) {
 		const a = argv[i];
@@ -37,6 +42,11 @@ function parseArgs(argv) {
 			opts.notesFile = argv[++i];
 		} else if (a === '--summary' && argv[i + 1]) {
 			opts.summary = argv[++i];
+		} else if (a === '--summary-file' && argv[i + 1]) {
+			// Arquivo UTF-8: evita perder acentos na linha de comando do Windows.
+			opts.summary = fs.readFileSync(argv[++i], 'utf8').trim();
+		} else if (a === '--no-check') {
+			opts.noCheck = true;
 		} else if (a === '--title' && argv[i + 1]) {
 			opts.title = argv[++i];
 		}
@@ -82,7 +92,7 @@ function parseMarkdownSections(md) {
 	return result;
 }
 
-function updateDocsChangelog(filePath, version, tag, channel, date, summaryText, sections, isEn) {
+function updateDocsChangelog(filePath, version, tag, channel, date, summaryText, sections, isEn, resourcesCount) {
 	if (!fs.existsSync(filePath)) return false;
 
 	let content = fs.readFileSync(filePath, 'utf8');
@@ -94,7 +104,7 @@ function updateDocsChangelog(filePath, version, tag, channel, date, summaryText,
 	const fixTitle = isEn ? '### 🐛 Bug Fixes' : '### 🐛 Correções de Bugs';
 
 	const implList = (sections.implementations.length ? sections.implementations : [
-		isEn ? `Release ${tag} (${channel.toUpperCase()}) consolidated with 27 first-party resources.` : `Release ${tag} (${channel.toUpperCase()}) consolidada com os 27 resources first-party.`
+		isEn ? `Release ${tag} (${channel.toUpperCase()}) consolidated with ${resourcesCount} first-party resources.` : `Release ${tag} (${channel.toUpperCase()}) consolidada com os ${resourcesCount} resources first-party.`
 	]).map(x => `- ${x}`).join('\n');
 
 	const imprList = (sections.improvements.length ? sections.improvements : [
@@ -204,7 +214,8 @@ function main() {
 	const tag = version.startsWith('v') ? version : `v${version}`;
 	const channel = vData.channel || 'beta';
 	const date = vData.releaseDate || new Date().toISOString().slice(0, 10);
-	const resourcesCount = vData.resourcesCount || 27;
+	// Quantidade de resources: sempre a do disco (pastas com fxmanifest.lua), nunca um número fixo.
+	const resourcesCount = collect(FRAMEWORK_ROOT).resourceCount;
 	const summaryPt = opts.summary || vData.releaseNotesSummary || `Release oficial ${tag} (${channel.toUpperCase()}) do COE Framework para FiveM Enhanced (Gen9 / DirectX 12).`;
 	const summaryEn = vData.releaseNotesSummaryEn || summaryPt;
 	const titlePt = opts.title || `Release ${tag} (${channel.toUpperCase()}) — Ecossistema FiveM Enhanced`;
@@ -234,8 +245,8 @@ function main() {
 		}
 
 		if (rawNotes) {
-			updateDocsChangelog(path.join(DOCS_ROOT, 'CHANGELOG.md'), version, tag, channel, date, summaryPt, parsed, false);
-			updateDocsChangelog(path.join(DOCS_ROOT, 'CHANGELOG.en-US.md'), version, tag, channel, date, summaryEn, parsed, true);
+			updateDocsChangelog(path.join(DOCS_ROOT, 'CHANGELOG.md'), version, tag, channel, date, summaryPt, parsed, false, resourcesCount);
+			updateDocsChangelog(path.join(DOCS_ROOT, 'CHANGELOG.en-US.md'), version, tag, channel, date, summaryEn, parsed, true, resourcesCount);
 		}
 		updateDocsReadmeBadge(path.join(DOCS_ROOT, 'README.pt-BR.md'), tag, channel, false);
 		updateDocsReadmeBadge(path.join(DOCS_ROOT, 'README.md'), tag, channel, true);
@@ -311,29 +322,14 @@ function main() {
 			fs.copyFileSync(frameworkRecipePath, webRecipePath);
 		}
 
-		// Sincroniza versão cirurgicamente nos arquivos HTML do website sem sobrescrever o layout e dobras vivas
-		const prevTag = existingEntry ? null : (relData.releases[1] ? relData.releases[1].tag : null);
-		if (prevTag && prevTag !== tag) {
-			const globHtml = (dir) => fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.html')).map(f => path.join(dir, f)) : [];
-			const htmlTargets = [
-				path.join(WEBSITE_ROOT, 'index.html'),
-				path.join(WEBSITE_ROOT, 'en', 'index.html'),
-				path.join(WEBSITE_ROOT, 'ui.html'),
-				path.join(WEBSITE_ROOT, 'en', 'ui.html'),
-				...globHtml(path.join(WEBSITE_ROOT, 'scripts')),
-				...globHtml(path.join(WEBSITE_ROOT, 'en', 'scripts'))
-			];
-			for (const hf of htmlTargets) {
-				if (!fs.existsSync(hf)) continue;
-				let content = fs.readFileSync(hf, 'utf8');
-				if (content.includes(prevTag)) {
-					content = content.split(prevTag).join(tag);
-					fs.writeFileSync(hf, content, 'utf8');
-				}
-			}
-		}
-		console.log(`[WEBSITE] releases.json, recipe.yaml e tags de versão sincronizados cirurgicamente para ${tag}.`);
+		console.log(`[WEBSITE] releases.json e recipe.yaml sincronizados para ${tag}.`);
 	}
+
+	// Páginas, selos de versão, contagens, referência e fatos: o conferidor corrige o que é mecânico e
+	// aponta o que precisa de texto novo (ex.: um resource novo sem verbete no catálogo do site).
+	if (opts.noCheck) return 0;
+	const check = spawnSync(process.execPath, [path.join(__dirname, 'check_docs_web.js'), '--fix', '--docs', DOCS_ROOT, '--website', WEBSITE_ROOT], { stdio: 'inherit' });
+	return check.status === 0 ? 0 : 1;
 }
 
-main();
+process.exit(main() || 0);
