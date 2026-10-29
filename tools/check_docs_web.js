@@ -15,6 +15,7 @@
  *             continua como erro, com a instrução do que fazer.
  *   --strict  avisos também reprovam (exit 1).
  *   --json    relatório em JSON (usado pelo COE Build Manager).
+ *   --only docs|website   confere só uma das partes (usado no CI de cada repositório).
  *
  * Sai com 1 quando sobra erro.
  */
@@ -37,6 +38,9 @@ const option = (name, fallback) => {
 const FIX = flag('--fix');
 const JSON_OUT = flag('--json');
 const STRICT = flag('--strict');
+// --only docs|website: cada repositório confere só a sua parte no CI (evita um PR depender do outro estar mergeado).
+const ONLY = (() => { const i = argv.indexOf('--only'); return i >= 0 ? String(argv[i + 1] || '') : ''; })();
+const want = part => !ONLY || ONLY === part;
 const WORKSPACE = path.resolve(FRAMEWORK_ROOT, '..');
 const DOCS = option('--docs', path.join(WORKSPACE, 'docs'));
 const WEBSITE = option('--website', path.join(WORKSPACE, 'website'));
@@ -594,9 +598,9 @@ function checkFrameworkReadmes() {
 }
 
 // ---------------------------------------------------------------------------------------------------
-checkFrameworkReadmes();
-checkDocs();
-checkWebsite();
+if (!ONLY) checkFrameworkReadmes();
+if (want('docs')) checkDocs();
+if (want('website')) checkWebsite();
 
 // Depois de corrigir, confere de novo para relatar só o que sobrou.
 if (FIX) {
@@ -604,7 +608,7 @@ if (FIX) {
 	issues.length = 0;
 	const child = (() => {
 		try {
-			return { code: 0, out: execFileSync(process.execPath, [__filename, '--json', '--docs', DOCS, '--website', WEBSITE], { encoding: 'utf8' }) };
+			return { code: 0, out: execFileSync(process.execPath, [__filename, '--json', '--docs', DOCS, '--website', WEBSITE, ...(ONLY ? ['--only', ONLY] : [])], { encoding: 'utf8' }) };
 		} catch (e) {
 			return { code: e.status, out: e.stdout };
 		}
