@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_vehicles'
-version '0.1.0-beta.12'
+version '0.1.0-beta.13'
 -- Usa só Core.Platform para entidades/veículos; tools/check_contracts.lua barra natives cruas aqui.
 coe_platform 'hal'
 description 'Registro persistente de veículos de jogador, placa, estado e quilometragem (Mileage)'
