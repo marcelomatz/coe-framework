@@ -4,61 +4,56 @@
 
 ## Exports
 
-### `GetNeeds(source)`
+### `GetNeeds(playerSource)`
 
-Retrieves the current vital needs snapshot of a player. Server-side.
-
-| Parameter | Type | Description |
-|---|---|---|
-| `source` | `integer` | Player server ID |
-
-**Returns**
-
-- `CoeNeedsState|nil` `snapshot` — `nil` if character data is not yet loaded
-
-### `AddNeed(source, name, delta)`
-
-Adds `delta` to a vital need (clamped between 0 and 100). Server-side; restricted to resources in `AllowedResources`. Changes are saved via periodic batch flush.
+[shared] On server receives `playerSource`; on client takes no arguments and returns the local snapshot.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `source` | `integer` | Player server ID |
-| `name` | `CoeNeedName` | Need identifier |
-| `delta` | `number` | Value offset to add (positive or negative) |
+| `playerSource?` | `integer` | Target player server ID (server-side only) |
 
 **Returns**
 
-- `true|string` `result` — `true` or error code: `caller_not_allowed`, `needs_not_loaded`, `invalid_need`
+- `CoeNeedsSnapshot|nil` `snapshot` — `nil` if player needs state is not yet loaded
 
-### `SetNeed(source, name, value)`
+### `SetNeed(playerSource, needName, value)`
 
-Sets the exact value of a vital need (clamped between 0 and 100). Same authorization rules as `AddNeed`.
+[server] Sets the absolute value (0..100) of a vital need. Requires ACE `coe.needs`.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `source` | `integer` | Player server ID |
-| `name` | `CoeNeedName` | Need identifier |
-| `value` | `number` | Absolute target value |
+| `playerSource` | `integer` | Target player server ID |
+| `needName` | `CoeNeedName` | Need identifier |
+| `value` | `number` | Target value (0..100) |
 
 **Returns**
 
-- `true|string` `result` — `true` or error code: `caller_not_allowed`, `needs_not_loaded`, `invalid_need`
+- `boolean|'caller_not_allowed'|'character_not_loaded'|'invalid_need'`
 
-### `GetState()`
+### `AddNeed(playerSource, needName, delta)`
 
-Returns the latest vital needs state synchronized from the server. Client-side.
+[server] Adds `delta` (positive or negative) to a vital need. Requires ACE `coe.needs`.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `playerSource` | `integer` | Target player server ID |
+| `needName` | `CoeNeedName` | Need identifier |
+| `delta` | `number` | Delta offset to add |
 
 **Returns**
 
-- `CoeNeedsState|nil`
+- `boolean|'caller_not_allowed'|'character_not_loaded'|'invalid_need'`
 
 ## Types
 
 ```lua
----@alias CoeNeedName 'hunger'|'thirst'|'stress'
+---@alias CoeNeedName 'hunger'|'thirst'|'stress'|'alcohol'|'drugs'
 
----@class CoeNeedsState
----@field hunger integer Value between 0 and 100
----@field thirst integer Value between 0 and 100
----@field stress integer Value between 0 and 100
+---@class CoeNeedsSnapshot
+---@field hunger number
+---@field thirst number
+---@field stress number
+---@field alcohol number
+---@field drugs number
+---@field updatedAt integer
 ```
