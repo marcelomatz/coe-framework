@@ -8,6 +8,7 @@
 | [coe_audit](coe_audit.md) | `Record`, `IsReady` |
 | [coe_bank](coe_bank.md) | `Yield`, `Status` |
 | [coe_businesses](coe_businesses.md) | `IsReady`, `Categories`, `RuleSchema`, `List`, `Get`, `Save`, `Seed`, `Delete`, `ClockIn`, `ClockOut`, `Clock`, `IsOnDuty`, `DutySummary`, `CurrentDuty`, `Access`, `Partners`, `Debtors`, `Permissions`, `RegisterPermissions`, `Grades`, `GradeOf`, `Can`, `Salary`, `Payroll`, `RegisterTab`, `RegisterProvider`, `TabletInstances`, `TabletCall` |
+| [coe_characters](coe_characters.md) | `IsOpen`, `CloseSelection` |
 | [coe_core](coe_core.md) | `GetCoreObject`, `GetCharacterByStateId`, `GetActiveCharacter`, `GetPlayerByStateId`, `GetGroupDefinitions`, `GetPlayerGroups`, `SetPlayerGroup`, `RemovePlayerGroup` |
 | [coe_database](coe_database.md) | `Query`, `Execute`, `Transaction`, `IsReady` |
 | [coe_economy](coe_economy.md) | `IsReady`, `Summary`, `GetBalance`, `Credit`, `Debit`, `Transfer`, `Ledger`, `LedgerStats`, `SocietyBalance`, `SocietyLedger`, `SocietyDeposit`, `SocietyWithdraw`, `SocietyCredit`, `SocietyCollect`, `SocietyCharge`, `BankSocietyPay`, `BankSocietyDeposit`, `BankSocietyDebit`, `BankSocietyCredit`, `BankSocietyTransfer`, `BankSocietyLedger`, `RunPayroll` |
@@ -15,6 +16,7 @@
 | [coe_hud](coe_hud.md) | `SetHidden`, `IsHidden`, `SetLogoVisible`, `IsLogoVisible`, `ToggleLogo` |
 | [coe_inventory](coe_inventory.md) | `CreateInventory`, `DeleteInventory`, `GetInventory`, `GetSlot`, `SwapSlots`, `SplitItem`, `AddItem`, `RemoveItem`, `UseItem`, `SetItemMetadata`, `GetItemCount`, `GetPersistenceStats`, `OpenStash`, `RemoveItemByName`, `RegisterItem`, `Items`, `GetItem`, `GetContainerInventory`, `GetPlayerInventory`, `GetInventoryObject` |
 | [coe_jobs](coe_jobs.md) | `RegisterJob`, `UnregisterJob`, `ListJobs`, `IsReady`, `GetSession`, `GetProgress`, `GetCareer`, `TabletVisible`, `TabletCall` |
+| [coe_loadscreen](coe_loadscreen.md) | `IsActive`, `Shutdown` |
 | [coe_logging](coe_logging.md) | `Log` |
 | [coe_map](coe_map.md) | `GetMode`, `OpenFull` |
 | [coe_mobile](coe_mobile.md) | `Yield`, `Status`, `NumberOf` |

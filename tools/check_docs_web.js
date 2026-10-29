@@ -433,8 +433,12 @@ function checkGeneratorParity(tools) {
 		const tmpSite = path.join(tmp, 'website');
 		for (const sub of ['tools', 'scripts', path.join('en', 'scripts')]) fs.cpSync(path.join(WEBSITE, sub), path.join(tmpSite, sub), { recursive: true });
 		for (const f of ['index.html', path.join('en', 'index.html')]) if (exists(path.join(WEBSITE, f))) fs.cpSync(path.join(WEBSITE, f), path.join(tmpSite, f));
-		if (exists(path.join(DOCS, 'reference'))) fs.cpSync(path.join(DOCS, 'reference'), path.join(tmp, 'docs', 'reference'), { recursive: true });
-		for (const f of ['CHANGELOG.md', 'CHANGELOG.en-US.md']) if (exists(path.join(DOCS, f))) fs.cpSync(path.join(DOCS, f), path.join(tmp, 'docs', f));
+		const refDir = exists(path.join(DOCS, 'reference')) ? path.join(DOCS, 'reference') : path.join(FRAMEWORK_ROOT, 'reference');
+		if (exists(refDir)) fs.cpSync(refDir, path.join(tmp, 'docs', 'reference'), { recursive: true });
+		for (const f of ['CHANGELOG.md', 'CHANGELOG.en-US.md']) {
+			const cf = exists(path.join(DOCS, f)) ? path.join(DOCS, f) : (f === 'CHANGELOG.md' && exists(path.join(FRAMEWORK_ROOT, f)) ? path.join(FRAMEWORK_ROOT, f) : null);
+			if (cf) fs.cpSync(cf, path.join(tmp, 'docs', f));
+		}
 		fs.writeFileSync(path.join(tmpSite, 'tools', 'framework_facts.json'), JSON.stringify(facts, null, 2) + '\n');
 		execFileSync(process.execPath, [path.join(tmpSite, 'tools', 'generate_site.js')], { cwd: tmpSite, stdio: 'pipe' });
 		const stale = [];

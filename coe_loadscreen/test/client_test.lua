@@ -2,6 +2,12 @@
 local calls = {}
 local states = { coe_characters = 'missing' }
 local t = 0
+local registeredExports = {}
+exports = setmetatable({}, {
+	__call = function(_, name, fn)
+		registeredExports[name] = fn
+	end
+})
 NetworkIsPlayerActive = function() return true end
 PlayerId = function() return 1 end
 GetResourceState = function(n) return states[n] end
