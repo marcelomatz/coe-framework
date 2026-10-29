@@ -11,21 +11,33 @@ local function isValidId(value)
 	return type(value) == 'string' and #value >= 1 and #value <= 64
 end
 
-local function dbCall(method, query, params)
+-- Os exports do coe_database respondem por callback (sucesso, resultado, código de erro); aqui a chamada vira
+-- síncrona dentro da thread com promise + Citizen.Await, como nos demais resources.
+local function dbCall(method, ...)
 	if GetResourceState('coe_database') ~= 'started' then
 		return nil, 'database_unavailable'
 	end
-	local ok, result, err = pcall(function()
-		return exports.coe_database[method](exports.coe_database, query, params)
+	local response = promise.new()
+	local database = exports['coe_database']
+	local args = { ... }
+	args[#args + 1] = function(success, result, errorCode)
+		response:resolve({ success = success == true, result = result, error = errorCode })
+	end
+	local dispatched, dispatchError = pcall(function()
+		database[method](database, table.unpack(args))
 	end)
-	if not ok then
-		log('error', 'database_call_failed', { method = method, error = tostring(result) })
+	if not dispatched then
+		log('error', 'database_call_failed', { method = method, error = tostring(dispatchError) })
 		return nil, 'database_unavailable'
 	end
-	if result == nil then
-		return nil, err or 'database_error'
+	local outcome = Citizen.Await(response)
+	if not outcome.success then
+		return nil, outcome.error or 'database_error'
 	end
-	return result
+	if outcome.result == nil then
+		return true
+	end
+	return outcome.result
 end
 
 function NeedsPersistence.IsReady()
@@ -33,7 +45,19 @@ function NeedsPersistence.IsReady()
 end
 
 function NeedsPersistence.Initialize()
-	local ok, err = CoeMigrations.Run(NeedsMigrations, dbCall, log)
+	local ok, err = CoeMigrations.Run({
+		tableName = 'coe_needs_schema_migrations',
+		migrations = NeedsMigrations.versions,
+		execute = function(sql, parameters)
+			return dbCall('Execute', sql, parameters)
+		end,
+		query = function(sql, parameters)
+			return dbCall('Query', sql, parameters)
+		end
+	})
+	if not ok then
+		log('error', 'needs_migrations_failed', { error_code = tostring(err) })
+	end
 	ready = ok == true
 	return ready, err
 end
@@ -123,8 +147,8 @@ function NeedsPersistence.SaveMany(rows)
 			return false, 'invalid_payload'
 		end
 		queries[i] = {
-			query = UPSERT_SQL,
-			values = {
+			sql = UPSERT_SQL,
+			parameters = {
 				id,
 				tonumber(state.hunger) or 0,
 				tonumber(state.thirst) or 0,

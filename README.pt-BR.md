@@ -8,12 +8,12 @@
 [![Documentação](https://img.shields.io/badge/Docs-docs.coeroleplay.app-purple.svg)](https://docs.coeroleplay.app/)
 [![Cfx Server Enhanced](https://img.shields.io/badge/Cfx%20Server%20Enhanced-Build%20b170%2B-blue.svg)](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows)
 [![CI Build](https://img.shields.io/badge/CI-passing-brightgreen.svg)](https://github.com/marcelomatz/coe-framework/actions)
-[![Suíte de Testes](https://img.shields.io/badge/tests-118%20unit%20%7C%2030%20smoke%20boot%20%7C%209%20mariadb%20%7C%20strict%20contracts-blue.svg)](#garantia-de-qualidade-e-anti-regressao-no-ci)
-[![Internacionalização](https://img.shields.io/badge/i18n-445%20keys%20%7C%20100%25%20parity%20%7C%20pt--BR%20%26%20en--US-green.svg)](I18N_LOCALIZATION.md)
-[![Platform HAL](https://img.shields.io/badge/platform%20hal-decoupled%20natives%20%7C%20zero%20legacy-purple.svg)](PLATFORM_HAL.md)
-[![Resources First-Party](https://img.shields.io/badge/resources-27%20first--party%20MIT-purple.svg)](PACKS.md)
+[![Suíte de Testes](https://img.shields.io/badge/tests-83%20lua%20%7C%208%20node%20%7C%209%20mariadb%20%7C%20strict%20contracts-blue.svg)](#garantia-de-qualidade-e-anti-regressao-no-ci)
+[![Internacionalização](https://img.shields.io/badge/i18n-445%20keys%20%7C%20100%25%20parity%20%7C%20pt--BR%20%26%20en--US-green.svg)](https://docs.coeroleplay.app/#doc=I18N_LOCALIZATION.md)
+[![Platform HAL](https://img.shields.io/badge/platform%20hal-decoupled%20natives%20%7C%20zero%20legacy-purple.svg)](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.md)
+[![Resources First-Party](https://img.shields.io/badge/resources-29%20first--party%20MIT-purple.svg)](https://docs.coeroleplay.app/#doc=PACKS.md)
 [![Plataforma](https://img.shields.io/badge/platform-FiveM%20for%20GTAV%20Enhanced%20%28Gen9%20DX12%29-lightgrey.svg)](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows)
-[![Arquitetura](https://img.shields.io/badge/architecture-clean%20%2F%20server--authoritative-orange.svg)](ARCHITECTURE.md)
+[![Arquitetura](https://img.shields.io/badge/architecture-clean%20%2F%20server--authoritative-orange.svg)](https://docs.coeroleplay.app/#doc=ARCHITECTURE.md)
 [![AI Ready](https://img.shields.io/badge/AI%20Agents-5%20Rules%20%7C%208%20Skills-teal.svg)](#como-conectar-os-agentes-de-ia-do-coe-no-seu-ambiente)
 
 > **A Nova Geração da Engenharia FiveM**: o primeiro ecossistema para servidores FiveM Enhanced do Brasil construído com **100% de código autoral**, arquitetura limpa em camadas, isolamento total de natives e zero dependências de bibliotecas ou frameworks legados do mercado.
@@ -32,7 +32,7 @@
 >
 > *Quero deixar registrado o meu mais profundo respeito e gratidão a todos os pioneiros e desenvolvedores de frameworks como **ESX**, **QBCore**, **Qbox** e **Ox**, que desbravaram caminhos, criaram os alicerces onde todos nós pisamos e continuam fazendo um trabalho admirável pelo ecossistema. Da mesma forma, meu agradecimento sincero a cada **modder**, criador de conteúdo e administrador de servidor que dedica noites e fins de semana para tornar o ambiente do FiveM cada vez melhor.*
 >
-> *O COE Framework nasce como uma contribuição de coração aberto: 27 resources em arquitetura limpa, com desempenho inegociável (0.00ms idle), totalmente orientados ao servidor, desacoplados via Platform HAL e com banco assíncrono MariaDB 11. Que ele sirva como ferramenta, inspiração e base sólida para que a comunidade continue criando o futuro do roleplay."*
+> *O COE Framework nasce como uma contribuição de coração aberto: 29 resources em arquitetura limpa, com desempenho inegociável (0.00ms idle), totalmente orientados ao servidor, desacoplados via Platform HAL e com banco assíncrono MariaDB 11. Que ele sirva como ferramenta, inspiração e base sólida para que a comunidade continue criando o futuro do roleplay."*
 >
 > — **Marcelo Matz**
 
@@ -71,7 +71,7 @@ Nunca montou um servidor no **FiveM for GTAV Enhanced** ou está vindo de bases 
    https://www.coeroleplay.app/recipe.yaml
    ```
 5. Informe a senha do seu **MariaDB** e a sua chave de licença Cfx.re ([Keymaster / Portal Cfx.re](https://portal.cfx.re/)).
-6. Clique em **Run Recipe (Executar Receita)**! O txAdmin fará tudo sozinho: baixará os resources padrão da Cfx.re, baixará os **27 resources abertos do COE Framework**, criará o banco de dados com todas as tabelas automaticamente e iniciará o servidor!
+6. Clique em **Run Recipe (Executar Receita)**! O txAdmin fará tudo sozinho: baixará os resources padrão da Cfx.re, baixará os **29 resources abertos do COE Framework**, criará o banco de dados com todas as tabelas automaticamente e iniciará o servidor!
 
 > [!TIP]
 > **Prefere instalar manualmente ou usar o ambiente completo de desenvolvimento?**
@@ -186,7 +186,7 @@ flowchart TD
     subgraph Server["Servidor Autorizador (Server-Authoritative)"]
         Val["Validação de Sessão, Cooldown & Permissões"]
         Platform["Camada de Isolamento Core.Platform (HAL)"]
-        Domain["Regras de Negócio (27 Resources)"]
+        Domain["Regras de Negócio (29 Resources)"]
         Locale["Motor i18n Core.Locale (_t)"]
     end
 
@@ -221,7 +221,7 @@ No COE Framework:
 ### 2. Camada de Plataforma CFX (`Core.Platform` / HAL)
 As natives em C++ fornecidas pelo runtime FiveM/CFX (`GetEntityCoords`, `DeleteEntity`, `SetVehicleNumberPlateText`, `SetPlayerRoutingBucket`, etc.) sofrem alterações de comportamento, depreciações ou mudanças de assinatura entre versões do servidor.
 
-O módulo [`@coe_core/lib/platform.lua`](PLATFORM_HAL.md) atua como uma **Anti-Corruption Layer (ACL)**:
+O módulo [`@coe_core/lib/platform.lua`](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.md) atua como uma **Anti-Corruption Layer (ACL)**:
 - Encapsula as natives brutas em métodos orientados a objetos tipados (`CoePlatformVehicle`, `CoePlatformPed`, `CoePlatformPlayer`);
 - Fornece backend de mock em memória ativado automaticamente fora do FXServer, permitindo executar suítes de testes unitários offline no terminal em milissegundos;
 - O CI rejeita qualquer chamada a natives não encapsuladas nos recursos migrados através do validador estático `--audit-natives`.
@@ -246,21 +246,21 @@ A tabela abaixo sintetiza as diferenças técnicas profundas entre o **COE Frame
 
 | Critério Técnico | ESX Legacy (2017–2024) | QBCore / Qbox (2020–2024) | vRP (Legado / vRPex) | COE Framework (Enhanced) |
 |---|---|---|---|---|
-| **Arquitetura Base** | Monolítica, loops pesados de thread | Modular parcial, dependência de 40+ repositórios terceiros | Sistema de proxies/túneis de alta latência | **8 Camadas Estritas (27 resources first-party integrados)** |
-| **Consumo de CPU (*Resmon*)** | `1.5ms – 3.5ms` em repouso no cliente | `0.8ms – 2.0ms` | `1.2ms – 2.5ms` | **`< 0.15ms` somando todos os 27 resources** |
+| **Arquitetura Base** | Monolítica, loops pesados de thread | Modular parcial, dependência de 40+ repositórios terceiros | Sistema de proxies/túneis de alta latência | **8 Camadas Estritas (29 resources first-party integrados)** |
+| **Consumo de CPU (*Resmon*)** | `1.5ms – 3.5ms` em repouso no cliente | `0.8ms – 2.0ms` | `1.2ms – 2.5ms` | **`< 0.15ms` somando todos os 29 resources** |
 | **Modelo de Segurança** | Confiante no cliente (vulnerável a executores Lua) | Verificação parcial por callbacks | Verificação por metatables vulneráveis | **Servidor Autoritativo estrito + Auditoria durável (`coe_audit`)** |
 | **Banco de Dados** | Queries síncronas bloqueantes (`MySQL.Sync`) | ORM pesado ou wrappers em Lua | Queries diretas sem integridade | **Node.js 22 assíncrono, Pool MariaDB 11, Transações ACID** |
 | **Integridade Relacional** | JSON solto em colunas longas, sem foreign keys | JSON serializado em colunas de inventário | Tabela única desnormalizada | **Modelagem 3NF, Chaves `RESTRICT`, Migrações idempotentes** |
 | **Plataforma Suportada** | FiveM Legacy clássico (DirectX 11) | FiveM Legacy clássico | FiveM Legacy clássico | **FiveM for GTA V Enhanced (DirectX 12 / C++ Native)** |
 | **Desacoplamento de Natives** | Zero (natives soltas em todos os scripts) | Zero (natives soltas em client e server) | Zero (natives espalhadas) | **Camada de Plataforma `Core.Platform` (HAL com Mocking)** |
 | **Internacionalização (i18n)** | Textos misturados, dicionários incompletos | Idiomas parciais em arquivos soltos | Hardcoded em português | **100% migrado (`Core.Locale`), 445 chaves, 0 literais no CI** |
-| **Testes Automatizados** | Nenhum (validação manual in-game) | Raros ou inexistentes | Nenhum | **118 testes unitários Lua, 22 de boot FiveM e 9 MariaDB no CI** |
+| **Testes Automatizados** | Nenhum (validação manual in-game) | Raros ou inexistentes | Nenhum | **83 arquivos de teste Lua, 8 suítes Node, 9 cenários MariaDB e checagens de contrato e acesso no CI** |
 | **Tipagem de Código** | Nenhuma (Lua dinâmico solto) | Parcial em Qbox | Nenhuma | **Contratos estáticos formais LuaLS (`types.lua`)** |
 | **UI & Design System** | NUI inchado (Vue/React pesados ou jQuery legado) | Frameworks NUI variados sem padrão visual | jQuery legado de 2017 | **Vanilla JS + CSS Tokens (`tokens.css`) com 5 Temas Dinâmicos** |
 
 ---
 
-## 💎 Funcionalidades Essenciais do Framework (27 Resources Open-Source)
+## 💎 Funcionalidades Essenciais do Framework (29 Resources Open-Source)
 
 O termo **Enhanced** não se limita apenas ao novo executável do GTA V: representa uma nova era de engenharia limpa e estável a 64 Hz com 0.00ms de resmon.
 
@@ -309,9 +309,9 @@ Abaixo, os principais subsistemas abertos que compõem o COE Framework:
 
 ---
 
-## 🏛️ As Camadas da Arquitetura (27 Resources)
+## 🏛️ As Camadas da Arquitetura (29 Resources)
 
-Para garantir dependências unidirecionais estritas, os 27 resources abertos organizam-se na seguinte hierarquia:
+Para garantir dependências unidirecionais estritas, os 29 resources abertos organizam-se na seguinte hierarquia:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -345,12 +345,13 @@ Para garantir dependências unidirecionais estritas, os 27 resources abertos org
 Todo o código é permanentemente submetido a uma esteira rigorosa no GitHub Actions, garantindo que nenhum erro de sintaxe, manifesto ou quebra de contrato chegue à branch principal:
 
 1. **Validação de Contratos e Manifestos (`tools/check_contracts.lua --strict --audit-natives --audit-locales`)**:
-   - **27 resources** verificados contra seus manifestos `fxmanifest.lua`;
+   - **29 resources** verificados contra seus manifestos `fxmanifest.lua`;
    - Exports públicos mapeados, validados e documentados;
    - Chamadas cruzadas (*cross-resource*) auditadas e aprovadas;
    - Eventos de rede registrados e disparos validados (zero eventos órfãos);
    - Natives auditadas com verificação de conformidade na camada de plataforma (`Core.Platform`);
-   - Chaves i18n mapeadas com **100% de paridade** entre `pt-BR` e `en-US` e **0 notificações literais restantes** em todo o framework.
+   - Chaves i18n mapeadas com **100% de paridade** entre `pt-BR` e `en-US` e **0 notificações literais restantes** em todo o framework;
+   - Todo resource com exports tem `types.lua`, e toda chamada a export protegido (banco, veículos, economia, voz, supervisor) vem de um resource na allowlist padrão do alvo.
 2. **Testes Unitários Lua**: Testes isolados de regras de negócio de cada resource executados via Lua 5.4 nativo.
 3. **Testes de Smoke Boot FiveM (`tools/smoke_boot_test.lua`)**: Simulação em ambiente de CI da inicialização de chunks globais, mitigação de perda de metatables por serialização MsgPack em exports e validação do inicializador `@coe_core/lib/init.lua`.
 4. **Cenários de Integração MariaDB 11**: Validação assíncrona com transações reais em banco MariaDB sobre Node.js 22, incluindo execução cumulativa das migrações SQL dos resources com persistência duas vezes seguidas para atestar **idempotência estrita**.
@@ -362,11 +363,11 @@ Todo o código é permanentemente submetido a uma esteira rigorosa no GitHub Act
 
 O COE Framework foi desenhado para empoderar a comunidade de desenvolvedores, scripters e modders de FiveM. Você **nunca precisa alterar o núcleo** do framework para criar novos empregos, sistemas, negócios ou minijogos:
 
-- **100% Open-Source (MIT)**: 27 resources autossuficientes e abertos no repositório `coe-framework` para você estudar, usar e estender livremente.
+- **100% Open-Source (MIT)**: 29 resources autossuficientes e abertos no repositório `coe-framework` para você estudar, usar e estender livremente.
 - **Pontos de Extensão Desacoplados**: Adicione abas no tablet de empresas (`coe_businesses:RegisterTab`), registre novos meios de pagamento em lojas (`coe_shops:RegisterPaymentMethod`) ou adicione provedores de dados sem editar uma única linha do framework original.
 - **Segurança Nativa por ACE**: Conceda acessos finos a banco de dados e economia no `server.cfg` através de `add_ace resource.<nome> coe.<capacidade> allow`.
 
-👉 **Acesse o guia completo e prático**: [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) com 5 exemplos de produção comentados passo a passo (Interação e Comandos, Eye-Targeting 3D com `coetarget`, Banco de Dados Assíncrono MariaDB 11, Economia/Inventário e Pontos de Extensão).
+👉 **Acesse o guia completo e prático**: [`DEVELOPER_GUIDE.md`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.md) com 5 exemplos de produção comentados passo a passo (Interação e Comandos, Eye-Targeting 3D com `coetarget`, Banco de Dados Assíncrono MariaDB 11, Economia/Inventário e Pontos de Extensão).
 
 ---
 
@@ -376,20 +377,20 @@ Navegue pelos documentos aprofundados para entender cada subsistema em detalhes:
 
 | Documento | Foco & Descrição |
 |---|---|
-| [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) ([`en-US`](DEVELOPER_GUIDE.en-US.md)) | **Guia do Desenvolvedor**: Manual passo a passo com exemplos práticos para criar scripts sobre o Core do COE. |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | **Arquitetura Geral**: Camadas funcionais, diagrama de dependências, detalhamento dos 27 resources abertos, tabela de exports públicos e ciclo de vida. |
-| [`PLATFORM_HAL.md`](PLATFORM_HAL.md) | **Camada de Plataforma CFX**: Hardware Abstraction Layer (`Core.Platform`), desacoplamento de natives, adaptadores OOP e backend de mock offline. |
-| [`I18N_LOCALIZATION.md`](I18N_LOCALIZATION.md) | **Internacionalização**: Arquitetura multi-idioma (`Core.Locale`), dicionários `pt-BR` e `en-US` com paridade estrita, helper defensivo `_t` e auditoria estática. |
-| [`DESIGN_RULES.md`](DESIGN_RULES.md) | **Regras de Projeto**: Princípios inegociáveis de segurança (servidor como fonte da verdade, concorrência atômica, migrações idempotentes e anti-padrões evitados). |
-| [`ROADMAP.md`](ROADMAP.md) | **Roadmap & Marcos**: Evolução do framework, ondas de internacionalização concluídas (Waves 1 a 4), suíte smoke boot e próximas etapas de engenharia. |
-| [`ANNOTATIONS.md`](ANNOTATIONS.md) | **Convenção de Contratos**: Padrão de anotações LuaLS, arquivos `types.lua`, referências geradas e o novo visualizador interativo de APIs. |
-| [`PACKS.md`](PACKS.md) | **Módulos Abertos**: Catálogo detalhado dos 27 resources sob licença MIT e guia de extensão. |
-| [`INGAME_CHECKLIST.md`](INGAME_CHECKLIST.md) | **Checklist In-Game**: Cenários de teste interativo dentro do FXServer Enhanced com orientações de medição de telemetria (`resmon 1` e `profiler`). |
-| [`DESIGN_PLAYER_V1.md`](DESIGN_PLAYER_V1.md) | **Desenho: Player v1**: Estrutura de contas (`userId`), personagens (`charId`), identidade pública (`stateId`) e slots por jogador. |
-| [`DESIGN_GROUPS.md`](DESIGN_GROUPS.md) | **Desenho: Grupos & Permissões**: Modelo de dados, sincronização idempotente de definições e herança de permissões ACE. |
-| [`LICENSING.md`](LICENSING.md) | **Governança & Licenciamento**: Licença de código aberto MIT, direitos autorais e governança com CLA. |
+| [`DEVELOPER_GUIDE.md`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.md) ([`en-US`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.en-US.md)) | **Guia do Desenvolvedor**: Manual passo a passo com exemplos práticos para criar scripts sobre o Core do COE. |
+| [`ARCHITECTURE.md`](https://docs.coeroleplay.app/#doc=ARCHITECTURE.md) | **Arquitetura Geral**: Camadas funcionais, diagrama de dependências, detalhamento dos 29 resources abertos, tabela de exports públicos e ciclo de vida. |
+| [`PLATFORM_HAL.md`](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.md) | **Camada de Plataforma CFX**: Hardware Abstraction Layer (`Core.Platform`), desacoplamento de natives, adaptadores OOP e backend de mock offline. |
+| [`I18N_LOCALIZATION.md`](https://docs.coeroleplay.app/#doc=I18N_LOCALIZATION.md) | **Internacionalização**: Arquitetura multi-idioma (`Core.Locale`), dicionários `pt-BR` e `en-US` com paridade estrita, helper defensivo `_t` e auditoria estática. |
+| [`DESIGN_RULES.md`](https://docs.coeroleplay.app/#doc=DESIGN_RULES.md) | **Regras de Projeto**: Princípios inegociáveis de segurança (servidor como fonte da verdade, concorrência atômica, migrações idempotentes e anti-padrões evitados). |
+| [`ROADMAP.md`](https://docs.coeroleplay.app/#doc=ROADMAP.md) | **Roadmap & Marcos**: Evolução do framework, ondas de internacionalização concluídas (Waves 1 a 4), suíte smoke boot e próximas etapas de engenharia. |
+| [`ANNOTATIONS.md`](https://docs.coeroleplay.app/#doc=ANNOTATIONS.md) | **Convenção de Contratos**: Padrão de anotações LuaLS, arquivos `types.lua`, referências geradas e o novo visualizador interativo de APIs. |
+| [`PACKS.md`](https://docs.coeroleplay.app/#doc=PACKS.md) | **Módulos Abertos**: Catálogo detalhado dos 29 resources sob licença MIT e guia de extensão. |
+| [`INGAME_CHECKLIST.md`](https://docs.coeroleplay.app/#doc=INGAME_CHECKLIST.md) | **Checklist In-Game**: Cenários de teste interativo dentro do FXServer Enhanced com orientações de medição de telemetria (`resmon 1` e `profiler`). |
+| [`DESIGN_PLAYER_V1.md`](https://docs.coeroleplay.app/#doc=DESIGN_PLAYER_V1.md) | **Desenho: Player v1**: Estrutura de contas (`userId`), personagens (`charId`), identidade pública (`stateId`) e slots por jogador. |
+| [`DESIGN_GROUPS.md`](https://docs.coeroleplay.app/#doc=DESIGN_GROUPS.md) | **Desenho: Grupos & Permissões**: Modelo de dados, sincronização idempotente de definições e herança de permissões ACE. |
+| [`LICENSING.md`](https://docs.coeroleplay.app/#doc=LICENSING.md) | **Governança & Licenciamento**: Licença de código aberto MIT, direitos autorais e governança com CLA. |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | **Guia de Contribuição & CLA**: Diretrizes de submissão de PRs e termo de cessão de direitos (CLA). |
-| [`COMMUNITY_RELEASE.md`](COMMUNITY_RELEASE.md) | **Anúncio Oficial**: Modelo de apresentação para o fórum da Cfx.re e canais da comunidade. |
+| [`COMMUNITY_RELEASE.md`](https://docs.coeroleplay.app/#doc=COMMUNITY_RELEASE.md) | **Anúncio Oficial**: Modelo de apresentação para o fórum da Cfx.re e canais da comunidade. |
 
 ---
 

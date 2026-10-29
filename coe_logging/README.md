@@ -54,7 +54,7 @@ Logs operacionais/auditoria não são encaminhados automaticamente ao jogador. O
 
 ## Limitações
 
-A saída atual depende do console/collector do FXServer. Armazenamento durável, rotação, retenção e consulta de auditoria são etapas futuras. Os eventos de auditoria existentes são parciais e não cobrem todas as ações de gameplay; consulte o [catálogo e histórico](../HISTORY.md). `coe_logging` não pode depender do banco, para continuar funcional quando o banco estiver indisponível.
+A saída atual depende do console/collector do FXServer. Armazenamento durável, rotação, retenção e consulta de auditoria são etapas futuras. Os eventos de auditoria existentes são parciais e não cobrem todas as ações de gameplay; consulte o [catálogo e histórico](https://docs.coeroleplay.app/#doc=CHANGELOG.md). `coe_logging` não pode depender do banco, para continuar funcional quando o banco estiver indisponível.
 
 ## Testes
 

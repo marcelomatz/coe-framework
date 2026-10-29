@@ -14,6 +14,10 @@ Antes da seleção, o adaptador também encerra a tela de loading (`ShutdownLoad
 
 Este resource não altera `spawnmanager` nem os resources distribuídos pela Cfx. Não inicie `basic-gamemode` junto deste fluxo: ele ativa respawn sem aguardar o estado autoritativo do Core.
 
+## Hotel de nascimento
+
+`exports.coe_spawn:GetStarterHotel()` devolve a configuração atual do hotel onde o personagem novo nasce; `SetStarterHotel(dados)` salva e sincroniza com os jogadores conectados (`true` ou `false, codigo`). O painel `coe_staff` usa os dois. Contrato em [`types.lua`](types.lua).
+
 ## Arquivos e testes
 
 - `config.lua`: coordenadas e heading do spawn inicial e ajustes da última posição.

@@ -2,7 +2,9 @@
 
 > Gerado de `coe_supervisor/types.lua` por `tools/gen_reference.lua`. Não edite à mão.
 
-Exports server-only, restritos ao resource em `SupervisorConfig.Caller` (coe_admin).
+Exports server-only. List/Restart/GetUpdateStatus/CheckForUpdates/ApplyUpdate exigem a ACE `coe.supervisor`
+(padrão: coe_staff). WriteFile/ReadFile/HashFile/DownloadFile/CommitFile/DiscardFile/VerifySignature são internos:
+só o próprio coe_supervisor pode chamá-los.
 
 ## Exports
 
@@ -48,13 +50,14 @@ Consulta o repositório oficial por novas versões do COE Framework.
 
 - `CoeSupervisorUpdateStatus|nil` `status` — `nil` para chamador não autorizado
 
-### `WriteFile(filePath, content, isBinary)`
+### `WriteFile(resource, relPath, content, isBinary)`
 
-Grava um arquivo em disco diretamente via Node.js nativo do FXServer.
+Interno. Grava um arquivo dentro de um resource (Node.js). Recusa outro chamador e caminho fora do resource.
 
 | Parâmetro | Tipo | Descrição |
 |---|---|---|
-| `filePath` | `string` | Caminho físico absoluto no host |
+| `resource` | `string` | Nome do resource de destino |
+| `relPath` | `string` | Caminho relativo dentro do resource (sem `..`, sem caminho absoluto) |
 | `content` | `string` | Conteúdo do arquivo |
 | `isBinary` | `boolean\|nil` | Se o arquivo é binário (ex.: imagem/áudio) |
 
@@ -62,31 +65,88 @@ Grava um arquivo em disco diretamente via Node.js nativo do FXServer.
 
 - `boolean` `ok`
 
-### `DownloadFile(url, filePath, cb)`
+### `ReadFile(resource, relPath)`
 
-Baixa um arquivo da rede diretamente para o disco via stream binário Node.js nativo do FXServer.
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `url` | `string` | URL do arquivo remoto |
-| `filePath` | `string` | Caminho físico absoluto de destino no host |
-| `cb` | `fun(ok:` | boolean, err: string\|nil)\|nil Callback assíncrono de conclusão |
-
-**Retorno**
-
-- `boolean` `ok` — Se o download foi iniciado
-
-### `ReadFile(filePath)`
-
-Lê um arquivo do disco diretamente via Node.js nativo do FXServer.
+Interno. Lê um arquivo de texto dentro de um resource (Node.js).
 
 | Parâmetro | Tipo | Descrição |
 |---|---|---|
-| `filePath` | `string` | Caminho físico absoluto no host |
+| `resource` | `string` |  |
+| `relPath` | `string` |  |
 
 **Retorno**
 
 - `string|nil` `content`
+
+### `HashFile(resource, relPath, isBinary)`
+
+Interno. SHA-256 (hex) de um arquivo instalado; texto com CRLF normalizado para LF.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `resource` | `string` |  |
+| `relPath` | `string` |  |
+| `isBinary` | `boolean\|nil` |  |
+
+**Retorno**
+
+- `string|nil` `sha256`
+
+### `DownloadFile(url, resource, relPath, sha256, cb)`
+
+Interno. Baixa por HTTPS (hosts do GitHub) para `<arquivo>.coe-new` e só conclui se o SHA-256 bater.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `url` | `string` | URL HTTPS do arquivo |
+| `resource` | `string` |  |
+| `relPath` | `string` |  |
+| `sha256` | `string` | SHA-256 esperado (hex, 64 caracteres) |
+| `cb` | `fun(ok:` | boolean, err: string\|nil) Callback de conclusão |
+
+**Retorno**
+
+- `boolean` `started` — Se o download foi iniciado
+
+### `CommitFile(resource, relPath)`
+
+Interno. Move o download conferido (`<arquivo>.coe-new`) para o lugar definitivo.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `resource` | `string` |  |
+| `relPath` | `string` |  |
+
+**Retorno**
+
+- `boolean` `ok`
+
+### `DiscardFile(resource, relPath)`
+
+Interno. Descarta um download conferido que não será aplicado.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `resource` | `string` |  |
+| `relPath` | `string` |  |
+
+**Retorno**
+
+- `boolean` `ok`
+
+### `VerifySignature(body, signature, publicKeyPem)`
+
+Interno. Confere a assinatura Ed25519 (base64) do version.json com a chave pública em PEM.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `body` | `string` |  |
+| `signature` | `string` |  |
+| `publicKeyPem` | `string` |  |
+
+**Retorno**
+
+- `boolean` `ok`
 
 ### `ApplyUpdate(requester)`
 

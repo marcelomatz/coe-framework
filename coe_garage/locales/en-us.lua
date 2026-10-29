@@ -9,6 +9,7 @@ Locales['en-US'] = {
 	['spot_not_found'] = 'Spot not found.',
 	['too_far'] = 'You are too far from the spot.',
 	['not_your_vehicle'] = 'This vehicle does not belong to you.',
+	['wrong_garage'] = 'This vehicle is stored in another garage.',
 	['vehicle_not_stored'] = 'The vehicle is not stored in this garage.',
 	['spawn_failed'] = 'Failed to spawn the vehicle.',
 	['store_failed'] = 'Failed to store the vehicle.',

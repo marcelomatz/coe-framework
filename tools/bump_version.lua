@@ -2,12 +2,16 @@
 -- Sincroniza a versão de release do COE Framework em:
 --   1. version.json (raiz do repositório)
 --   2. coe_supervisor/version.json (embutido no supervisor para leitura em runtime via LoadResourceFile)
---   3. fxmanifest.lua de todos os 27 resources do framework
+--   3. fxmanifest.lua de todos os resources do framework (descobertos pelo fxmanifest.lua na raiz)
 --   4. recipe.yaml (txAdmin Recipe)
+-- O version.json lista, por resource, os arquivos de runtime com FNV-1a (compatibilidade) e SHA-256 (o updater do
+-- coe_supervisor recusa qualquer arquivo baixado cujo SHA-256 não bata).
 --
 -- Uso:
 --   lua tools/bump_version.lua <versao> [--notes "Notas da release"]
---   lua tools/bump_version.lua --check
+--   lua tools/bump_version.lua --check [--tag v<versao>]
+--     Confere versões (manifests, recipe, os dois version.json), lista de arquivos e hashes. Com --tag, também
+--     confere que a tag publicada é a do version.json (usado no release.yml).
 
 local isWin = package.config:sub(1, 1) == '\\'
 
@@ -135,6 +139,11 @@ local function listRuntimeFiles(res)
 				skip = true
 			elseif rel == 'types.lua' or rel == 'package-lock.json' or rel == '.gitignore' or rel == '.luarc.json' then
 				skip = true
+			elseif res == 'coe_supervisor' and (rel == 'version.json' or rel == 'version.json.sig') then
+				-- O manifesto não pode conter o próprio hash; o updater grava o version.json ao final da atualização.
+				skip = true
+			elseif rel:match('%.coe%-new$') or rel:match('%.dist%.lua$') then
+				skip = true
 			elseif rel:match('%.md$') or rel:match('%.log$') or rel:match('%.tmp$') or rel:match('%.bak$') then
 				skip = true
 			elseif rel:match('_test%.lua$') or rel:match('%.test%.js$') then
@@ -253,6 +262,10 @@ local function fnv1a(content, isBinary)
 	return string.format('%08x', hash)
 end
 
+-- SHA-256 com a mesma normalização do updater (texto: CRLF -> LF). Implementação única em coe_supervisor/updater.lua.
+dofile('coe_supervisor/updater.lua')
+local sha256 = SupervisorUpdater.Sha256
+
 local function isBinaryFile(relPath)
 	if not relPath then return false end
 	local ext = relPath:match('%.([^%.]+)$')
@@ -301,15 +314,22 @@ local function buildVersionJson(version, notes, resources)
 			lines[#lines + 1] = '\t\t\t\t"' .. jsonEscape(rel) .. '"' .. comma
 		end
 		lines[#lines + 1] = '\t\t\t],'
+		local contents = {}
+		for _, rel in ipairs(files) do
+			local f = io.open(res .. '/' .. rel, 'rb')
+			contents[rel] = f and f:read('*a') or ''
+			if f then f:close() end
+		end
 		lines[#lines + 1] = '\t\t\t"hashes": {'
 		for fIdx, rel in ipairs(files) do
-			local filePath = res .. '/' .. rel
-			local f = io.open(filePath, 'rb')
-			local fileContent = f and f:read('*a') or ''
-			if f then f:close() end
-			local h = fnv1a(fileContent, isBinaryFile(rel))
 			local comma = fIdx < #files and ',' or ''
-			lines[#lines + 1] = '\t\t\t\t"' .. jsonEscape(rel) .. '": "' .. h .. '"' .. comma
+			lines[#lines + 1] = '\t\t\t\t"' .. jsonEscape(rel) .. '": "' .. fnv1a(contents[rel], isBinaryFile(rel)) .. '"' .. comma
+		end
+		lines[#lines + 1] = '\t\t\t},'
+		lines[#lines + 1] = '\t\t\t"sha256": {'
+		for fIdx, rel in ipairs(files) do
+			local comma = fIdx < #files and ',' or ''
+			lines[#lines + 1] = '\t\t\t\t"' .. jsonEscape(rel) .. '": "' .. sha256(contents[rel], isBinaryFile(rel)) .. '"' .. comma
 		end
 		lines[#lines + 1] = '\t\t\t}'
 		local resComma = idx < #resources and ',' or ''
@@ -355,10 +375,40 @@ if mode == '--check' then
 			errors = errors + 1
 		end
 	end
+	local recipeContent = readFile('recipe.yaml') or ''
+	local recipeVer = recipeContent:gsub('\r\n', '\n'):match('\nversion:%s*"([^"]+)"')
+	if recipeVer ~= version then
+		print(string.format('[ERRO] recipe.yaml tem version=%s (esperado %s)', tostring(recipeVer), version))
+		errors = errors + 1
+	end
+
+	-- Arquivos e hashes do manifesto precisam bater com o que está no repositório: o updater confere SHA-256.
+	local function resourcesSection(text)
+		local norm = text:gsub('\r\n', '\n')
+		local start = norm:find('\n\t"resources": {', 1, true)
+		return start and norm:sub(start) or ''
+	end
+	local expected = resourcesSection(buildVersionJson(version, '', resources))
+	if resourcesSection(rootJson) ~= expected then
+		print('[ERRO] version.json desatualizado: arquivos ou hashes (FNV/SHA-256) não batem com o repositório.')
+		print('       Rode lua tools/bump_version.lua ' .. version .. ' --no-docs-sync e versione o resultado.')
+		errors = errors + 1
+	end
+
+	for i = 2, #(arg or {}) do
+		if arg[i] == '--tag' then
+			local tag = (arg[i + 1] or ''):gsub('^refs/tags/', '')
+			if tag:gsub('^v', '') ~= version then
+				print(string.format('[ERRO] Tag %s não corresponde à versão do version.json (%s).', tag, version))
+				errors = errors + 1
+			end
+		end
+	end
+
 	if errors > 0 then
 		os.exit(1)
 	end
-	print(string.format('[OK] Versão %s (%s) sincronizada em %d resources.', version, parseChannel(version), #resources))
+	print(string.format('[OK] Versão %s (%s) sincronizada em %d resources, recipe e hashes do version.json.', version, parseChannel(version), #resources))
 	os.exit(0)
 end
 

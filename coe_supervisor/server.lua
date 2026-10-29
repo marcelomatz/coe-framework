@@ -372,94 +372,64 @@ local function httpGet(url, timeoutMs, maxRetries)
 	return nil, 'max_retries_exceeded'
 end
 
-local function isWindowsHost()
-	if type(package) == 'table' and type(package.config) == 'string' then
-		return package.config:sub(1, 1) == '\\'
-	end
-	if type(os.getenv) == 'function' then
-		local osName = os.getenv('OS')
-		if type(osName) == 'string' and osName:find('Windows') then
-			return true
+local SELF_RESOURCE = type(GetCurrentResourceName) == 'function' and GetCurrentResourceName() or 'coe_supervisor'
+
+-- Chama o fs_writer.js deste resource (Node). As funções recusam qualquer outro chamador e só aceitam
+-- (resource, caminho relativo): o caminho absoluto é resolvido e confinado dentro do lado Node.
+local function nodeCall(name, ...)
+	local args = { ... }
+	local ok, result = pcall(function()
+		local own = exports and exports[SELF_RESOURCE]
+		if not own or not own[name] then
+			return nil
 		end
-		if os.getenv('WINDIR') or os.getenv('SystemRoot') then
-			return true
-		end
+		return own[name](own, table.unpack(args, 1, #args))
+	end)
+	if ok then
+		return result
 	end
-	if type(GetResourcePath) == 'function' and type(GetCurrentResourceName) == 'function' then
-		local p = GetResourcePath(GetCurrentResourceName()) or ''
-		if p:find('^[A-Za-z]:') or p:find('\\', 1, true) then
-			return true
-		end
-	end
-	return true
+	return nil
 end
 
-local function ensureParentDir(filePath)
-	if type(filePath) ~= 'string' then
-		return
+-- Conjunto de resources que o updater pode tocar: os gerenciados do framework e o próprio supervisor.
+-- Inclui os resources do version.json instalado: uma config.lua antiga preservada pelo updater não esconde
+-- resources novos do framework.
+local function updatableResources()
+	local allowed = { [SELF_RESOURCE] = true }
+	for _, name in ipairs(SupervisorConfig.Managed or {}) do
+		allowed[name] = true
 	end
-	local dir = filePath:match('^(.*)/[^/]+$') or filePath:match('^(.*)\\[^\\]+$')
-	if not dir or dir == '' then
-		return
-	end
-	if type(os.execute) == 'function' then
-		pcall(function()
-			local isWin = isWindowsHost()
-			if isWin then
-				os.execute('if not exist "' .. dir:gsub('/', '\\') .. '" mkdir "' .. dir:gsub('/', '\\') .. '" >nul 2>nul')
-			else
-				os.execute('mkdir -p "' .. dir .. '" >/dev/null 2>&1')
+	local raw = type(LoadResourceFile) == 'function' and LoadResourceFile(SELF_RESOURCE, 'version.json') or nil
+	if type(raw) == 'string' and type(json) == 'table' then
+		local ok, decoded = pcall(json.decode, raw)
+		if ok and type(decoded) == 'table' and type(decoded.resources) == 'table' then
+			for name in pairs(decoded.resources) do
+				if type(name) == 'string' and name:match('^[%w_%-]+$') then
+					allowed[name] = true
+				end
 			end
-		end)
+		end
 	end
+	return allowed
 end
 
 local function writeResourceFile(resName, relPath, content, isBinary)
 	local safeRel = Updater.SanitizeRelativePath(relPath)
-	if not safeRel or type(content) ~= 'string' then
+	if not safeRel or type(content) ~= 'string' or not updatableResources()[resName] then
 		return false
 	end
-
-	local currentRes = type(GetCurrentResourceName) == 'function' and GetCurrentResourceName() or 'coe_supervisor'
-
-	-- 1. GetResourcePath: caminho físico no host
-	if type(GetResourcePath) == 'function' then
-		local basePath = GetResourcePath(resName)
-		if type(basePath) == 'string' and basePath ~= '' then
-			local fullPath = basePath:gsub('\\', '/'):gsub('/+$', '') .. '/' .. safeRel
-
-			-- 1a. Tenta via fs_writer (Node.js nativo do FXServer)
-			local okNode, nodeRes = pcall(function()
-				if exports and exports[currentRes] and exports[currentRes].WriteFile then
-					return exports[currentRes]:WriteFile(fullPath, content, isBinary)
-				end
-				return nil
-			end)
-			if okNode and nodeRes == true then
-				return true
-			end
-
-			-- 1b. Fallback para io.open nativo com criação de pasta pai
-			ensureParentDir(fullPath)
-			local handle = io.open(fullPath, 'wb')
-			if handle then
-				handle:write(content)
-				handle:close()
-				return true
-			end
-		end
+	if nodeCall('WriteFile', resName, safeRel, content, isBinary == true) == true then
+		return true
 	end
-
-	-- 2. Tenta SaveResourceFile (permitido pelo VFS quando add_filesystem_permission estiver no server.cfg)
+	-- Fallback sandboxed do FXServer: exige "add_filesystem_permission coe_supervisor write <resource>".
 	if type(SaveResourceFile) == 'function' then
-		local ok = SaveResourceFile(resName, safeRel, content, -1)
+		local ok = SaveResourceFile(resName, safeRel, content, #content)
 		if ok == true or ok == 1 then
 			return true
 		end
 	end
-
 	say('ERROR', 'file_write_failed', ('Falha ao gravar arquivo: %s/%s. Certifique-se de que "add_filesystem_permission %s write %s" está no server.cfg e reinicie o FXServer.'):format(
-		tostring(resName), tostring(safeRel), tostring(currentRes), tostring(resName)))
+		tostring(resName), tostring(safeRel), SELF_RESOURCE, tostring(resName)))
 	return false
 end
 
@@ -468,41 +438,45 @@ local function readResourceFile(resName, relPath)
 	if not safeRel then
 		return nil
 	end
-
-	local currentRes = type(GetCurrentResourceName) == 'function' and GetCurrentResourceName() or 'coe_supervisor'
-
-	if type(GetResourcePath) == 'function' then
-		local basePath = GetResourcePath(resName)
-		if type(basePath) == 'string' and basePath ~= '' then
-			local fullPath = basePath:gsub('\\', '/'):gsub('/+$', '') .. '/' .. safeRel
-
-			local okNode, nodeRes = pcall(function()
-				if exports and exports[currentRes] and exports[currentRes].ReadFile then
-					return exports[currentRes]:ReadFile(fullPath)
-				end
-				return nil
-			end)
-			if okNode and type(nodeRes) == 'string' then
-				return nodeRes
-			end
-
-			local handle = io.open(fullPath, 'rb')
-			if handle then
-				local content = handle:read('*a')
-				handle:close()
-				return content
-			end
-		end
+	local content = nodeCall('ReadFile', resName, safeRel)
+	if type(content) == 'string' then
+		return content
 	end
-
 	if type(LoadResourceFile) == 'function' then
 		local c = LoadResourceFile(resName, safeRel)
 		if type(c) == 'string' then
 			return c
 		end
 	end
-
 	return nil
+end
+
+-- SHA-256 do arquivo instalado (Node lê os bytes; binários não passam pela conversão de string do Lua).
+local function hashResourceFile(resName, relPath, isBinary)
+	local safeRel = Updater.SanitizeRelativePath(relPath)
+	if not safeRel then
+		return nil
+	end
+	local hash = nodeCall('HashFile', resName, safeRel, isBinary == true)
+	if type(hash) == 'string' then
+		return hash
+	end
+	if not isBinary then
+		return Updater.Sha256(readResourceFile(resName, safeRel), false)
+	end
+	return nil
+end
+
+local function downloadVerified(item)
+	local p = promise.new()
+	local started = nodeCall('DownloadFile', item.url, item.resource, item.file, item.sha256, function(ok, err)
+		p:resolve({ ok = ok == true, err = err })
+	end)
+	if started ~= true then
+		return false, 'download_unavailable'
+	end
+	local result = Citizen.Await(p)
+	return result and result.ok == true, result and result.err
 end
 
 local function printUpdateBanner(plan)
@@ -538,15 +512,36 @@ local function runCheckForUpdates(announceConsole)
 	if manifestUrl == '' then
 		manifestUrl = updaterConfig.ManifestUrl or 'https://raw.githubusercontent.com/marcelomatz/coe-framework/main/version.json'
 	end
-	local rawBaseUrl = (type(GetConvar) == 'function' and GetConvar('coe_updater_raw_base_url', '')) or ''
-	if rawBaseUrl == '' then
-		rawBaseUrl = updaterConfig.RawBaseUrl
+	local rawRepoUrl = (type(GetConvar) == 'function' and GetConvar('coe_updater_raw_repo_url', '')) or ''
+	if rawRepoUrl == '' then
+		rawRepoUrl = updaterConfig.RawRepoUrl
+	end
+	if not Updater.IsSecureUrl(manifestUrl) then
+		updateState.checking = false
+		updateState.lastError = 'insecure_url'
+		return publishUpdateState()
 	end
 
 	local body, httpErr = httpGet(manifestUrl, updaterConfig.TimeoutMs)
 	if not body then
 		updateState.checking = false
 		updateState.lastError = httpErr or 'fetch_failed'
+		return publishUpdateState()
+	end
+
+	-- Assinatura Ed25519 do manifesto (version.json.sig), obrigatória quando há chave pública configurada.
+	local publicKey = type(updaterConfig.PublicKey) == 'string' and updaterConfig.PublicKey or ''
+	if publicKey ~= '' then
+		local signature = httpGet(manifestUrl .. '.sig', updaterConfig.TimeoutMs)
+		if not signature or nodeCall('VerifySignature', body, signature, publicKey) ~= true then
+			updateState.checking = false
+			updateState.lastError = 'invalid_signature'
+			say('ERROR', 'manifest_signature_invalid', manifestUrl)
+			return publishUpdateState()
+		end
+	elseif updaterConfig.RequireSignature == true then
+		updateState.checking = false
+		updateState.lastError = 'signature_key_missing'
 		return publishUpdateState()
 	end
 
@@ -558,7 +553,10 @@ local function runCheckForUpdates(announceConsole)
 	end
 
 	local _, catalog = managed()
-	local plan, planErr = Updater.BuildUpdatePlan(localManifest, remoteManifest, readInstalledVersions(), catalog, rawBaseUrl)
+	local plan, planErr = Updater.BuildUpdatePlan(localManifest, remoteManifest, readInstalledVersions(), catalog, {
+		rawRepoUrl = rawRepoUrl,
+		allowed = updatableResources()
+	})
 	updateState.checking = false
 	if not plan then
 		updateState.lastError = planErr or 'invalid_manifest'
@@ -631,133 +629,74 @@ local function runApplyUpdate(requester)
 	local failedFile = nil
 	local lastPrintedRes = nil
 	local totalDl = #(plan.downloads or {})
+	local allowed = updatableResources()
+	local staged = {}
 
-	for _, item in ipairs(plan.downloads or {}) do
-		local resState = GetResourceState(item.resource)
-		if resState ~= 'missing' then
-			-- Tenta conceder permissão nativa de escrita no VFS do FXServer se suportado
-			if type(ExecuteCommand) == 'function' then
-				local currentRes = type(GetCurrentResourceName) == 'function' and GetCurrentResourceName() or 'coe_supervisor'
-				pcall(function()
-					ExecuteCommand(('add_filesystem_permission %s write %s'):format(currentRes, item.resource))
-				end)
-			end
-
-			local shouldSkip = false
-			-- Checagem diferencial: se o hash do arquivo local for idêntico ao remoto, dispensa o download
-			if item.hash then
-				local localRaw = readResourceFile(item.resource, item.file)
-				if type(localRaw) == 'string' then
-					local localHash = Updater.Hash(localRaw, item.isBinary)
-					if localHash == item.hash then
-						shouldSkip = true
-					end
-				end
-			end
-
-			if shouldSkip then
-				filesSkipped = filesSkipped + 1
-				filesWritten = filesWritten + 1
-				updatedResources[item.resource] = true
-				updateState.filesWritten = filesWritten
-				updateState.filesSkipped = filesSkipped
-				updateState.currentResource = item.resource
-				updateState.lastProgressTime = os.time()
-			else
-				-- Pacing preventivo de 35ms para evitar acionar burst limiter do GitHub/Fastly
-				Wait(35)
-
-				local isConfig = type(Updater.IsConfigFile) == 'function' and Updater.IsConfigFile(item.file)
-				local existingLocalRaw = isConfig and readResourceFile(item.resource, item.file) or nil
-				local wroteTarget = true
-
-				-- Para arquivos binários (imagens webp/png, fontes, etc.), usa download nativo via stream Node.js
-				-- para evitar corrupção de bytes na conversão de string UTF-8 do runtime Lua do FXServer.
-				if item.isBinary and exports and exports[currentRes] and exports[currentRes].DownloadFile and type(GetResourcePath) == 'function' then
-					local basePath = GetResourcePath(item.resource)
-					if type(basePath) == 'string' and basePath ~= '' then
-						local safeRel = Updater.SanitizeRelativePath(item.file)
-						if safeRel then
-							local fullPath = basePath:gsub('\\', '/'):gsub('/+$', '') .. '/' .. safeRel
-							local pDl = promise.new()
-							local triggered = false
-							pcall(function()
-								triggered = exports[currentRes]:DownloadFile(item.url, fullPath, function(ok, err)
-									pDl:resolve({ ok = ok == true, err = err })
-								end)
-							end)
-							if triggered then
-								local dlRes = Citizen.Await(pDl)
-								if dlRes and dlRes.ok then
-									wroteTarget = false
-								else
-									failedFile = ('%s/%s (dl_binary_failed: %s)'):format(item.resource, item.file, tostring(dlRes and dlRes.err or 'unknown'))
-									break
-								end
-							end
-						end
-					end
-				end
-
-				if wroteTarget then
-					local content, dlErr = httpGet(item.url, updaterConfig.TimeoutMs, 3)
-					if not content then
-						failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(dlErr))
-						break
-					end
-
-					-- Se for um arquivo de configuração já existente e customizado pelo administrador:
-					-- Preserva o arquivo do usuário, faz backup e grava a versão da release como .dist.lua
-					if isConfig and type(existingLocalRaw) == 'string' and existingLocalRaw ~= '' then
-						local localHash = Updater.Hash(existingLocalRaw, false)
-						if item.hash and localHash ~= item.hash then
-							local bakFile = item.file .. '.bak'
-							writeResourceFile(item.resource, bakFile, existingLocalRaw, false)
-
-							local distFile = item.file:gsub('%.lua$', '.dist.lua')
-							if distFile == item.file then
-								distFile = item.file .. '.dist'
-							end
-							writeResourceFile(item.resource, distFile, content, false)
-
-							local newKeys = type(Updater.DetectNewConfigKeys) == 'function' and Updater.DetectNewConfigKeys(existingLocalRaw, content) or {}
-							local newKeysMsg = #newKeys > 0 and (' (novas chaves: ' .. table.concat(newKeys, ', ') .. ')') or ''
-
-							say('WARN', 'config_preserved', ('%s/%s customizado localmente; preservado! Referencia upstream salva em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
-							if requester then
-								notify(requester, true, ('Config mantida: %s/%s. Referência nova em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
-							end
-							wroteTarget = false
-						end
-					end
-
-					if wroteTarget and not writeResourceFile(item.resource, item.file, content, item.isBinary) then
-						failedFile = ('%s/%s (write_failed)'):format(item.resource, item.file)
-						break
-					end
-				end
-				updatedResources[item.resource] = true
-				filesWritten = filesWritten + 1
-				updateState.filesWritten = filesWritten
-				updateState.filesSkipped = filesSkipped
-				updateState.currentResource = item.resource
-				updateState.lastProgressTime = os.time()
-			end
-
-			if filesWritten % 10 == 0 or filesWritten == totalDl then
-				publishUpdateState()
-			end
-			if Ansi and Ansi.PrintProgress and totalDl > 0 then
-				local resChanged = (lastPrintedRes ~= item.resource)
-				if filesWritten == 1 or filesWritten % 15 == 0 or filesWritten == totalDl or resChanged then
-					lastPrintedRes = item.resource
-					Ansi.PrintProgress(filesWritten, totalDl, item.resource)
-				end
+	local function progress(item, processed)
+		updateState.filesWritten = processed
+		updateState.filesSkipped = filesSkipped
+		updateState.currentResource = item.resource
+		updateState.lastProgressTime = os.time()
+		if processed % 10 == 0 or processed == totalDl then
+			publishUpdateState()
+		end
+		if Ansi and Ansi.PrintProgress and totalDl > 0 then
+			local resChanged = (lastPrintedRes ~= item.resource)
+			if processed == 1 or processed % 15 == 0 or processed == totalDl or resChanged then
+				lastPrintedRes = item.resource
+				Ansi.PrintProgress(processed, totalDl, item.resource)
 			end
 		end
 	end
 
+	if (plan.missingIntegrity or 0) > 0 then
+		failedFile = ('manifesto sem SHA-256 para %d arquivo(s)'):format(plan.missingIntegrity)
+	end
+
+	-- Fase 1: baixa e confere o SHA-256 de tudo antes de gravar qualquer arquivo. Um erro aqui não muda nada no disco.
+	local processed = 0
+	for _, item in ipairs(failedFile and {} or plan.downloads or {}) do
+		if allowed[item.resource] and GetResourceState(item.resource) ~= 'missing' then
+			if type(ExecuteCommand) == 'function' then
+				pcall(ExecuteCommand, ('add_filesystem_permission %s write %s'):format(SELF_RESOURCE, item.resource))
+			end
+			processed = processed + 1
+			if hashResourceFile(item.resource, item.file, item.isBinary) == item.sha256 then
+				filesSkipped = filesSkipped + 1
+				updatedResources[item.resource] = true
+			elseif item.isBinary then
+				Wait(35)
+				local ok, err = downloadVerified(item)
+				if not ok then
+					failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(err or 'download_failed'))
+					break
+				end
+				staged[#staged + 1] = { item = item, binary = true }
+			else
+				-- Pacing preventivo de 35ms para evitar acionar burst limiter do GitHub/Fastly
+				Wait(35)
+				local content, dlErr = httpGet(item.url, updaterConfig.TimeoutMs, 3)
+				if not content then
+					failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(dlErr))
+					break
+				end
+				local verified, verifyErr = Updater.VerifyContent(item, content)
+				if not verified then
+					failedFile = ('%s/%s (%s)'):format(item.resource, item.file, tostring(verifyErr))
+					break
+				end
+				staged[#staged + 1] = { item = item, content = content }
+			end
+			progress(item, processed)
+		end
+	end
+
 	if failedFile then
+		for _, entry in ipairs(staged) do
+			if entry.binary then
+				nodeCall('DiscardFile', entry.item.resource, entry.item.file)
+			end
+		end
 		updateState.updating = false
 		updateState.startTime = nil
 		updateState.lastProgressTime = nil
@@ -768,9 +707,54 @@ local function runApplyUpdate(requester)
 		return false, 'update_download_failed'
 	end
 
+	-- Fase 2: tudo conferido; grava. Config customizada pelo dono fica e a nova vai para <arquivo>.dist.lua.
+	filesWritten = filesSkipped
+	for _, entry in ipairs(staged) do
+		local item = entry.item
+		local wrote = true
+		if entry.binary then
+			wrote = nodeCall('CommitFile', item.resource, item.file) == true
+		else
+			local existing = Updater.IsConfigFile(item.file) and readResourceFile(item.resource, item.file) or nil
+			if existing and Updater.IsCustomizedConfig(existing, item) then
+				local distFile = item.file:gsub('%.lua$', '.dist.lua')
+				if distFile == item.file then
+					distFile = item.file .. '.dist'
+				end
+				wrote = writeResourceFile(item.resource, distFile, entry.content, false)
+				local newKeys = Updater.DetectNewConfigKeys(existing, entry.content)
+				local newKeysMsg = #newKeys > 0 and (' (novas chaves: ' .. table.concat(newKeys, ', ') .. ')') or ''
+				say('WARN', 'config_preserved', ('%s/%s customizado localmente; preservado! Referencia upstream salva em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
+				if requester then
+					notify(requester, true, ('Config mantida: %s/%s. Referência nova em %s%s'):format(item.resource, item.file, distFile, newKeysMsg))
+				end
+			else
+				wrote = writeResourceFile(item.resource, item.file, entry.content, false)
+			end
+		end
+		if not wrote then
+			failedFile = ('%s/%s (write_failed)'):format(item.resource, item.file)
+			break
+		end
+		updatedResources[item.resource] = true
+		filesWritten = filesWritten + 1
+	end
+	updateState.filesWritten = filesWritten
+	updateState.filesSkipped = filesSkipped
+
+	if failedFile then
+		updateState.updating = false
+		updateState.startTime = nil
+		updateState.lastProgressTime = nil
+		updateState.requester = nil
+		updateState.lastError = 'write_failed'
+		publishUpdateState()
+		say('ERROR', 'update_failed', 'file=' .. failedFile)
+		return false, 'update_write_failed'
+	end
+
 	if type(lastRemoteRawJson) == 'string' and lastRemoteRawJson ~= '' then
-		local currentRes = type(GetCurrentResourceName) == 'function' and GetCurrentResourceName() or 'coe_supervisor'
-		writeResourceFile(currentRes, 'version.json', lastRemoteRawJson)
+		writeResourceFile(SELF_RESOURCE, 'version.json', lastRemoteRawJson)
 	end
 
 	ExecuteCommand('refresh')

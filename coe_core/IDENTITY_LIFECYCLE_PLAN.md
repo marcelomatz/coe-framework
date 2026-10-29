@@ -11,7 +11,7 @@ Definir e implementar uma identidade persistente de jogador, personagens indepen
 - **Observabilidade atual:** `coe_logging` emite eventos JSON no console/collector e `coe_notify` apresenta feedback explícito ao jogador. O histórico de auditoria ainda é parcial e não é persistido pelo framework; não usar os logs atuais como trilha durável/compliance.
 - **Pendente antes de uso real:** teste de integração em FXServer Enhanced com Node 22, bridge assíncrona JS/Lua e MariaDB; configuração das convars de banco no ambiente; confirmação de que a chave Cfx configurada está ativa no Keymaster.
 - **Próximas etapas:** validar no FXServer Enhanced/Node 22 e MariaDB real; cobrir integration tests com constraints/transações; adicionar estado e aparência do personagem se definidos no escopo do MVP; desenvolver save/load de gameplay e revisar operação/rollback.
-- A cobertura por resource e as lacunas atuais estão consolidadas em [TEST_COVERAGE.md](../TEST_COVERAGE.md); o histórico desta revisão e o catálogo parcial de eventos de auditoria ficam em [HISTORY.md](../HISTORY.md).
+- A cobertura por resource e as lacunas atuais estão consolidadas em [TEST_COVERAGE.md](../TEST_COVERAGE.md); o histórico desta revisão e o catálogo parcial de eventos de auditoria ficam em o [changelog](https://docs.coeroleplay.app/#doc=CHANGELOG.md).
 
 ## Decisões de domínio confirmadas
 

@@ -12,7 +12,16 @@ SupervisorConfig = {
 		Repository = 'marcelomatz/coe-framework',
 		Branch = 'main',
 		ManifestUrl = 'https://raw.githubusercontent.com/marcelomatz/coe-framework/main/version.json',
-		RawBaseUrl = 'https://raw.githubusercontent.com/marcelomatz/coe-framework/main',
+		-- Raiz dos arquivos (sem ref): o updater sempre baixa da tag da release anunciada no manifesto e confere o
+		-- SHA-256 de cada arquivo antes de gravar.
+		RawRepoUrl = 'https://raw.githubusercontent.com/marcelomatz/coe-framework',
+		-- Chave pública Ed25519 (PEM) que assina o version.json (version.json.sig). Com chave, manifesto sem
+		-- assinatura válida é recusado. Ver README (Assinatura do manifesto).
+		PublicKey = [[-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAkgYLhYRzjtnamROy1ERQhFlD1fht8RwoMAJJpu93Dls=
+-----END PUBLIC KEY-----]],
+		-- true: recusa atualizar enquanto PublicKey estiver vazia.
+		RequireSignature = false,
 		TimeoutMs = 10000
 	},
 	-- Resources do framework que podem ser reiniciados. Pacotes e scripts de terceiros entram declarando no próprio
@@ -35,6 +44,8 @@ SupervisorConfig = {
 		'coe_map',
 		'coe_vehicles',
 		'coe_vehicle_catalog',
+		'coe_garage',
+		'coe_rentals',
 		'coe_economy',
 		'coe_businesses',
 		'coe_jobs',
@@ -64,6 +75,8 @@ SupervisorConfig = {
 		coe_needs = { category = 'gameplay' },
 		coe_vehicles = { category = 'gameplay' },
 		coe_vehicle_catalog = { category = 'gameplay' },
+		coe_garage = { category = 'gameplay' },
+		coe_rentals = { category = 'gameplay' },
 		coe_economy = { category = 'business' },
 		coe_businesses = { category = 'business' },
 		coe_jobs = { category = 'gameplay' },

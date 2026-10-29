@@ -1,6 +1,11 @@
 RentalsConfig = {
 	Locale = 'pt-BR',
 
+	-- Distância máxima (m) entre o jogador e o balcão (coords) para alugar, ou a returnZone para devolver.
+	InteractRadius = 6.0,
+	-- Intervalo mínimo entre pedidos de aluguel/devolução do mesmo jogador (ms).
+	CooldownMs = 2000,
+
 	-- Catálogo de veículos para aluguel inicial
 	-- price: custo do serviço (não reembolsável)
 	-- deposit: caução devolvido integralmente quando o veículo é devolvido em qualquer ponto

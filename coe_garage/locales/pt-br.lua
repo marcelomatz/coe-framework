@@ -9,6 +9,7 @@ Locales['pt-BR'] = {
 	['spot_not_found'] = 'Vaga não encontrada.',
 	['too_far'] = 'Você está muito longe da vaga.',
 	['not_your_vehicle'] = 'Este veículo não pertence a você.',
+	['wrong_garage'] = 'Este veículo está guardado em outra garagem.',
 	['vehicle_not_stored'] = 'O veículo não está guardado nesta garagem.',
 	['spawn_failed'] = 'Não foi possível retirar o veículo.',
 	['store_failed'] = 'Não foi possível guardar o veículo.',

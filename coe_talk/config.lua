@@ -50,3 +50,13 @@ Config.Submix = {
 
 -- Intervalo de verificacao de voz em milissegundos
 Config.VoiceTickMs = 150
+
+-- Quem pode colocar jogadores em chamadas e radios pelos exports de servidor (SetPlayerCall/SetPlayerRadio).
+-- Chamadas so entram pelo servidor (coe_mobile); scripts de terceiros: add_ace resource.<nome> coe.talk allow
+Config.Access = {
+	Ace = 'coe.talk',
+	Resources = { coe_mobile = true }
+}
+
+-- Intervalo minimo entre eventos de voz/radio vindos do mesmo jogador (ms)
+Config.EventCooldownMs = 250

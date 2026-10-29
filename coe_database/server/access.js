@@ -4,7 +4,7 @@
 const DEFAULT_CALLERS = Object.freeze([
 	'coe_core', 'coe_inventory', 'coe_audit', 'coe_vehicles', 'coe_vehicle_catalog', 'coe_businesses',
 	'coe_needs', 'coe_economy', 'coe_spawn', 'coe_jobs', 'coe_shops', 'coe_bank',
-	'coe_mobile', 'coe_staff'
+	'coe_mobile', 'coe_staff', 'coe_garage'
 ])
 const DATABASE_ACE = 'coe.database'
 const CACHE_MS = 5000

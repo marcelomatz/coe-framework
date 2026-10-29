@@ -25,6 +25,8 @@ Os nomes das ACEs ficam em `config.lua` (`Ace`).
 - **Mundo** (`coe.staff.world`): horário (com opção de parar o relógio) e clima para todos, volta ao ciclo natural e aviso para todos os jogadores online. Sem nada definido, o jogo segue o próprio ciclo.
 - **Negócios** (`coe.staff.businesses`): lista, cria e edita negócios do `coe_businesses`. A área nasce como um círculo em volta do admin (raio ajustável, redefinível); relógios de ponto, baús, bancadas e showroom são marcados na posição do admin ("Adicionar aqui"). Também: nome, ativo, regras da categoria, dono e equipe pelo ID de cidadão (online ou offline), cargos com salário e permissões, ir até e apagar. Trocar ou remover o dono desfaz a sociedade.
 
+Garagens: o `coe_garage` registra um provedor com `exports.coe_staff:RegisterGaragesProvider({ List, Save, Delete })` e o painel passa a listar, criar e apagar garagens por ele.
+
 ## Acesso a outros resources
 
 O `coe_staff` está nos padrões do framework para o que usa: `coe_core` (grupos), `coe_economy` (conta), `coe_vehicles` e `coe_businesses` (gravação), `coe_database` (busca de personagem offline), `coe_notify`, `coe_logging` e `coe_audit`.

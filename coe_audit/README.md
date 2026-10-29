@@ -31,6 +31,8 @@ SELECT occurred_at, event, actor_license FROM coe_audit_log
 WHERE category = 'security' AND occurred_at > UTC_TIMESTAMP() - INTERVAL 1 DAY;
 ```
 
+`exports.coe_audit:IsReady()` informa se a persistência terminou as migrações.
+
 ## Retenção e acesso
 
 - Padrão: guarda tudo (`RetentionDays = 0`). `set coe_audit_retention_days 90` remove, ao iniciar o resource, registros mais antigos (em lotes de 5000).

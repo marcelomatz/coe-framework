@@ -7,7 +7,7 @@
  *   2. docs/README.pt-BR.md e docs/README.md (badge da Release atual)
  *   3. docs/reference/*.md (espelhando coe-framework/reference/*.md)
  *   4. website/tools/releases.json e website/assets/data/releases.json
- *   5. website/recipe.yaml (versão sincronizada)
+ *   5. website/recipe.yaml (cópia integral do recipe.yaml do framework)
  *   6. website/index.html, website/en/index.html e website/scripts/*.html (via tools/generate_site.js)
  *
  * Uso:
@@ -304,12 +304,11 @@ function main() {
 		if (!fs.existsSync(assetsDataDir)) fs.mkdirSync(assetsDataDir, { recursive: true });
 		fs.writeFileSync(assetsReleasesPath, jsonStr, 'utf8');
 
-		// Sincroniza versão no website/recipe.yaml
+		// website/recipe.yaml é cópia do recipe.yaml do framework (fonte única): permissões, ensures e versão iguais.
 		const webRecipePath = path.join(WEBSITE_ROOT, 'recipe.yaml');
-		if (fs.existsSync(webRecipePath)) {
-			let rec = fs.readFileSync(webRecipePath, 'utf8');
-			rec = rec.replace(/^version:\s*"[^"]*"/m, `version: "${version}"`);
-			fs.writeFileSync(webRecipePath, rec, 'utf8');
+		const frameworkRecipePath = path.join(FRAMEWORK_ROOT, 'recipe.yaml');
+		if (fs.existsSync(frameworkRecipePath)) {
+			fs.copyFileSync(frameworkRecipePath, webRecipePath);
 		}
 
 		// Sincroniza versão cirurgicamente nos arquivos HTML do website sem sobrescrever o layout e dobras vivas

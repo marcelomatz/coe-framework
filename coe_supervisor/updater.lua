@@ -262,15 +262,132 @@ function SupervisorUpdater.Hash(content, isBinary)
 	return string.format('%08x', hash)
 end
 
+local SHA256_K = {
+	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+	0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+	0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+	0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+	0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+	0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+}
+
+---Calcula SHA-256 (hex minúsculo). Mesma normalização do Hash: texto tem CRLF convertido para LF antes.
+---Usado para verificar a integridade de cada arquivo baixado pelo updater e gerado pelo tools/bump_version.lua.
+---@param content string|nil
+---@param isBinary boolean|nil
+---@return string|nil hex `nil` quando o conteúdo não é string
+function SupervisorUpdater.Sha256(content, isBinary)
+	if type(content) ~= 'string' then
+		return nil
+	end
+	local data = isBinary and content or content:gsub('\r\n', '\n')
+	local h0, h1, h2, h3 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
+	local h4, h5, h6, h7 = 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+	local bitLen = #data * 8
+	data = data .. '\128' .. string.rep('\0', (55 - #data) % 64) .. string.pack('>I8', bitLen)
+	local w = {}
+	for chunk = 1, #data, 64 do
+		for i = 0, 15 do
+			w[i] = string.unpack('>I4', data, chunk + i * 4)
+		end
+		for i = 16, 63 do
+			local a, b = w[i - 15], w[i - 2]
+			local s0 = ((a >> 7) | (a << 25)) ~ ((a >> 18) | (a << 14)) ~ (a >> 3)
+			local s1 = ((b >> 17) | (b << 15)) ~ ((b >> 19) | (b << 13)) ~ (b >> 10)
+			w[i] = (w[i - 16] + s0 + w[i - 7] + s1) & 0xffffffff
+		end
+		local a, b, c, d, e, f, g, h = h0, h1, h2, h3, h4, h5, h6, h7
+		for i = 0, 63 do
+			local S1 = ((e >> 6) | (e << 26)) ~ ((e >> 11) | (e << 21)) ~ ((e >> 25) | (e << 7))
+			local ch = (e & f) ~ ((~e) & g)
+			local t1 = (h + (S1 & 0xffffffff) + (ch & 0xffffffff) + SHA256_K[i + 1] + w[i]) & 0xffffffff
+			local S0 = ((a >> 2) | (a << 30)) ~ ((a >> 13) | (a << 19)) ~ ((a >> 22) | (a << 10))
+			local maj = (a & b) ~ (a & c) ~ (b & c)
+			local t2 = ((S0 & 0xffffffff) + maj) & 0xffffffff
+			h, g, f, e = g, f, e, (d + t1) & 0xffffffff
+			d, c, b, a = c, b, a, (t1 + t2) & 0xffffffff
+		end
+		h0 = (h0 + a) & 0xffffffff
+		h1 = (h1 + b) & 0xffffffff
+		h2 = (h2 + c) & 0xffffffff
+		h3 = (h3 + d) & 0xffffffff
+		h4 = (h4 + e) & 0xffffffff
+		h5 = (h5 + f) & 0xffffffff
+		h6 = (h6 + g) & 0xffffffff
+		h7 = (h7 + h) & 0xffffffff
+	end
+	return string.format('%08x%08x%08x%08x%08x%08x%08x%08x', h0, h1, h2, h3, h4, h5, h6, h7)
+end
+
+---Confere o conteúdo baixado contra o SHA-256 do manifesto antes de qualquer gravação.
+---@param item { sha256: string|nil, isBinary: boolean|nil }
+---@param content string|nil
+---@return boolean ok
+---@return string|nil errorCode 'integrity_missing' | 'integrity_mismatch'
+function SupervisorUpdater.VerifyContent(item, content)
+	if type(item) ~= 'table' or type(item.sha256) ~= 'string' then
+		return false, 'integrity_missing'
+	end
+	if SupervisorUpdater.Sha256(content, item.isBinary == true) ~= item.sha256 then
+		return false, 'integrity_mismatch'
+	end
+	return true, nil
+end
+
+---Config local foi editada pelo dono do servidor? Compara com o SHA-256 da versão instalada; sem ele, com a nova.
+---Uma config apenas antiga (igual à instalada) não é customizada e recebe a versão nova.
+---@param localContent string|nil
+---@param item { sha256: string|nil, installedSha256: string|nil }
+---@return boolean
+function SupervisorUpdater.IsCustomizedConfig(localContent, item)
+	if type(localContent) ~= 'string' or localContent == '' or type(item) ~= 'table' then
+		return false
+	end
+	local current = SupervisorUpdater.Sha256(localContent, false)
+	if current == item.sha256 then
+		return false
+	end
+	if type(item.installedSha256) == 'string' then
+		return current ~= item.installedSha256
+	end
+	return true
+end
+
+---Só HTTPS: o updater nunca baixa código por HTTP simples.
+---@param url string|nil
+---@return boolean
+function SupervisorUpdater.IsSecureUrl(url)
+	return type(url) == 'string' and url:match('^https://[%w%.%-]+/') ~= nil
+end
+
+---Ref imutável de onde os arquivos são baixados: a tag da release, nunca um branch.
+---@param remoteManifest table
+---@param remoteVersion string
+---@return string|nil ref
+function SupervisorUpdater.ReleaseRef(remoteManifest, remoteVersion)
+	local tag = type(remoteManifest) == 'table' and remoteManifest.tag or nil
+	if type(tag) ~= 'string' or tag == '' then
+		tag = 'v' .. tostring(remoteVersion)
+	end
+	if not tag:match('^v?%d+%.%d+%.%d+[%w%.%-]*$') then
+		return nil
+	end
+	return tag
+end
+
 ---Monta o plano de atualização comparando manifesto local, versões instaladas e manifesto remoto.
 ---@param localManifest table|nil
 ---@param remoteManifest table|nil
 ---@param installedVersions table<string, string|nil>|nil
 ---@param catalog table<string, table>|nil
----@param rawBaseUrl string|nil
+---@param options { rawRepoUrl: string|nil, allowed: table<string, boolean>|nil }|nil
+---  rawRepoUrl: raiz HTTPS do repositório (sem ref); a ref usada é sempre a tag da release.
+---  allowed: resources que o updater pode tocar (gerenciados + coe_supervisor). Os demais do manifesto são ignorados.
 ---@return table|nil plan
 ---@return string|nil errorCode
-function SupervisorUpdater.BuildUpdatePlan(localManifest, remoteManifest, installedVersions, catalog, rawBaseUrl)
+function SupervisorUpdater.BuildUpdatePlan(localManifest, remoteManifest, installedVersions, catalog, options)
 	if type(remoteManifest) ~= 'table' or type(remoteManifest.version) ~= 'string' then
 		return nil, 'invalid_remote_manifest'
 	end
@@ -291,16 +408,28 @@ function SupervisorUpdater.BuildUpdatePlan(localManifest, remoteManifest, instal
 
 	local repo = type(remoteManifest.repository) == 'string' and remoteManifest.repository ~= '' and remoteManifest.repository or 'marcelomatz/coe-framework'
 	local branch = type(remoteManifest.branch) == 'string' and remoteManifest.branch ~= '' and remoteManifest.branch or 'main'
-	local base = (type(rawBaseUrl) == 'string' and rawBaseUrl ~= '' and rawBaseUrl:gsub('/+$', ''))
-		or ('https://raw.githubusercontent.com/' .. repo .. '/' .. branch)
+	local opts = type(options) == 'table' and options or {}
+	local allowed = type(opts.allowed) == 'table' and opts.allowed or nil
+	local repoUrl = (type(opts.rawRepoUrl) == 'string' and opts.rawRepoUrl ~= '' and opts.rawRepoUrl:gsub('/+$', ''))
+		or ('https://raw.githubusercontent.com/' .. repo)
+	if not SupervisorUpdater.IsSecureUrl(repoUrl .. '/') then
+		return nil, 'insecure_url'
+	end
+	local ref = SupervisorUpdater.ReleaseRef(remoteManifest, parsedRemote.raw)
+	if not ref then
+		return nil, 'invalid_remote_tag'
+	end
+	-- Arquivos vêm da tag da release (imutável), nunca de um branch que pode mudar entre a verificação e o download.
+	local base = repoUrl .. '/' .. ref
 
 	local outdatedResources = {}
 	local downloads = {}
+	local missingIntegrity = 0
 	local requiresFullRestart = false
 
 	local names = {}
 	for resName in pairs(remoteResources) do
-		if type(resName) == 'string' and resName:match('^[%w_%-]+$') then
+		if type(resName) == 'string' and resName:match('^[%w_%-]+$') and (not allowed or allowed[resName] == true) then
 			names[#names + 1] = resName
 		end
 	end
@@ -324,14 +453,24 @@ function SupervisorUpdater.BuildUpdatePlan(localManifest, remoteManifest, instal
 			end
 			local files = type(remoteEntry) == 'table' and type(remoteEntry.files) == 'table' and remoteEntry.files or { 'fxmanifest.lua' }
 			local hashes = type(remoteEntry) == 'table' and type(remoteEntry.hashes) == 'table' and remoteEntry.hashes or nil
+			local sha = type(remoteEntry) == 'table' and type(remoteEntry.sha256) == 'table' and remoteEntry.sha256 or nil
+			local installedSha = type(localEntry) == 'table' and type(localEntry.sha256) == 'table' and localEntry.sha256 or nil
 			for _, rel in ipairs(files) do
 				local safeRel = SupervisorUpdater.SanitizeRelativePath(rel)
 				if safeRel then
+					local fileSha = sha and sha[safeRel] or nil
+					if type(fileSha) ~= 'string' or not fileSha:match('^%x+$') or #fileSha ~= 64 then
+						fileSha = nil
+						missingIntegrity = missingIntegrity + 1
+					end
 					downloads[#downloads + 1] = {
 						resource = resName,
 						file = safeRel,
 						url = string.format('%s/%s/%s', base, resName, safeRel),
 						hash = hashes and hashes[safeRel] or nil,
+						sha256 = fileSha and fileSha:lower() or nil,
+						-- SHA-256 do arquivo como foi instalado: distingue config customizada de config apenas antiga.
+						installedSha256 = installedSha and type(installedSha[safeRel]) == 'string' and installedSha[safeRel]:lower() or nil,
 						isBinary = SupervisorUpdater.IsBinaryFile(safeRel)
 					}
 				end
@@ -420,6 +559,9 @@ function SupervisorUpdater.BuildUpdatePlan(localManifest, remoteManifest, instal
 		outdatedCount = #outdatedResources,
 		downloads = downloads,
 		filesCount = #downloads,
+		ref = ref,
+		-- Arquivos sem SHA-256 no manifesto: o apply recusa o plano inteiro (fail-closed).
+		missingIntegrity = missingIntegrity,
 		requiresFullRestart = requiresFullRestart,
 		-- Múltiplas releases e plano cumulativo de atualização
 		pendingReleases = pendingReleases,

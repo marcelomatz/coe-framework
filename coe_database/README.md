@@ -77,7 +77,9 @@ Inicie `coe_database` antes de `coe_core`. O Core verifica `IsReady()` e só pub
 
 ## Testes
 
-Execute `npm test` a partir da pasta do resource. `test/validation.test.js` cobre statements/argumentos; `test/provider.test.js` usa um driver dublê para testar inicialização, retry, execução, transação, rollback e encerramento. Esses testes não substituem MariaDB real. O bridge de exports Lua↔Node, autorização via `GetInvokingResource()`, credenciais, constraints reais e runtime Node 22 do FXServer Enhanced ainda não têm teste de integração local; ver [TEST_COVERAGE.md](../TEST_COVERAGE.md).
+Execute `npm test` a partir da pasta do resource. `test/validation.test.js` cobre statements/argumentos; `test/provider.test.js` usa um driver dublê para testar inicialização, retry, execução, transação, rollback e encerramento. `test/access.test.js` cobre a allowlist de chamadores e a ACE `coe.database`.
+
+`npm run test:integration` roda os cenários de `test/integration/` contra um MariaDB real (variáveis `COE_TEST_DB_USER`, `COE_TEST_DB_PASSWORD`, `COE_TEST_DB_NAME` terminando em `_test`; opcional `COE_TEST_DB_HOST`/`COE_TEST_DB_PORT`; requer `lua` no PATH). O CI roda essa suíte num serviço MariaDB 11.4. O bridge de exports Lua↔Node e o `GetInvokingResource()` reais do FXServer continuam simulados; ver [TEST_COVERAGE.md](../TEST_COVERAGE.md).
 
 ## Referência da API
 

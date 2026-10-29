@@ -30,3 +30,6 @@ desktop.ini
 # Gerador de icones (tools/item_icons)
 __pycache__/
 tools/item_icons/svg/
+
+# Downloads do updater ainda nao confirmados
+*.coe-new

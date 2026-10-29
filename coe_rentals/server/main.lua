@@ -18,6 +18,40 @@ local function notify(playerId, kind, message)
 	end
 end
 
+local lastRequest = {}
+
+-- Um pedido de aluguel/devolução por jogador a cada RentalsConfig.CooldownMs.
+local function throttled(playerId)
+	local now = GetGameTimer()
+	local previous = lastRequest[playerId]
+	if previous and now - previous < (RentalsConfig.CooldownMs or 2000) then
+		return true
+	end
+	lastRequest[playerId] = now
+	return false
+end
+
+local function playerCoords(playerId)
+	local ped = GetPlayerPed(playerId)
+	if not ped or ped == 0 then
+		return nil
+	end
+	return GetEntityCoords(ped)
+end
+
+-- Fail-closed: sem coe_economy no ar, ninguém aluga de graça. Cada chamada à economia fica escrita por extenso
+-- para o tools/check_contracts.lua conferir que coe_rentals está na allowlist da economia.
+local function economy(call)
+	if GetResourceState('coe_economy') ~= 'started' then
+		return nil, 'economy_unavailable'
+	end
+	local ok, result, errorCode = pcall(call)
+	if not ok then
+		return nil, 'economy_unavailable'
+	end
+	return result, errorCode
+end
+
 local function getCharacterId(playerId)
 	if not Core or not Core.Players or not Core.Players.GetActiveCharacterId then
 		return nil
@@ -27,6 +61,10 @@ end
 
 Core.Events.OnNet('rentals.rent', function(stationId, model)
 	local playerId = source
+	if throttled(playerId) then
+		notify(playerId, 'warning', _t('busy'))
+		return
+	end
 	local characterId = getCharacterId(playerId)
 	if not characterId then
 		notify(playerId, 'error', _t('no_character'))
@@ -36,6 +74,11 @@ Core.Events.OnNet('rentals.rent', function(stationId, model)
 	local station = RentalsRules.FindStation(RentalsConfig, stationId)
 	if not station then
 		notify(playerId, 'error', _t('station_not_found'))
+		return
+	end
+	if not RentalsRules.IsNear(playerCoords(playerId), station.coords, RentalsConfig.InteractRadius or 6.0) then
+		log('warn', 'rental_denied', { player_id = playerId, error_code = 'too_far', station = stationId })
+		notify(playerId, 'error', _t('too_far'))
 		return
 	end
 
@@ -52,12 +95,10 @@ Core.Events.OnNet('rentals.rent', function(stationId, model)
 	end
 
 	local price, deposit, total = RentalsRules.CalculateTotal(vehicleDef)
-	if exports and exports.coe_economy and exports.coe_economy.Debit then
-		local debited = exports.coe_economy:Debit(characterId, total, 'vehicle_rental')
-		if not debited then
-			notify(playerId, 'error', _t('not_enough_money'))
-			return
-		end
+	local debited, debitError = economy(function() return exports.coe_economy:Debit(characterId, total, 'vehicle_rental') end)
+	if debited ~= true then
+		notify(playerId, 'error', _t(debitError == 'economy_unavailable' and 'economy_unavailable' or 'not_enough_money'))
+		return
 	end
 
 	local plate = RentalsRules.GenerateRentalPlate()
@@ -67,8 +108,8 @@ Core.Events.OnNet('rentals.rent', function(stationId, model)
 	local entity = CreateVehicle(modelHash, spawnPoint.x, spawnPoint.y, spawnPoint.z, spawnPoint.h or 0.0, true, true)
 	if not DoesEntityExist(entity) then
 		-- Reembolso de segurança caso o spawn falhe
-		if exports and exports.coe_economy and exports.coe_economy.Credit then
-			exports.coe_economy:Credit(characterId, total, 'rental_refund_spawn_failed')
+		if economy(function() return exports.coe_economy:Credit(characterId, total, 'rental_refund_spawn_failed') end) ~= true then
+			log('error', 'rental_refund_failed', { character_id = characterId, total = total })
 		end
 		notify(playerId, 'error', _t('vehicle_spawn_failed'))
 		return
@@ -97,6 +138,9 @@ end)
 
 Core.Events.OnNet('rentals.return', function(stationId)
 	local playerId = source
+	if throttled(playerId) then
+		return
+	end
 	local characterId = getCharacterId(playerId)
 	if not characterId then
 		return
@@ -114,6 +158,11 @@ Core.Events.OnNet('rentals.return', function(stationId)
 		return
 	end
 
+	if not RentalsRules.IsNear(playerCoords(playerId), station.returnZone or station.coords, (station.returnZone and station.returnZone.radius or 0) + (RentalsConfig.InteractRadius or 6.0)) then
+		notify(playerId, 'error', _t('too_far'))
+		return
+	end
+
 	local ped = GetPlayerPed(playerId)
 	local veh = GetVehiclePedIsIn(ped, false)
 	if veh == 0 or veh ~= rental.entity then
@@ -126,18 +175,24 @@ Core.Events.OnNet('rentals.return', function(stationId)
 	local depositAmount = rental.deposit or 0
 
 	-- Reembolsa o caução ao jogador
-	if depositAmount > 0 and exports and exports.coe_economy and exports.coe_economy.Credit then
-		exports.coe_economy:Credit(characterId, depositAmount, 'vehicle_rental_deposit')
+	local refunded = depositAmount
+	if depositAmount > 0 and economy(function() return exports.coe_economy:Credit(characterId, depositAmount, 'vehicle_rental_deposit') end) ~= true then
+		refunded = 0
+		log('error', 'rental_refund_failed', { character_id = characterId, plate = rental.plate, total = depositAmount })
+		notify(playerId, 'error', _t('refund_failed'))
 	end
 
 	activeRentals[characterId] = nil
-	log('info', 'vehicle_returned', { character_id = characterId, plate = rental.plate, refunded_deposit = depositAmount })
-	notify(playerId, 'success', _t('return_success', { deposit = depositAmount }))
+	log('info', 'vehicle_returned', { character_id = characterId, plate = rental.plate, refunded_deposit = refunded })
+	if refunded == depositAmount then
+		notify(playerId, 'success', _t('return_success', { deposit = depositAmount }))
+	end
 	Core.Events.ToClient(playerId, 'rentals.returned')
 end)
 
 AddEventHandler('playerDropped', function()
 	local playerId = source
+	lastRequest[playerId] = nil
 	local characterId = getCharacterId(playerId)
 	if characterId and activeRentals[characterId] then
 		local r = activeRentals[characterId]
