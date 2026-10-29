@@ -546,3 +546,14 @@ AddEventHandler('onResourceStop', function(resourceName)
 		SetNuiFocus(false, false)
 	end
 end)
+
+exports('IsOpen', function()
+	return isOpen
+end)
+
+exports('CloseSelection', function()
+	if isOpen then
+		setOpen(false)
+		destroyScene(false)
+	end
+end)
