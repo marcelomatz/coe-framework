@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_garage'
-version '0.1.0-beta.12'
+version '0.1.0-beta.13'
 description 'Garagens públicas básicas: guarda e retirada de veículos pessoais com blip e administração via coe_staff'
 
 -- Categoria de reinicio no painel do coe_supervisor: administration | business | gameplay
