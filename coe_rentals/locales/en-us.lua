@@ -13,5 +13,9 @@ Locales['en-US'] = {
 	not_in_vehicle = 'You must be driving your rented vehicle to return it.',
 	station_not_found = 'Rental station not found.',
 	vehicle_not_available = 'Vehicle model unavailable for rent.',
-	vehicle_spawn_failed = 'Could not spawn the vehicle at this time. Please try again.'
+	vehicle_spawn_failed = 'Could not spawn the vehicle at this time. Please try again.',
+	too_far = 'You need to be at the rental point.',
+	busy = 'Wait a moment and try again.',
+	economy_unavailable = 'The financial system is unavailable. Try again shortly.',
+	refund_failed = 'The deposit could not be refunded right now. Staff has been notified.'
 }

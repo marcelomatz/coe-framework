@@ -2,9 +2,9 @@ $engine: 3
 $onesync: on
 
 name: "COE Framework - FiveM Enhanced Gen9"
-version: "0.1.0-beta.11"
+version: "0.1.0-beta.12"
 author: "COE Roleplay Team"
-description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 27 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
+description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 29 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
 
 tasks:
   # 1. Download official CitizenFX default server data (chat, spawnmanager, baseevents, etc.)
@@ -74,30 +74,22 @@ tasks:
       ## Configuração do Banco de Dados MySQL / MariaDB
       set mysql_connection_string "{{dbConnectionString}}"
       set coe_database_host "{{dbHost}}"
-      set coe_database_port 3306
+      set coe_database_port {{dbPort}}
       set coe_database_user "{{dbUsername}}"
       set coe_database_password "{{dbPassword}}"
       set coe_database_name "{{dbName}}"
       set coe_database_connection_limit 20
       set coe_database_ssl false
 
-      ## Permissões de Administrador txAdmin & COE Admin
+      ## Permissões de Administrador txAdmin
       add_ace group.admin command allow
       add_ace group.admin command.quit deny
       {{addPrincipalsMaster}}
 
       ## Permissões da Staff (COE Staff Open-Source)
+      ## Módulos por grupo (opcional): coe.staff.players, coe.staff.vehicles, coe.staff.world, coe.staff.self,
+      ## coe.staff.businesses, coe.staff.garages, coe.staff.hotel, coe.staff.yield
       add_ace group.admin coe.staff.all allow
-
-      add_ace group.admin coe_admin.open allow
-      add_ace group.admin coe_admin.items.give allow
-      add_ace group.admin coe_admin.staff.manage allow
-      add_ace group.admin coe_admin.groups.manage allow
-      add_ace group.admin coe_admin.resources.manage allow
-      add_ace group.admin coe_admin.theme.manage allow
-      add_ace group.admin coe_admin.businesses.manage allow
-      add_ace group.admin coe_admin.crypto.manage allow
-      add_ace group.admin coe_admin.root allow
 
       ## --------------------------------------------------------------------
       ## Recursos Base do CitizenFX
@@ -110,6 +102,7 @@ tasks:
       ## Permissões de Sistema de Arquivos (COE Auto-Updater / Supervisor)
       ## Permite ao coe_supervisor aplicar atualizações diretamente nos resources
       ## --------------------------------------------------------------------
+      add_filesystem_permission coe_supervisor write coe_supervisor
       add_filesystem_permission coe_supervisor write coetarget
       add_filesystem_permission coe_supervisor write coe_appearance
       add_filesystem_permission coe_supervisor write coe_audit
@@ -119,6 +112,7 @@ tasks:
       add_filesystem_permission coe_supervisor write coe_core
       add_filesystem_permission coe_supervisor write coe_database
       add_filesystem_permission coe_supervisor write coe_economy
+      add_filesystem_permission coe_supervisor write coe_garage
       add_filesystem_permission coe_supervisor write coe_hud
       add_filesystem_permission coe_supervisor write coe_inventory
       add_filesystem_permission coe_supervisor write coe_jobs
@@ -128,6 +122,7 @@ tasks:
       add_filesystem_permission coe_supervisor write coe_mobile
       add_filesystem_permission coe_supervisor write coe_needs
       add_filesystem_permission coe_supervisor write coe_notify
+      add_filesystem_permission coe_supervisor write coe_rentals
       add_filesystem_permission coe_supervisor write coe_shops
       add_filesystem_permission coe_supervisor write coe_spawn
       add_filesystem_permission coe_supervisor write coe_staff
@@ -172,3 +167,5 @@ tasks:
       ensure coe_staff
       ensure coe_vehicle_catalog
       ensure coe_vehicles
+      ensure coe_garage
+      ensure coe_rentals

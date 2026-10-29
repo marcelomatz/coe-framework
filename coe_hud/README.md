@@ -23,6 +23,8 @@ Em `/hud` > Preferências, **Minimapa** e **Bússola e localização** têm `Sem
 
 Outros recursos escondem o HUD e o minimapa por motivo, usando o nome do recurso: `TriggerEvent('coe_hud:setHidden', GetCurrentResourceName(), true)` (ou `exports.coe_hud:SetHidden(motivo, true)`). O HUD só volta quando nenhum motivo restar; se o recurso que escondeu parar, o motivo dele é liberado. `exports.coe_hud:IsHidden()` informa o estado. Usado pela seleção (`coe_characters`) e pelo criador (`coe_appearance`).
 
+A logo do servidor segue a preferência do jogador: `exports.coe_hud:SetLogoVisible(true|false)`, `IsLogoVisible()` e `ToggleLogo()` (mesmo efeito de `/logo`) devolvem o estado final. Contrato completo em [`types.lua`](types.lua) e na [referência da API](../reference/coe_hud.md).
+
 ## Velocímetros
 
 Em `/hud` > *Velocímetro* o jogador escolhe o visual do painel de veículo; a escolha fica salva por jogador (`speedo` em `prefs.lua`).

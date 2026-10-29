@@ -132,13 +132,13 @@ test('integração MariaDB', { skip: !configured ? 'COE_TEST_DB_* não definido'
 	for (const [name, scenario] of [
 		['coe_core: migrations e repositório de personagens', 'core_scenario.lua'],
 		['coe_inventory: migrations e persistência', 'inventory_scenario.lua'],
-		['coe_admin: migrations e cargos de staff', 'admin_scenario.lua'],
 		['coe_audit: migrations, lote e retenção', 'audit_scenario.lua'],
-		['coe_phone + coe_telecom: aparelhos, chips e linhas por número', 'phone_telecom_scenario.lua'],
-		['coe_vehicles + coe_mechanic + coe_vehicle_catalog: ciclo de vida do veículo e revisão mecânica', 'vehicles_mechanic_scenario.lua'],
-		['coe_economy + coe_banking + coe_shops + coe_inventory: ciclo de comercio, loja e transacoes', 'commerce_scenario.lua'],
+		['coe_garage + coe_mobile: garagens, vagas fixas e números de telefone', 'garage_mobile_scenario.lua'],
+		['coe_needs: migrations, estado por personagem e salvamento em lote', 'needs_scenario.lua'],
+		['coe_vehicles + coe_vehicle_catalog: ciclo de vida do veículo, chaves e quilometragem', 'vehicles_scenario.lua'],
+		['coe_economy + coe_shops + coe_inventory: ciclo de comércio, loja e transações', 'commerce_scenario.lua'],
 		['coe_businesses + coe_jobs + coe_economy: gestao de empresas, equipe, folha de pagamento e carreira', 'jobs_businesses_scenario.lua'],
-		['validacao cumulativa: migracao completa de todos os 31 resources e verificacao de tabelas (fresh db)', 'all_migrations_scenario.lua']
+		['validação cumulativa: migrations de todos os resources com banco (fresh db)', 'all_migrations_scenario.lua']
 	]) {
 		await t.test(name, async () => {
 			await resetSchema(adminPool)

@@ -37,9 +37,12 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Validate Version Sync
+      - name: Validate Version, Tag and Manifest Hashes
         shell: pwsh
-        run: lua tools/bump_version.lua --check
+        run: |
+          $tag = if ("${{ github.event.inputs.tag }}" -ne "") { "${{ github.event.inputs.tag }}" } else { $env:GITHUB_REF_NAME }
+          lua tools/bump_version.lua --check --tag $tag
+          if ($LASTEXITCODE -ne 0) { throw "version.json, recipe ou tag fora de sincronia" }
 
       - name: Unit Tests
         shell: pwsh
@@ -55,9 +58,13 @@ jobs:
           }
           if ($failed) { throw "Falharam: $($failed -join ', ')" }
 
-      - name: Validate Contracts and Platform HAL
+      - name: Validate Contracts, Access and Platform HAL
         shell: pwsh
         run: lua tools/check_contracts.lua --strict --audit-natives --audit-locales
+
+      - name: API Reference Up To Date
+        shell: pwsh
+        run: lua tools/gen_reference.lua --check
 
       - name: Run Smoke Boot Suite
         shell: pwsh
@@ -71,6 +78,11 @@ jobs:
         shell: pwsh
         working-directory: coe_database
         run: node --test test/access.test.js test/provider.test.js test/validation.test.js
+
+      - name: Supervisor File Writer Tests
+        shell: pwsh
+        working-directory: coe_supervisor
+        run: node --test test/fs_writer.test.js
 
       - name: Build Release Package (coe-framework-dist.zip)
         id: pkg
@@ -101,6 +113,7 @@ jobs:
           }
 
           Copy-Item -Path "version.json" -Destination (Join-Path $stageRoot "version.json") -Force
+          if (Test-Path "version.json.sig") { Copy-Item -Path "version.json.sig" -Destination (Join-Path $stageRoot "version.json.sig") -Force }
           Copy-Item -Path "recipe.yaml" -Destination (Join-Path $stageRoot "recipe.yaml") -Force
 
           $zipPath = Join-Path $PWD "coe-framework-dist.zip"
@@ -133,7 +146,9 @@ jobs:
           body_path: RELEASE_NOTES.md
           prerelease: ${{ steps.pkg.outputs.prerelease == 'true' }}
           generate_release_notes: true
+          fail_on_unmatched_files: false
           files: |
             coe-framework-dist.zip
             version.json
+            version.json.sig
             recipe.yaml

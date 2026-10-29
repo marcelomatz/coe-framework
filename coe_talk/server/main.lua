@@ -1,4 +1,35 @@
 -- coe_talk - Servidor de Voz e Comunicacao
+local accessConfig = Config.Access or {}
+local lastEvent = {}
+
+-- Eventos de voz chegam do client: um por jogador a cada Config.EventCooldownMs.
+local function throttled(src, kind)
+	local now = GetGameTimer()
+	local byKind = lastEvent[src]
+	if not byKind then
+		byKind = {}
+		lastEvent[src] = byKind
+	end
+	local previous = byKind[kind]
+	if previous and now - previous < (Config.EventCooldownMs or 250) then
+		return true
+	end
+	byKind[kind] = now
+	return false
+end
+
+-- Exports de servidor que movem jogadores entre canais: so o coe_mobile (padrao) ou quem tem a ACE coe.talk.
+local function callerAllowed()
+	return CoeAccess.Allowed(GetInvokingResource(), accessConfig.Ace or 'coe.talk', accessConfig.Resources)
+end
+
+local function validPlayer(source)
+	return math.type(source) == 'integer' and source > 0
+end
+
+local function validCallId(callId)
+	return type(callId) == 'string' and #callId <= 64 and callId:match('^[%w_:%-]+$') ~= nil
+end
 local function getPlayerJob(src)
 	local job = 'unemployed'
 	pcall(function()
@@ -65,12 +96,14 @@ end)
 -- Evento: atualizar alcance ou estado de transmissao da voz do jogador
 RegisterNetEvent('coe_talk:server:setVoiceRange', function(distance, active)
 	local src = source
+	if throttled(src, 'voice') then return end
 	Routing.SetPlayerProximity(src, distance, active)
 end)
 
 -- Evento: entrar ou trocar frequencia de radio
 RegisterNetEvent('coe_talk:server:setRadio', function(rawFrequency)
 	local src = source
+	if throttled(src, 'radio') then return end
 	if rawFrequency == nil or rawFrequency == 0 or rawFrequency == '' then
 		local _, prev = Routing.LeaveRadio(src)
 		TriggerClientEvent('coe_talk:client:radioSet', src, nil)
@@ -111,6 +144,7 @@ end)
 -- Evento: iniciou transmissao no radio (Push-to-Talk)
 RegisterNetEvent('coe_talk:server:startRadioTransmitting', function()
 	local src = source
+	if throttled(src, 'transmit') then return end
 	Routing.SetRadioTransmitting(src, true)
 	local freq = Routing.GetRadio(src)
 	if not freq then return end
@@ -138,23 +172,8 @@ RegisterNetEvent('coe_talk:server:stopRadioTransmitting', function()
 	end
 end)
 
--- Evento: entrar ou criar chamada telefonica
-RegisterNetEvent('coe_talk:server:setCall', function(callId)
-	local src = source
-	if not callId or callId == '' then
-		local _, prev = Routing.LeaveCall(src)
-		TriggerClientEvent('coe_talk:client:callSet', src, nil)
-		if prev then syncCallChannel(prev) end
-		return
-	end
-
-	local _, prev = Routing.LeaveCall(src)
-	if prev then syncCallChannel(prev) end
-
-	Routing.JoinCall(src, callId)
-	TriggerClientEvent('coe_talk:client:callSet', src, callId)
-	syncCallChannel(callId)
-end)
+-- Chamadas telefonicas: o client nao escolhe em qual chamada entra (isso permitiria ouvir chamadas alheias).
+-- Quem coloca os dois lados na chamada e o coe_mobile, pelo export SetPlayerCall, depois de atender.
 
 -- Evento: sair de chamada telefonica
 RegisterNetEvent('coe_talk:server:leaveCall', function()
@@ -170,6 +189,7 @@ AddEventHandler('playerDropped', function()
 	local radio = Routing.GetRadio(src)
 	local call = Routing.GetCall(src)
 	Routing.RemovePlayer(src)
+	lastEvent[src] = nil
 	if radio then syncRadioChannel(radio) end
 	if call then syncCallChannel(call) end
 end)
@@ -178,6 +198,12 @@ end)
 exports('SetPlayerRadio', function(source, frequency, extra)
 	if type(source) == 'table' then
 		source, frequency = frequency, extra
+	end
+	if not callerAllowed() then
+		return false, 'forbidden'
+	end
+	if not validPlayer(source) then
+		return false, 'invalid_player'
 	end
 	if frequency == nil or frequency == 0 then
 		local _, prev = Routing.LeaveRadio(source)
@@ -205,6 +231,15 @@ end)
 exports('SetPlayerCall', function(source, callId, extra)
 	if type(source) == 'table' then
 		source, callId = callId, extra
+	end
+	if not callerAllowed() then
+		return false, 'forbidden'
+	end
+	if not validPlayer(source) then
+		return false, 'invalid_player'
+	end
+	if callId ~= nil and not validCallId(callId) then
+		return false, 'invalid_call'
 	end
 	if not callId then
 		local _, prev = Routing.LeaveCall(source)

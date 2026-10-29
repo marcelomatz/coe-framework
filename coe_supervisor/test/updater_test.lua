@@ -190,4 +190,67 @@ eq(planSorted.downloads[1].resource, 'coe_supervisor', 'coe_supervisor vem prime
 eq(planSorted.downloads[2].resource, 'coe_supervisor', 'segundo item também é coe_supervisor')
 eq(planSorted.downloads[1].hash ~= nil, true, 'hash é propagado para o item de download')
 
+-- 7. SHA-256 (vetores NIST) com a mesma normalização CRLF do Hash
+eq(SupervisorUpdater.Sha256(''), 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'sha256 vazio')
+eq(SupervisorUpdater.Sha256('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad', 'sha256 abc')
+eq(SupervisorUpdater.Sha256('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq'),
+	'248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1', 'sha256 448 bits (dois blocos)')
+eq(SupervisorUpdater.Sha256('a\r\nb', false), SupervisorUpdater.Sha256('a\nb', false), 'sha256 texto ignora CRLF')
+eq(SupervisorUpdater.Sha256('a\r\nb', true) ~= SupervisorUpdater.Sha256('a\nb', true), true, 'sha256 binário é byte a byte')
+eq(SupervisorUpdater.Sha256(nil), nil, 'sha256 de não-string é nil')
+
+-- 8. Plano: tag imutável, allowlist de resources, HTTPS e SHA-256 obrigatório
+local shaMain = SupervisorUpdater.Sha256('print(1)\n')
+local remoteSigned = {
+	version = '0.1.0-beta.7',
+	tag = 'v0.1.0-beta.7',
+	resources = {
+		coe_core = { version = '0.1.0-beta.7', files = { 'server.lua' }, sha256 = { ['server.lua'] = shaMain } },
+		resource_de_terceiro = { version = '0.1.0-beta.7', files = { 'server.lua' }, sha256 = { ['server.lua'] = shaMain } }
+	}
+}
+local localWithSha = {
+	version = '0.1.0-beta.6',
+	resources = { coe_core = { files = { 'server.lua' }, sha256 = { ['server.lua'] = string.rep('1', 64) } } }
+}
+local allowed = { coe_core = true, coe_supervisor = true }
+local planSigned = SupervisorUpdater.BuildUpdatePlan(localWithSha, remoteSigned, {}, {}, {
+	rawRepoUrl = 'https://raw.githubusercontent.com/marcelomatz/coe-framework/',
+	allowed = allowed
+})
+eq(planSigned.filesCount, 1, 'resource fora da allowlist é ignorado')
+eq(planSigned.downloads[1].resource, 'coe_core', 'só coe_core no plano')
+eq(planSigned.downloads[1].url, 'https://raw.githubusercontent.com/marcelomatz/coe-framework/v0.1.0-beta.7/coe_core/server.lua',
+	'download vem da tag, nunca de branch')
+eq(planSigned.downloads[1].sha256, shaMain, 'sha256 propagado')
+eq(planSigned.downloads[1].installedSha256, string.rep('1', 64), 'sha256 instalado propagado')
+eq(planSigned.missingIntegrity, 0, 'manifesto completo')
+eq(planSigned.ref, 'v0.1.0-beta.7', 'ref = tag')
+
+local _, insecure = SupervisorUpdater.BuildUpdatePlan(localWithSha, remoteSigned, {}, {}, { rawRepoUrl = 'http://raw.githubusercontent.com/x' })
+eq(insecure, 'insecure_url', 'repositório HTTP é recusado')
+local _, badTag = SupervisorUpdater.BuildUpdatePlan(localWithSha, { version = '0.1.0-beta.7', tag = 'main', resources = {} }, {}, {})
+eq(badTag, 'invalid_remote_tag', 'tag que não é versão é recusada')
+
+local remoteUnsigned = { version = '0.1.0-beta.7', resources = { coe_core = { files = { 'server.lua' } } } }
+local planUnsigned = SupervisorUpdater.BuildUpdatePlan(localWithSha, remoteUnsigned, {}, {}, { allowed = allowed })
+eq(planUnsigned.missingIntegrity, 1, 'arquivo sem sha256 é contado (apply recusa)')
+eq(planUnsigned.downloads[1].url:find('/v0.1.0-beta.7/', 1, true) ~= nil, true, 'sem tag usa v<versão>')
+
+-- 9. Verificação do conteúdo e detecção de config customizada
+local item = { sha256 = shaMain, isBinary = false }
+eq(SupervisorUpdater.VerifyContent(item, 'print(1)\r\n'), true, 'conteúdo íntegro (CRLF normalizado)')
+local okTamper, tamperErr = SupervisorUpdater.VerifyContent(item, 'print(2)\n')
+eq(okTamper, false, 'conteúdo adulterado é recusado')
+eq(tamperErr, 'integrity_mismatch', 'erro integrity_mismatch')
+eq(select(2, SupervisorUpdater.VerifyContent({}, 'x')), 'integrity_missing', 'sem sha256 é recusado')
+
+local oldCfg = 'Config = { A = 1 }\n'
+local newCfg = 'Config = { A = 1, B = 2 }\n'
+local cfgItem = { sha256 = SupervisorUpdater.Sha256(newCfg), installedSha256 = SupervisorUpdater.Sha256(oldCfg) }
+eq(SupervisorUpdater.IsCustomizedConfig(oldCfg, cfgItem), false, 'config apenas antiga recebe a versão nova')
+eq(SupervisorUpdater.IsCustomizedConfig('Config = { A = 9 }\n', cfgItem), true, 'config editada é preservada')
+eq(SupervisorUpdater.IsCustomizedConfig(newCfg, cfgItem), false, 'config já igual à nova')
+eq(SupervisorUpdater.IsCustomizedConfig(oldCfg, { sha256 = cfgItem.sha256 }), true, 'sem hash instalado: conservador')
+
 io.write('coe_supervisor updater_test: ok\n')

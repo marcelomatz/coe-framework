@@ -4,17 +4,19 @@ Saldo por personagem, extrato (`coe_economy_ledger`) e operações atômicas. É
 
 - Conta criada no primeiro uso com `StartingBalance` (`config.lua`).
 - Valores sempre inteiros e positivos; saldo `BIGINT UNSIGNED`, então um débito além do saldo falha e desfaz a transação. O resource exige `sql_mode` estrito ao iniciar.
-- Só resources autorizados chamam os exports; o nome vem do runtime. Padrão do framework (`AllowedResources`): `coe_economy`, `coe_businesses`, `coe_jobs`, `coe_shops`, `coe_bank` e `coe_staff` (painel básico da staff). Os demais (pacotes comerciais e scripts de terceiros) recebem a ACE no `server.cfg`: `add_ace resource.<nome> coe.economy.money allow`. Pacotes de empregos pagam pelo `coe_jobs` e não precisam dela.
+- Só resources autorizados chamam os exports; o nome vem do runtime. Padrão do framework (`AllowedResources`): `coe_economy`, `coe_businesses`, `coe_jobs`, `coe_shops`, `coe_bank`, `coe_mobile`, `coe_staff` (painel básico da staff) e `coe_rentals` (aluguel e caução). Os demais (pacotes comerciais e scripts de terceiros) recebem a ACE no `server.cfg`: `add_ace resource.<nome> coe.economy.money allow`. Pacotes de empregos pagam pelo `coe_jobs` e não precisam dela.
 
 Exports (server): `GetBalance(characterId)`, `Credit(characterId, valor, motivo, referencia?)`, `Debit(...)`, `Transfer(deId, paraId, valor, motivo, referencia?)`. Retornam `true`/valor ou `nil, codigo` (`insufficient_funds`, `invalid_amount`, `balance_limit`, `same_account`, `forbidden`, `not_ready`...). `motivo` é `[a-z0-9_]{1,32}`.
 
 > **Atenção:** chamado por `exports` a partir de outro resource, só o primeiro valor de retorno chega; o código de erro de `nil, codigo` se perde e o chamador vê só `nil`. Os exports novos (`Ledger`, `LedgerStats`, sociedade) já usam valor único ou `{ error = codigo }`. A padronização dos demais segue a mesma linha da #167.
 
-`Summary()`: totais da economia para a Visão Geral do admin; só quem tem `coe.economy.admin` (ex.: `coe_admin`; senão `{ error = 'forbidden' }`).
+`IsReady()`: persistência pronta e chamador autorizado.
 
-`Ledger(characterId, limite?)`: extrato pessoal, mais recentes primeiro (`{ delta, reason, reference, created_at }`, até 100), ou `{ error = codigo }`. Usado pelo `coe_banking`.
+`Summary()`: totais da economia para a Visão Geral do admin; só quem tem `coe.economy.admin` (senão `{ error = 'forbidden' }`).
 
-`LedgerStats(characterId, dias, motivosIgnorados?)`: `{ firstAt, inflow }`: epoch do primeiro lançamento (ou nil) e soma das entradas dos últimos `dias` (1 a 365), sem os motivos ignorados (até 20); ou `{ error = codigo }`. Usado na pontuação de crédito do `coe_banking`.
+`Ledger(characterId, limite?)`: extrato pessoal, mais recentes primeiro (`{ delta, reason, reference, created_at }`, até 100), ou `{ error = codigo }`. Usado pelo `coe_bank`.
+
+`LedgerStats(characterId, dias, motivosIgnorados?)`: `{ firstAt, inflow }`: epoch do primeiro lançamento (ou nil) e soma das entradas dos últimos `dias` (1 a 365), sem os motivos ignorados (até 20); ou `{ error = codigo }`. Contrato completo de todos os exports (inclusive sociedade e conta empresarial) em [`types.lua`](types.lua) e na [referência da API](../reference/coe_economy.md).
 
 Comandos: `/saldo` (jogador) e `coe_economy_credit <characterId> <valor>` (ACE `command.coe_economy_credit`).
 
@@ -37,4 +39,4 @@ Folha: a cada `PayrollIntervalMinutes` (padrão 30; 0 desliga) cada negócio ati
 
 ## Persistência e testes
 
-Tabelas `coe_economy_accounts` e `coe_economy_ledger` (migração 1), `coe_economy_societies` e `coe_economy_society_ledger` (migração 2), versionadas em `server/migrations.lua`. Testes: `lua test/rules_test.lua` (validação de valores e motivos, filtro do extrato empresarial e transações sem buracos nos parâmetros). A integração MariaDB ainda não cobre a economia (#173).
+Tabelas `coe_economy_accounts` e `coe_economy_ledger` (migração 1), `coe_economy_societies` e `coe_economy_society_ledger` (migração 2), versionadas em `server/migrations.lua`. Testes: `lua test/rules_test.lua` (validação de valores e motivos, filtro do extrato empresarial e transações sem buracos nos parâmetros) e `lua test/server_test.lua` (exports com persistência em memória: chamador sem allowlist/ACE recusado, validação de valores, saldo insuficiente, teto e transferência). O cenário `commerce_scenario.lua` da integração MariaDB (`coe_database/test/integration`) cobre contas, sociedade e extrato no banco real.

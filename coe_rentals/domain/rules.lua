@@ -44,6 +44,24 @@ function RentalsRules.GenerateRentalPlate()
 	return 'RENT' .. num
 end
 
+---O jogador está a até `radius` metros do ponto? `coords` e `point` com x, y, z.
+function RentalsRules.IsNear(coords, point, radius)
+	if type(coords) ~= 'table' and type(coords) ~= 'userdata' then
+		return false
+	end
+	if type(point) ~= 'table' then
+		return false
+	end
+	local x, y, z = tonumber(coords.x), tonumber(coords.y), tonumber(coords.z)
+	local px, py, pz = tonumber(point.x), tonumber(point.y), tonumber(point.z)
+	local limit = tonumber(radius)
+	if not (x and y and z and px and py and pz and limit) then
+		return false
+	end
+	local dx, dy, dz = x - px, y - py, z - pz
+	return (dx * dx + dy * dy + dz * dz) <= limit * limit
+end
+
 function RentalsRules.CanRent(characterId, activeRentals)
 	if not characterId or characterId == '' then
 		return false, 'no_character'

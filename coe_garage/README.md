@@ -23,6 +23,12 @@ Permite aos cidadãos guardar e retirar seus veículos pessoais em vagas marcada
 | `SaveGarage(data)` | `data: table` | `CoeGarage\|nil, error` | Salva ou atualiza uma garagem |
 | `DeleteGarage(id)` | `id: string` | `boolean, error` | Remove uma garagem |
 
+## Acesso a outros resources
+
+O `coe_garage` está nos padrões do framework para o que usa: `coe_database` (`DEFAULT_CALLERS`) e `coe_vehicles` (`WriterResources`: `Spawn`, `GiveKey`, `Store`). Nada a configurar no `server.cfg` além do `ensure coe_garage` (já no `recipe.yaml`). O `tools/check_contracts.lua` falha o CI se uma dessas allowlists perder o resource.
+
+Regras no servidor: o jogador precisa estar dentro do raio da vaga (padrão 4 m) para listar e retirar, e o veículo a até 5 m para guardar; só o dono retira; um veículo com vaga fixa só sai da garagem onde foi guardado (`wrong_garage`); uma ação por jogador a cada `GarageConfig.Limits.ActionCooldownMs`.
+
 ## Banco de Dados
 
 - Tabela `coe_garage_registry`: armazena as garagens e suas vagas em JSON.
@@ -36,3 +42,5 @@ cd coe_garage
 lua test/domain_test.lua
 lua test/service_test.lua
 ```
+
+A integração MariaDB (`coe_database/test/integration/garage_mobile_scenario.lua`) cobre migrações, garagens e vagas no banco real.

@@ -62,7 +62,7 @@ shared_script '@coe_core/lib/init.lua'
 shared_script '@coe_inventory/lib/init.lua'
 ```
 
-Isso disponibiliza `Core` e, quando solicitado, `Inventory` no client e no servidor. APIs de inventário e catálogo pertencem a `coe_inventory`, não a `Core`.
+Isso disponibiliza `Core` e, quando solicitado, `Inventory` no client e no servidor. Sem o `lib/init.lua`, `exports.coe_core:GetCoreObject()` devolve o objeto `Core` (eventos, jogadores, grupos e estados), no server e no client. APIs de inventário e catálogo pertencem a `coe_inventory`, não a `Core`.
 
 ### Migração da API anterior
 
@@ -122,11 +122,11 @@ Esses testes cobrem identidade, perfil do personagem, grupos, invariantes e oper
 - [coe_logging](../coe_logging/README.md): contrato de logs, níveis e segurança de contexto.
 - [coe_notify](../coe_notify/README.md): biblioteca NUI de notificações client/server.
 - [coe_inventory](../coe_inventory/README.md): catálogo, itens, containers, exports e configuração.
-- [coe_admin](../coe_admin/README.md): painel e modelo de permissões.
+- [coe_staff](../coe_staff/README.md): painel básico da staff e modelo de permissões por ACE.
 - [coe_characters](../coe_characters/README.md): seleção, criação e arquivamento de personagens.
 - [coe_spawn](../coe_spawn/README.md): integração de spawn condicionada ao ciclo de vida.
 - [Mapa de testes](../TEST_COVERAGE.md): cobertura automatizada e lacunas de integração.
-- [Histórico de engenharia e auditoria](../HISTORY.md): ações documentadas, eventos auditáveis e limites de retenção.
+- [Changelog](https://docs.coeroleplay.app/#doc=CHANGELOG.md): histórico de releases e mudanças documentadas.
 
 ## Slots de personagem
 

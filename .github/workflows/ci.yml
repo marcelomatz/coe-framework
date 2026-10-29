@@ -36,24 +36,92 @@ jobs:
           }
           if ($failed) { throw "Falharam: $($failed -join ', ')" }
 
-      - name: Validate Contracts and Platform HAL
+      - name: Validate Contracts, Access and Platform HAL
         shell: pwsh
         run: lua tools/check_contracts.lua --strict --audit-natives --audit-locales
+
+      - name: API Reference Up To Date
+        shell: pwsh
+        run: lua tools/gen_reference.lua --check
 
       - name: Run Smoke Boot Suite
         shell: pwsh
         run: lua tools/smoke_boot_test.lua
-      
+
       - name: Open-core Boundary
         shell: pwsh
         run: lua tools/check_boundary.lua
-      
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-      
+
       - name: Database Provider Tests
         shell: pwsh
         working-directory: coe_database
         run: node --test test/access.test.js test/provider.test.js test/validation.test.js
+
+      - name: Supervisor File Writer Tests
+        shell: pwsh
+        working-directory: coe_supervisor
+        run: node --test test/fs_writer.test.js
+
+      - name: UI and HUD DOM Tests
+        shell: pwsh
+        run: |
+          foreach ($dir in @('coe_ui', 'coe_hud')) {
+            Push-Location $dir
+            npm install --no-save --no-package-lock --no-audit --no-fund jsdom@26.1.0
+            if ($LASTEXITCODE -ne 0) { throw "npm install falhou em $dir" }
+            node --test (Get-ChildItem test -Filter *.test.js | ForEach-Object { "test/$($_.Name)" })
+            if ($LASTEXITCODE -ne 0) { throw "Testes de DOM falharam em $dir" }
+            Pop-Location
+          }
+
+  database-integration:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: coe_ci_test
+          MARIADB_USER: coe
+          MARIADB_PASSWORD: coe
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.4"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Database Driver
+        working-directory: coe_database
+        run: npm install --omit=dev --no-audit --no-fund
+
+      - name: MariaDB Integration Scenarios
+        working-directory: coe_database
+        env:
+          COE_TEST_DB_HOST: 127.0.0.1
+          COE_TEST_DB_PORT: "3306"
+          COE_TEST_DB_USER: coe
+          COE_TEST_DB_PASSWORD: coe
+          COE_TEST_DB_NAME: coe_ci_test
+        run: node --test test/integration/integration.test.js

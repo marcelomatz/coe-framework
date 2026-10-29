@@ -150,10 +150,24 @@ for _, res in ipairs(resources) do
 			end
 		end
 
-		for exp in content:gmatch('(?:server_)?export%s+[\'"]([%w_]+)[\'"]') do
+		-- Comentários do manifesto não declaram nada.
+		content = content:gsub('%-%-%[%[.-%]%]', ''):gsub('%-%-[^\n]*', '')
+
+		-- Padrões Lua não têm alternância: cada palavra-chave é procurada separadamente (%f evita casar sufixos).
+		local function manifestExport(exp)
 			data.manifestExports[exp] = true
 			data.allExports[exp] = true
 			totalVerifiedExports = totalVerifiedExports + 1
+		end
+		for _, keyword in ipairs({ 'export', 'server_export' }) do
+			for exp in content:gmatch('%f[%w_]' .. keyword .. '%s*[\'"]([%w_]+)[\'"]') do
+				manifestExport(exp)
+			end
+			for block in content:gmatch('%f[%w_]' .. keyword .. 's%s*(%b{})') do
+				for exp in block:gmatch('[\'"]([%w_]+)[\'"]') do
+					manifestExport(exp)
+				end
+			end
 		end
 
 		for dep in content:gmatch('dependency%s+[\'"]([%w_]+)[\'"]') do
@@ -175,12 +189,16 @@ for _, res in ipairs(resources) do
 			end
 		end
 
-		for single in content:gmatch('(?:client_script|server_script|shared_script|file|ui_page)%s+[\'"]([^\'"]+)[\'"]') do
-			checkFileEntry(single)
+		for _, keyword in ipairs({ 'client_script', 'server_script', 'shared_script', 'file', 'ui_page', 'loadscreen' }) do
+			for single in content:gmatch('%f[%w_]' .. keyword .. '%s*[\'"]([^\'"]+)[\'"]') do
+				checkFileEntry(single)
+			end
 		end
-		for block in content:gmatch('(?:client_scripts|server_scripts|shared_scripts|files)%s*(%b{})') do
-			for path in block:gmatch('[\'"]([^\'"]+)[\'"]') do
-				checkFileEntry(path)
+		for _, keyword in ipairs({ 'client_scripts', 'server_scripts', 'shared_scripts', 'files' }) do
+			for block in content:gmatch('%f[%w_]' .. keyword .. '%s*(%b{})') do
+				for path in block:gmatch('[\'"]([^\'"]+)[\'"]') do
+					checkFileEntry(path)
+				end
 			end
 		end
 	end
@@ -224,6 +242,14 @@ end
 -- 4. Validação de contratos (types.lua vs Implementação)
 for _, res in ipairs(resources) do
 	local data = resData[res]
+	if not data.hasTypes and next(data.allExports) then
+		local names = {}
+		for exp in pairs(data.allExports) do
+			names[#names + 1] = exp
+		end
+		table.sort(names)
+		addError('contract', res, string.format('Resource com %d export(s) sem types.lua: %s', #names, table.concat(names, ', ')))
+	end
 	if data.hasTypes then
 		for exp in pairs(data.typesExports) do
 			if not data.allExports[exp] then
@@ -239,6 +265,7 @@ for _, res in ipairs(resources) do
 end
 
 -- 5. Validação de chamadas cruzadas de exports (exports['res']:Method())
+local crossCalls = {}
 for _, res in ipairs(resources) do
 	local data = resData[res]
 	for _, filePath in ipairs(data.files) do
@@ -249,6 +276,7 @@ for _, res in ipairs(resources) do
 				for target, method in line:gmatch('exports%[[\'"]([%w_]+)[\'"]%]%s*[:.]([%w_]+)') do
 					if target ~= res and resourceSet[target] then
 						totalCrossCalls = totalCrossCalls + 1
+						crossCalls[#crossCalls + 1] = { resource = res, target = target, method = method, file = filePath, line = lineNum }
 						local targetData = resData[target]
 						local targetHasExport = targetData.allExports[method] or targetData.typesExports[method]
 						if not targetHasExport then
@@ -259,6 +287,7 @@ for _, res in ipairs(resources) do
 				for target, method in line:gmatch('exports%.([%w_]+)%s*[:.]([%w_]+)') do
 					if target ~= res and resourceSet[target] then
 						totalCrossCalls = totalCrossCalls + 1
+						crossCalls[#crossCalls + 1] = { resource = res, target = target, method = method, file = filePath, line = lineNum }
 						local targetData = resData[target]
 						local targetHasExport = targetData.allExports[method] or targetData.typesExports[method]
 						if not targetHasExport then
@@ -267,6 +296,78 @@ for _, res in ipairs(resources) do
 					end
 				end
 				lineNum = lineNum + 1
+			end
+		end
+	end
+end
+
+-- 5b. Contrato de acesso: chamada cruzada a export protegido precisa vir de resource na allowlist padrão.
+-- Sem isso, um resource do próprio framework recebe 'forbidden' em produção mesmo com os testes unitários verdes.
+local function loadConfigTable(path, globalName)
+	local content = readFile(path)
+	if not content then return nil end
+	local env = setmetatable({ GetConvar = function(_, default) return default end }, { __index = _G })
+	local fn = load(content, '@' .. path, 't', env)
+	if not fn or not pcall(fn) then return nil end
+	return env[globalName]
+end
+
+local function jsArrayNames(path, constName)
+	local content = readFile(path) or ''
+	local body = content:match(constName .. '%s*=%s*Object%.freeze%(%s*(%b[])') or content:match(constName .. '%s*=%s*(%b[])') or ''
+	local set = {}
+	for name in body:gmatch('[\'"]([%w_]+)[\'"]') do
+		set[name] = true
+	end
+	return set
+end
+
+local function setOf(list)
+	local set = {}
+	for _, name in ipairs(list) do set[name] = true end
+	return set
+end
+
+local vehiclesConfig = loadConfigTable('coe_vehicles/config.lua', 'CoeVehiclesConfig') or {}
+local economyConfig = loadConfigTable('coe_economy/config.lua', 'EconomyConfig') or {}
+local talkConfig = loadConfigTable('coe_talk/config.lua', 'Config') or {}
+local supervisorConfig = loadConfigTable('coe_supervisor/config.lua', 'SupervisorConfig') or {}
+
+local accessContracts = {
+	{ target = 'coe_database', ace = 'coe.database', allow = jsArrayNames('coe_database/server/access.js', 'DEFAULT_CALLERS') },
+	{ target = 'coe_vehicles', ace = 'coe.vehicles.write', allow = vehiclesConfig.WriterResources or {},
+		methods = setOf({ 'Create', 'Spawn', 'Store', 'GiveKey', 'RevokeKey' }) },
+	{ target = 'coe_vehicles', ace = 'coe.vehicles.mileage', allow = vehiclesConfig.MileageEditors or {}, methods = setOf({ 'SetMileage' }) },
+	{ target = 'coe_economy', ace = 'coe.economy.money', allow = economyConfig.AllowedResources or {},
+		methods = setOf({ 'GetBalance', 'Credit', 'Debit', 'Transfer', 'Ledger', 'LedgerStats' }) },
+	{ target = 'coe_talk', ace = 'coe.talk', allow = (talkConfig.Access or {}).Resources or {}, methods = setOf({ 'SetPlayerCall', 'SetPlayerRadio' }) },
+	{ target = 'coe_supervisor', ace = 'coe.supervisor', allow = supervisorConfig.Defaults or {},
+		methods = setOf({ 'List', 'Restart', 'GetUpdateStatus', 'CheckForUpdates', 'ApplyUpdate' }) }
+}
+
+local totalAccessChecked = 0
+local function checkAccess(res, target, method, file, line)
+	for _, contract in ipairs(accessContracts) do
+		if contract.target == target and (not contract.methods or contract.methods[method]) then
+			totalAccessChecked = totalAccessChecked + 1
+			if not contract.allow[res] then
+				addError('access-contract', res, string.format("Chama %s:%s mas não está na allowlist padrão de %s (ACE %s)", target, method or '*', target, contract.ace), file, line)
+			end
+		end
+	end
+end
+
+for _, call in ipairs(crossCalls) do
+	checkAccess(call.resource, call.target, call.method, call.file, call.line)
+end
+-- O banco costuma ser chamado por indireção (local db = exports['coe_database']; db[name](db, ...)).
+for _, res in ipairs(resources) do
+	if res ~= 'coe_database' then
+		for _, filePath in ipairs(resData[res].files) do
+			local content = readFile(filePath) or ''
+			if content:match('exports%[[\'"]coe_database[\'"]%]') or content:match('exports%.coe_database') then
+				checkAccess(res, 'coe_database', nil, filePath)
+				break
 			end
 		end
 	end
@@ -381,10 +482,14 @@ for _, e in ipairs(triggeredNetEvents) do
 end
 
 -- 8. Linter de Conformidade de Natives da Plataforma (Platform / HAL)
-local platformMigratedResources = {
-	['coe_vehicles'] = true,
-	['coe_fuel'] = true
-}
+-- Recursos migrados declaram no fxmanifest: coe_platform 'hal'. Neles, natives cruas listadas abaixo são erro.
+local platformMigratedResources = {}
+for _, res in ipairs(resources) do
+	local manifest = readFile(res .. '/fxmanifest.lua') or ''
+	if manifest:match('\n%s*coe_platform%s+[\'"]hal[\'"]') then
+		platformMigratedResources[res] = true
+	end
+end
 
 local platformRestrictedNatives = {
 	['DoesEntityExist'] = 'Core.Platform.Entities.Exists',
@@ -447,28 +552,13 @@ for _, res in ipairs(resources) do
 end
 
 -- 9. Linter e Auditoria de Internacionalização (i18n / Core.Locale)
-local i18nMigratedResources = {
-	['coe_vehicles'] = true,
-	['coe_core'] = true,
-	['coe_inventory'] = true,
-	['coe_economy'] = true,
-	['coe_banking'] = true,
-	['coe_businesses'] = true,
-	['coe_news'] = true,
-	['coe_talk'] = true,
-	['coe_telecom'] = true,
-	['coe_fuel'] = true,
-	['coe_amzg'] = true,
-	['coe_police'] = true,
-	['coe_ems'] = true,
-	['coe_dispatch'] = true,
-	['coe_mechanic'] = true,
-	['coe_housing'] = true,
-	['coe_deepweb'] = true,
-	['coe_jobs'] = true,
-	['coe_loot'] = true,
-	['coe_tablet'] = true
-}
+-- Todo resource com locales/pt-br.lua e locales/en-us.lua é tratado como migrado (paridade e literais viram erro).
+local i18nMigratedResources = {}
+for _, res in ipairs(resources) do
+	if fileExists(res .. '/locales/pt-br.lua') and fileExists(res .. '/locales/en-us.lua') then
+		i18nMigratedResources[res] = true
+	end
+end
 
 local function loadLocaleTable(filePath, langKey)
 	local content = readFile(filePath)
@@ -514,13 +604,23 @@ for _, res in ipairs(resources) do
 			local enDict = loadLocaleTable(enPath, 'en-US') or {}
 			local ptCount = 0
 			local missingInEn = {}
+			local missingInPt = {}
 			for k in pairs(ptDict) do
 				ptCount = ptCount + 1
 				if not enDict[k] then
 					missingInEn[#missingInEn + 1] = k
 				end
 			end
+			for k in pairs(enDict) do
+				if not ptDict[k] then
+					missingInPt[#missingInPt + 1] = k
+				end
+			end
 			table.sort(missingInEn)
+			table.sort(missingInPt)
+			if #missingInPt > 0 then
+				addError('i18n-parity', res, string.format('Chaves ausentes em pt-BR: %s', table.concat(missingInPt, ', ')), ptPath)
+			end
 			totalLocalizedKeys = totalLocalizedKeys + ptCount
 			localeKeysByResource[res] = ptCount
 
@@ -578,6 +678,7 @@ print(string.rep('=', 70))
 print(string.format('Resources verificados:       %d', #resources))
 print(string.format('Exports mapeados:            %d', totalVerifiedExports))
 print(string.format('Chamadas cross-resource:     %d', totalCrossCalls))
+print(string.format('Acessos protegidos checados: %d', totalAccessChecked))
 print(string.format('Eventos de rede registrados: %d', #registeredNetEvents))
 print(string.format('Disparos de rede validados:  %d', #triggeredNetEvents))
 print(string.format('Natives auditadas (Platform):%d', totalPlatformAuditedCalls))
@@ -588,9 +689,11 @@ if auditNatives or verbose then
 	print('\n' .. string.rep('-', 70))
 	print('📊 AUDITORIA DA CAMADA DE PLATAFORMA (Core.Platform)')
 	print(string.rep('-', 70))
-	print('Recursos piloto migrados (100% de conformidade estrita):')
-	for res in pairs(platformMigratedResources) do
-		print(string.format('  ✅ %-24s [Conforme Core.Platform]', res))
+	print("Recursos migrados (declaram coe_platform 'hal'; natives cruas são erro):")
+	for _, res in ipairs(resources) do
+		if platformMigratedResources[res] then
+			print(string.format('  ✅ %-24s [Conforme Core.Platform]', res))
+		end
 	end
 	print('\nChamadas de natives detectadas em recursos a migrar:')
 	for _, res in ipairs(resources) do

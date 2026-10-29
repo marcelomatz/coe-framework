@@ -255,6 +255,13 @@ RegisterNetEvent('coe_garage:retrieveVehicle', function(garageId, spotId, vehicl
 		return notify(src, 'error', _t('vehicle_not_stored'))
 	end
 
+	-- Mesma regra da listagem: veículo com vaga fixa só sai da garagem onde foi guardado.
+	local slots = GaragePersistence.SlotsOf(characterId) or {}
+	local assignedGarage = slots[tostring(vehicleId)]
+	if assignedGarage and assignedGarage ~= garageId then
+		return notify(src, 'error', _t('wrong_garage'))
+	end
+
 	local netId = exports.coe_vehicles:Spawn(vehicleId, targetSpot.x, targetSpot.y, targetSpot.z, targetSpot.heading, 'automobile')
 	if not netId or type(netId) ~= 'number' then
 		return notify(src, 'error', _t('spawn_failed'))

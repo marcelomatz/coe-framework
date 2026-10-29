@@ -4,6 +4,7 @@ Bridge.InstallFiveMStubs()
 
 -- Carrega o executor padronizado de migrações
 dofile([=[coe_core/lib/migrations.lua]=])
+dofile([=[coe_core/lib/logger.lua]=])
 
 -- Carrega bootstrap e migrações do coe_core
 dofile([=[coe_core/core/shared/bootstrap.lua]=])
@@ -50,44 +51,46 @@ local function runResourceMigrations(name, migrations, tableName)
 	return success, err
 end
 
--- Lista de todos os 30 recursos adicionais e suas respectivas migrações
+-- Migrações de todos os resources do framework que têm banco (além do coe_core). Um resource novo com
+-- migrations precisa entrar aqui; o teste compara com os arquivos existentes no repositório.
 local migrationDefs = {
 	{ resource = 'coe_audit', file = 'coe_audit/server/migrations.lua', get = function() return AuditMigrations end },
 	{ resource = 'coe_economy', file = 'coe_economy/server/migrations.lua', get = function() return EconomyMigrations end },
-	{ resource = 'coe_banking', file = 'coe_banking/server/migrations.lua', get = function() return BankingMigrations end },
 	{ resource = 'coe_inventory', file = 'coe_inventory/adapters/migrations.lua', get = function() return InventoryMigrations end },
 	{ resource = 'coe_businesses', file = 'coe_businesses/server/migrations.lua', get = function() return BusinessesMigrations end },
 	{ resource = 'coe_jobs', file = 'coe_jobs/server/migrations.lua', get = function() return JobsMigrations end },
-	{ resource = 'coe_factions', file = 'coe_factions/server/migrations.lua', get = function() return FactionsMigrations end },
 	{ resource = 'coe_vehicles', file = 'coe_vehicles/server/migrations.lua', get = function() return VehiclesMigrations end },
 	{ resource = 'coe_vehicle_catalog', file = 'coe_vehicle_catalog/server/migrations.lua', get = function() return VehicleCatalogMigrations end },
-	{ resource = 'coe_handling', file = 'coe_handling/server/migrations.lua', get = function() return HandlingMigrations end },
-	{ resource = 'coe_garages', file = 'coe_garages/server/migrations.lua', get = function() return GaragesMigrations end },
-	{ resource = 'coe_mechanic', file = 'coe_mechanic/server/migrations.lua', get = function() return MechanicMigrations end },
-	{ resource = 'coe_fuel', file = 'coe_fuel/server/migrations.lua', get = function() return FuelMigrations end },
-	{ resource = 'coe_housing', file = 'coe_housing/server/migrations.lua', get = function() return HousingMigrations end },
-	{ resource = 'coe_doors', file = 'coe_doors/server/migrations.lua', get = function() return DoorsMigrations end },
+	{ resource = 'coe_garage', file = 'coe_garage/adapters/migrations.lua', get = function() return GarageMigrations end },
 	{ resource = 'coe_shops', file = 'coe_shops/server/migrations.lua', get = function() return ShopsMigrations end },
-	{ resource = 'coe_crafting', file = 'coe_crafting/server/migrations.lua', get = function() return CraftingMigrations end },
-	{ resource = 'coe_phone', file = 'coe_phone/server/migrations.lua', get = function() return PhoneMigrations end },
-	{ resource = 'coe_telecom', file = 'coe_telecom/server/migrations.lua', get = function() return TelecomMigrations end },
-	{ resource = 'coe_apps', file = 'coe_apps/server/migrations.lua', get = function() return AppsMigrations end },
-	{ resource = 'coe_mail', file = 'coe_mail/server/migrations.lua', get = function() return MailMigrations end },
-	{ resource = 'coe_news', file = 'coe_news/server/migrations.lua', get = function() return NewsMigrations end },
-	{ resource = 'coe_amzg', file = 'coe_amzg/server/migrations.lua', get = function() return AmzgMigrations end },
-	{ resource = 'coe_crypto', file = 'coe_crypto/server/migrations.lua', get = function() return CryptoMigrations end },
-	{ resource = 'coe_deepweb', file = 'coe_deepweb/server/migrations.lua', get = function() return DeepwebMigrations end },
-	{ resource = 'coe_elos', file = 'coe_elos/server/migrations.lua', get = function() return ElosMigrations end },
-	{ resource = 'coe_police', file = 'coe_police/server/migrations.lua', get = function() return PoliceMigrations end },
-	{ resource = 'coe_ems', file = 'coe_ems/server/migrations.lua', get = function() return EmsMigrations end },
-	{ resource = 'coe_mdt', file = 'coe_mdt/server/migrations.lua', get = function() return MdtMigrations end },
-	{ resource = 'coe_spawn', file = 'coe_spawn/server/migrations.lua', get = function() return SpawnMigrations end },
-	{ resource = 'coe_admin', file = 'coe_admin/server/migrations.lua', get = function() return AdminMigrations end }
+	{ resource = 'coe_mobile', file = 'coe_mobile/server/migrations.lua', get = function() return MobileMigrations end },
+	-- coe_needs usa o formato { resource, versions } do CoeMigrations; roda pelo próprio Initialize.
+	{ resource = 'coe_needs', file = 'coe_needs/adapters/migrations.lua', extra = 'coe_needs/adapters/persistence.lua',
+		initialize = function() return NeedsPersistence.Initialize() end },
+	{ resource = 'coe_spawn', file = 'coe_spawn/server/migrations.lua', get = function() return SpawnMigrations end }
 }
+
+-- Nenhum arquivo de migrations do repositório pode ficar fora da lista acima.
+local listed = {}
+for _, item in ipairs(migrationDefs) do
+	listed[item.file] = true
+end
+local isWin = package.config:sub(1, 1) == '\\'
+local pipe = io.popen(isWin and 'dir /b /s migrations.lua' or 'find . -name migrations.lua -path "*/server/*" -o -name migrations.lua -path "*/adapters/*"')
+for line in pipe:lines() do
+	local rel = line:gsub('\\', '/'):gsub('^%./', ''):match('(coe_[%w_]+/[%w_]+/migrations%.lua)$')
+	if rel and not rel:match('^coe_core/') and not rel:match('/test/') then
+		assertEqual(listed[rel], true, 'migrations sem cenário de integração: ' .. rel)
+	end
+end
+pipe:close()
 
 -- Carrega todos os arquivos de migrações
 for _, item in ipairs(migrationDefs) do
 	dofile(item.file)
+	if item.extra then
+		dofile(item.extra)
+	end
 end
 
 -- Executa duas vezes para validar idempotência total em banco do zero
@@ -98,19 +101,28 @@ for attempt = 1, 2 do
 
 	-- 2. Demais recursos
 	for _, item in ipairs(migrationDefs) do
-		local success, err = runResourceMigrations(item.resource, item.get())
+		local success, err
+		if item.initialize then
+			success, err = item.initialize()
+		else
+			success, err = runResourceMigrations(item.resource, item.get())
+		end
 		assertEqual(success, true, item.resource .. ' migration attempt ' .. attempt .. ': ' .. tostring(err))
 	end
 end
 
--- Valida que as tabelas de schema de todos os 31 recursos foram criadas e registradas
+-- Valida que as tabelas de schema de todos os recursos foram criadas e registradas
 local coreVersions = Bridge.Query('SELECT version, name FROM coe_schema_migrations')
 assertEqual(coreVersions.ok, true, 'coe_schema_migrations query ok')
 assertEqual(#coreVersions.result >= 7, true, 'coe_core has recorded all migrations')
 
 local allTables = Bridge.Query('SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()')
 assertEqual(allTables.ok, true, 'information_schema query ok')
-assertEqual(#allTables.result >= 50, true, 'at least 50 tables created in fresh database: got ' .. tostring(#allTables.result))
+for _, item in ipairs(migrationDefs) do
+	local versions = Bridge.Query('SELECT COUNT(*) AS n FROM ' .. item.resource .. '_schema_migrations')
+	assertEqual(versions.ok and versions.result[1].n >= 1, true, item.resource .. ' registrou suas migrations')
+end
+assertEqual(#allTables.result >= #migrationDefs * 2, true, 'tabelas criadas no banco novo: ' .. tostring(#allTables.result))
 
 Bridge.Done()
 

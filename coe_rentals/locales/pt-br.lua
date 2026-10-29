@@ -13,5 +13,9 @@ Locales['pt-BR'] = {
 	not_in_vehicle = 'Você precisa estar conduzindo o veículo alugado para devolver.',
 	station_not_found = 'Estação de aluguel não encontrada.',
 	vehicle_not_available = 'Modelo de veículo indisponível para aluguel.',
-	vehicle_spawn_failed = 'Não foi possível disponibilizar o veículo no momento. Tente novamente.'
+	vehicle_spawn_failed = 'Não foi possível disponibilizar o veículo no momento. Tente novamente.',
+	too_far = 'Você precisa estar no ponto de aluguel.',
+	busy = 'Aguarde um instante e tente novamente.',
+	economy_unavailable = 'O sistema financeiro está indisponível. Tente novamente em instantes.',
+	refund_failed = 'Não foi possível devolver a caução agora. A equipe foi avisada.'
 }

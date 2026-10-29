@@ -219,11 +219,15 @@ exports('GetCallChannel', function()
 	return Phone and Phone.callId or nil
 end)
 
+-- Entrar em chamada e decisao do servidor (coe_mobile -> export SetPlayerCall). Do client so da para sair.
 exports('SetCallChannel', function(callId, extra)
 	if type(callId) == 'table' then
 		callId = extra
 	end
-	TriggerServerEvent('coe_talk:server:setCall', callId)
+	if callId ~= nil then
+		return false
+	end
+	TriggerServerEvent('coe_talk:server:leaveCall')
 	return true
 end)
 

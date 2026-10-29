@@ -6,8 +6,6 @@ dofile([=[coe_core/lib/migrations.lua]=])
 dofile([=[coe_core/lib/logger.lua]=])
 dofile([=[coe_economy/server/migrations.lua]=])
 dofile([=[coe_economy/server/persistence.lua]=])
-dofile([=[coe_banking/server/migrations.lua]=])
-dofile([=[coe_banking/server/persistence.lua]=])
 dofile([=[coe_shops/server/migrations.lua]=])
 dofile([=[coe_shops/server/persistence.lua]=])
 
@@ -15,12 +13,10 @@ Inventory = {}
 dofile([=[coe_inventory/adapters/migrations.lua]=])
 dofile([=[coe_inventory/adapters/persistence.lua]=])
 
--- 1. Migrações idempotentes dos quatro recursos integrados
+-- 1. Migrações idempotentes dos três recursos integrados
 for attempt = 1, 2 do
 	local ok, err = EconomyPersistence.Initialize()
 	assertEqual(ok, true, 'economy initialize ' .. attempt .. ' ' .. tostring(err))
-	ok, err = BankingPersistence.Initialize()
-	assertEqual(ok, true, 'banking initialize ' .. attempt .. ' ' .. tostring(err))
 	ok, err = ShopsPersistence.Initialize()
 	assertEqual(ok, true, 'shops initialize ' .. attempt .. ' ' .. tostring(err))
 	ok, err = Inventory.Persistence.Initialize()
@@ -29,8 +25,6 @@ end
 
 local economyVersions = Bridge.Query('SELECT version, name FROM coe_economy_schema_migrations')
 assertEqual(#economyVersions.result, 2, 'economy migrations count')
-local bankingVersions = Bridge.Query('SELECT version, name FROM coe_banking_schema_migrations')
-assertEqual(#bankingVersions.result, 6, 'banking migrations count')
 local shopsVersions = Bridge.Query('SELECT version, name FROM coe_shops_schema_migrations')
 assertEqual(#shopsVersions.result, 1, 'shops migrations count')
 local inventoryVersions = Bridge.Query('SELECT version, name FROM coe_inventory_schema_migrations')
@@ -91,34 +85,13 @@ assertEqual(debitFail, nil, 'insufficient funds transaction rejected')
 assertEqual(EconomyPersistence.Balance('50'), 1000, 'buyer balance unchanged after failed purchase')
 assertEqual(EconomyPersistence.SocietyBalance('ltd_vinewood'), 1000, 'shop treasury unchanged after failed purchase')
 
--- 6. Cartão Bancário Corporativo / PJ (coe_banking)
-local cardId = BankingPersistence.InsertCard({
-	accountType = 'business',
-	accountRef = 'ltd_vinewood',
-	holderId = '77',
-	holderName = 'Gerente Joao',
-	serial = '4000123456789010',
-	pinHash = 'pin_hash_demo',
-	pinSalt = 'salt_demo',
-	kind = 'physical',
-	dailyLimit = 2500
-})
-assertEqual(type(cardId), 'number', 'business card issued for shop')
-local card = BankingPersistence.Card(cardId)
-assertEqual(card.accountRef, 'ltd_vinewood', 'card account ref is the business')
-assertEqual(card.holderId, '77', 'card holder is employee 77')
-assertEqual(card.dailyLimit, 2500, 'card daily limit is $2500')
-
-local businessCards = BankingPersistence.AccountCards('business', 'ltd_vinewood')
-assertEqual(#businessCards, 1, '1 card registered to business account')
-
--- 7. Distribuição de Lucros / Pró-labore para o Dono da Loja
+-- 6. Distribuição de Lucros / Pró-labore para o Dono da Loja
 assertEqual(EconomyPersistence.EnsureAccount('88', 0, 'coe_economy'), true, 'owner account created')
-assertEqual(EconomyPersistence.SocietyPay('ltd_vinewood', '88', 800, 'dividend', 'div:01', 'coe_banking'), true, 'dividend payout to owner')
+assertEqual(EconomyPersistence.SocietyPay('ltd_vinewood', '88', 800, 'dividend', 'div:01', 'coe_economy'), true, 'dividend payout to owner')
 assertEqual(EconomyPersistence.SocietyBalance('ltd_vinewood'), 200, 'shop treasury has $200 remaining')
 assertEqual(EconomyPersistence.Balance('88'), 800, 'owner received $800 dividend')
 
--- 8. Auditoria de Livro-Razão (Ledger)
+-- 7. Auditoria de Livro-Razão (Ledger)
 local buyerLedger = Bridge.Query('SELECT delta, reason FROM coe_economy_ledger WHERE character_id = 50 ORDER BY id')
 assertEqual(#buyerLedger.result, 2, 'buyer has 2 ledger entries')
 assertEqual(buyerLedger.result[1].delta, 2000, 'starting balance ledger')

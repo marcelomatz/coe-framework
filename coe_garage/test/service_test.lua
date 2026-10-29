@@ -48,9 +48,13 @@ end
 TriggerClientEvent = function(name, target, payload)
 	sent[#sent + 1] = { name = name, target = target, payload = payload }
 end
+local clock = 1000
 GetGameTimer = function()
-	return 1000
+	return clock
 end
+GetPlayerPed = function() return 1 end
+local playerPos = { x = 215.0, y = -805.0, z = 30.0 }
+GetEntityCoords = function() return playerPos end
 GetInvokingResource = function()
 	return 'test'
 end
@@ -160,5 +164,35 @@ eq(#exportsMap.ListGarages(), 2, 'agora duas garagens cadastradas')
 local deleted = registeredStaffProvider.Delete('garagem_sandy')
 eq(deleted, true, 'staff removeu garagem')
 eq(#exportsMap.ListGarages(), 1, 'uma garagem restante')
+
+-- 5. Retirada respeita a vaga fixa: veículo guardado em outra garagem não sai daqui.
+local vehicles = {
+	v1 = { id = 'v1', owner_id = 'char_1', state = 'stored', model = 'panto', plate = 'AAA111' }
+}
+exports.coe_vehicles.Get = function(_, id) return vehicles[id] end
+local spawned = {}
+exports.coe_vehicles.Spawn = function(_, id) spawned[#spawned + 1] = id return 77 end
+memorySlots['v1'] = 'garagem_sandy'
+
+local function retrieve(vehicleId)
+	clock = clock + 5000
+	notified = {}
+	netEvents['coe_garage:retrieveVehicle']('garagem_central', 'vaga_1', vehicleId)
+	return notified[#notified] and notified[#notified][3]
+end
+
+eq(retrieve('v1'), Locales['pt-BR']['wrong_garage'], 'veículo de outra garagem é recusado')
+eq(#spawned, 0, 'nada spawnado')
+
+memorySlots['v1'] = 'garagem_central'
+eq(retrieve('v1'), Locales['pt-BR']['vehicle_retrieved'], 'retirada na garagem certa')
+eq(spawned[1], 'v1', 'veículo spawnado')
+
+memorySlots['v1'] = nil
+vehicles.v1.state = 'stored'
+eq(retrieve('v1'), Locales['pt-BR']['vehicle_retrieved'], 'sem vaga fixa sai em qualquer garagem')
+
+vehicles.v2 = { id = 'v2', owner_id = 'char_9', state = 'stored' }
+eq(retrieve('v2'), Locales['pt-BR']['not_your_vehicle'], 'veículo de outro dono é recusado')
 
 print('coe_garage service_test: ok')

@@ -8,12 +8,12 @@
 [![Documentation](https://img.shields.io/badge/Docs-docs.coeroleplay.app-purple.svg)](https://docs.coeroleplay.app/)
 [![Cfx Server Enhanced](https://img.shields.io/badge/Cfx%20Server%20Enhanced-Build%20b170%2B-blue.svg)](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows)
 [![CI Build](https://img.shields.io/badge/CI-passing-brightgreen.svg)](https://github.com/marcelomatz/coe-framework/actions)
-[![Test Suite](https://img.shields.io/badge/tests-118%20unit%20%7C%2030%20smoke%20boot%20%7C%209%20mariadb%20%7C%20strict%20contracts-blue.svg)](INGAME_CHECKLIST.en-US.md)
-[![Internationalization](https://img.shields.io/badge/i18n-445%20keys%20%7C%20100%25%20parity%20%7C%20en--US%20%26%20pt--BR-green.svg)](I18N_LOCALIZATION.en-US.md)
-[![Platform HAL](https://img.shields.io/badge/platform%20hal-decoupled%20natives%20%7C%20zero%20legacy-purple.svg)](PLATFORM_HAL.en-US.md)
-[![First-Party Resources](https://img.shields.io/badge/resources-27%20first--party%20MIT-purple.svg)](PACKS.en-US.md)
+[![Test Suite](https://img.shields.io/badge/tests-83%20lua%20%7C%208%20node%20%7C%209%20mariadb%20%7C%20strict%20contracts-blue.svg)](https://docs.coeroleplay.app/#doc=INGAME_CHECKLIST.en-US.md)
+[![Internationalization](https://img.shields.io/badge/i18n-445%20keys%20%7C%20100%25%20parity%20%7C%20en--US%20%26%20pt--BR-green.svg)](https://docs.coeroleplay.app/#doc=I18N_LOCALIZATION.en-US.md)
+[![Platform HAL](https://img.shields.io/badge/platform%20hal-decoupled%20natives%20%7C%20zero%20legacy-purple.svg)](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.en-US.md)
+[![First-Party Resources](https://img.shields.io/badge/resources-29%20first--party%20MIT-purple.svg)](https://docs.coeroleplay.app/#doc=PACKS.en-US.md)
 [![Platform](https://img.shields.io/badge/platform-FiveM%20for%20GTAV%20Enhanced%20%28Gen9%20DX12%29-lightgrey.svg)](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows)
-[![Architecture](https://img.shields.io/badge/architecture-clean%20%2F%20server--authoritative-orange.svg)](ARCHITECTURE.en-US.md)
+[![Architecture](https://img.shields.io/badge/architecture-clean%20%2F%20server--authoritative-orange.svg)](https://docs.coeroleplay.app/#doc=ARCHITECTURE.en-US.md)
 [![AI Ready](https://img.shields.io/badge/AI%20Agents-5%20Rules%20%7C%208%20Skills-teal.svg)](#how-to-connect-coe-ai-agents-in-your-environment)
 
 > **The Next Generation of FiveM Engineering**: an ecosystem engineered with **100% first-party code**, clean layered architecture, complete native isolation, and zero dependencies on legacy third-party frameworks.
@@ -32,7 +32,7 @@
 >
 > *I want to express my deepest respect and heartfelt gratitude to the pioneers and brilliant minds behind frameworks like **ESX**, **QBCore**, **Qbox**, and **Ox**. They laid the very foundation on which we all stand today, and they continue to do tireless, incredible work for the ecosystem. Likewise, my warmest thanks go out to every single **modder**, creator, and server administrator who dedicates their nights and weekends to making FiveM an ever-evolving, richer platform.*
 >
-> *The COE Framework is offered to the community with an open heart: 27 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
+> *The COE Framework is offered to the community with an open heart: 29 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
 >
 > — **Marcelo Matz**
 
@@ -71,7 +71,7 @@ New to setting up a **FiveM for GTAV Enhanced** server or migrating from older b
    https://www.coeroleplay.app/recipe.yaml
    ```
 5. Enter your **MariaDB** password and your Cfx.re license key ([Cfx.re Portal / Keymaster](https://portal.cfx.re/)).
-6. Click **Run Recipe**! txAdmin will handle everything automatically: downloading the default Cfx.re resources, pulling all **27 open-source COE Framework resources**, provisioning the database schema, and launching your server!
+6. Click **Run Recipe**! txAdmin will handle everything automatically: downloading the default Cfx.re resources, pulling all **29 open-source COE Framework resources**, provisioning the database schema, and launching your server!
 
 > [!TIP]
 > **Prefer manual installation or using the full developer workspace?**
@@ -184,7 +184,7 @@ flowchart TD
     subgraph Server["Server Authority (Server-Authoritative)"]
         Val["Session Validation, Cooldown & Security"]
         Platform["Isolation Layer Core.Platform (HAL)"]
-        Domain["Business Domain Logic (27 Resources)"]
+        Domain["Business Domain Logic (29 Resources)"]
         Locale["i18n Engine Core.Locale (_t)"]
     end
 
@@ -217,7 +217,7 @@ In conventional scripts, clients frequently execute sensitive events such as `Tr
 ### 2. CFX Platform Layer (`Core.Platform` / HAL)
 Raw C++ natives provided by the CFX runtime (`GetEntityCoords`, `DeleteEntity`, `SetVehicleNumberPlateText`, `SetPlayerRoutingBucket`, etc.) are prone to deprecation and engine signature changes.
 
-The [`@coe_core/lib/platform.lua`](PLATFORM_HAL.en-US.md) module acts as an **Anti-Corruption Layer (ACL)**:
+The [`@coe_core/lib/platform.lua`](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.en-US.md) module acts as an **Anti-Corruption Layer (ACL)**:
 - Encapsulates raw natives inside typed object-oriented contracts (`CoePlatformVehicle`, `CoePlatformPed`, `CoePlatformPlayer`);
 - Provides an automated in-memory mock backend enabled outside FXServer for fast offline terminal testing;
 - CI pipelines strictly enforce zero raw natives in migrated domain scripts via `--audit-natives`.
@@ -247,7 +247,7 @@ The [`@coe_core/lib/platform.lua`](PLATFORM_HAL.en-US.md) module acts as an **An
 | **Platform Target** | Legacy FiveM DX11 | Legacy FiveM DX11 | **FiveM for GTA V Enhanced (Pure)** |
 | **Native Decoupling** | None (direct natives in scripts) | None (direct natives) | **Platform HAL Layer (`Core.Platform`) with Mocking** |
 | **Internationalization** | Mixed languages or untranslated | Partial loose locale files | **100% Migrated (`Core.Locale`), 445 keys, 100% Parity** |
-| **Automated Testing** | None (in-game trial and error) | Minimal unit tests | **118 Unit Tests, 30 Smoke Boot Tests, 100% Green CI** |
+| **Automated Testing** | None (in-game trial and error) | Minimal unit tests | **83 Lua unit test files, 8 Node suites, 9 MariaDB scenarios, contract and access checks in CI** |
 | **Code Annotations** | Untyped dynamic Lua | Partial LuaLS annotations | **Formal LuaLS typed contracts (`types.lua`)** |
 | **Design System** | Unstyled / Legacy jQuery | Varied disparate web templates | **Unified Design Tokens (`tokens.css`) with 5 Dynamic Themes** |
 
@@ -257,11 +257,11 @@ The [`@coe_core/lib/platform.lua`](PLATFORM_HAL.en-US.md) module acts as an **An
 
 The COE Framework is committed to empowering FiveM developers and modders. You never need to fork or hack the core framework to create custom jobs, businesses, missions, or minigames:
 
-- **100% MIT Open Source**: 27 standalone resources you can explore, extend, and deploy for free.
+- **100% MIT Open Source**: 29 standalone resources you can explore, extend, and deploy for free.
 - **Runtime Extension Points**: Register new corporate tablet tabs (`coe_businesses:RegisterTab`), payment providers (`coe_shops:RegisterPaymentMethod`), and custom items (`coe_inventory:RegisterItem`) without modifying framework files.
 - **FiveM ACE Security**: Grant fine-grained permissions via `add_ace resource.<name> coe.<capability> allow`.
 
-👉 **Read the comprehensive tutorial**: [`DEVELOPER_GUIDE.en-US.md`](DEVELOPER_GUIDE.en-US.md) (or [Versão em Português](DEVELOPER_GUIDE.md)) with 5 complete production-ready examples (Interactions, 3D Targeting, MariaDB 11, Economy/Inventory, and Extension Points).
+👉 **Read the comprehensive tutorial**: [`DEVELOPER_GUIDE.en-US.md`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.en-US.md) (or [Versão em Português](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.md)) with 5 complete production-ready examples (Interactions, 3D Targeting, MariaDB 11, Economy/Inventory, and Extension Points).
 
 ---
 
@@ -269,15 +269,15 @@ The COE Framework is committed to empowering FiveM developers and modders. You n
 
 | Document | Topic & Focus |
 |---|---|
-| [`DEVELOPER_GUIDE.en-US.md`](DEVELOPER_GUIDE.en-US.md) ([`pt-BR`](DEVELOPER_GUIDE.md)) | **Developer Guide**: Complete manual with practical examples for creating scripts on COE Core. |
-| [`ARCHITECTURE.en-US.md`](ARCHITECTURE.en-US.md) | **Technical Architecture**: Deep dive into the 8 layers, database lifecycles, and export contracts. |
-| [`PACKS.en-US.md`](PACKS.en-US.md) | **Open Modules**: Detailed catalog of the 27 open-source resources under MIT license. |
-| [`LICENSING.en-US.md`](LICENSING.en-US.md) | **Governance & Licensing**: Open Core model (MIT on GitHub) and Contributor License Agreement guidelines. |
-| [`PLATFORM_HAL.en-US.md`](PLATFORM_HAL.en-US.md) | **Platform HAL**: CFX native isolation, entity adapters, and test mock backend. |
-| [`I18N_LOCALIZATION.en-US.md`](I18N_LOCALIZATION.en-US.md) | **Internationalization**: `Core.Locale` guide, dictionary syntax, dynamic NUI translation, and CI linter. |
-| [`ROADMAP.en-US.md`](ROADMAP.en-US.md) | **Ecosystem Roadmap**: Completed milestones (Waves 1–4 of i18n, HAL, Smoke Boot) and ongoing tasks. |
-| [`INGAME_CHECKLIST.en-US.md`](INGAME_CHECKLIST.en-US.md) | **Verification Checklist**: 50 live in-game scenarios and benchmarking guidelines. |
-| [`COMMUNITY_RELEASE.en-US.md`](COMMUNITY_RELEASE.en-US.md) | **Community Announcements**: Official release post templates for the Cfx.re forums and Discord. |
+| [`DEVELOPER_GUIDE.en-US.md`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.en-US.md) ([`pt-BR`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.md)) | **Developer Guide**: Complete manual with practical examples for creating scripts on COE Core. |
+| [`ARCHITECTURE.en-US.md`](https://docs.coeroleplay.app/#doc=ARCHITECTURE.en-US.md) | **Technical Architecture**: Deep dive into the 8 layers, database lifecycles, and export contracts. |
+| [`PACKS.en-US.md`](https://docs.coeroleplay.app/#doc=PACKS.en-US.md) | **Open Modules**: Detailed catalog of the 29 open-source resources under MIT license. |
+| [`LICENSING.en-US.md`](https://docs.coeroleplay.app/#doc=LICENSING.en-US.md) | **Governance & Licensing**: Open Core model (MIT on GitHub) and Contributor License Agreement guidelines. |
+| [`PLATFORM_HAL.en-US.md`](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.en-US.md) | **Platform HAL**: CFX native isolation, entity adapters, and test mock backend. |
+| [`I18N_LOCALIZATION.en-US.md`](https://docs.coeroleplay.app/#doc=I18N_LOCALIZATION.en-US.md) | **Internationalization**: `Core.Locale` guide, dictionary syntax, dynamic NUI translation, and CI linter. |
+| [`ROADMAP.en-US.md`](https://docs.coeroleplay.app/#doc=ROADMAP.en-US.md) | **Ecosystem Roadmap**: Completed milestones (Waves 1–4 of i18n, HAL, Smoke Boot) and ongoing tasks. |
+| [`INGAME_CHECKLIST.en-US.md`](https://docs.coeroleplay.app/#doc=INGAME_CHECKLIST.en-US.md) | **Verification Checklist**: 50 live in-game scenarios and benchmarking guidelines. |
+| [`COMMUNITY_RELEASE.en-US.md`](https://docs.coeroleplay.app/#doc=COMMUNITY_RELEASE.en-US.md) | **Community Announcements**: Official release post templates for the Cfx.re forums and Discord. |
 
 ---
 

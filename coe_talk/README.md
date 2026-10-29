@@ -83,6 +83,13 @@ local talking = exports.coe_talk:IsTalking()
 
 -- Retorna se o jogador esta transmitindo no radio
 local transmitting = exports.coe_talk:IsRadioTransmitting()
+
+-- Chamada atual (definida pelo servidor) e saida da chamada; o client nao escolhe em qual chamada entra
+local callId = exports.coe_talk:GetCallChannel()
+exports.coe_talk:SetCallChannel(nil)
+
+-- Volume da voz recebida (0-100)
+exports.coe_talk:SetVoiceVolume(80)
 ```
 
 ### Servidor
@@ -97,9 +104,17 @@ local freq = exports.coe_talk:GetPlayerRadio(source)
 -- Retorna a lista de sources em uma frequencia
 local members = exports.coe_talk:GetRadioMembers(911.0)
 
--- Conecta jogadores a uma chamada privada
+-- Conecta jogadores a uma chamada privada (id: ate 64 caracteres [A-Za-z0-9_:-]; nil encerra)
 exports.coe_talk:SetPlayerCall(source, 'chamada_123')
+
+-- Chamada de um jogador e participantes de uma chamada
+local callId = exports.coe_talk:GetPlayerCall(source)
+local inCall = exports.coe_talk:GetCallMembers(callId)
 ```
+
+`SetPlayerRadio` e `SetPlayerCall` so aceitam chamadas de `Config.Access.Resources` (padrao: `coe_mobile`) ou de quem tem a ACE `coe.talk` (`add_ace resource.<nome> coe.talk allow`). Para outros resources eles retornam `false, 'forbidden'`. Entrar em chamada so acontece pelo servidor: nao ha evento de rede para o client escolher uma chamada (isso permitiria ouvir chamadas alheias). Eventos de voz e radio vindos do client tem intervalo minimo de `Config.EventCooldownMs`.
+
+Contrato completo em [`types.lua`](types.lua) e na [referencia da API](../reference/coe_talk.md).
 
 ---
 

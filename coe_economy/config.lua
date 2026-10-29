@@ -36,7 +36,9 @@ EconomyConfig = {
 		-- Telefone móvel: app bancário e transferências PIX.
 		coe_mobile = true,
 		-- Painel básico da staff: dar e retirar dinheiro da conta (motivo admin_adjustment).
-		coe_staff = true
+		coe_staff = true,
+		-- Aluguel de veículos: cobra aluguel + caução e devolve a caução na entrega.
+		coe_rentals = true
 	},
 	SocietyCollectors = {
 		-- Vendas das lojas (coe_shops): o cliente já pagou; a receita entra no caixa.

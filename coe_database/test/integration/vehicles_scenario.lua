@@ -7,25 +7,19 @@ dofile([=[coe_vehicle_catalog/server/migrations.lua]=])
 dofile([=[coe_vehicle_catalog/server/persistence.lua]=])
 dofile([=[coe_vehicles/server/migrations.lua]=])
 dofile([=[coe_vehicles/server/persistence.lua]=])
-dofile([=[coe_mechanic/server/migrations.lua]=])
-dofile([=[coe_mechanic/server/persistence.lua]=])
 
--- 1. Migrações idempotentes dos três recursos
+-- 1. Migrações idempotentes dos dois recursos
 for attempt = 1, 2 do
 	local ok, err = VehicleCatalogPersistence.Initialize()
 	assertEqual(ok, true, 'catalog initialize ' .. attempt .. ' ' .. tostring(err))
 	ok, err = VehiclesPersistence.Initialize()
 	assertEqual(ok, true, 'vehicles initialize ' .. attempt .. ' ' .. tostring(err))
-	ok, err = MechanicPersistence.Initialize()
-	assertEqual(ok, true, 'mechanic initialize ' .. attempt .. ' ' .. tostring(err))
 end
 
 local catalogVersions = Bridge.Query('SELECT version, name FROM coe_vehicle_catalog_schema_migrations')
 assertEqual(#catalogVersions.result, 1, 'catalog migrations recorded')
 local vehicleVersions = Bridge.Query('SELECT version, name FROM coe_vehicles_schema_migrations')
 assertEqual(#vehicleVersions.result, 2, 'vehicles migrations recorded')
-local mechanicVersions = Bridge.Query('SELECT version, name FROM coe_mechanic_schema_migrations')
-assertEqual(#mechanicVersions.result, 4, 'mechanic migrations recorded')
 
 -- 2. Catálogo: overrides de veículos da concessionária
 assertEqual(VehicleCatalogPersistence.SaveOverride('sultan', { price = 45000, stock = 3, category = 'sedans' }), true, 'catalog override saved')
@@ -95,25 +89,5 @@ assertEqual(VehiclesPersistence.FindById(vehicleId).state, 'out', 'state is out'
 
 assertEqual(VehiclesPersistence.ResetOutState(), true, 'server reboot resets out vehicles to stored')
 assertEqual(VehiclesPersistence.FindById(vehicleId).state, 'stored', 'state reset to stored')
-
--- 7. Desgaste Mecânico Cruzado (coe_mechanic)
--- Aplica desgaste extra vindo de combustível comum (coe_fuel) nas velas
-assertEqual(MechanicPersistence.AddWear(vehicleId, 'spark_plugs', 2500), true, 'extra wear added to spark plugs')
-local parts = MechanicPersistence.ListParts(vehicleId)
-assertEqual(parts.spark_plugs, -2500, 'extra wear is discounted from baseline (negative milestone)')
-
--- 8. Revisão na Oficina: troca e persistência de peças novas
-assertEqual(MechanicPersistence.SavePart(vehicleId, 'spark_plugs', 15000), true, 'spark plugs replaced at current mileage')
-assertEqual(MechanicPersistence.SavePart(vehicleId, 'brake_pads', 15000), true, 'brake pads replaced at current mileage')
-
-parts = MechanicPersistence.ListParts(vehicleId)
-assertEqual(parts.spark_plugs, 15000, 'spark plugs installed_at recorded, extra wear reset')
-assertEqual(parts.brake_pads, 15000, 'brake pads installed_at recorded')
-
--- 9. Aparência e Tuning do Veículo (coe_mechanic)
-assertEqual(MechanicPersistence.SaveAppearance(vehicleId, { primaryColor = 3, modLivery = 1 }), true, 'appearance saved')
-local appearance = MechanicPersistence.FindAppearance(vehicleId)
-assertEqual(appearance.primaryColor, 3, 'appearance primary color matches')
-assertEqual(appearance.modLivery, 1, 'appearance mod livery matches')
 
 Bridge.Done()

@@ -13,16 +13,38 @@ Não declara `dependencies`: precisa continuar de pé quando qualquer resource g
 
 O plano é puro (`plan.lua`) e testado em `test/plan_test.lua`. Dependências circulares são recusadas (`dependency_cycle`).
 
-## Exports (só resources com a ACE `coe.supervisor`)
+## Exports (só resources com a ACE `coe.supervisor`; padrão: `coe_staff`)
 
 - `List()`: resources gerenciados com `state`, `description`/`version` (do fxmanifest), `dependencies`, `dependents`, `restart` (ordem que será seguida) e `replacedBy` (pacote que substitui o básico, quando houver).
 - `Restart(name, requesterSource)`: `true` ou código de erro (`forbidden`, `restart_in_progress`, `resource_not_managed`, `dependency_cycle`, `resource_replaced`). Um reinício por vez.
+- `GetUpdateStatus()`, `CheckForUpdates()`: estado da verificação de versão (`nil` para chamador sem ACE).
+- `ApplyUpdate(requesterSource)`: aplica a atualização verificada; `false, 'forbidden'` para chamador sem ACE.
 
-A autorização do operador é de quem chama (ex.: o painel concede com `coe_admin.resources.manage`). Conceda ao painel no `server.cfg`: `add_ace resource.coe_admin coe.supervisor allow`. O resultado final é notificado ao solicitante via `coe_notify`.
+A autorização do operador é de quem chama (o painel F10 do `coe_staff` confere as ACEs `coe.staff.*` do jogador). Outro painel entra pelo `server.cfg`: `add_ace resource.meu_painel coe.supervisor allow`. O resultado final é notificado ao solicitante via `coe_notify`.
+
+Exports internos do `fs_writer.js` (`WriteFile`, `ReadFile`, `HashFile`, `DownloadFile`, `CommitFile`, `DiscardFile`, `VerifySignature`) só aceitam chamadas do próprio `coe_supervisor`, recebem `(resource, caminho relativo)` e recusam qualquer caminho fora da pasta do resource.
+
+## Atualização e integridade
+
+`coe_update apply` (console) ou o painel F10 aplicam a release anunciada no `version.json` do repositório:
+
+1. O manifesto só é buscado por HTTPS. Com `Updater.PublicKey` configurada, o `version.json.sig` (Ed25519) precisa ser válido; `RequireSignature = true` recusa atualizar sem chave.
+2. Os arquivos vêm da **tag** da release (`RawRepoUrl/<tag>/<resource>/<arquivo>`), nunca de um branch.
+3. Só entram resources gerenciados (`Managed`, os do `version.json` instalado e o próprio supervisor); qualquer outro nome no manifesto é ignorado.
+4. **Fase 1**: cada arquivo é baixado e conferido contra o SHA-256 do manifesto. Um arquivo adulterado, ausente ou sem hash aborta a atualização inteira sem gravar nada.
+5. **Fase 2**: com tudo conferido, os arquivos são gravados. Uma `config.lua` editada pelo dono (diferente da versão instalada) é mantida e a nova vai para `config.dist.lua`; uma config apenas antiga recebe a versão nova.
+
+### Assinatura do manifesto
+
+1. `node tools/sign_manifest.js --keygen` gera `coe-manifest.key` (privada; nunca versionar) e mostra a pública.
+2. Cole a pública em `SupervisorConfig.Updater.PublicKey` e guarde a privada como segredo `COE_MANIFEST_KEY`.
+3. Depois de `lua tools/bump_version.lua <versão>`, rode `node tools/sign_manifest.js` (com `COE_MANIFEST_KEY` ou `COE_MANIFEST_KEY_FILE`) e versione `version.json.sig` junto do `version.json`: o supervisor busca a assinatura ao lado do manifesto (`ManifestUrl .. '.sig'`). O `release.yml` anexa o `.sig` à release quando ele existe.
+
+Testes: `test/updater_test.lua` (plano, SHA-256, config), `test/apply_test.lua` (fluxo de verificar e aplicar com HTTP e disco simulados) e `node --test test/fs_writer.test.js` (confinamento de caminho, HTTPS, hash e assinatura).
 
 ## Configuração
 
-`config.lua`: `Managed` (resources do framework), `Catalog` (categoria e criticidade de cada um; fora dele vira `other`), `StopTimeoutMs`, `StartTimeoutMs`.
+`config.lua`: `Managed` (resources do framework), `Catalog` (categoria e criticidade de cada um; fora dele vira `other`), `StopTimeoutMs`, `StartTimeoutMs` e `Updater` (`ManifestUrl`, `RawRepoUrl`, `PublicKey`, `RequireSignature`, `TimeoutMs`). As convars `coe_updater_manifest_url` e `coe_updater_raw_repo_url` sobrepõem as URLs.
 
 Pacotes e scripts de terceiros entram sem editar o framework, declarando no próprio `fxmanifest.lua`:
 

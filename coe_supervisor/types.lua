@@ -1,6 +1,8 @@
 ---@meta
 -- Contrato público de coe_supervisor para LuaLS. Não é carregado pelo servidor. Ver docs/ANNOTATIONS.md.
--- Exports server-only, restritos ao resource em `SupervisorConfig.Caller` (coe_admin).
+-- Exports server-only. List/Restart/GetUpdateStatus/CheckForUpdates/ApplyUpdate exigem a ACE `coe.supervisor`
+-- (padrão: coe_staff). WriteFile/ReadFile/HashFile/DownloadFile/CommitFile/DiscardFile/VerifySignature são internos:
+-- só o próprio coe_supervisor pode chamá-los.
 
 ---@class CoeSupervisorEntry
 ---@field name string
@@ -58,24 +60,54 @@ function exports_coe_supervisor:GetUpdateStatus() end
 ---@return CoeSupervisorUpdateStatus|nil status `nil` para chamador não autorizado
 function exports_coe_supervisor:CheckForUpdates(requester) end
 
----Grava um arquivo em disco diretamente via Node.js nativo do FXServer.
----@param filePath string Caminho físico absoluto no host
+---Interno. Grava um arquivo dentro de um resource (Node.js). Recusa outro chamador e caminho fora do resource.
+---@param resource string Nome do resource de destino
+---@param relPath string Caminho relativo dentro do resource (sem `..`, sem caminho absoluto)
 ---@param content string Conteúdo do arquivo
 ---@param isBinary boolean|nil Se o arquivo é binário (ex.: imagem/áudio)
 ---@return boolean ok
-function exports_coe_supervisor:WriteFile(filePath, content, isBinary) end
+function exports_coe_supervisor:WriteFile(resource, relPath, content, isBinary) end
 
----Baixa um arquivo da rede diretamente para o disco via stream binário Node.js nativo do FXServer.
----@param url string URL do arquivo remoto
----@param filePath string Caminho físico absoluto de destino no host
----@param cb fun(ok: boolean, err: string|nil)|nil Callback assíncrono de conclusão
----@return boolean ok Se o download foi iniciado
-function exports_coe_supervisor:DownloadFile(url, filePath, cb) end
-
----Lê um arquivo do disco diretamente via Node.js nativo do FXServer.
----@param filePath string Caminho físico absoluto no host
+---Interno. Lê um arquivo de texto dentro de um resource (Node.js).
+---@param resource string
+---@param relPath string
 ---@return string|nil content
-function exports_coe_supervisor:ReadFile(filePath) end
+function exports_coe_supervisor:ReadFile(resource, relPath) end
+
+---Interno. SHA-256 (hex) de um arquivo instalado; texto com CRLF normalizado para LF.
+---@param resource string
+---@param relPath string
+---@param isBinary boolean|nil
+---@return string|nil sha256
+function exports_coe_supervisor:HashFile(resource, relPath, isBinary) end
+
+---Interno. Baixa por HTTPS (hosts do GitHub) para `<arquivo>.coe-new` e só conclui se o SHA-256 bater.
+---@param url string URL HTTPS do arquivo
+---@param resource string
+---@param relPath string
+---@param sha256 string SHA-256 esperado (hex, 64 caracteres)
+---@param cb fun(ok: boolean, err: string|nil) Callback de conclusão
+---@return boolean started Se o download foi iniciado
+function exports_coe_supervisor:DownloadFile(url, resource, relPath, sha256, cb) end
+
+---Interno. Move o download conferido (`<arquivo>.coe-new`) para o lugar definitivo.
+---@param resource string
+---@param relPath string
+---@return boolean ok
+function exports_coe_supervisor:CommitFile(resource, relPath) end
+
+---Interno. Descarta um download conferido que não será aplicado.
+---@param resource string
+---@param relPath string
+---@return boolean ok
+function exports_coe_supervisor:DiscardFile(resource, relPath) end
+
+---Interno. Confere a assinatura Ed25519 (base64) do version.json com a chave pública em PEM.
+---@param body string
+---@param signature string
+---@param publicKeyPem string
+---@return boolean ok
+function exports_coe_supervisor:VerifySignature(body, signature, publicKeyPem) end
 
 ---Baixa e aplica a última versão dos scripts do repositório oficial nos resources instalados.
 ---@param requester integer|nil Jogador que pediu (auditoria)
