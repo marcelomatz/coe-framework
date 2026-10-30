@@ -25,6 +25,7 @@ shared_scripts {
 	'config.lua',
 	'locales/pt-br.lua',
 	'locales/en-us.lua',
+	'shared/i18n.lua',
 	'domain/garage.lua'
 }
 

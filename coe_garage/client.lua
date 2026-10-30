@@ -2,10 +2,26 @@ local stations = {}
 local blips = {}
 local menuOpen = false
 
-local function showHelp(text)
-	BeginTextCommandDisplayHelp('STRING')
-	AddTextComponentSubstringPlayerName(text)
-	EndTextCommandDisplayHelp(0, false, true, -1)
+-- Aviso de interação padrão do coe_ui (o mesmo do banco e dos negócios). Só reenvia quando muda.
+local promptKey = nil
+
+local function setPrompt(key, station, label)
+	if key == promptKey then
+		return
+	end
+	promptKey = key
+	if not key then
+		SendNUIMessage({ action = 'prompt', data = nil })
+		return
+	end
+	SendNUIMessage({
+		action = 'prompt',
+		data = {
+			title = station.title or _t('prompt_default_title'),
+			subtitle = station.label or _t('prompt_default_spot'),
+			options = { { key = 'E', label = label } }
+		}
+	})
 end
 
 local function clearBlips()
@@ -66,6 +82,7 @@ CreateThread(function()
 
 		local nearest = nil
 		local nearestDist = 9999.0
+		local wanted = nil
 
 		for _, st in ipairs(stations) do
 			local dist = #(coords - vector3(st.x, st.y, st.z))
@@ -81,13 +98,17 @@ CreateThread(function()
 			if nearestDist <= radius then
 				sleep = 0
 				if not inVeh then
-					showHelp(_t('prompt_open_garage'))
-					if IsControlJustPressed(0, 38) then -- Tecla E
+					wanted = 'open'
+					if not menuOpen then
+						setPrompt('open:' .. tostring(nearest.garageId) .. ':' .. tostring(nearest.spotId), nearest, _t('prompt_open_garage'))
+					end
+					if not menuOpen and IsControlJustPressed(0, 38) then -- Tecla E
 						TriggerServerEvent('coe_garage:getStoredVehicles', nearest.garageId, nearest.spotId)
 						Wait(500)
 					end
 				elseif isDriver and NetworkGetEntityIsNetworked(vehicle) then
-					showHelp(_t('prompt_store_vehicle'))
+					wanted = 'store'
+					setPrompt('store:' .. tostring(nearest.garageId) .. ':' .. tostring(nearest.spotId), nearest, _t('prompt_store_vehicle'))
 					if IsControlJustPressed(0, 38) then -- Tecla E
 						local netId = NetworkGetNetworkIdFromEntity(vehicle)
 						TriggerServerEvent('coe_garage:storeVehicle', nearest.garageId, nearest.spotId, netId)
@@ -97,6 +118,10 @@ CreateThread(function()
 			end
 		end
 
+		if not wanted or (wanted == 'open' and menuOpen) then
+			setPrompt(nil)
+		end
+
 		Wait(sleep)
 	end
 end)
@@ -104,7 +129,7 @@ end)
 -- Interface NUI
 RegisterNetEvent('coe_garage:openMenu', function(garageId, spotId, vehicles)
 	if not vehicles or #vehicles == 0 then
-		exports.coe_notify:Notify('info', _t('no_vehicles_stored'))
+		exports.coe_notify:Show('info', _t('no_vehicles_stored'))
 		return
 	end
 

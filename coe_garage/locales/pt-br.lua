@@ -1,7 +1,9 @@
 Locales = Locales or {}
 Locales['pt-BR'] = {
-	['prompt_open_garage'] = 'Pressione ~INPUT_CONTEXT~ para abrir a garagem',
-	['prompt_store_vehicle'] = 'Pressione ~INPUT_CONTEXT~ para guardar o veículo',
+	['prompt_open_garage'] = 'Abrir garagem',
+	['prompt_store_vehicle'] = 'Guardar veículo',
+	['prompt_default_title'] = 'Garagem Pública',
+	['prompt_default_spot'] = 'Vaga',
 	['no_vehicles_stored'] = 'Você não tem nenhum veículo guardado nesta garagem.',
 	['vehicle_stored'] = 'Veículo guardado com sucesso.',
 	['vehicle_retrieved'] = 'Veículo retirado com sucesso.',

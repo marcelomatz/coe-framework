@@ -1,7 +1,9 @@
 Locales = Locales or {}
 Locales['en-US'] = {
-	['prompt_open_garage'] = 'Press ~INPUT_CONTEXT~ to open the garage',
-	['prompt_store_vehicle'] = 'Press ~INPUT_CONTEXT~ to store the vehicle',
+	['prompt_open_garage'] = 'Open garage',
+	['prompt_store_vehicle'] = 'Store vehicle',
+	['prompt_default_title'] = 'Public Garage',
+	['prompt_default_spot'] = 'Spot',
 	['no_vehicles_stored'] = 'You do not have any vehicles stored in this garage.',
 	['vehicle_stored'] = 'Vehicle stored successfully.',
 	['vehicle_retrieved'] = 'Vehicle retrieved successfully.',
