@@ -273,8 +273,33 @@ end)
 
 -- Loops de progressao e persistencia ------------------------------------------
 
+-- Aguarda o coe_database ficar pronto antes de migrar: o pool conecta de forma
+-- assíncrona e, num boot limpo (ex.: deploy via recipe do txAdmin), ainda não está
+-- pronto quando este resource inicia.
+local function initializePersistence()
+	local waitingLogged = false
+	while not NeedsPersistence.IsReady() do
+		local initialized, errorCode = NeedsPersistence.Initialize()
+		if initialized then
+			log('info', 'system', 'needs_ready', {})
+			return
+		end
+		if errorCode == 'database_not_ready' or errorCode == 'database_unavailable' then
+			if not waitingLogged then
+				log('info', 'database', 'database_waiting', {})
+				waitingLogged = true
+			end
+			Wait(1000)
+		else
+			log('error', 'database', 'needs_migrations_failed', { error_code = tostring(errorCode), retry_ms = 5000 })
+			Wait(5000)
+		end
+	end
+end
+
+CreateThread(initializePersistence)
+
 CreateThread(function()
-	NeedsPersistence.Initialize()
 	while true do
 		Wait(settings.TickIntervalMs)
 		local now = GetGameTimer()
