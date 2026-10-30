@@ -96,6 +96,10 @@
 	color: var(--coe-danger);
 }
 
+.coe-modal-overlay[hidden] {
+	display: none !important;
+}
+
 .coe-modal-overlay {
 	position: fixed;
 	inset: 0;
