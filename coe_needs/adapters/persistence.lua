@@ -55,9 +55,6 @@ function NeedsPersistence.Initialize()
 			return dbCall('Query', sql, parameters)
 		end
 	})
-	if not ok then
-		log('error', 'needs_migrations_failed', { error_code = tostring(err) })
-	end
 	ready = ok == true
 	return ready, err
 end
