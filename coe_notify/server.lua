@@ -13,6 +13,7 @@ local allowedResources = {
 	coe_characters = true,
 	coe_core = true,
 	coe_economy = true,
+	coe_garage = true,
 	coe_inventory = true,
 	coe_vehicles = true,
 	coe_jobs = true,
