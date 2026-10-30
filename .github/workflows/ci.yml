@@ -57,6 +57,19 @@ jobs:
         with:
           node-version: "22"
 
+      - name: JavaScript Syntax Check
+        shell: pwsh
+        run: |
+          # Valida a sintaxe de todo .js versionado (NUIs, server JS e testes), exceto node_modules.
+          $files = git ls-files '*.js' '*.mjs' '*.cjs' | Where-Object { $_ -notmatch '(^|/)node_modules/' }
+          $failed = @()
+          foreach ($file in $files) {
+            node --check $file
+            if ($LASTEXITCODE -ne 0) { $failed += $file }
+          }
+          Write-Host "Verificados: $($files.Count) arquivo(s)"
+          if ($failed) { throw "Erro de sintaxe em: $($failed -join ', ')" }
+
       - name: Database Provider Tests
         shell: pwsh
         working-directory: coe_database
