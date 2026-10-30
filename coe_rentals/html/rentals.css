@@ -1,0 +1,283 @@
+/* Menu do aluguel: modal padrão do coe_ui (components.css) e só tokens do tema (tokens.css). */
+[hidden] {
+	display: none !important;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: transparent;
+	overflow: hidden;
+	user-select: none;
+	font-family: var(--coe-font);
+	color: var(--coe-text);
+}
+
+.rental-card {
+	width: min(520px, 92vw);
+	max-height: 82vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.rental-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--coe-space-3);
+	padding: var(--coe-space-4) var(--coe-space-4) var(--coe-space-3);
+	border-bottom: 1px solid var(--coe-line);
+}
+
+.rental-heading {
+	display: grid;
+	gap: var(--coe-space-1);
+	min-width: 0;
+}
+
+.rental-title {
+	margin: 0;
+	font-size: var(--coe-text-lg);
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.rental-subtitle {
+	margin: 0;
+	font-size: var(--coe-text-sm);
+	color: var(--coe-muted);
+}
+
+.rental-close {
+	flex: none;
+	width: 32px;
+	padding: 0;
+}
+
+.rental-list {
+	display: grid;
+	gap: var(--coe-space-2);
+	padding: var(--coe-space-3) var(--coe-space-4);
+	overflow-y: auto;
+}
+
+.rental-empty {
+	margin: var(--coe-space-3) 0;
+	text-align: center;
+	color: var(--coe-muted);
+}
+
+.rental-item {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: var(--coe-space-3);
+	width: 100%;
+	padding: var(--coe-space-3);
+	border: 1px solid var(--coe-line);
+	border-left: 2px solid rgba(var(--coe-accent-rgb), 0.35);
+	background: linear-gradient(100deg, rgba(var(--coe-ink-rgb), 0.05), rgba(var(--coe-ink-rgb), 0) 60%);
+	color: var(--coe-text);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: border-color var(--coe-dur) var(--coe-ease), background var(--coe-dur) var(--coe-ease);
+}
+
+.rental-item:hover {
+	border-color: var(--coe-line-strong);
+	border-left-color: rgba(var(--coe-accent-rgb), 0.7);
+}
+
+.rental-item:focus-visible {
+	outline: 2px solid var(--coe-accent);
+	outline-offset: 2px;
+}
+
+.rental-item[aria-selected="true"] {
+	border-color: rgba(var(--coe-accent-rgb), 0.55);
+	border-left-color: var(--coe-accent);
+	background: linear-gradient(100deg, var(--coe-accent-soft), rgba(var(--coe-ink-rgb), 0) 75%);
+}
+
+.rental-badge {
+	min-width: 52px;
+	padding: 3px 8px;
+	border: 1px solid var(--coe-line-strong);
+	color: var(--coe-muted);
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.08em;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+.rental-item[aria-selected="true"] .rental-badge {
+	border-color: rgba(var(--coe-accent-rgb), 0.55);
+	color: var(--coe-accent);
+}
+
+.rental-info {
+	display: grid;
+	gap: 2px;
+	min-width: 0;
+}
+
+.rental-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--coe-text-md);
+	font-weight: 600;
+}
+
+.rental-detail {
+	font-size: var(--coe-text-xs);
+	color: var(--coe-muted);
+}
+
+.rental-price {
+	font-size: var(--coe-text-md);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.rental-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--coe-space-3);
+	padding: var(--coe-space-3) var(--coe-space-4);
+	border-top: 1px solid var(--coe-line);
+}
+
+.rental-summary {
+	display: grid;
+	gap: 2px;
+	min-width: 0;
+}
+
+.rental-summary-label {
+	font-size: var(--coe-text-xs);
+	color: var(--coe-muted);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.rental-summary-total {
+	font-size: var(--coe-text-lg);
+	font-variant-numeric: tabular-nums;
+}
+
+.rental-summary-hint {
+	font-size: var(--coe-text-xs);
+	color: var(--coe-muted);
+}
+
+/* Aluguel em andamento (devolver / encerrar) */
+.rental-current {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--coe-space-3);
+	margin: var(--coe-space-3) var(--coe-space-4) 0;
+	padding: var(--coe-space-3);
+	border: 1px solid rgba(var(--coe-accent-rgb), 0.45);
+	background: var(--coe-accent-soft);
+}
+
+.rental-current-info {
+	display: grid;
+	gap: 2px;
+	min-width: 0;
+}
+
+.rental-current-info small {
+	font-size: var(--coe-text-xs);
+	color: var(--coe-muted);
+}
+
+.rental-current-actions {
+	display: flex;
+	gap: var(--coe-space-2);
+	flex: none;
+}
+
+/* Documento de locação */
+.rental-doc {
+	width: min(460px, 92vw);
+}
+
+.rental-doc-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--coe-space-3);
+	padding: var(--coe-space-4) var(--coe-space-4) var(--coe-space-3);
+	border-bottom: 1px solid var(--coe-line);
+}
+
+.rental-doc-kicker {
+	margin: 0 0 var(--coe-space-1);
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--coe-muted);
+}
+
+.rental-doc-status {
+	flex: none;
+	padding: 3px 8px;
+	border: 1px solid var(--coe-line-strong);
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--coe-muted);
+}
+
+.rental-doc-status.is-active {
+	border-color: rgba(var(--coe-accent-rgb), 0.55);
+	color: var(--coe-accent);
+}
+
+.rental-doc-fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--coe-space-3) var(--coe-space-4);
+	margin: 0;
+	padding: var(--coe-space-4);
+}
+
+.rental-doc-fields div {
+	display: grid;
+	gap: 2px;
+	min-width: 0;
+}
+
+.rental-doc-fields dt {
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--coe-muted);
+}
+
+.rental-doc-fields dd {
+	margin: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--coe-text-md);
+	font-variant-numeric: tabular-nums;
+}
+
+.rental-doc-fields .is-wide {
+	grid-column: 1 / -1;
+}
+
+.rental-doc-footer {
+	display: flex;
+	justify-content: flex-end;
+	padding: var(--coe-space-3) var(--coe-space-4);
+	border-top: 1px solid var(--coe-line);
+}

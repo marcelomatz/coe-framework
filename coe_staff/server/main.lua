@@ -579,106 +579,172 @@ function A.teleportToHotel(admin, data)
 	return { ok = true }
 end
 
--- Provedor de garagens (registrado dinamicamente em runtime por pacotes de garagens via export).
-local garageProvider = nil
+-- Provedores (garagens e aluguel): outro resource registra List/Save/Delete em runtime via export.
+-- Funções que atravessam exports chegam como referência (tabela chamável), não como 'function'.
+local providers = {}
 
-exports('RegisterGaragesProvider', function(provider)
-	if type(provider) ~= 'table' then
+local function callable(value)
+	local kind = type(value)
+	return kind == 'function' or kind == 'table'
+end
+
+local function registerProvider(name, provider, extra)
+	if type(provider) ~= 'table' or not callable(provider.List) or not callable(provider.Save) or not callable(provider.Delete) then
 		return false, 'invalid_provider'
 	end
-	garageProvider = {
-		resource = provider.resource or GetInvokingResource(),
+	local entry = {
+		resource = GetInvokingResource() or provider.resource,
 		List = provider.List,
 		Save = provider.Save,
 		Delete = provider.Delete
 	}
-	return true
-end)
-
-AddEventHandler('onResourceStop', function(resName)
-	if garageProvider and garageProvider.resource == resName then
-		garageProvider = nil
+	for key, value in pairs(extra or {}) do
+		entry[key] = value
 	end
-end)
-
-local function garagesReady()
-	return garageProvider ~= nil
+	providers[name] = entry
+	log('info', 'system', 'staff_provider_registered', { operation = name, target = entry.resource })
+	return true
 end
 
-function A.garages()
-	if not garagesReady() then
-		return { ok = false, error = 'garages_unavailable' }
-	end
-	local list = {}
-	if type(garageProvider.List) == 'function' then
-		local ok, res = pcall(garageProvider.List)
-		if ok and type(res) == 'table' then
-			list = res
+AddEventHandler('onResourceStop', function(resName)
+	for name, provider in pairs(providers) do
+		if provider.resource == resName then
+			providers[name] = nil
 		end
 	end
-	return { ok = true, data = { garages = list } }
+end)
+
+-- Chama um método do provedor. Retorna resultado ou nil, código de erro.
+local function providerCall(name, method, ...)
+	local provider = providers[name]
+	if not provider then
+		return nil, name .. '_unavailable'
+	end
+	local ok, result, errorCode = pcall(provider[method], ...)
+	if not ok then
+		log('error', 'system', 'staff_provider_failed', { operation = name .. '.' .. method, error_code = tostring(result):sub(1, 96) })
+		return nil, 'provider_failed'
+	end
+	if type(result) == 'table' and result.error then
+		return nil, tostring(result.error)
+	end
+	if result == nil or result == false then
+		return nil, errorCode and tostring(errorCode) or 'provider_failed'
+	end
+	return result
+end
+
+local function providerList(name)
+	local list = providerCall(name, 'List')
+	return type(list) == 'table' and list or {}
+end
+
+exports('RegisterGaragesProvider', function(provider)
+	local kinds = {}
+	for _, kind in ipairs(type(provider) == 'table' and type(provider.kinds) == 'table' and provider.kinds or { 'public' }) do
+		if kind == 'public' or kind == 'business' or kind == 'job' then
+			kinds[#kinds + 1] = kind
+		end
+	end
+	return registerProvider('garages', provider, { kinds = kinds })
+end)
+
+exports('RegisterRentalsProvider', function(provider)
+	return registerProvider('rentals', provider, {
+		Catalog = type(provider) == 'table' and callable(provider.Catalog) and provider.Catalog or nil
+	})
+end)
+
+function A.garages()
+	local provider = providers.garages
+	if not provider then
+		return { ok = false, error = 'garages_unavailable' }
+	end
+	return { ok = true, data = { garages = providerList('garages'), kinds = provider.kinds, source = provider.resource } }
 end
 
 function A.garageSave(admin, data)
-	if not garagesReady() then
-		return { ok = false, error = 'garages_unavailable' }
-	end
-	local result = nil
-	if type(garageProvider.Save) == 'function' then
-		local ok, res = pcall(garageProvider.Save, data)
-		if ok then
-			result = res
-		end
-	end
-	if type(result) == 'table' and result.error then
-		return { ok = false, error = tostring(result.error) }
+	local saved, errorCode = providerCall('garages', 'Save', data)
+	if not saved then
+		return { ok = false, error = errorCode }
 	end
 	audit('staff_garage_saved', { source = admin, id = data and data.id, kind = data and data.kind })
 	return A.garages()
 end
 
 function A.garageDelete(admin, data)
-	if not garagesReady() then
-		return { ok = false, error = 'garages_unavailable' }
-	end
-	local result = nil
-	if type(garageProvider.Delete) == 'function' then
-		local ok, res = pcall(garageProvider.Delete, data.id)
-		if ok then
-			result = res
-		end
-	end
-	if type(result) == 'table' and result.error then
-		return { ok = false, error = tostring(result.error) }
+	local deleted, errorCode = providerCall('garages', 'Delete', data and data.id)
+	if not deleted then
+		return { ok = false, error = errorCode }
 	end
 	audit('staff_garage_deleted', { source = admin, id = data and data.id })
 	return A.garages()
 end
 
+local function teleportToFirst(admin, name, id, points)
+	for _, entry in ipairs(providerList(name)) do
+		if entry.id == id then
+			local point = points(entry)
+			if point then
+				effect(admin, 'teleport', { x = point.x, y = point.y, z = point.z, heading = point.heading or point.h or 0.0 })
+				return true
+			end
+		end
+	end
+	return false
+end
+
 function A.garageGoto(admin, data)
-	if not garagesReady() then
+	if not providers.garages then
 		return { ok = false, error = 'garages_unavailable' }
 	end
-	local list = {}
-	if type(garageProvider.List) == 'function' then
-		local ok, res = pcall(garageProvider.List)
-		if ok and type(res) == 'table' then
-			list = res
-		end
-	end
-	local target = nil
-	for _, g in ipairs(list) do
-		if g.id == data.id then
-			target = g
-			break
-		end
-	end
-	if not target or not target.spots or #target.spots == 0 then
+	if not teleportToFirst(admin, 'garages', data.id, function(g) return g.spots and g.spots[1] end) then
 		return { ok = false, error = 'garage_not_found' }
 	end
-	local firstSpot = target.spots[1]
-	effect(admin, 'teleport', { x = firstSpot.x, y = firstSpot.y, z = firstSpot.z, heading = firstSpot.heading or 0.0 })
 	audit('staff_garage_goto', { source = admin, id = data.id })
+	return { ok = true }
+end
+
+-- Aluguel de veículos (provedor do coe_rentals) ------------------------------------------------------------
+
+function A.rentals()
+	if not providers.rentals then
+		return { ok = false, error = 'rentals_unavailable' }
+	end
+	local catalog = {}
+	if providers.rentals.Catalog then
+		local ok, list = pcall(providers.rentals.Catalog)
+		catalog = ok and type(list) == 'table' and list or {}
+	end
+	return { ok = true, data = { stations = providerList('rentals'), catalog = catalog } }
+end
+
+function A.rentalSave(admin, data)
+	local saved, errorCode = providerCall('rentals', 'Save', data)
+	if not saved then
+		return { ok = false, error = errorCode }
+	end
+	audit('staff_rental_saved', { source = admin, id = data and data.id })
+	return A.rentals()
+end
+
+function A.rentalDelete(admin, data)
+	local deleted, errorCode = providerCall('rentals', 'Delete', data and data.id)
+	if not deleted then
+		return { ok = false, error = errorCode }
+	end
+	audit('staff_rental_deleted', { source = admin, id = data and data.id })
+	return A.rentals()
+end
+
+function A.rentalGoto(admin, data)
+	if not providers.rentals then
+		return { ok = false, error = 'rentals_unavailable' }
+	end
+	if not teleportToFirst(admin, 'rentals', data.id, function(st) return st.ped end) then
+		return { ok = false, error = 'rental_not_found' }
+	end
+	audit('staff_rental_goto', { source = admin, id = data.id })
 	return { ok = true }
 end
 

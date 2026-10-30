@@ -23,5 +23,10 @@ Locales['en-US'] = {
 	take_failed = 'Could not revoke key.',
 	key_revoked = 'Key for %{plate} revoked.',
 	key_revoked_target = 'Your key for vehicle %{plate} has been revoked.',
-	no_key_warning = 'You do not have the key for this vehicle.'
+	no_key_warning = 'You do not have the key for this vehicle.',
+	key_label = 'Key · %{plate}',
+	vehicle_locked = 'Vehicle locked.',
+	vehicle_unlocked = 'Vehicle unlocked.',
+	no_vehicle_near_lock = 'None of your vehicles is close enough to lock.',
+	lock_keybind = 'Lock/unlock vehicle'
 }

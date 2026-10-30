@@ -4,6 +4,8 @@
 	const modal = document.getElementById('garage-modal');
 	const listEl = document.getElementById('vehicle-list');
 	const closeBtn = document.getElementById('garage-close');
+	const titleEl = document.getElementById('garage-title');
+	const subtitleEl = document.getElementById('garage-subtitle');
 
 	let currentGarageId = null;
 	let currentSpotId = null;
@@ -28,33 +30,36 @@
 		currentGarageId = data.garageId;
 		currentSpotId = data.spotId;
 		listEl.innerHTML = '';
+		titleEl.textContent = data.title || 'Garagem Pública';
+		subtitleEl.textContent = data.spotLabel ? (data.spotLabel + ' · selecione o veículo para retirar') : 'Selecione o veículo que deseja retirar';
 
 		const vehicles = Array.isArray(data.vehicles) ? data.vehicles : [];
 		if (vehicles.length === 0) {
 			const emptyMsg = document.createElement('p');
-			emptyMsg.className = 'garage-subtitle';
+			emptyMsg.className = 'garage-empty';
 			emptyMsg.textContent = 'Nenhum veículo disponível nesta garagem.';
 			listEl.appendChild(emptyMsg);
 		} else {
 			vehicles.forEach(function (v) {
 				const item = document.createElement('div');
-				item.className = 'garage-vehicle-item';
+				item.className = 'garage-item';
 
 				const details = document.createElement('div');
-				details.className = 'garage-veh-details';
+				details.className = 'garage-item-info';
 
 				const model = document.createElement('div');
-				model.className = 'garage-veh-model';
-				model.textContent = v.model || 'Veículo';
+				model.className = 'garage-item-name';
+				model.textContent = v.label || v.model || 'Veículo';
 
 				const plate = document.createElement('div');
-				plate.className = 'garage-veh-plate';
+				plate.className = 'garage-item-plate';
 				plate.textContent = v.plate || '------';
 
 				details.appendChild(model);
 				details.appendChild(plate);
 
 				const retrieveBtn = document.createElement('button');
+				retrieveBtn.type = 'button';
 				retrieveBtn.className = 'coe-button coe-button--primary';
 				retrieveBtn.textContent = 'Retirar';
 				retrieveBtn.addEventListener('click', function () {

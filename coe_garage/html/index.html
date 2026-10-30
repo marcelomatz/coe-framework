@@ -12,20 +12,16 @@
 </head>
 <body>
 	<div id="garage-modal" class="coe-modal-overlay" hidden>
-		<div class="coe-modal garage-card">
-			<header class="coe-modal-header">
-				<div class="garage-header-info">
-					<h2 class="coe-modal-title">Garagem Pública</h2>
-					<p class="garage-subtitle">Selecione o veículo que deseja retirar da vaga</p>
+		<section class="coe-modal garage-card" role="dialog" aria-labelledby="garage-title">
+			<header class="garage-header">
+				<div class="garage-heading">
+					<h2 id="garage-title" class="garage-title">Garagem Pública</h2>
+					<p id="garage-subtitle" class="garage-subtitle">Selecione o veículo que deseja retirar</p>
 				</div>
-				<button id="garage-close" class="coe-button coe-button--ghost coe-button--icon" aria-label="Fechar">✕</button>
+				<button id="garage-close" type="button" class="coe-button garage-close" aria-label="Fechar">✕</button>
 			</header>
-			<div class="coe-modal-body">
-				<div id="vehicle-list" class="garage-vehicle-list">
-					<!-- Veículos injetados via JS -->
-				</div>
-			</div>
-		</div>
+			<div id="vehicle-list" class="garage-list"></div>
+		</section>
 	</div>
 
 	<script src="nui://coe_ui/html/prompt.js"></script>

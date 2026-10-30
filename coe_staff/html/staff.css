@@ -367,3 +367,8 @@ input[type=number]::-webkit-inner-spin-button { opacity: 0.5; }
 	color: var(--coe-accent);
 	font-weight: 600;
 }
+
+/* Coordenadas (garagens e aluguel): campos estreitos na mesma linha. */
+.sf-row .sf-field.sf-coord-field { flex: 0 0 112px; min-width: 0; }
+.sf-row .sf-field.sf-coord-field .coe-field,
+.sf-row .sf-field.sf-coord-field .sf-coord-input { width: 100%; min-width: 0; flex: none; }

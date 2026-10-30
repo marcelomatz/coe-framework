@@ -84,6 +84,7 @@ MobilePersistence = {
 	Initialize = function() return true end,
 	NumberOf = function(c) return db.numbers[c] or false end,
 	CharacterOf = function(n) for c, number in pairs(db.numbers) do if number == n then return c end end; return false end,
+	CharacterByStateId = function(stateId) return stateId == 'OFF12345' and '77' or false end,
 	EnsureNumber = function(c, generate)
 		if db.numbers[c] then return db.numbers[c] end
 		for _ = 1, 5 do
@@ -461,5 +462,13 @@ now = now + 1000
 local failFunds = act(1, 'bank_transfer', { target = '555-2222', amount = 999999 })
 eq(failFunds.ok, false, 'saldo insuficiente')
 eq(failFunds.error, 'insufficient_funds', 'erro saldo')
+
+-- PIX pelo ID de cidadão (stateId): offline pelo cadastro; ID desconhecido é recusado.
+now = now + 1000
+local byState = act(1, 'bank_transfer', { target = 'off12345', amount = 100 })
+eq(byState.ok, true, 'pix para ID de cidadão')
+now = now + 1000
+local unknown = act(1, 'bank_transfer', { target = 'ZZZ99999', amount = 100 })
+eq(unknown.error, 'recipient_not_found', 'ID desconhecido')
 
 print('coe_mobile server: ok')

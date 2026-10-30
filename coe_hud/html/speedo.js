@@ -3,6 +3,15 @@
 	const STYLES = ['modern', 'modernpro', 'bold', 'retro', 'minimal', 'analog'];
 	const MAX = { kmh: 240, mph: 160 };
 	const STEP = { kmh: 40, mph: 20 };
+	// Bicicleta: escala própria e sem motor (sem combustível, rotação, marcha, farol ou cinto).
+	const BIKE_MAX = { kmh: 60, mph: 40 };
+	const BIKE_SEGMENTS = 20;
+	const BICYCLE = 'bicycle';
+	// Indicadores que não existem em cada tipo de veículo.
+	const HIDDEN_FLAGS = {
+		bicycle: ['engine', 'fuel', 'belt', 'lights', 'left', 'right'],
+		motorcycle: ['belt']
+	};
 	const FUEL_LOW = 15;
 	const ENGINE_LOW = 30;
 	const RETRO_SEGMENTS = 24;
@@ -112,6 +121,22 @@
 				+ '<div class="sp-pillrow"><span class="sp-pill" data-text="gear" data-gear></span>'
 				+ '<b class="sp-num" data-text="speed"></b><small data-text="unit"></small></div></div>';
 		},
+		// Bicicleta (em qualquer estilo escolhido): ciclocomputador de guidão. Só velocidade: sem motor, combustível,
+		// marcha, farol, cinto ou setas.
+		bicycle() {
+			let segs = '';
+			for (let i = 0; i < BIKE_SEGMENTS; i += 1) {
+				segs += '<i></i>';
+			}
+			return '<div class="sp-html sp-bicycle"><div class="sp-bc-screen">'
+				+ '<div class="sp-bc-top"><svg class="sp-bc-icon" viewBox="0 0 32 20" aria-hidden="true">'
+				+ '<circle cx="7" cy="13" r="5.5"/><circle cx="25" cy="13" r="5.5"/>'
+				+ '<path d="M7 13l5-8h8l5 8M12 5l4 8h-9M16 13l4-8M10 3h4M19 5l1-2h3"/></svg>'
+				+ '<span class="sp-bc-unit" data-text="unit"></span></div>'
+				+ '<div class="sp-bc-speed"><span class="dim" data-text="zeros2"></span><span data-text="speed"></span></div>'
+				+ `<div class="sp-segs sp-bc-segs" data-segs="speed">${segs}</div>`
+				+ '</div></div>';
+		},
 		analog(unit) {
 			const max = MAX[unit] || MAX.kmh;
 			const step = STEP[unit] || STEP.kmh;
@@ -148,9 +173,19 @@
 		let refs = null;
 		let unit = 'kmh';
 		let current = null;
+		// Estilo escolhido pelo jogador; a bicicleta usa o próprio template e volta para ele ao trocar de veículo.
+		let preferred = null;
+		let mountedKind = null;
 
-		function mount(style, nextUnit) {
+		function mount(style, nextUnit, kind) {
 			unit = nextUnit === 'mph' ? 'mph' : 'kmh';
+			if (kind === undefined) {
+				preferred = style;
+			}
+			mountedKind = kind || null;
+			if (kind === BICYCLE && Object.prototype.hasOwnProperty.call(source, BICYCLE)) {
+				style = BICYCLE;
+			}
 			if (current) {
 				host.classList.remove(`sp-s-${current}`);
 			}
@@ -179,10 +214,18 @@
 		}
 
 		function update(state) {
-			if (!refs || !state) {
+			if (!state) {
 				return;
 			}
-			const max = MAX[unit];
+			// Troca para o template da bicicleta (ou volta ao estilo escolhido) conforme o veículo.
+			const kind = state.kind === BICYCLE ? BICYCLE : null;
+			if (preferred && kind !== mountedKind && Object.prototype.hasOwnProperty.call(source, BICYCLE)) {
+				mount(preferred, unit, kind);
+			}
+			if (!refs) {
+				return;
+			}
+			const max = (state.kind === BICYCLE ? BIKE_MAX : MAX)[unit];
 			const speed = Math.max(0, state.speed || 0);
 			const v = {
 				speed: clamp(speed / max, 0, 1),
@@ -194,13 +237,15 @@
 			const text = {
 				speed: speedText,
 				zeros: '0'.repeat(Math.max(0, 3 - speedText.length)),
+				zeros2: '0'.repeat(Math.max(0, 2 - speedText.length)),
 				unit: unit === 'mph' ? 'MPH' : 'KM/H',
 				gear: state.gear > 0 ? String(state.gear) : (speed > 0 ? 'R' : 'N'),
 				fuelPct: `${state.fuel || 0}%`,
 				enginePct: `${state.engine || 0}%`,
 				lights: state.lights === 2 ? 'ALTO' : 'FAROL'
 			};
-			const noGear = state.kind === 'boat' || state.kind === 'air';
+			const noGear = state.kind === 'boat' || state.kind === 'air' || state.kind === BICYCLE;
+			const hidden = HIDDEN_FLAGS[state.kind] || [];
 			const flags = {
 				left: [state.left, false],
 				right: [state.right, false],
@@ -252,11 +297,13 @@
 				}
 			});
 			refs.flag.forEach((el) => {
-				const [on, warn] = flags[el.dataset.flag] || [false, false];
-				const key = `${on ? 1 : 0}${warn ? 1 : 0}`;
+				const off = hidden.includes(el.dataset.flag);
+				const [on, warn] = off ? [false, false] : (flags[el.dataset.flag] || [false, false]);
+				const key = `${on ? 1 : 0}${warn ? 1 : 0}${off ? 1 : 0}`;
 				if (put(el, 'f', key)) {
 					el.classList.toggle('on', !!on);
 					el.classList.toggle('warn', !!warn);
+					el.style.display = off ? 'none' : '';
 				}
 			});
 		}
@@ -271,7 +318,7 @@
 		return { update: instance.update };
 	}
 
-	const api = { STYLES, MAX, create, createIndicators };
+	const api = { STYLES, MAX, BIKE_MAX, HIDDEN_FLAGS, create, createIndicators };
 	if (typeof module !== 'undefined' && module.exports) {
 		module.exports = api;
 	}

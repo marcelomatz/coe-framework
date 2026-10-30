@@ -91,6 +91,11 @@ assertEqual(EconomyPersistence.SocietyPay('ltd_vinewood', '88', 800, 'dividend',
 assertEqual(EconomyPersistence.SocietyBalance('ltd_vinewood'), 200, 'shop treasury has $200 remaining')
 assertEqual(EconomyPersistence.Balance('88'), 800, 'owner received $800 dividend')
 
+-- Extrato pessoal: além do texto do banco, a data em segundos Unix (`at`) para as telas.
+local statement = EconomyPersistence.Ledger('50', 10)
+assertEqual(#statement >= 2, true, 'extrato do comprador')
+assertEqual(tonumber(statement[1].at) ~= nil and tonumber(statement[1].at) > 1600000000, true, 'data do extrato em segundos Unix')
+
 -- 7. Auditoria de Livro-Razão (Ledger)
 local buyerLedger = Bridge.Query('SELECT delta, reason FROM coe_economy_ledger WHERE character_id = 50 ORDER BY id')
 assertEqual(#buyerLedger.result, 2, 'buyer has 2 ledger entries')

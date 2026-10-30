@@ -295,10 +295,12 @@
 		}
 
 		const driving = !!view.vehicle;
-		const custom = prefs.speedo !== 'panel';
+		// Bicicleta: sempre o ciclocomputador (mesmo no estilo "Painel") e sem a faixa de indicadores (não tem pisca).
+		const bicycle = view.kind === 'bicycle';
+		const custom = prefs.speedo !== 'panel' || bicycle;
 		show(speedoHost, prefs.showVehicle && driving && custom, driving && custom);
 		show(vehicleGroup, prefs.showVehicle && driving && !custom, driving && !custom);
-		show(indicatorsHost, prefs.showIndicators && driving, driving);
+		show(indicatorsHost, prefs.showIndicators && driving && !bicycle, driving && !bicycle);
 		if (driving) {
 			if (custom) speedo.update(view);
 			indicators.update(view);
@@ -309,7 +311,12 @@
 
 	function renderPanel(view) {
 		$('#veh-speed').textContent = view.speed;
+		// Bicicleta: só a velocidade (sem motor: sem rotação, marcha, combustível ou estado do motor).
+		const motor = view.motor !== false;
 		const rpm = $('.veh-rpm');
+		rpm.hidden = !motor;
+		$('.veh-row').hidden = !motor;
+		if (!motor) return;
 		$('i', rpm).style.setProperty('--v', view.rpm / 100);
 		rpm.classList.toggle('hot', view.rpm >= 90);
 		const gear = $('#veh-gear');

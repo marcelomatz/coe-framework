@@ -206,6 +206,21 @@ Removes `count` items by name, sweeping across occupied slots.
 - `boolean` `ok`
 - `string|nil` `errorCode` — `invalid_count|insufficient_items|persistence_failed`
 
+### `RemoveItemsByMetadata(id, itemName, filter)`
+
+Removes every unit of an item whose metadata contains `filter` (partial match). E.g. all keys of a vehicle.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | `string` | Inventory identifier |
+| `itemName` | `string` | Item name |
+| `filter` | `table` | keys and values the metadata must contain |
+
+**Returns**
+
+- `integer|false` `removed` — units removed (0 when there were none)
+- `string|nil` `errorCode` — `invalid_item_metadata|persistence_failed`
+
 ### `RegisterItem(definition)`
 
 Dynamically registers an item definition into the active inventory catalog.

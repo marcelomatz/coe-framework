@@ -13,7 +13,14 @@ Registro persistente de veículos de jogador: dono, modelo, placa, estado e **Mi
 
 ## Chaves
 
-- Quem recebe o veículo (dono) tem a chave automaticamente; sem chave o veículo fica inoperante para o jogador.
+- A chave é o item `carkey` do inventário (metadata `vehicleId`, `plate`). O dono recebe o item quando o veículo é
+  criado na rua (retirada da garagem, painel, concessionária) e **todas** as chaves do veículo saem dos inventários
+  online (e do dono offline) quando ele é guardado ou removido — nada acumula. Chaves de veículos já guardados também
+  saem ao carregar o personagem (reinício com o carro na rua).
+- Sem o item o veículo não liga nem tranca. Entregar a chave a outro jogador (inventário) passa o uso junto.
+- Trancar/destrancar: tecla `L` (configurável em Teclas > FiveM) ou usar a chave no inventário, a até `LockDistanceMeters`.
+- Veículos alugados (`coe_rentals`) usam o mesmo item com `{ plate, rental = true }` e o state bag `coe:keyPlate`.
+- Sem `coe_inventory` no ar, vale a regra antiga: o dono tem a chave implícita e as emprestadas.
 - O dono empresta a chave a outro jogador próximo e pode retirá-la. Quem recebeu não reempresta. Limite: `MaxLoanedKeysPerVehicle`.
 - A quilometragem conta para o veículo, independente de quem dirige.
 - O client pergunta ao servidor (`coe_vehicles:checkKey`) ao assumir o banco do motorista; sem resposta ou sem chave, o veículo fica indriveável. A decisão é do servidor, mas o bloqueio em si é aplicado no client (não é proteção contra cheats; hotwire/roubo ficam para o pacote de crime).

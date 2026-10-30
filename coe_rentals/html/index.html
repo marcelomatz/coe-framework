@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Aluguel de veículos</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="rentals.css">
+</head>
+<body>
+	<div id="rental-modal" class="coe-modal-overlay" hidden>
+		<section class="coe-modal rental-card" role="dialog" aria-labelledby="rental-title">
+			<header class="rental-header">
+				<div class="rental-heading">
+					<h2 id="rental-title" class="rental-title"></h2>
+					<p id="rental-subtitle" class="rental-subtitle"></p>
+				</div>
+				<button id="rental-close" type="button" class="coe-button rental-close">✕</button>
+			</header>
+			<div id="rental-current" class="rental-current" hidden>
+				<div class="rental-current-info">
+					<strong id="rental-current-title"></strong>
+					<small id="rental-current-status"></small>
+				</div>
+				<div class="rental-current-actions">
+					<button id="rental-return" type="button" class="coe-button coe-button--primary"></button>
+					<button id="rental-end" type="button" class="coe-button coe-button--danger"></button>
+				</div>
+			</div>
+			<div id="rental-list" class="rental-list" role="listbox"></div>
+			<footer class="rental-footer">
+				<div class="rental-summary">
+					<span id="rental-summary-label" class="rental-summary-label"></span>
+					<strong id="rental-summary-total" class="rental-summary-total"></strong>
+					<small id="rental-summary-hint" class="rental-summary-hint"></small>
+				</div>
+				<button id="rental-confirm" type="button" class="coe-button coe-button--primary" disabled></button>
+			</footer>
+		</section>
+	</div>
+
+	<div id="rental-document" class="coe-modal-overlay" hidden>
+		<section class="coe-modal rental-doc" role="dialog" aria-labelledby="doc-title">
+			<header class="rental-doc-header">
+				<div>
+					<p id="doc-kicker" class="rental-doc-kicker"></p>
+					<h2 id="doc-title" class="rental-title"></h2>
+				</div>
+				<span id="doc-status" class="rental-doc-status"></span>
+			</header>
+			<dl id="doc-fields" class="rental-doc-fields"></dl>
+			<footer class="rental-doc-footer">
+				<button id="doc-close" type="button" class="coe-button"></button>
+			</footer>
+		</section>
+	</div>
+
+	<script src="nui://coe_ui/html/components.js"></script>
+	<script src="rentals.js"></script>
+</body>
+</html>

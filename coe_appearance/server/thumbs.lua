@@ -42,11 +42,14 @@ end
 
 ThumbsServer = { decodeBase64 = decodeBase64, sessions = sessions }
 
-local function reply(source, text)
+local function reply(source, text, kind)
 	if source == 0 then
 		print(('[coe_appearance] %s'):format(text))
 	else
-		TriggerClientEvent('chat:addMessage', source, { args = { 'Aparência', text } })
+		local message = 'Aparência: ' .. text
+		pcall(function()
+			exports.coe_notify:Notify(source, kind or 'info', message:sub(1, 240), 8000)
+		end)
 	end
 end
 
@@ -56,11 +59,11 @@ RegisterCommand(cfg.Command, function(source, args)
 		return
 	end
 	if not IsPlayerAceAllowed(tostring(source), cfg.Ace) then
-		reply(source, 'sem permissão para gerar as fotos de roupa.')
+		reply(source, 'sem permissão para gerar as fotos de roupa.', 'error')
 		return
 	end
 	if GetResourceState('screenshot-basic') ~= 'started' then
-		reply(source, 'o recurso screenshot-basic precisa estar iniciado.')
+		reply(source, 'o recurso screenshot-basic precisa estar iniciado.', 'error')
 		return
 	end
 	if sessions[source] then
@@ -127,7 +130,7 @@ RegisterNetEvent('coe_appearance:thumbsDone', function(cancelled)
 	sessions[source] = nil
 	local text = ('fotos de roupa %s: %d salvas, %d recusadas em %d s. Reinicie o coe_appearance para os jogadores receberem.')
 		:format(cancelled and 'interrompidas' or 'concluídas', session.saved, session.rejected, os.time() - session.startedAt)
-	reply(source, text)
+	reply(source, text, cancelled and 'warning' or 'success')
 	print(('[coe_appearance] %s (%s)'):format(text, GetPlayerName(source) or source))
 end)
 

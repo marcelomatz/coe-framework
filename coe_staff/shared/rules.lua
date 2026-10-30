@@ -1,7 +1,7 @@
 -- Regras do painel da staff, sem natives (testáveis fora do jogo).
 StaffRules = {}
 
-StaffRules.ModuleOrder = { 'self', 'players', 'vehicles', 'hotel', 'garages', 'world', 'businesses' }
+StaffRules.ModuleOrder = { 'self', 'players', 'vehicles', 'hotel', 'garages', 'rentals', 'world', 'businesses' }
 
 -- Ação -> módulo que precisa estar liberado para o admin.
 StaffRules.Actions = {
@@ -19,6 +19,8 @@ StaffRules.Actions = {
 	hotel = 'hotel', saveStarterHotel = 'hotel', teleportToHotel = 'hotel',
 	-- Garagens Públicas e Corporativas
 	garages = 'garages', garageSave = 'garages', garageDelete = 'garages', garageGoto = 'garages',
+	-- Aluguel de veículos (estações do coe_rentals)
+	rentals = 'rentals', rentalSave = 'rentals', rentalDelete = 'rentals', rentalGoto = 'rentals',
 	-- Mundo
 	world = 'world', setTime = 'world', setWeather = 'world', resetWorld = 'world', announce = 'world',
 	-- Negócios

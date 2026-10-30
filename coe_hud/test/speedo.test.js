@@ -139,3 +139,36 @@ test('segmentos de rotação acendem proporcionalmente', () => {
 	speedo.update({ ...car, rpm: 100 });
 	assert.ok(segs.querySelectorAll('i.hot.on').length > 0);
 });
+
+test('bicicleta usa o próprio velocímetro e volta ao estilo escolhido', () => {
+	const { host, speedo } = setup();
+	speedo.mount('modern', 'kmh');
+	speedo.update({ vehicle: true, kind: 'bicycle', speed: 24, motor: false, hasBelt: false });
+	assert.ok(host.querySelector('.sp-bicycle'), 'template da bicicleta');
+	assert.equal(text(host, 'speed').textContent, '24');
+	assert.equal(host.querySelectorAll('[data-segs="speed"] i').length, 20, 'barra de velocidade do ciclocomputador');
+	assert.equal(host.querySelector('[data-flag]'), null, 'sem setas no ciclocomputador');
+	assert.equal(host.querySelector('[data-arc="fuel"]'), null, 'sem combustível');
+	assert.equal(host.querySelector('[data-arc="engine"]'), null, 'sem motor');
+	speedo.update(car);
+	assert.ok(host.querySelector('.sp-modern'), 'volta ao estilo do jogador');
+	assert.equal(host.querySelector('.sp-bicycle'), null);
+});
+
+test('indicadores: moto sem cinto; bicicleta sem nenhum indicador (nem pisca)', () => {
+	const dom = new JSDOM('<div id="host"></div>', { runScripts: 'outside-only' });
+	dom.window.eval(source);
+	const host = dom.window.document.getElementById('host');
+	const indicators = dom.window.CoeSpeedo.createIndicators(host);
+	const flag = (key) => host.querySelector(`[data-flag="${key}"]`);
+	indicators.update({ ...car, kind: 'motorcycle', belt: false, speed: 80 });
+	assert.equal(flag('belt').style.display, 'none');
+	assert.equal(flag('fuel').style.display, '');
+	assert.ok(!flag('belt').classList.contains('warn'), 'moto não alerta cinto');
+	indicators.update({ vehicle: true, kind: 'bicycle', speed: 20, motor: false });
+	for (const key of ['engine', 'fuel', 'belt', 'lights', 'left', 'right']) {
+		assert.equal(flag(key).style.display, 'none', key);
+	}
+	indicators.update(car);
+	assert.equal(flag('belt').style.display, '');
+});

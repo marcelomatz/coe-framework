@@ -15,6 +15,15 @@
 		invalid_amount: 'Valor inválido.', invalid_target: 'Informe o número ou ID do destinatário.', recipient_not_found: 'Destinatário não encontrado.', same_account: 'Não é possível transferir para você mesmo.', insufficient_funds: 'Saldo bancário insuficiente.', transfer_failed: 'Falha ao realizar transferência.',
 		timeout: 'Sem resposta do servidor.', closed: 'Telefone fechado.'
 	};
+	// Motivos do extrato (coe_economy) em português; desconhecidos viram texto legível.
+	const REASONS = {
+		mobile_pix: 'PIX', bank_withdraw: 'Saque', bank_deposit: 'Depósito', bank_transfer: 'Transferência',
+		bank_refund: 'Estorno', deposit: 'Depósito', payroll: 'Salário', society_deposit: 'Depósito na empresa',
+		society_withdraw: 'Saque da empresa', business_payment: 'Pagamento de empresa', business_bonus: 'Bônus',
+		admin_adjustment: 'Ajuste da staff', job_payment: 'Pagamento de trabalho', job_deposit: 'Caução de trabalho',
+		shop_purchase: 'Compra em loja', vehicle_rental: 'Aluguel de veículo',
+		rental_refund_spawn_failed: 'Estorno do aluguel'
+	};
 	const ENDED = {
 		ended: 'Ligação encerrada', missed: 'Sem resposta', declined: 'Ligação recusada',
 		cancelled: 'Ligação cancelada', unreachable: 'Ligação caiu'
@@ -135,6 +144,45 @@
 		const now = new Date();
 		if (date.toDateString() === now.toDateString()) { return pad(date.getHours()) + ':' + pad(date.getMinutes()); }
 		return pad(date.getDate()) + '/' + pad(date.getMonth() + 1);
+	}
+	// Data do extrato: segundos/ms Unix ou texto do banco ('AAAA-MM-DD HH:MM:SS', lido como hora local).
+	function parseDate(value) {
+		if (value === undefined || value === null || value === '') { return null; }
+		let date;
+		if (typeof value === 'number') {
+			date = new Date(value < 1e12 ? value * 1000 : value);
+		} else {
+			const text = String(value).trim();
+			if (/^\d+(\.\d+)?$/.test(text)) {
+				const n = Number(text);
+				date = new Date(n < 1e12 ? n * 1000 : n);
+			} else {
+				date = new Date(text.replace(' ', 'T'));
+			}
+		}
+		return Number.isFinite(date.getTime()) ? date : null;
+	}
+	function txWhen(value) {
+		const date = parseDate(value);
+		if (!date) { return ''; }
+		const time = pad(date.getHours()) + ':' + pad(date.getMinutes());
+		if (date.toDateString() === new Date().toDateString()) { return 'Hoje, ' + time; }
+		return pad(date.getDate()) + '/' + pad(date.getMonth() + 1) + ', ' + time;
+	}
+	function reasonLabel(tx) {
+		const reason = String(tx.reason || '');
+		if (reason === 'vehicle_rental_deposit') {
+			return Number(tx.delta) > 0 ? 'Caução do aluguel devolvida' : 'Caução do aluguel';
+		}
+		if (REASONS[reason]) { return REASONS[reason]; }
+		if (reason.indexOf('job_') === 0) { return 'Trabalho: ' + reason.slice(4).replace(/_/g, ' '); }
+		if (!reason) { return 'Movimentação'; }
+		const text = reason.replace(/_/g, ' ');
+		return text.charAt(0).toUpperCase() + text.slice(1);
+	}
+	function moneyText(value) {
+		const amount = Math.floor(Number(value) || 0);
+		return '$ ' + Math.abs(amount).toLocaleString('pt-BR');
 	}
 	function duration(seconds) {
 		const total = Math.max(0, Math.floor(seconds || 0));
@@ -326,45 +374,45 @@
 		head.append(el('span', 'mb-head-action'));
 
 		const content = el('div', 'mb-bank-content');
+		const bank = state.bank;
 
 		const balanceCard = el('div', 'mb-bank-card');
-		balanceCard.append(el('span', 'mb-bank-card-label', 'Saldo em Conta'));
-		const balVal = state.bank ? Number(state.bank.balance || 0).toLocaleString('pt-BR') : '...';
-		balanceCard.append(el('strong', 'mb-bank-card-value', '$ ' + balVal));
-
+		balanceCard.append(el('span', 'mb-bank-card-label', 'Saldo em conta'));
+		balanceCard.append(el('strong', 'mb-bank-card-value', bank ? moneyText(bank.balance) : '...'));
 		const cashRow = el('div', 'mb-bank-cashrow');
-		cashRow.append(el('span', 'mb-bank-cashrow-label', 'Dinheiro Vivo'));
-		const cashVal = state.bank ? Number(state.bank.cash || 0).toLocaleString('pt-BR') : '...';
-		cashRow.append(el('strong', 'mb-bank-cashrow-value', '$ ' + cashVal));
+		cashRow.append(el('span', 'mb-bank-cashrow-label', 'Dinheiro vivo'));
+		cashRow.append(el('strong', 'mb-bank-cashrow-value', bank ? moneyText(bank.cash) : '...'));
 		balanceCard.append(cashRow);
 		content.append(balanceCard);
 
 		const transferSec = el('div', 'mb-bank-section');
 		transferSec.append(el('h2', 'mb-bank-section-title', 'Transferência / PIX'));
 
-		const form = el('form', 'mb-bank-form');
-		form.addEventListener('submit', function (e) { e.preventDefault(); });
-
-		const targetGroup = el('div', 'mb-form-field');
-		targetGroup.append(el('label', 'mb-form-label', 'Destinatário (PIX ou ID)'));
-		const targetInput = el('input', 'mb-form-input');
+		const form = el('form', 'mb-form mb-bank-form');
+		const targetInput = el('input', 'coe-field');
 		targetInput.type = 'text';
-		targetInput.placeholder = 'Número ou ID do cidadão';
-		targetGroup.append(targetInput);
-
-		const amountGroup = el('div', 'mb-form-field');
-		amountGroup.append(el('label', 'mb-form-label', 'Valor ($)'));
-		const amountInput = el('input', 'mb-form-input');
-		amountInput.type = 'number';
+		targetInput.placeholder = 'Ex.: 555-1234 ou AB12CD34';
+		targetInput.maxLength = 16;
+		targetInput.autocomplete = 'off';
+		const amountInput = el('input', 'coe-field mb-mono');
+		amountInput.type = 'text';
+		amountInput.inputMode = 'numeric';
 		amountInput.placeholder = '0';
-		amountInput.min = '1';
-		amountGroup.append(amountInput);
+		amountInput.maxLength = 9;
+		amountInput.autocomplete = 'off';
+		// Só dígitos, com separador de milhar enquanto digita.
+		amountInput.addEventListener('input', function () {
+			const raw = amountInput.value.replace(/\D/g, '').replace(/^0+/, '');
+			amountInput.value = raw ? Number(raw).toLocaleString('pt-BR') : '';
+		});
 
-		const sendBtn = el('button', 'mb-btn mb-btn--primary mb-bank-submit', 'Transferir');
-		sendBtn.type = 'button';
-		sendBtn.addEventListener('click', function () {
+		const hint = el('p', 'mb-bank-hint', 'Número do telefone ou ID do cidadão (o mesmo do /id).');
+		const sendBtn = el('button', 'coe-button coe-button--primary mb-bank-submit', 'Transferir');
+		sendBtn.type = 'submit';
+		form.addEventListener('submit', function (e) {
+			e.preventDefault();
 			const target = targetInput.value.trim();
-			const amount = parseInt(amountInput.value, 10);
+			const amount = parseInt(amountInput.value.replace(/\D/g, ''), 10);
 			if (!target) {
 				toast('Informe o destinatário.', 'error');
 				targetInput.focus();
@@ -375,10 +423,18 @@
 				amountInput.focus();
 				return;
 			}
+			if (bank && amount > Number(bank.balance || 0)) {
+				toast('Saldo bancário insuficiente.', 'error');
+				amountInput.focus();
+				return;
+			}
 			sendBtn.disabled = true;
+			sendBtn.textContent = 'Enviando...';
 			act('bank_transfer', { target: target, amount: amount }).then(function (res) {
 				sendBtn.disabled = false;
+				sendBtn.textContent = 'Transferir';
 				if (res) {
+					toast('PIX de ' + moneyText(amount) + ' enviado.', 'success');
 					targetInput.value = '';
 					amountInput.value = '';
 					loadBank();
@@ -386,30 +442,30 @@
 			});
 		});
 
-		form.append(targetGroup, amountGroup, sendBtn);
+		const targetField = field('Destinatário', targetInput);
+		targetField.append(hint);
+		form.append(targetField, field('Valor', amountInput), sendBtn);
 		transferSec.append(form);
 		content.append(transferSec);
 
 		const ledgerSec = el('div', 'mb-bank-section');
-		ledgerSec.append(el('h2', 'mb-bank-section-title', 'Últimas Transações'));
-
+		ledgerSec.append(el('h2', 'mb-bank-section-title', 'Últimas transações'));
 		const ledgerList = el('div', 'mb-bank-ledger');
-		const items = (state.bank && Array.isArray(state.bank.ledger)) ? state.bank.ledger : [];
-		if (!items.length) {
+		const items = (bank && Array.isArray(bank.ledger)) ? bank.ledger : [];
+		if (!bank) {
+			ledgerList.append(el('p', 'mb-empty', 'Carregando...'));
+		} else if (!items.length) {
 			ledgerList.append(el('p', 'mb-empty', 'Nenhuma movimentação recente.'));
 		} else {
 			items.forEach(function (tx) {
-				const row = el('div', 'mb-bank-tx');
-				const isPositive = Number(tx.delta) > 0;
-				row.classList.add(isPositive ? 'is-in' : 'is-out');
-
+				const delta = Number(tx.delta) || 0;
+				const row = el('div', 'mb-bank-tx ' + (delta > 0 ? 'is-in' : 'is-out'));
 				const info = el('div', 'mb-bank-tx-info');
-				info.append(el('span', 'mb-bank-tx-reason', tx.reason || 'Transação'));
-				if (tx.created_at) {
-					info.append(el('span', 'mb-bank-tx-date', when(tx.created_at)));
-				}
-				const val = el('strong', 'mb-bank-tx-value', (isPositive ? '+ $' : '- $') + Math.abs(Number(tx.delta)).toLocaleString('pt-BR'));
-				row.append(info, val);
+				info.append(el('span', 'mb-bank-tx-reason', reasonLabel(tx)));
+				// `at` (segundos Unix, calculado pelo banco) é o confiável; created_at é texto no fuso do servidor do banco.
+				const date = txWhen(tx.at !== undefined && tx.at !== null ? Number(tx.at) : tx.created_at);
+				if (date) { info.append(el('span', 'mb-bank-tx-date', date)); }
+				row.append(info, el('strong', 'mb-bank-tx-value', (delta > 0 ? '+ ' : '- ') + moneyText(delta)));
 				ledgerList.append(row);
 			});
 		}

@@ -7,7 +7,18 @@ estação e recebe a caução de volta ao devolver o veículo em qualquer estaç
 
 - Estações e catálogo em `config.lua` (`RentalsConfig.Stations` e `RentalsConfig.Vehicles`). Cada veículo tem
   `price` (não reembolsável) e `deposit` (caução).
-- O client mostra o balcão a 2 m de `coords` e pede `rentals.rent`; o servidor confere o personagem ativo, a estação, o
+- Estações ficam no banco (`coe_rental_stations`) e são editadas no painel (aba **Aluguel** do `coe_staff`; painéis
+  de pacotes usam os exports com a ACE `coe.rentals.admin`): atendente (NPC e balcão), vários pontos de retirada (o veículo sai no primeiro livre), zona de
+  devolução, modelos oferecidos e blip. `RentalsConfig.Stations` só semeia o banco na primeira vez.
+- Ao alugar, o jogador recebe o **contrato de locação** (`rental_contract`, usar mostra o documento com veículo,
+  placa, locatário, data e valores) e a **chave** (`carkey` com `rental = true`; sem ela o veículo não liga nem tranca).
+  Os dois itens saem do inventário ao devolver ou encerrar.
+- Devolver: dirigindo, na zona de devolução (E) ou a pé, no balcão (menu **Devolver**) com o carro estacionado perto
+  (`CounterReturnDistance`) e vazio. Se o carro foi destruído ou sumiu, **Encerrar aluguel** libera alugar de novo e a
+  caução fica retida.
+- No balcão, `E` abre o menu (`html/`, tema do `coe_ui`): lista os veículos da estação com aluguel, caução e total;
+  setas/clique escolhem, `Enter`/Alugar confirma, `Esc` fecha. `vehicles = { ... }` na estação limita o catálogo ali.
+- O menu pede `rentals.rent`; o servidor confere o personagem ativo, a estação, o
   modelo, a distância (`InteractRadius`, 6 m) e o intervalo entre pedidos (`CooldownMs`, 2 s), e só então cobra.
 - **Cobrança fail-closed**: sem `coe_economy` no ar o aluguel é recusado (`economy_unavailable`); nada sai de graça.
   Se o veículo não puder ser criado, o valor é estornado.

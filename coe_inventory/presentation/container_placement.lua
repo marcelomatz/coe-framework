@@ -165,6 +165,15 @@ function C.placeContainerProp(containerId)
 	SetEntityAlpha(record.entity, PREVIEW_ALPHA, false)
 	state.placement = { containerId = containerId, record = record }
 
+	-- Instruções no aviso de interação padrão do framework (exports.coe_notify:Prompt).
+	pcall(function()
+		exports.coe_notify:Prompt({
+			title = 'Posicionar baú',
+			subtitle = 'Mire para o local desejado',
+			options = { { key = 'E', label = 'Colocar' }, { key = 'Backspace', label = 'Cancelar' } }
+		})
+	end)
+
 	CreateThread(function()
 		while state.placement and state.placement.containerId == containerId do
 			Wait(0)
@@ -172,9 +181,6 @@ function C.placeContainerProp(containerId)
 			local position = getPlacementPoint(playerPed, record)
 			SetEntityCoordsNoOffset(record.entity, position.x, position.y, position.z, false, false, false)
 			SetEntityHeading(record.entity, GetEntityHeading(playerPed))
-			BeginTextCommandDisplayHelp('STRING')
-			AddTextComponentSubstringPlayerName('Mire para o local desejado. Pressione E para colocar ou BACKSPACE para cancelar.')
-			EndTextCommandDisplayHelp(0, false, true, -1)
 
 			if IsControlJustPressed(0, CONTROL_CONFIRM) then
 				state.placement = nil
@@ -184,6 +190,9 @@ function C.placeContainerProp(containerId)
 				C.attachContainerProp(record)
 			end
 		end
+		pcall(function()
+			exports.coe_notify:Prompt(nil)
+		end)
 	end)
 	return true
 end

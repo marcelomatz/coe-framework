@@ -23,5 +23,10 @@ Locales['pt-BR'] = {
 	take_failed = 'Não foi possível retirar a chave.',
 	key_revoked = 'Chave de %{plate} retirada.',
 	key_revoked_target = 'Sua chave do veículo %{plate} foi retirada.',
-	no_key_warning = 'Você não tem a chave deste veículo.'
+	no_key_warning = 'Você não tem a chave deste veículo.',
+	key_label = 'Chave · %{plate}',
+	vehicle_locked = 'Veículo trancado.',
+	vehicle_unlocked = 'Veículo destrancado.',
+	no_vehicle_near_lock = 'Nenhum veículo seu por perto para trancar.',
+	lock_keybind = 'Trancar/destrancar veículo'
 }

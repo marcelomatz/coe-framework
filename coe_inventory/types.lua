@@ -126,6 +126,14 @@ function exports_coe_inventory:OpenStash(playerId, stashId, definition) end
 ---@return string|nil errorCode `invalid_count|insufficient_items|persistence_failed`
 function exports_coe_inventory:RemoveItemByName(id, itemName, count) end
 
+---Remove todas as unidades de um item cuja metadata contém `filter` (comparação parcial). Ex.: as chaves de um veículo.
+---@param id string
+---@param itemName string
+---@param filter table chaves e valores que a metadata precisa ter
+---@return integer|false removed unidades removidas (0 quando não havia)
+---@return string|nil errorCode `invalid_item_metadata|persistence_failed`
+function exports_coe_inventory:RemoveItemsByMetadata(id, itemName, filter) end
+
 ---Registra uma nova definição de item no inventário.
 ---@param definition table
 ---@return boolean ok

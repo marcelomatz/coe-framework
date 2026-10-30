@@ -9,6 +9,7 @@ local notificationTypes = {
 --   add_ace resource.<nome> coe.notify allow
 local NOTIFY_ACE = 'coe.notify'
 local allowedResources = {
+	coe_appearance = true,
 	coe_businesses = true,
 	coe_characters = true,
 	coe_core = true,
@@ -17,7 +18,9 @@ local allowedResources = {
 	coe_inventory = true,
 	coe_vehicles = true,
 	coe_jobs = true,
+	coe_rentals = true,
 	coe_shops = true,
+	coe_talk = true,
 	coe_bank = true,
 	coe_mobile = true,
 	coe_workpad = true,

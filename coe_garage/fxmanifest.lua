@@ -8,6 +8,8 @@ description 'Garagens públicas básicas: guarda e retirada de veículos pessoai
 
 -- Categoria de reinicio no painel do coe_supervisor: administration | business | gameplay
 coe_supervisor 'gameplay'
+-- Básico substituível: não inicia enquanto um pacote completo de garagens (coe_supervisor_replaces) estiver rodando.
+coe_supervisor_replaceable 'yes'
 
 dependencies {
 	'coe_core',

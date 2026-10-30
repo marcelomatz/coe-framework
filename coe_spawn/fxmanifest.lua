@@ -9,7 +9,15 @@ description 'Adaptador de spawn condicionado ao carregamento do personagem, com 
 dependencies {
 	'coe_core',
 	'coe_database',
+	'coe_ui',
 	'spawnmanager'
+}
+
+-- Só o aviso de interação padrão do coe_ui (hotel de início).
+ui_page 'html/index.html'
+
+files {
+	'html/index.html'
 }
 
 shared_scripts {
@@ -26,5 +34,6 @@ server_scripts {
 }
 
 client_scripts {
-	'client.lua'
+	'client.lua',
+	'@coe_ui/theme_bridge.lua'
 }

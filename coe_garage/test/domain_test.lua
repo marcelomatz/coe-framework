@@ -54,4 +54,13 @@ local stations = GarageDomain.BuildStationList(garages)
 eq(#stations, 1, 'apenas garagem ativa vira estacao')
 eq(stations[1].garageId, 'garagem_central', 'id da estacao')
 
+-- Um blip por garagem, mesmo com várias vagas.
+local multi = GarageDomain.BuildStationList({ g = {
+	id = 'g', label = 'Duas vagas', enabled = true, blip = { enabled = true, sprite = 357, color = 3, scale = 0.8 },
+	spots = { { id = 'a', x = 0, y = 0, z = 0 }, { id = 'b', x = 3, y = 0, z = 0 } }
+} })
+eq(#multi, 2, 'uma estacao por vaga')
+eq(multi[1].blip ~= nil, true, 'blip na primeira vaga')
+eq(multi[2].blip, nil, 'sem blip nas demais vagas')
+
 print('coe_garage domain_test: ok')

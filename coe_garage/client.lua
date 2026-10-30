@@ -127,7 +127,7 @@ CreateThread(function()
 end)
 
 -- Interface NUI
-RegisterNetEvent('coe_garage:openMenu', function(garageId, spotId, vehicles)
+RegisterNetEvent('coe_garage:openMenu', function(garageId, spotId, vehicles, info)
 	if not vehicles or #vehicles == 0 then
 		exports.coe_notify:Show('info', _t('no_vehicles_stored'))
 		return
@@ -139,7 +139,9 @@ RegisterNetEvent('coe_garage:openMenu', function(garageId, spotId, vehicles)
 		action = 'open',
 		garageId = garageId,
 		spotId = spotId,
-		vehicles = vehicles
+		vehicles = vehicles,
+		title = type(info) == 'table' and info.title or nil,
+		spotLabel = type(info) == 'table' and info.spotLabel or nil
 	})
 end)
 

@@ -33,7 +33,7 @@ GetEntityMaxHealth = function() return 200 end
 GetPedArmour = function() return natives.armor end
 GetVehiclePedIsIn = function() return natives.vehicle end
 GetPedInVehicleSeat = function() return natives.seatDriver and 1 or 0 end
-GetVehicleClass = function() return 8 end
+GetVehicleClass = function() return natives.class or 8 end
 GetEntitySpeed = function() return natives.speed end
 GetVehicleCurrentRpm = function() return 0.5 end
 GetVehicleCurrentGear = function() return 3 end
@@ -133,8 +133,26 @@ natives.speed = 10
 tick()
 local s = messages[#messages].state
 eq(s.vehicle, true, 'motorista em veiculo')
-eq(s.kind, 'bike', 'classe moto')
+eq(s.kind, 'motorcycle', 'classe moto')
 eq(s.speed, 36, 'km/h')
+eq(s.hasBelt, false, 'moto sem cinto')
+commands.coe_hud_belt()
+tick()
+eq(messages[#messages].state.belt, false, 'moto não afivela cinto')
+eq(flags[32], true, 'moto: queda normal (sem cinto)')
+
+natives.class = 13
+tick()
+s = messages[#messages].state
+eq(s.kind, 'bicycle', 'classe bicicleta')
+eq(s.motor, false, 'bicicleta sem motor')
+eq(s.fuel, nil, 'bicicleta sem combustível')
+eq(s.hasBelt, false, 'bicicleta sem cinto')
+
+natives.class = 1
+tick()
+eq(messages[#messages].state.kind, 'car', 'carro')
+eq(messages[#messages].state.hasBelt, true, 'carro tem cinto')
 
 -- cinto, farol e setas
 eq(keymaps.coe_hud_belt, 'B', 'cinto em B')

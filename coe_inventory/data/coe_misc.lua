@@ -10,7 +10,8 @@ local registered, errorMessage = Inventory.Items.RegisterImageGroup('misc', item
 		black_money = { weight = 0, maxStack = 1000000000 },
 		card_bank = { stack = false, maxStack = 1 },
 		card_id = { stack = false, maxStack = 1 },
-		carkey = { stack = false, maxStack = 1 },
+		-- Chave de veículo (coe_vehicles/coe_rentals): metadata { label, plate, vehicleId | rental }. Usar tranca/destranca.
+		carkey = { stack = false, maxStack = 1, usable = true, consume = 0, close = true },
 		key = { stack = false, maxStack = 1 },
 		-- Espécie: cada unidade é $1; sem peso e em pilha grande para saques do banco e ajustes caberem.
 		money = { weight = 0, maxStack = 1000000000 },

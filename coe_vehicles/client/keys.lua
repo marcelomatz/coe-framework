@@ -21,6 +21,10 @@ end
 local CHECK_INTERVAL_MS = 250
 local IDLE_INTERVAL_MS = 1000
 local RETRY_MS = 1500
+-- A chave é um item: pode chegar (ou sair) com o jogador já sentado. Sem chave pergunta de novo a cada 3 s;
+-- com chave, a cada 10 s.
+local RECHECK_DENIED_MS = 3000
+local RECHECK_ALLOWED_MS = 10000
 
 local currentNetId = nil
 local hasKey = nil
@@ -53,7 +57,8 @@ CreateThread(function()
 		local candidate = GetVehiclePedIsIn(ped, false)
 		local registered = candidate ~= 0
 			and GetPedInVehicleSeat(candidate, -1) == ped
-			and Core.Platform.Entities.GetState(candidate, 'coe:vehicleId') ~= nil
+			and (Core.Platform.Entities.GetState(candidate, 'coe:vehicleId') ~= nil
+				or Core.Platform.Entities.GetState(candidate, 'coe:keyPlate') ~= nil)
 
 		if not registered then
 			if vehicle ~= 0 then
@@ -79,6 +84,10 @@ CreateThread(function()
 				end
 			elseif hasKey then
 				SetVehicleUndriveable(vehicle, false)
+				if GetGameTimer() - requestedAt >= RECHECK_ALLOWED_MS then
+					requestedAt = GetGameTimer()
+					TriggerServerEvent('coe_vehicles:checkKey', currentNetId)
+				end
 			else
 				SetVehicleUndriveable(vehicle, true)
 				SetVehicleEngineOn(vehicle, false, true, true)
@@ -88,8 +97,47 @@ CreateThread(function()
 						exports.coe_notify:Show('error', _t('no_key_warning'))
 					end)
 				end
+				if GetGameTimer() - requestedAt >= RECHECK_DENIED_MS then
+					requestedAt = GetGameTimer()
+					TriggerServerEvent('coe_vehicles:checkKey', currentNetId)
+				end
 			end
 			Wait(CHECK_INTERVAL_MS)
 		end
 	end
+end)
+
+-- Trancar/destrancar (tecla configurável). O servidor escolhe o veículo, confere a chave (item) e tranca.
+if type(RegisterCommand) == 'function' and type(RegisterKeyMapping) == 'function' then
+	RegisterCommand('+coe_vehicle_lock', function()
+		local ped = PlayerPedId()
+		local vehicle = GetVehiclePedIsIn(ped, false)
+		local netId = nil
+		if vehicle ~= 0 then
+			netId = Core.Platform.Entities.GetNetworkId(vehicle)
+		end
+		TriggerServerEvent('coe_vehicles:toggleLock', netId)
+	end, false)
+	RegisterCommand('-coe_vehicle_lock', function() end, false)
+	RegisterKeyMapping('+coe_vehicle_lock', _t('lock_keybind'), 'keyboard', (config and config.LockKey) or 'L')
+end
+
+-- Retorno visual e sonoro ao trancar/destrancar.
+RegisterNetEvent('coe_vehicles:lockChanged', function(netId, locked)
+	if math.type(netId) ~= 'integer' or not NetworkDoesEntityExistWithNetworkId(netId) then
+		return
+	end
+	local vehicle = Core.Platform.Entities.FromNetworkId(netId)
+	if not vehicle or vehicle == 0 then
+		return
+	end
+	PlaySoundFromEntity(-1, locked and 'Remote_Control_Close' or 'Remote_Control_Open', vehicle, 'PI_Menu_Sounds', true, 0)
+	CreateThread(function()
+		for _ = 1, 2 do
+			SetVehicleLights(vehicle, 2)
+			Wait(150)
+			SetVehicleLights(vehicle, 0)
+			Wait(150)
+		end
+	end)
 end)

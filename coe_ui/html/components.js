@@ -467,7 +467,12 @@
 		if (cachedLocale) applyLocale(cachedLocale);
 	} catch (_) {}
 
+	// Handshake com o theme_bridge.lua do resource. Páginas que só recebem avisos (coe_notify, prompts)
+	// nunca recebem 'open': enquanto o tema não chegar, qualquer mensagem pede de novo (no máximo a cada 2 s).
+	let themeReceived = false;
+	let lastThemeRequest = 0;
 	function requestThemeReady() {
+		lastThemeRequest = Date.now();
 		if (typeof GetParentResourceName === 'function') {
 			fetch(`https://${GetParentResourceName()}/coe_theme_ready`, { method: 'POST', body: '{}' }).catch(() => {});
 		}
@@ -475,7 +480,10 @@
 
 	window.addEventListener('message', (event) => {
 		if (!event.data) return;
-		if (event.data.action === 'coe:theme') applyTheme(event.data.theme);
+		if (event.data.action === 'coe:theme') {
+			themeReceived = true;
+			applyTheme(event.data.theme);
+		}
 		if (event.data.action === 'coe:accent' || event.data.action === 'coe:userTheme') {
 			applyAccent(event.data.userTheme || event.data.accent);
 		}
@@ -483,6 +491,8 @@
 			applyLocale(event.data.lang, event.data.dict, event.data.serverName);
 		}
 		if (event.data.action === 'open' || event.data.action === 'selectionRequired') {
+			requestThemeReady();
+		} else if (!themeReceived && Date.now() - lastThemeRequest > 2000) {
 			requestThemeReady();
 		}
 	});

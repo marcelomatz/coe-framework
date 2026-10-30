@@ -497,19 +497,19 @@ button { font: inherit; color: inherit; }
 	.mb, .mb-call, .mb-toast, .mb-app-icon, .mb-call.is-ringing.is-incoming .mb-avatar { animation: none; transition: none; }
 }
 
-/* App de Banco */
+/* App de Banco (rola junto com a tela; só tokens do tema) */
 .mb-bank-content {
 	display: flex;
 	flex-direction: column;
-	gap: var(--coe-space-3);
-	padding: var(--coe-space-3);
-	overflow-y: auto;
-	height: calc(100% - 44px);
+	gap: var(--coe-space-4);
+	padding: var(--coe-space-1) 0 var(--coe-space-3);
 }
 .mb-bank-card {
-	padding: var(--coe-space-3);
-	background: linear-gradient(135deg, rgba(30, 64, 175, 0.35), rgba(var(--coe-panel-rgb), 0.9));
-	border: 1px solid var(--coe-line-strong);
+	padding: var(--coe-space-3) var(--coe-space-3) var(--coe-space-2);
+	border: 1px solid rgba(var(--coe-accent-rgb), 0.35);
+	background:
+		linear-gradient(135deg, rgba(var(--coe-accent-rgb), 0.18), rgba(var(--coe-accent-rgb), 0) 65%),
+		rgba(var(--coe-panel-rgb), 0.9);
 	clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
 }
 .mb-bank-card-label {
@@ -517,25 +517,26 @@ button { font: inherit; color: inherit; }
 	font-size: var(--coe-text-xs);
 	color: var(--coe-muted);
 	text-transform: uppercase;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.1em;
 }
 .mb-bank-card-value {
 	display: block;
-	font-size: 22px;
+	margin: 4px 0 var(--coe-space-2);
+	font-size: 24px;
 	color: var(--coe-text);
-	margin: 4px 0 8px;
+	font-variant-numeric: tabular-nums;
 	letter-spacing: 0.02em;
 }
 .mb-bank-cashrow {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding-top: 6px;
+	padding-top: var(--coe-space-2);
 	border-top: 1px dashed var(--coe-line);
 	font-size: var(--coe-text-xs);
 }
 .mb-bank-cashrow-label { color: var(--coe-muted); }
-.mb-bank-cashrow-value { color: var(--coe-success); font-weight: 600; }
+.mb-bank-cashrow-value { color: var(--coe-success); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .mb-bank-section {
 	display: flex;
@@ -543,25 +544,30 @@ button { font: inherit; color: inherit; }
 	gap: var(--coe-space-2);
 }
 .mb-bank-section-title {
-	font-size: var(--coe-text-xs);
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	color: var(--coe-muted);
 	margin: 0;
+	font-size: var(--coe-text-xs);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	color: var(--coe-muted);
 }
 .mb-bank-form {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	background: var(--coe-panel-raised);
-	padding: var(--coe-space-2);
+	gap: var(--coe-space-2);
+	padding: var(--coe-space-3);
 	border: 1px solid var(--coe-line);
+	background: rgba(var(--coe-ink-rgb), 0.03);
+}
+.mb-bank-form .coe-field { min-height: 34px; }
+.mb-bank-hint {
+	margin: 0;
+	font-size: 10px;
+	line-height: 1.4;
+	color: var(--coe-muted);
 }
 .mb-bank-submit {
-	margin-top: 4px;
-	padding: 8px 12px;
-	font-weight: 600;
-	cursor: pointer;
+	width: 100%;
+	min-height: 36px;
+	margin-top: var(--coe-space-1);
 }
 .mb-bank-ledger {
 	display: flex;
@@ -572,20 +578,23 @@ button { font: inherit; color: inherit; }
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 6px 8px;
-	background: rgba(var(--coe-ink-rgb), 0.04);
+	gap: var(--coe-space-2);
+	padding: 8px 10px;
 	border-left: 2px solid var(--coe-line);
-	font-size: var(--coe-text-xs);
+	background: rgba(var(--coe-ink-rgb), 0.04);
 }
 .mb-bank-tx.is-in { border-left-color: var(--coe-success); }
 .mb-bank-tx.is-out { border-left-color: var(--coe-danger); }
 .mb-bank-tx-info {
-	display: flex;
-	flex-direction: column;
+	display: grid;
 	gap: 2px;
+	min-width: 0;
 }
 .mb-bank-tx-reason {
-	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--coe-text-sm);
 	color: var(--coe-text);
 }
 .mb-bank-tx-date {
@@ -593,8 +602,18 @@ button { font: inherit; color: inherit; }
 	color: var(--coe-muted);
 }
 .mb-bank-tx-value {
+	flex: none;
 	font-size: var(--coe-text-sm);
 	font-variant-numeric: tabular-nums;
 }
 .mb-bank-tx.is-in .mb-bank-tx-value { color: var(--coe-success); }
 .mb-bank-tx.is-out .mb-bank-tx-value { color: var(--coe-text); }
+
+
+/* Barra de rolagem fina (o CEF do FiveM não aplica scrollbar-width). */
+.mb-view::-webkit-scrollbar,
+.mb-bubbles::-webkit-scrollbar { width: 4px; }
+.mb-view::-webkit-scrollbar-track,
+.mb-bubbles::-webkit-scrollbar-track { background: transparent; }
+.mb-view::-webkit-scrollbar-thumb,
+.mb-bubbles::-webkit-scrollbar-thumb { background: rgba(var(--coe-ink-rgb), 0.18); border-radius: 2px; }

@@ -15,13 +15,18 @@ local function isHidden()
 	return next(hiddenBy) ~= nil
 end
 
-local BIKE_CLASSES = { [8] = true, [13] = true }
+local CLASS_MOTORCYCLE = 8
+local CLASS_CYCLE = 13
 local AIR_CLASSES = { [15] = true, [16] = true }
 
+-- motorcycle: moto (sem cinto). bicycle: bicicleta (sem motor: sem combustível, rotação, marcha nem cinto).
 local function vehicleKind(vehicle)
 	local class = GetVehicleClass(vehicle)
-	if BIKE_CLASSES[class] then
-		return 'bike'
+	if class == CLASS_MOTORCYCLE then
+		return 'motorcycle'
+	end
+	if class == CLASS_CYCLE then
+		return 'bicycle'
 	end
 	if class == 14 then
 		return 'boat'
@@ -84,15 +89,20 @@ local function buildSnapshot(ped)
 	VehicleControls.Track(ped, driving and vehicle or 0)
 	if driving then
 		local factor = live.unit == 'mph' and 2.236936 or 3.6
+		local kind = vehicleKind(vehicle)
 		snapshot.vehicle = true
-		snapshot.kind = vehicleKind(vehicle)
+		snapshot.kind = kind
 		snapshot.speed = math.floor(GetEntitySpeed(vehicle) * factor + 0.5)
-		snapshot.rpm = percent(GetVehicleCurrentRpm(vehicle), 1)
-		snapshot.gear = GetVehicleCurrentGear(vehicle)
-		snapshot.fuel = percent(GetVehicleFuelLevel(vehicle), 100)
-		snapshot.engine = percent(GetVehicleEngineHealth(vehicle), 1000)
-		snapshot.engineOn = GetIsVehicleEngineRunning(vehicle) and true or false
-		snapshot.belt = VehicleControls.belt
+		snapshot.motor = kind ~= 'bicycle'
+		snapshot.hasBelt = VehicleControls.HasBelt(kind)
+		if snapshot.motor then
+			snapshot.rpm = percent(GetVehicleCurrentRpm(vehicle), 1)
+			snapshot.gear = GetVehicleCurrentGear(vehicle)
+			snapshot.fuel = percent(GetVehicleFuelLevel(vehicle), 100)
+			snapshot.engine = percent(GetVehicleEngineHealth(vehicle), 1000)
+			snapshot.engineOn = GetIsVehicleEngineRunning(vehicle) and true or false
+		end
+		snapshot.belt = snapshot.hasBelt and VehicleControls.belt or false
 		snapshot.lights = VehicleControls.lights
 		snapshot.left = VehicleControls.left
 		snapshot.right = VehicleControls.right

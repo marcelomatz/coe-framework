@@ -35,9 +35,32 @@ Mostra uma notificação local. Client.
 - `boolean` `ok`
 - `string|nil` `errorCode` — `invalid_notification`
 
+### `Prompt(data)`
+
+Mostra (ou limpa, com nil) o aviso de interação padrão do resource chamador. Client. Chame só quando o conteúdo mudar; um aviso por resource; o resource parado tem o aviso removido.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `data` | `CoeNotifyPrompt\|nil` |  |
+
+**Retorno**
+
+- `boolean` `ok`
+- `string|nil` `errorCode` — `invalid_prompt`
+
 ## Tipos
 
 ```lua
 ---@alias CoeNotifyKind 'info'|'success'|'warning'|'error'
+
+---@class CoeNotifyPromptOption
+---@field key string tecla mostrada (até 12 caracteres)
+---@field label string ação (até 80 caracteres)
+
+---@class CoeNotifyPrompt
+---@field title string até 64 caracteres
+---@field subtitle string|nil até 64 caracteres
+---@field badge string|nil selo à esquerda (até 3 caracteres; padrão: tecla da primeira opção)
+---@field options CoeNotifyPromptOption[] até 6
 ```
 

@@ -124,7 +124,7 @@ function GarageDomain.BuildStationList(garages)
 
 	for _, garage in pairs(garages) do
 		if garage.enabled then
-			for _, spot in ipairs(garage.spots or {}) do
+			for index, spot in ipairs(garage.spots or {}) do
 				stations[#stations + 1] = {
 					garageId = garage.id,
 					spotId = spot.id,
@@ -136,7 +136,8 @@ function GarageDomain.BuildStationList(garages)
 					z = spot.z,
 					radius = spot.radius or 3.5,
 					heading = spot.heading or 0.0,
-					blip = garage.blip and garage.blip.enabled and garage.blip or nil
+					-- Um blip por garagem (na primeira vaga), não um por vaga.
+					blip = index == 1 and garage.blip and garage.blip.enabled and garage.blip or nil
 				}
 			end
 		end
