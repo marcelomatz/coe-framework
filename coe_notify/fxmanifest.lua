@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_notify'
-version '0.1.0-beta.13'
+version '0.1.0-beta.14'
 description 'Client notification library for Coe resources'
 
 dependencies {

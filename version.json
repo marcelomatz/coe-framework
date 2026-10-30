@@ -1,17 +1,24 @@
 {
-	"version": "0.1.0-beta.13",
-	"tag": "v0.1.0-beta.13",
+	"version": "0.1.0-beta.14",
+	"tag": "v0.1.0-beta.14",
 	"channel": "beta",
 	"repository": "marcelomatz/coe-framework",
 	"branch": "main",
-	"notes": "COE Framework v0.1.0-beta.13 — FiveM Enhanced Gen9 (Build 170+)",
+	"notes": "COE Framework v0.1.0-beta.14 — FiveM Enhanced Gen9 (Build 170+)",
 	"releases": [
+		{
+			"version": "0.1.0-beta.14",
+			"tag": "v0.1.0-beta.14",
+			"channel": "beta",
+			"date": "2026-10-30",
+			"notes": "COE Framework v0.1.0-beta.14 — FiveM Enhanced Gen9 (Build 170+)"
+		},
 		{
 			"version": "0.1.0-beta.13",
 			"tag": "v0.1.0-beta.13",
 			"channel": "beta",
 			"date": "2026-10-29",
-			"notes": "COE Framework v0.1.0-beta.13 — FiveM Enhanced Gen9 (Build 170+)"
+			"notes": "COE Framework v0.1.0-beta.13 (beta): 2 atualização(ões) nos resources do ecossistema. Destaque: **[tools]** Atualiza tools."
 		},
 		{
 			"version": "0.1.0-beta.12",
@@ -93,7 +100,7 @@
 	],
 	"resources": {
 		"coe_appearance": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/apply.lua",
 				"client/creator.lua",
@@ -111,11 +118,11 @@
 				"client/creator.lua": "49c13074",
 				"client/thumbs.lua": "b7e503cf",
 				"config.lua": "b081ecf3",
-				"fxmanifest.lua": "d43c4a64",
+				"fxmanifest.lua": "2bdb1b29",
 				"html/app.js": "53931ed6",
 				"html/index.html": "4379e87d",
 				"html/style.css": "22582212",
-				"server/thumbs.lua": "b4ad8b24",
+				"server/thumbs.lua": "073fde01",
 				"shared/schema.lua": "345c00f5"
 			},
 			"sha256": {
@@ -123,16 +130,16 @@
 				"client/creator.lua": "46f974630b3d59ddb15bb1a7d8a5ec602d406e7ef6f1c50b28ccbc1087f2383b",
 				"client/thumbs.lua": "01922249a33609738579884a136bad769a21823a5323d1e035b711b1490f6d62",
 				"config.lua": "564e11d8b958ad2cce161a79a2639885b62cf8a0f2373bb33920600eafc12e38",
-				"fxmanifest.lua": "c4aa720a9c130938fcb1d2491e4d98298b3ed215f6fa6983165727c83a0ba9d7",
+				"fxmanifest.lua": "64281ad0256978106d1b2deed120dd98923c9338c83301ae5e406011ecace579",
 				"html/app.js": "b4e0888e8465b75e1ed74b4aa96249622d2ac92613890cfc345ee5fd3ae9906f",
 				"html/index.html": "505edfd8eb12805704736a73f682cb511f8309bee9adc9a4b21a267ea3871fc1",
 				"html/style.css": "2bbe84bf791cac0c3d857abcd83c1ba1336dd313b40ddef90f8cf1eac4ba9df2",
-				"server/thumbs.lua": "ae3a683f69e4278198c180903163f9c4e2b03b2a4ba8c3a3b5d05464e89f7c37",
+				"server/thumbs.lua": "d5bd043d4c71388fc013a22b62c5653a68559987227d7d9552298910080a1e2f",
 				"shared/schema.lua": "4efaa008276eca37ea146872906fc834063b93f4d406a577021a39c67bc1a7bc"
 			}
 		},
 		"coe_audit": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"config.lua",
 				"fxmanifest.lua",
@@ -144,7 +151,7 @@
 			],
 			"hashes": {
 				"config.lua": "92af6a9b",
-				"fxmanifest.lua": "0eaef122",
+				"fxmanifest.lua": "d4263df9",
 				"server/entry.lua": "1637ee1d",
 				"server/main.lua": "511b89b7",
 				"server/migrations.lua": "ad931575",
@@ -153,7 +160,7 @@
 			},
 			"sha256": {
 				"config.lua": "126c73f9ed039cbdf11cf72afd45d0aa6ef06b164b69759047a9ba207e2f5c0c",
-				"fxmanifest.lua": "136e064394530e1c99e1284fe45a2b1373f85b929b9d77ebe3e82f0a00f63572",
+				"fxmanifest.lua": "d23a3ef84339d77f6b8c5928f61cc4b95af38129198b06b77d5303b7dcd13ab2",
 				"server/entry.lua": "9529cca9f73f3fd0c98b14ea946916345b5ac337814fe70b736cb73f427a2c27",
 				"server/main.lua": "2f9c4d3fe3a7a3028a1ee36c1b83e73e7f4a8c2bd275e9d5ab37df3de61f7ef9",
 				"server/migrations.lua": "9b2a391f9da98fe1a10591f6b6fedcb00c4829fdf3799d08f53c2696fbdee9e3",
@@ -162,7 +169,7 @@
 			}
 		},
 		"coe_bank": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -178,7 +185,7 @@
 			"hashes": {
 				"client/main.lua": "8b07f876",
 				"config.lua": "4ac97d7c",
-				"fxmanifest.lua": "24d41c3b",
+				"fxmanifest.lua": "ecc82f16",
 				"html/bank.css": "ca754bb6",
 				"html/bank.js": "a51b7416",
 				"html/index.html": "c5388fd9",
@@ -190,7 +197,7 @@
 			"sha256": {
 				"client/main.lua": "23b689b7f82082e49630973ffce06fa114abe17f5c594a4a4e55ed3ea36bb872",
 				"config.lua": "1e34e6a0dbccd8b7860df7314dd57d8543830e5bfa7b34052efa2e89035fafe0",
-				"fxmanifest.lua": "b8c2dd7721c5a24cb6bc471485815d2a2de490ac785f307a0b4028203b73736a",
+				"fxmanifest.lua": "368603fd97d8aa3783a380fd7650196366b2dc47e0871c3e231291786d502b2a",
 				"html/bank.css": "f5e82e8bf312e14aaa23e42da60f8ab18c1ac5ff64d42f19cdc816f6c2ecc666",
 				"html/bank.js": "175c7fbc09865d9ee7df863d98f67dd790363efc6f8b25c6fa6170257ca7adc5",
 				"html/index.html": "63c254b8a1dc67af27cf0425592271dea9bc0cb7f3dc9912408e32c33bcac0dc",
@@ -201,7 +208,7 @@
 			}
 		},
 		"coe_businesses": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -225,7 +232,7 @@
 			"hashes": {
 				"client/main.lua": "ab266217",
 				"config.lua": "cdfdc8bd",
-				"fxmanifest.lua": "d7625050",
+				"fxmanifest.lua": "d050e83b",
 				"html/index.html": "74a3b3ea",
 				"html/offer.js": "51b09136",
 				"html/tablet_app.js": "a19fe2c0",
@@ -245,7 +252,7 @@
 			"sha256": {
 				"client/main.lua": "5f84b5abf8bd5bffeed78312acde9b6094bf15a0f4b34e005d12bc746a8ccf7d",
 				"config.lua": "91cec325cead73096b87b05f08bb68c3c8a22cf0d1547455604dd343abd694aa",
-				"fxmanifest.lua": "5b79e1966a9fd48c74351c1b3256afadbf3d7b4d7a065b13a3fc8cd0672dd9af",
+				"fxmanifest.lua": "b5f1cf19a2e75d6f8df323284612baadabf5ca478a6aad28bbd87b63d757ec22",
 				"html/index.html": "9d030beccc234402b52afed4d23baf55d3c6ce97253b2e9c4e8ac969a7d0832f",
 				"html/offer.js": "2962ac31fea6ebd53944e38f5b7800f637356d10e182169ce2fc976a163fecd2",
 				"html/tablet_app.js": "ba228755c12dff230cbacb1a2cafe64f395006695b13be9f1f427599fd5d4b17",
@@ -264,7 +271,7 @@
 			}
 		},
 		"coe_characters": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client.lua",
 				"client/scene.lua",
@@ -275,26 +282,26 @@
 				"html/style.css"
 			],
 			"hashes": {
-				"client.lua": "5503dae2",
+				"client.lua": "a4c46006",
 				"client/scene.lua": "4d3c9f2c",
 				"config.lua": "720457b6",
-				"fxmanifest.lua": "cdc567d9",
+				"fxmanifest.lua": "d23cd714",
 				"html/app.js": "2b9b8fd8",
 				"html/index.html": "95813bb8",
 				"html/style.css": "409a5788"
 			},
 			"sha256": {
-				"client.lua": "691a7da51bb10c93d84a7b806691100d963a31ba34960b16f2f19f84d86cd7ee",
+				"client.lua": "32b7f7d38e91cc6f6b499a9aac29ffeceb74501689e474c9f93925250cede415",
 				"client/scene.lua": "811ecb7976b639c31420df26e26d7b65acd02838d31163b0f2a95a3e4ed3c298",
 				"config.lua": "24190b2e100568776ed6656fb7eeebeda2b4c87c3bc3419af46a3c73282c85ff",
-				"fxmanifest.lua": "6c7351b5398ce9f0d8664b9deb3b5bd0eb79b0d385a312be002df44717b4422f",
+				"fxmanifest.lua": "4d37313f6747371d281ad7d2818e02f4d913f190c366de311814e2471f36de8b",
 				"html/app.js": "1633b0157175aa911e1028e912b3595888a73c82d44836eaa30f368b62340b85",
 				"html/index.html": "ad4ba8606e2b26df40bf9d8b400747d63c1dba14949de6f1c3b68faecfdb4904",
 				"html/style.css": "a79a6aa9b868a13ca08726cfcee6b35a75fe993829b8ca99e4548cca75e7c9aa"
 			}
 		},
 		"coe_core": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"config/groups.lua",
 				"core/application/player_service.lua",
@@ -347,7 +354,7 @@
 				"core/shared/functions.lua": "5f4823a6",
 				"core/shared/identity.lua": "537df0dc",
 				"core/shared/states.lua": "8e6f5705",
-				"fxmanifest.lua": "eb63a366",
+				"fxmanifest.lua": "fe8c799f",
 				"lib/access.lua": "feccd880",
 				"lib/hash.lua": "1b19c8ce",
 				"lib/init.lua": "df074303",
@@ -379,7 +386,7 @@
 				"core/shared/functions.lua": "e424e60d6be96d5f6c554d337059e26a02ae01fae4054eeb5c37d27903b31473",
 				"core/shared/identity.lua": "7e99a081d3c6951bad46de8a97dd548744c60ad0a3a8fc5afccbb5290d0f41cf",
 				"core/shared/states.lua": "9a4439d780adb9bb3e9821de7b19b68594ca8efadd73c2b17849d71d034a843c",
-				"fxmanifest.lua": "20c784981b64a251e108625e8601cfeb0a90cc2ae27732bfeaf31ec3f3ab95bc",
+				"fxmanifest.lua": "c0bd5174da2a134f0a622954de87028e64061f354004790bfb642bf618ca95ee",
 				"lib/access.lua": "8bd49f381d23a0e2022274e1ef3775426dc76326cee469aac2c0e4e02fc36bc7",
 				"lib/hash.lua": "b46496b231143560fb010040d1ace337f01d2ecc45d098c6855762294b52dc03",
 				"lib/init.lua": "6783d9e55ddf8d9087efea223de8c10a4dc3a10269bf969fbaca37ff66e3eaab",
@@ -393,7 +400,7 @@
 			}
 		},
 		"coe_database": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"fxmanifest.lua",
 				"package.json",
@@ -403,24 +410,24 @@
 				"server/validation.js"
 			],
 			"hashes": {
-				"fxmanifest.lua": "da44d46d",
+				"fxmanifest.lua": "330197cc",
 				"package.json": "eace074c",
-				"server/access.js": "16285eef",
+				"server/access.js": "3c6cdcb0",
 				"server/index.js": "f1816ab7",
 				"server/provider.js": "0cb527d6",
 				"server/validation.js": "a5aed4e9"
 			},
 			"sha256": {
-				"fxmanifest.lua": "949f0f2f35d0b1b232c0b5df727efaa8c2ebd89a24100455643f6551f455c1fe",
+				"fxmanifest.lua": "8d125ca22f101c78f88f0933ab6f4dbe0474222c6f23a13bb5f5c0689d26d5f3",
 				"package.json": "b0e416074ff8b7809e9d3530d7ebb51324ad9b230d83887e2a86a6eaa863eae0",
-				"server/access.js": "012408c64ebbbf1e47ecd60e3d5439efba025b5acee3b40a91f3736f53bdfeed",
+				"server/access.js": "41b470ad096f432d434301f533b9b60187f8eacc1b96b193a84d85e874290b15",
 				"server/index.js": "74e5bf471de9634b5fce8544240e98907b2ee37a133557ebaefc84a8cadf451f",
 				"server/provider.js": "811c15bc53b8e952c3863c6ed4923e5b38a9c41cf71d08114c178d564b313f93",
 				"server/validation.js": "7c0af8eb3f2b0d02754d00c429a76c77c70dbbbdd710233585cef169cfa08fb5"
 			}
 		},
 		"coe_economy": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"config.lua",
 				"fxmanifest.lua",
@@ -433,27 +440,27 @@
 			],
 			"hashes": {
 				"config.lua": "04729f19",
-				"fxmanifest.lua": "242db601",
+				"fxmanifest.lua": "492fb3e4",
 				"locales/en-us.lua": "0952d7b7",
 				"locales/pt-br.lua": "f4d7e50b",
 				"server/main.lua": "486e171b",
 				"server/migrations.lua": "42c9e6a0",
-				"server/persistence.lua": "6f4b8e41",
+				"server/persistence.lua": "a9fbb3c2",
 				"server/rules.lua": "bc7c1657"
 			},
 			"sha256": {
 				"config.lua": "44559872d60998b3db0b5056db4d305776fc4dfe4ca00db4522d8745b4680203",
-				"fxmanifest.lua": "e913a5d2ad6e2edc3fe85f2b67df58608cd7cf86a6f68287a1eec286257bcf48",
+				"fxmanifest.lua": "1eb5feb97d239e30cfed35e0969fc6b0b73589ae2436bcbda94d3a12539a67a9",
 				"locales/en-us.lua": "b7e246d1150fb04c3b5bc46472412877411b7f5f8a62db922e3ef244e7eda2e8",
 				"locales/pt-br.lua": "aa0695842f65c8b66c0a55dfe807bda713069e1bfd6d7db078cf8453477fed25",
 				"server/main.lua": "558c53574ad69d79fead37dbf72ad7d70ea1b0321b948b12d3fe8f8889abf8dd",
 				"server/migrations.lua": "c84c3757eb7daaf434dab17eb10e47ee9fb8d6c1cb3a0994374f18df5bfd2480",
-				"server/persistence.lua": "073f8b7d121bd3d41d52993ebb980758e32064bf2632059f169bbff834360dfe",
+				"server/persistence.lua": "4203a5c43c4d38d71f7352bdf78341d8f36e98c8dc77db2548368734dc58cfc9",
 				"server/rules.lua": "986f32443585047c3dfe07945e6680728803140c2c6a9ff33f267ea378a1b383"
 			}
 		},
 		"coe_garage": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"adapters/migrations.lua",
 				"adapters/persistence.lua",
@@ -466,39 +473,42 @@
 				"html/garage.js",
 				"html/index.html",
 				"locales/en-us.lua",
-				"locales/pt-br.lua"
+				"locales/pt-br.lua",
+				"shared/i18n.lua"
 			],
 			"hashes": {
 				"adapters/migrations.lua": "d82cf536",
 				"adapters/persistence.lua": "297dc47b",
-				"application/service.lua": "cf7ff6aa",
-				"client.lua": "d2dd9146",
+				"application/service.lua": "04c6afb0",
+				"client.lua": "25cc7a48",
 				"config.lua": "61d4623e",
-				"domain/garage.lua": "0541ddac",
-				"fxmanifest.lua": "4c3e60c1",
-				"html/garage.css": "9b28e1c7",
-				"html/garage.js": "894c8161",
-				"html/index.html": "1dfc51c3",
-				"locales/en-us.lua": "8a58bdef",
-				"locales/pt-br.lua": "979558fb"
+				"domain/garage.lua": "da20a8cb",
+				"fxmanifest.lua": "d940c12c",
+				"html/garage.css": "2a39ebfa",
+				"html/garage.js": "d8dff9a6",
+				"html/index.html": "a0bd459b",
+				"locales/en-us.lua": "79695ac3",
+				"locales/pt-br.lua": "55ead96c",
+				"shared/i18n.lua": "877c05c0"
 			},
 			"sha256": {
 				"adapters/migrations.lua": "e6f2a078240188a7c373c86b7a8411002b24d349905a631c54cdcb55d7e846b9",
 				"adapters/persistence.lua": "85589e9581c94e54b2fce1c4c68f9affbf0cb27cad9401211f824fc885906b14",
-				"application/service.lua": "dcc6dcf9357703cdd86868f58b4058ecfeabc07866a9273894e5275ffc5cc513",
-				"client.lua": "eaadd1588204dd3aae1e8942a993acc79ddae3c6dffef8617172e5e17b048e07",
+				"application/service.lua": "b81793d02b4b84d68132e147e4e9b7cf9794b86387331b995e41efda21607fe8",
+				"client.lua": "03ce060eb2236b38eecc5019e00c19ec942359b3c905f9e8a230d644125b3a15",
 				"config.lua": "d8bd31e8d5d924151b5d81972890eec4bf068a0d85a77a68e983d583eb792cb0",
-				"domain/garage.lua": "3c4e37b60f33ff78ad63ca82f09605371a18f93749421a17a0e898e885219214",
-				"fxmanifest.lua": "27c97e88d076a9e993ed4ba1a9ef899d3f5af0b5f1c2e9e7118bcecca32f3a80",
-				"html/garage.css": "c889f29038f910ef6b233eac273648a42038bf0c3b5c9355598db7bc480d4762",
-				"html/garage.js": "829706b98e7f11283b4941884fb7530b254464e122c5ad4e934e53d4dd8a86c9",
-				"html/index.html": "39a7d5eac6b30a58c66167923ec81ece662dab03ac674ccb5e29c63cd4e04efe",
-				"locales/en-us.lua": "ac0a9bec979c1a8da40c1c01e737a5a9186edd2c597b5521e97b7b994e24fab6",
-				"locales/pt-br.lua": "7af9188731e0f812caea6ab9ecff68c67a5028d0431762aca1261fe65ac95009"
+				"domain/garage.lua": "79de5bed5f6ca6a7f4eefa55573e2f778e5fb059816515a974beee2cf68519f6",
+				"fxmanifest.lua": "e765ebf89c48912002ef251d5dbbbb32ca4a3086e6c9a48193fb4f9969618de2",
+				"html/garage.css": "77350e9bf1946496a4c6bf17a9fbfd5f350799b1afe2791d5c799ed239c682de",
+				"html/garage.js": "01f6eb3e98c8fed3e67e607a95f031bf84c163718bd4f073dd5c5b46eca7a8ea",
+				"html/index.html": "e8e4390e4eb425dc14de329eec2ea792b4bfc2acf91ce32647c5a5185ab84908",
+				"locales/en-us.lua": "04b54779654bf820d799de59b57dcd1d4a1b4c279a38ed3f88b89a67c971f25b",
+				"locales/pt-br.lua": "36e740099cf01c8d39a317636712d5d25c46d8c42dbaafdfc5128b1c4f32b323",
+				"shared/i18n.lua": "660facb9c29fa5d88e7a73a4af881b6a2e77e11fe9f55603687a8e8bfc05aba5"
 			}
 		},
 		"coe_hud": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -519,15 +529,15 @@
 				"vehicle.lua"
 			],
 			"hashes": {
-				"client.lua": "6cdcf687",
+				"client.lua": "9e9d7da4",
 				"config.lua": "f418e36e",
-				"fxmanifest.lua": "07e8388a",
-				"html/app.js": "9ef70271",
+				"fxmanifest.lua": "8eb1e5f3",
+				"html/app.js": "73547468",
 				"html/editor.css": "bbd74f3c",
 				"html/editor.js": "7eba4432",
 				"html/index.html": "df9b3425",
-				"html/speedo.css": "e424af2a",
-				"html/speedo.js": "43b2042a",
+				"html/speedo.css": "966e1463",
+				"html/speedo.js": "9c4b3115",
 				"html/style.css": "0e3b48e2",
 				"location.lua": "347287be",
 				"logo.lua": "a5470770",
@@ -535,18 +545,18 @@
 				"package.json": "69407f3d",
 				"prefs.lua": "b8332d48",
 				"route.lua": "5322c3a9",
-				"vehicle.lua": "1efbd936"
+				"vehicle.lua": "6096ef07"
 			},
 			"sha256": {
-				"client.lua": "332518f35b9fbb4531be4be55d73d4b77eb9900ae642010c8d5cffd10dee35c4",
+				"client.lua": "41df20f247901802b8b49234bb4745caf7a71b235317e3e496423a9e1a25e030",
 				"config.lua": "6f65cdaa1d6a3f423f39c5ded4cdc6e70c219f49019465abcb892ac89f75088e",
-				"fxmanifest.lua": "e7af1118d1517ebb5c90566216f2fb8e9460b2c298715851c6327888faf34c30",
-				"html/app.js": "5602a0618a3c8f38763fc1fbb3b09a33a2554cbd9e931a1293290b9de1f4c0dc",
+				"fxmanifest.lua": "8272a1eb944f8a0ec35411ee02b0b6117d03668e9a52b1fac6b083b523d2719c",
+				"html/app.js": "1233682130e90abedb7b3bdbcdd0387c34f3ae6a9b7165cc0a447cd67d50d82d",
 				"html/editor.css": "0358fa12bde6c44e2704348e66fd9e9110645ce0b1151a342087185e7c5ca64c",
 				"html/editor.js": "9d33491a619087e3cbb19cc6eaccb4706f19030c865921ada17fc15fec5bd518",
 				"html/index.html": "bdbee7c1427d7716435debea98d497f153284b4152e42b038acf1e4dc48b3f60",
-				"html/speedo.css": "83e3a97c9686234800bc0190fe8e0dde6cbaac0981840509c24857fef2b4ac09",
-				"html/speedo.js": "7645653526df45ba0ebf735d1d596567b6cad71b96c311bf14b87b46deca4a7c",
+				"html/speedo.css": "60d25fb70d2ccbab0f26bc74c4f6f7adaffc206f6ca3ed21387637813e7474d2",
+				"html/speedo.js": "c9018b91a1277ee079623944fcd225d945ce41f0e6299f692a760018468a971e",
 				"html/style.css": "281e0fa8e1ee7b49275be17f5b80dd5d0c1a258c7c57a88a935f98d9fa696dda",
 				"location.lua": "0a1f134dc8301e09eae870800bca03a2093300d82deca111fab06e0f0b6d03de",
 				"logo.lua": "d6825a2b3afbed22150504b4a60bdf8b886e8bd775c25e79c22ed36c6fb0c4f7",
@@ -554,11 +564,11 @@
 				"package.json": "b52ddc514f2ad73ef07778717419066922c6c5dd3ca63970d08df191c57f8788",
 				"prefs.lua": "8cdde2959b097ee03b6e80d0b125fc64936605388b10560aae92242f1aaa84c2",
 				"route.lua": "8257040d76bfe153d19960247d88bd6c8f5f1c1ac9dd7224279fc67307e07047",
-				"vehicle.lua": "90fa4c6edae59348fff5d4ff0b7a8dea869ce8ee9c9c6b99dc64c58aba1c785c"
+				"vehicle.lua": "daef3b872194f77d41d432135e11d8e4c57c4de47967064b8735d00ec745257c"
 			}
 		},
 		"coe_inventory": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"adapters/migrations.lua",
 				"adapters/persistence.lua",
@@ -1030,6 +1040,7 @@
 				"data/images/race_tablet.webp",
 				"data/images/radio.png",
 				"data/images/radio.webp",
+				"data/images/rental_contract.svg",
 				"data/images/repair_kit.png",
 				"data/images/repair_kit.webp",
 				"data/images/repairkit.png",
@@ -1099,7 +1110,7 @@
 				"application/lifecycle.lua": "2db40fb4",
 				"application/opened_containers.lua": "ee315601",
 				"application/player_inventory.lua": "916b5f6d",
-				"application/stashes.lua": "ed6be0ff",
+				"application/stashes.lua": "49f69750",
 				"application/state.lua": "6d4de425",
 				"application/storage.lua": "dc14811f",
 				"application/weapons.lua": "c60a9bac",
@@ -1109,13 +1120,13 @@
 				"data/coe_ammo.lua": "5b2f120d",
 				"data/coe_animations.lua": "2857a80d",
 				"data/coe_attachments.lua": "87fe1829",
-				"data/coe_base_items.lua": "c5de3ade",
+				"data/coe_base_items.lua": "a8cd8b82",
 				"data/coe_catalog.lua": "2e33b3fd",
 				"data/coe_consumables.lua": "34859c8e",
 				"data/coe_containers.lua": "b9a3f702",
 				"data/coe_food.lua": "e849dba5",
 				"data/coe_ingredients.lua": "958181f7",
-				"data/coe_misc.lua": "722fca3f",
+				"data/coe_misc.lua": "6ccf6cd6",
 				"data/coe_parts.lua": "bde663aa",
 				"data/coe_shop_items.lua": "c1bc67f7",
 				"data/coe_weapon_profiles.lua": "529f27e1",
@@ -1560,6 +1571,7 @@
 				"data/images/race_tablet.webp": "893e8820",
 				"data/images/radio.png": "d4ca8ece",
 				"data/images/radio.webp": "3a6975ba",
+				"data/images/rental_contract.svg": "163326dd",
 				"data/images/repair_kit.png": "9b0b459a",
 				"data/images/repair_kit.webp": "4189b671",
 				"data/images/repairkit.png": "e2bb220d",
@@ -1598,7 +1610,7 @@
 				"data/images/ziptie.webp": "d6194857",
 				"domain/config_schema.lua": "fa557084",
 				"domain/items.lua": "be3db9db",
-				"fxmanifest.lua": "aa114a0e",
+				"fxmanifest.lua": "7618e363",
 				"html/app.js": "e12ff17d",
 				"html/index.html": "69458a82",
 				"html/style.css": "4f0a8daa",
@@ -1607,7 +1619,7 @@
 				"locales/pt-br.lua": "936e80b0",
 				"presentation/bootstrap.lua": "1e19fecb",
 				"presentation/container_camera.lua": "956e318f",
-				"presentation/container_placement.lua": "9049ca34",
+				"presentation/container_placement.lua": "8429e057",
 				"presentation/container_props.lua": "3fef5e58",
 				"presentation/inventory_ui.lua": "ef43ed5e",
 				"presentation/item_animation.lua": "2e20b046",
@@ -1629,7 +1641,7 @@
 				"application/lifecycle.lua": "4bc6ddc3e986903409fcf19beb04522da34def9fd7cc5a9a2ffb7e41d01e41a2",
 				"application/opened_containers.lua": "0df65aa48360afaddeea8983a4bd5dc1a1b59649e4a2e1123ede1f27d7970c4a",
 				"application/player_inventory.lua": "5705483e3bb43c1f64809ca95d4a7dfef2a9e7559ab8ddba31dc2c46f786facd",
-				"application/stashes.lua": "feeed17440ddbaba461ea8cbd4e9cd566edca6b221d9447613e47e64d20d1fde",
+				"application/stashes.lua": "9fe5454e87f63455f2a901e5eb3ca45ea331061a8b695c3f0c5b6525aaf47a6a",
 				"application/state.lua": "7f8ec228099a984310bf463e978a8c25c67443c5b98b669f638192c08348cc8b",
 				"application/storage.lua": "2d3b5b013a6b7c833a77d86a229cf11c519f6ede43126c45662aa8528eb09ed3",
 				"application/weapons.lua": "5a857a74a7e4e344b8af7bd125176f535d48b9bb4b271ba84da67c6a6e692552",
@@ -1639,13 +1651,13 @@
 				"data/coe_ammo.lua": "7a1028aeb45a560966216efdcefa38e6d97699f7ae105262e91cf7f07357702b",
 				"data/coe_animations.lua": "d4ab3e431a29fdc1dec0ec25f6cf2f11ea621631fe2119a9651021266d9b53c6",
 				"data/coe_attachments.lua": "ce024ba3d7c304412ad2393754d0134af8c16c7abd3cea388f21edfcfb746ccb",
-				"data/coe_base_items.lua": "18a1cc5d7462452b8bb7b375d7125e4ceabab4f450742c1329fad609a257ffc9",
+				"data/coe_base_items.lua": "c3516131b31690bd23d6cb447d130aa68a0425978b8643a70eabd86f168b0817",
 				"data/coe_catalog.lua": "1fd0285f9008cde35e979274fa14b05690fd16dc715bdf20ed9b3cc2b14cef4f",
 				"data/coe_consumables.lua": "6790d27548138df0e0a61281302884fa0b3d6c1a9327231ba1aeb1362f2da06a",
 				"data/coe_containers.lua": "8d2c307eb162a214e330d0e1dacf7e74b8acd8f8f433e7b02e0dabde7e91217b",
 				"data/coe_food.lua": "45baeb792e7a560f3f74d998bac383bddff6510d0883ec3bc1edf05f5b62ae61",
 				"data/coe_ingredients.lua": "0999761842f5b110fb14382cf1e9ffa946adeb719018115b22c967c2386fe44d",
-				"data/coe_misc.lua": "f890a03bc42535f6caca1a7587bb96045f42eabc413d3bc90a8bae52110d283e",
+				"data/coe_misc.lua": "3e2698fe1c3dea7e3cca1b3e5187b5b23c4f7c7e4ef09faaefdb0fe2044376b1",
 				"data/coe_parts.lua": "51ea207073374ee8f5a989b86387dfe5b81765daa30752f437113a909e446b00",
 				"data/coe_shop_items.lua": "e001380409a64987d4333a366fc40a15589e12cf0c3c1d3f84b8e0c338ea2f79",
 				"data/coe_weapon_profiles.lua": "28cc1808d65e08246ddbb2c3528e4efc9764c475c34ab3b04d3b7927789bbd56",
@@ -2090,6 +2102,7 @@
 				"data/images/race_tablet.webp": "158ff00fa78dd61b4988320a4a6d34f55d6ab82a0d9fa98d83e30ed9fc0f2c78",
 				"data/images/radio.png": "101135cfba4011b975b31579939c96888eeb3729801b0e28c9dc43e96e927305",
 				"data/images/radio.webp": "5f47c7f6dd77d78b3c631501dee74c196fd07c594b0d0c5cdfde8f3730d903c1",
+				"data/images/rental_contract.svg": "e2da1319521798f7442a79e9f9435dc328a1071ab0f51432d9187c5c65f37ac4",
 				"data/images/repair_kit.png": "4a788d198aa521d4c9b017abe914f31b5cf0fd0ee1690370d3e55d7cd231b66d",
 				"data/images/repair_kit.webp": "3b372b07fa7c536881c554273f39f0231ccecb49f12d211e1b8bd93c337bf0dc",
 				"data/images/repairkit.png": "f01f74322d5573cec6577e313bf588c0ddfecd877c63c783376d9b532a97d8fe",
@@ -2128,7 +2141,7 @@
 				"data/images/ziptie.webp": "07830b8f835ac919482ca69f59559c8e41ae576c635d4e81601b47fabc37e3a1",
 				"domain/config_schema.lua": "31fbd1d17fa09dc27a9c78afd255854e2be0dd7b9cee74b1de78ec5a88341c68",
 				"domain/items.lua": "9c69335334214dead28c32bf22491016ca5881de474c0b34c216c2b15bda90b6",
-				"fxmanifest.lua": "d6144bb2153340537de8e44864f7f0eaa495497d3560939b3f9dc970240ca99d",
+				"fxmanifest.lua": "5249b78a4d36dd818c38acf1db0480ade0049ab8aa9630b99ff042dc9e066a8b",
 				"html/app.js": "f286efe2654ccda2f2591e089f578df39427b791b95b1c7a16606c195fd03f94",
 				"html/index.html": "bc35ff154e3a5ff144bcfadcec509e691dc835b5ed370b60deacee54d82d0243",
 				"html/style.css": "228bd7b39e7350ad6af11c58c92b867a56f17acc142c22c56d145393fe80de03",
@@ -2137,7 +2150,7 @@
 				"locales/pt-br.lua": "a47aa5e10e33f8e2ba64d1a43c1c22bc7a84a0ed6525a3ac108a68888a3a01e8",
 				"presentation/bootstrap.lua": "9b351dd2205cd512f320c5273dfc54e9a8f490eb40c49d2fb88670b6736a08d8",
 				"presentation/container_camera.lua": "55725262271fa9e09fc04215681fddef8feed8870fc8c5a81ec48ae65c026e98",
-				"presentation/container_placement.lua": "597f3c34b1f46c18505b114cc57f04c55a68b9387e6c79965114a685c3301574",
+				"presentation/container_placement.lua": "36941d5d796b6e57028e216e9ec59de4d172fcfe809849ff621593f1f99dc66a",
 				"presentation/container_props.lua": "9aa21c0b8ef293f78eaa5ffddf10a3028c5d784ca1c68328c38ddb3c81635674",
 				"presentation/inventory_ui.lua": "61f8542437bf6814ffddcbfede5c3055c2a5ade8780bf3032b7ca8223cf9679d",
 				"presentation/item_animation.lua": "41fb80a33ff895ebefd3eec5afabf65363c458915b6d6388235b9fbea70f4a73",
@@ -2151,7 +2164,7 @@
 			}
 		},
 		"coe_jobs": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -2181,7 +2194,7 @@
 			"hashes": {
 				"client/main.lua": "0267fc28",
 				"config.lua": "8e0234b4",
-				"fxmanifest.lua": "bb838a26",
+				"fxmanifest.lua": "a6319136",
 				"html/career.js": "f589d623",
 				"html/guide-view.js": "8f31692e",
 				"html/guide.css": "10d77738",
@@ -2207,7 +2220,7 @@
 			"sha256": {
 				"client/main.lua": "9f149530e96e6f3cdf9ac218346b8116551c65f9ee3ff5ae174d4ee30c7a535d",
 				"config.lua": "20843740e866c737235fa6a0fe8bd7a711f910f4d2dbff2901ee2f3517f15a01",
-				"fxmanifest.lua": "8e9f93124004a017f0b43ae8feb633205cafbd8b749fdd8f0740413aab8ef29d",
+				"fxmanifest.lua": "f02324ae7bc35dd765ecf3ad06502058d09699430aa04659b9b38e22e2d6894b",
 				"html/career.js": "c70a37cf5e0c3aa325f27557076fd84d6f82f16a9099e4cf72afe2e69b5bcee8",
 				"html/guide-view.js": "ee7025a62609b98093da7b2e5a41ec57b9cecce51b1289aec7ad417a0df0bfc3",
 				"html/guide.css": "4668d7d9fb22386bbac7324186ff2f78910a588ae9feb867ac20ffa59787a2f7",
@@ -2232,7 +2245,7 @@
 			}
 		},
 		"coe_loadscreen": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client.lua",
 				"fxmanifest.lua",
@@ -2241,22 +2254,22 @@
 				"html/style.css"
 			],
 			"hashes": {
-				"client.lua": "5dab6855",
-				"fxmanifest.lua": "f2db2bfc",
+				"client.lua": "089c9a23",
+				"fxmanifest.lua": "be1ebcd5",
 				"html/app.js": "ef22827b",
 				"html/index.html": "60e4d321",
 				"html/style.css": "a7627956"
 			},
 			"sha256": {
-				"client.lua": "94d0f0e5c32b44658f0341b643316914512cd502934b337090b17673a3de53b2",
-				"fxmanifest.lua": "b59a83875ffdca472fc320ec63c3987bb5c7c455e53e4668f1a1ba78d3f16593",
+				"client.lua": "3c33980cd6a592c7706670838668dbe7ad3c340bd21c6d724037d23e54e6f58a",
+				"fxmanifest.lua": "e245c032a3efa669fe9550acba252bf441bd6f66746650618bc8fc89b78adab4",
 				"html/app.js": "f10ff8bbe686d1e9eb9c2a1d7e34e59b6e5c372715ab4924304c4949eeaa5f13",
 				"html/index.html": "d83e01a9b4f398ed369bc5c8db5b498856a220e232dc0f067361cd485fd9ae4e",
 				"html/style.css": "58371a3061ff153f1cb60c713bda0e2275ad9e48f59116bec877579ebdb1b193"
 			}
 		},
 		"coe_logging": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"config.lua",
 				"fxmanifest.lua",
@@ -2264,17 +2277,17 @@
 			],
 			"hashes": {
 				"config.lua": "6578e6b8",
-				"fxmanifest.lua": "18183ef8",
+				"fxmanifest.lua": "3f91d183",
 				"server.lua": "5aa76a1a"
 			},
 			"sha256": {
 				"config.lua": "9b13cf48cdc1cb62f0c5887f5bfc50fbe646d272af909e522936337790fa5fbc",
-				"fxmanifest.lua": "f86f4f1b2be4e3e2e64739f8ee2f61de53b3959fe166af348fda7025276392bc",
+				"fxmanifest.lua": "ad0b647e9310e61487eaa2584ab9f9609c5f7a816e864586928d67740eb90ab4",
 				"server.lua": "af17e86712b110f4b7344c66e50a97f72ead3a3bf015a6fbbb8c8ce62f82531b"
 			}
 		},
 		"coe_map": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"anchor.lua",
 				"client.lua",
@@ -2288,7 +2301,7 @@
 				"anchor.lua": "be4e42ee",
 				"client.lua": "bf467198",
 				"config.lua": "e4e0b424",
-				"fxmanifest.lua": "8ef2f243",
+				"fxmanifest.lua": "73839bfa",
 				"html/app.js": "b2e5d97a",
 				"html/index.html": "e7c167cf",
 				"html/style.css": "66c2e165"
@@ -2297,14 +2310,14 @@
 				"anchor.lua": "bce8909e2391d89ed7cb6833bd52cf8b88b706c25bbf06f32309a3b3ad386d89",
 				"client.lua": "8845af2404813b5ffec8df31ba27566b04a01495f8b44fd46d565a0d9f12f571",
 				"config.lua": "dcc6785c40c82ae62dd53358ab02c39d5530187dbd0c351ba19c1c6048986051",
-				"fxmanifest.lua": "6883d1dc14f7e247e937d9e196ad0fc0feae3d507217027f58086a15a0a9224b",
+				"fxmanifest.lua": "d709169e3a46cc4287ec469105d28d58428a26bc98d972b576fef31fd2018534",
 				"html/app.js": "fda9c45660e2d3155e3729f958d1db9da7b3ed32cd50efbf53988afca580f486",
 				"html/index.html": "6c1d39de4696bc778b62fe8c745cbc4ea771e8a871cb29333a0aacbe4c8628c7",
 				"html/style.css": "8d7be8581236f4f0c9b9df848a9ab7ea43508237609b07d76893a34ae08e638d"
 			}
 		},
 		"coe_mobile": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -2322,34 +2335,34 @@
 			"hashes": {
 				"client/main.lua": "dafedb22",
 				"config.lua": "01471c63",
-				"fxmanifest.lua": "5241c615",
+				"fxmanifest.lua": "a0c6f168",
 				"html/index.html": "2ec96fd1",
-				"html/mobile.css": "cdcf7acf",
-				"html/mobile.js": "4c70609c",
+				"html/mobile.css": "a146a369",
+				"html/mobile.js": "a57c0caf",
 				"locales/en-us.lua": "43f34c6e",
 				"locales/pt-br.lua": "568657ef",
-				"server/main.lua": "0f403337",
+				"server/main.lua": "1e44e073",
 				"server/migrations.lua": "fa67e4c4",
-				"server/persistence.lua": "8a6bfb67",
+				"server/persistence.lua": "7c080451",
 				"shared/rules.lua": "6606b630"
 			},
 			"sha256": {
 				"client/main.lua": "95b13f88a6eb61d224be07db51fc530300e8b9716cadb8fb37e587e462df4879",
 				"config.lua": "2a7785cd72fa849d7b97da195fcb55c95868d0cd32b78cebaffaeffc23392ae6",
-				"fxmanifest.lua": "b281c8994e7c89f236f35295b028888143b0e07e46bd1950bac7ab9c7b071d6f",
+				"fxmanifest.lua": "df389cb0601c2f1dbc0946ece6ecc6041444c40fd95a3c81e9d6920c172780ef",
 				"html/index.html": "7558b0b50394afebf86245002568e275e1139234438043ada53f692e1b6c0575",
-				"html/mobile.css": "d0412eb0f69584d7a460c9a1893e2a35ae45347347c417fedcda1df6931567ce",
-				"html/mobile.js": "c7039a4a15bacab01563241dc576f47cf2338d3ecb79e9d68387050b8d9a772f",
+				"html/mobile.css": "4891b52898c191769bbd0c3eacf768dc4c4920e61c189cb63937d2f9250a4bbe",
+				"html/mobile.js": "412cb4792b323f996c5ff13bbffd4dc0c2b731f81f319b8e60efe322dc98461f",
 				"locales/en-us.lua": "9ce28f2c1f21a5bceabd91eceb0e98b149f583a68523c8e307c980484ee201a5",
 				"locales/pt-br.lua": "356a313ab9ab92217695831c2951dbafe7e6f3988e5954c23eb12bff8a28d1fa",
-				"server/main.lua": "9792bae7a06d4ed2d4359f02e6fdb453a29b4c92903c3c46017a832a1a4f553a",
+				"server/main.lua": "17bb312e7e18cad251d4801efb0d351bec5bf5c5631f4570b7916b0c6185207f",
 				"server/migrations.lua": "639484ee4c7446ef6d495ae520961be2d9bf5a64095db40c25bfe0c3f26704c1",
-				"server/persistence.lua": "28b464d66e447d4261836c7288f19445f4ffae53a6dcafba9a57c499c4e0aecb",
+				"server/persistence.lua": "f038d98dde9f0f386eeca06b6913152f31e93888fcb5af17bf764c995a4489dd",
 				"shared/rules.lua": "25a6c731df8b4c6d8a7530a592f5e942f33ef98014baf6316ede1c8e73de3fe9"
 			}
 		},
 		"coe_needs": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"adapters/migrations.lua",
 				"adapters/persistence.lua",
@@ -2363,29 +2376,29 @@
 			],
 			"hashes": {
 				"adapters/migrations.lua": "b1c80d4d",
-				"adapters/persistence.lua": "37316259",
-				"application/service.lua": "8589490b",
+				"adapters/persistence.lua": "c9fea0fe",
+				"application/service.lua": "2eba7887",
 				"client.lua": "c9863908",
 				"config.lua": "a01c7d78",
 				"domain/needs.lua": "751ccb3f",
-				"fxmanifest.lua": "9de8eaac",
+				"fxmanifest.lua": "735a2567",
 				"locales/en-us.lua": "a25daaaa",
 				"locales/pt-br.lua": "add4650d"
 			},
 			"sha256": {
 				"adapters/migrations.lua": "505d6713ecf4bbce599fb35104422f9cb41c469ed32bd6a7ec6f711827156e5f",
-				"adapters/persistence.lua": "24289199670b2f1767ff72043cf855663b71c083efa31eea5129fc2c012b54f8",
-				"application/service.lua": "be2f162ba9ea41a1823cae00369a593b646647e42e70279ba0ce9b3e3d89a4c8",
+				"adapters/persistence.lua": "16f2ef805993cfdaef3bce842ba8938690f25cb6b00c240696ee395af591d4d0",
+				"application/service.lua": "ff367a6b294aa847f7a7d0c52e04245dd3fefdebaa38f914364fd74c620996f1",
 				"client.lua": "8358aacb63428c1e2539a9b0ae46320dabd75a54153fd6f90dc91c74332a4378",
 				"config.lua": "978a16ccf258f4204bf249cd47850b688b1a8c323e673ca20d616082542ac7b7",
 				"domain/needs.lua": "79d2e2bb43c446426896db2988468f8a5957458fc12d81c2a218311f6f7fdd41",
-				"fxmanifest.lua": "a70c6c716a0ba0ee80f37e591942f8319cca384576d8e23a41db6bb93095ab44",
+				"fxmanifest.lua": "1a77afb97afda36c9f9525d742d296a7cd7f1e8825e5eff62235eee4ffb8bc2b",
 				"locales/en-us.lua": "5afe50e8c869323befacc89047f24e207c1a5aaf5b7edecd94194ef72d49a540",
 				"locales/pt-br.lua": "f9af4a6853a367ddfb21c57a98fa6ff68ae1490f521c8d959eff520b69c0a781"
 			}
 		},
 		"coe_notify": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client.lua",
 				"fxmanifest.lua",
@@ -2395,54 +2408,72 @@
 				"server.lua"
 			],
 			"hashes": {
-				"client.lua": "d73d97f5",
-				"fxmanifest.lua": "e8ccb0f2",
+				"client.lua": "c7c6449c",
+				"fxmanifest.lua": "11cd15dd",
 				"html/app.js": "ab297ed3",
-				"html/index.html": "06191492",
+				"html/index.html": "11dc938f",
 				"html/style.css": "75bf52ee",
-				"server.lua": "4a7b3dd7"
+				"server.lua": "1837ffa1"
 			},
 			"sha256": {
-				"client.lua": "7907f823a2ff86e7b2e9ee677cc11a5c74ad04c3b11477a2b610df37c46924f5",
-				"fxmanifest.lua": "108467715f1f2042640fbb15b49c9b39d5857dc49f552e90ac75a3755d72484e",
+				"client.lua": "104dbbdbd0b3ab28f6864743852c7e4f34be66bbb4ddc3f1418ea431f1ed2312",
+				"fxmanifest.lua": "95a49347931da0254425ab690e0ee13f565f7174f3d954b1aa6363e29ba355ad",
 				"html/app.js": "2615db15f69278ab5e7b0031465a21bcc278625971cc3a0fa20c6639eb0eb642",
-				"html/index.html": "026bbbed5b7c6cb8e84db1fe4276fe9e838e9d6b4bced2dfdfbffe7a73adffaa",
+				"html/index.html": "6b4fa19fed397239b5acb17456c26b2021de4fb6aa0cdc997aa504a574781b99",
 				"html/style.css": "f25283df0e2a766bcb2e5717bc446a5c22932d83c23f4d12195717b3c00f520f",
-				"server.lua": "821521577caf5e59345b46a47c4469dff4e70e2a3f4fea371048571669f58171"
+				"server.lua": "c5312bf84394bcfcc678fc2ac78a8050b3ea7bfa07daf2425bceeb943e2cc5bb"
 			}
 		},
 		"coe_rentals": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/main.lua",
 				"config.lua",
 				"domain/rules.lua",
+				"domain/stations.lua",
 				"fxmanifest.lua",
+				"html/index.html",
+				"html/rentals.css",
+				"html/rentals.js",
 				"locales/en-us.lua",
 				"locales/pt-br.lua",
-				"server/main.lua"
+				"server/main.lua",
+				"server/migrations.lua",
+				"server/persistence.lua"
 			],
 			"hashes": {
-				"client/main.lua": "91f906ac",
-				"config.lua": "64d7b2b8",
-				"domain/rules.lua": "cd401196",
-				"fxmanifest.lua": "4db0985a",
-				"locales/en-us.lua": "f23b0859",
-				"locales/pt-br.lua": "034ec53d",
-				"server/main.lua": "df64633a"
+				"client/main.lua": "6d7e10c3",
+				"config.lua": "607dffdc",
+				"domain/rules.lua": "103727c7",
+				"domain/stations.lua": "03fbfaf1",
+				"fxmanifest.lua": "9aec4ab1",
+				"html/index.html": "d4914722",
+				"html/rentals.css": "cb7d4c59",
+				"html/rentals.js": "7e96e432",
+				"locales/en-us.lua": "0e3164b0",
+				"locales/pt-br.lua": "fad11ee9",
+				"server/main.lua": "a0940039",
+				"server/migrations.lua": "26b49cda",
+				"server/persistence.lua": "cd42129c"
 			},
 			"sha256": {
-				"client/main.lua": "25386fac25480335947735340cd1b7cf7f16d75957e1ade2b8817bb4b0b78973",
-				"config.lua": "a6461933a8dd1ede53a765a07a1f49744f09aa40790af2b2b4286038ec8cb0bb",
-				"domain/rules.lua": "a97a1cc75b8a5ffe7bd04286a183d11ec0f95331c7adfb45292ebde294b33f99",
-				"fxmanifest.lua": "04af22328f8890f6c5cec8aabb4819acd952ee60eb808bdb553216b773535d3d",
-				"locales/en-us.lua": "dfe7835e0a7ca0b2db4caa94954a6030ab9555d4737fcb5ac5ea7ebedb54ed78",
-				"locales/pt-br.lua": "512c159b28415f5c9b1ea3ef51505396acbd6cf32f81416c1f3125dbf754ad0a",
-				"server/main.lua": "25d371be87cdacf97c3f1cda04a9a4e9c9dc8a294a19b1c177448498efbd1a25"
+				"client/main.lua": "69c3c4530f3faf6084b4c2ab7ddfb0d5e3209a318178d1335e9c9e0befe1aaa7",
+				"config.lua": "ccfda14dfcb5e80ab6cacd7d15a4ba06932d50bca2f85b3530784198f1ec3e21",
+				"domain/rules.lua": "6c259d08d96e51052682666390688116cfb927bc333d26fd91c409696a24a39e",
+				"domain/stations.lua": "72cc80413ce1b32f284320bb90b1333e74527568e4d9f408636856f50192d7ae",
+				"fxmanifest.lua": "9d9192d169d93d01f715c41aa0c6373927bc914bd8c3d343840442ae6e43858d",
+				"html/index.html": "13202d7665cb92b96c664d90a112293db4449e22a3cde995bd95ad6d24dce384",
+				"html/rentals.css": "34ff9d14f66091ca81eeaa083baf2e5de30736ae737ba4bc54cead2eea192cc6",
+				"html/rentals.js": "162e8e287f283dd5cd6e8ebe55514db27d24666f0428b64b3d977f1209d38660",
+				"locales/en-us.lua": "3a20c5dc036cca678c3482d339b6b54f3b1c5f2cbe618821ad7bce607eaf7ed3",
+				"locales/pt-br.lua": "a4e8b545f8a00f5def019b3398b39aabdb07e82155bd932fcaffc4a57c26d26f",
+				"server/main.lua": "799c3536ac225cad2e8d6b15d635e391d389d54248be5a88f545f4f66720a7a9",
+				"server/migrations.lua": "fa0e25431e878546db8a1ab1d5c98bdf03e5932ee24acee2490c2ed929cc1fce",
+				"server/persistence.lua": "ebc99f8b91dae64a1a1968386a534a2382c0bf4a22af6a82997e4a80c75c11a0"
 			}
 		},
 		"coe_shops": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -2461,7 +2492,7 @@
 			"hashes": {
 				"client/main.lua": "9c5bbcb4",
 				"config.lua": "2705c19e",
-				"fxmanifest.lua": "e4f99cb4",
+				"fxmanifest.lua": "3df2dc52",
 				"html/business.css": "348f7c37",
 				"html/business.js": "fd5a7a91",
 				"html/index.html": "bb973a7f",
@@ -2476,7 +2507,7 @@
 			"sha256": {
 				"client/main.lua": "52c5b7a1f56214eb536993bb1b71bb2e572cb30abf61436f3f49a3e70275fabf",
 				"config.lua": "291d56badc5b5f1e3b6b6f99cb0d5cee365456d34828e4fcd4a08826cacd072a",
-				"fxmanifest.lua": "bc02b4a8a09f670946bf95f71cbe3da001441448ee98b0d6caab1c920b861fc7",
+				"fxmanifest.lua": "3a0c7af2e0cf7ffe12f0e5f1039cdc1cb059fb3879814cdefa7118a10852f2d6",
 				"html/business.css": "31913b5b95f992b713a1b0abc80406f58b1813c4f8a3b0088bd6f4e6e38db044",
 				"html/business.js": "cd1b9389cc6819fe28a5fbf1836170fd590d5a937d4ab0c599685173dd696f4f",
 				"html/index.html": "54643722ae5b977f36136bcf5e1ddacc3f5976dc1b9d148d7ff2e97d7231855c",
@@ -2490,29 +2521,32 @@
 			}
 		},
 		"coe_spawn": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client.lua",
 				"config.lua",
 				"fxmanifest.lua",
+				"html/index.html",
 				"server/main.lua",
 				"server/migrations.lua",
 				"server/persistence.lua",
 				"shared/positions.lua"
 			],
 			"hashes": {
-				"client.lua": "51e54fa7",
+				"client.lua": "2c68fa11",
 				"config.lua": "57316801",
-				"fxmanifest.lua": "aee1cfe8",
+				"fxmanifest.lua": "1bac73c1",
+				"html/index.html": "5062af7e",
 				"server/main.lua": "d1558016",
 				"server/migrations.lua": "50df7bda",
 				"server/persistence.lua": "8c98668d",
 				"shared/positions.lua": "54182078"
 			},
 			"sha256": {
-				"client.lua": "6d90585783658c0658e6ce2d16a646139203922f27b2ac7e8d018efda8b835a0",
+				"client.lua": "e632e9515d63467f396f4cca95c875570a5d03d8abdf29979214fe0b532b6f08",
 				"config.lua": "130e14e2c26d10aa62a288f10be00c02fa2895a1e971dbefad9cb784bde0813f",
-				"fxmanifest.lua": "818931b84a612fcd3b6c474139e742ecb77b95761ee1b06fd76bfbf1efa28909",
+				"fxmanifest.lua": "c80bc48a4a45ce8943b28ab45c79c3205e27a62301149d00b16c5cc2764e994f",
+				"html/index.html": "58c9c6a3746b6410ea92fb9f484d6f0ea8211b9b8a2f88d8dc81d7772603b345",
 				"server/main.lua": "4e216fc2cbdb1bbddab8a866a00512431e47aa273b0c4ee5e7d6a43f297676bb",
 				"server/migrations.lua": "974ab408dc8cdb23027d6e47f1116ccc5991a6b6d88de6b9ac4e2874375e0430",
 				"server/persistence.lua": "5cef4a355b7ac100b349867c2f6b4e55090fab2635dd96881f07606890f681d2",
@@ -2520,7 +2554,7 @@
 			}
 		},
 		"coe_staff": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/main.lua",
 				"client/noclip.lua",
@@ -2536,33 +2570,33 @@
 			],
 			"hashes": {
 				"client/main.lua": "52d6f59e",
-				"client/noclip.lua": "fe0e2ada",
-				"config.lua": "55c1d0f2",
-				"fxmanifest.lua": "e9160b8f",
+				"client/noclip.lua": "dc570acc",
+				"config.lua": "f3068092",
+				"fxmanifest.lua": "4a507e54",
 				"html/index.html": "cdc20103",
-				"html/staff.css": "9ec881ec",
-				"html/staff.js": "3cfce458",
+				"html/staff.css": "bba675b8",
+				"html/staff.js": "80895253",
 				"locales/en-us.lua": "aeeb85ac",
 				"locales/pt-br.lua": "b1df95c5",
-				"server/main.lua": "d48d9521",
-				"shared/rules.lua": "77a0467c"
+				"server/main.lua": "61b8aaa7",
+				"shared/rules.lua": "42a571c0"
 			},
 			"sha256": {
 				"client/main.lua": "5cf72f9759e6b8b6fbfd3a46b0144258bdcbb3ecb80612d229f1acf0408a0865",
-				"client/noclip.lua": "0af52851f3b3ac68abddfb6c47242e77ab5af2a27d9e77265659d9c8ed5bc67f",
-				"config.lua": "357539d969e07e4a013faa60f777225238ca19e3d41379117eacd95cc0d75180",
-				"fxmanifest.lua": "8447d03da81f87833fb3bc42b5561c8df21f07e8f1d74736dca2387df5b70505",
+				"client/noclip.lua": "e8114abe7861e3dbfaa8e03917d97d25ced95d39f51bdd073a00151bd02d4756",
+				"config.lua": "80cba3f2ae556a22c601831d368a41f1819c787fba09c6d4d95b6b57c698e639",
+				"fxmanifest.lua": "50de380225f62fca6bb834bc3b8358b96937c569556debdf028a062c271d61b0",
 				"html/index.html": "fee64c09aeaa283b684351e72a6de4efda3ab399406ff07a56c1aec23402c8c1",
-				"html/staff.css": "584f192ab9f82ca344beab128fb4d947ee22b9d8d33aaceb37600d5cf252839e",
-				"html/staff.js": "e921263acfebf83629074d10a7f574499db34baa71889f9b6c95e5de0667e7f6",
+				"html/staff.css": "6430d25ad0bb4127c91d0e0b332a5a385c7c6e1da64efad15cd76a3aa2104127",
+				"html/staff.js": "386cd22091389869d2eab1fddcea11ac570287445b289719cf972fac98b73c70",
 				"locales/en-us.lua": "a08b1904105af73dbb9d77b36c0636c69ba4dc8128e93ab6f8971015d49d1617",
 				"locales/pt-br.lua": "04d727c843d9130aa02c06a1880f0655361d7d75cfb0b21c9f277dec30474c92",
-				"server/main.lua": "f8d16be98ec55af0e08a10c11e934063b03c7639560a124559c8d843f91fe326",
-				"shared/rules.lua": "a737d3a1044ec9d44357c08bb52b1c90ad8717e627680c6f8d9d3632469e0119"
+				"server/main.lua": "0c14654615558f72dc2a7a7f7f68646e9b38112a8ab1933b95289f84a82f4c80",
+				"shared/rules.lua": "220876a6a0d0a8901305c0abdc894d8c309343a3090e37d27cfc48ffce615426"
 			}
 		},
 		"coe_supervisor": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"ansi.lua",
 				"client.lua",
@@ -2579,7 +2613,7 @@
 				"client.lua": "f277035a",
 				"config.lua": "d345f876",
 				"fs_writer.js": "ea1eb71b",
-				"fxmanifest.lua": "caec7708",
+				"fxmanifest.lua": "37a1afb1",
 				"plan.lua": "cda7dbb8",
 				"replace.lua": "178b65eb",
 				"server.lua": "efd4d2f9",
@@ -2590,7 +2624,7 @@
 				"client.lua": "b32677fc2da077aaad4840e50742a238fe95f45085aba6ab61c43b1d8a8c0408",
 				"config.lua": "2c72eda69a36bb9509983bf4c2f1dacd2b93770f3835ccf575013af3ef438dc1",
 				"fs_writer.js": "e16f6e805c33c3fed814f920f0c764f7ec49ae436b7ccd03065b2787b5328649",
-				"fxmanifest.lua": "06571b13f7254f4dd34896d90f992ceb2ad20e5dcad05bb4435aeec9de7ada1a",
+				"fxmanifest.lua": "8ae66b3923c678fabec4ee55baf39c53e3b086a647f545ae475c831c2d21e7b0",
 				"plan.lua": "060bde40f237f74dae15e3b98babc8ca8bc0bb0e91883dd49a611fb7d4e7c335",
 				"replace.lua": "636f1d8879a102d0b2cfac5dec451bab4da8c9b43d93961ba5487b99d19fd4c7",
 				"server.lua": "75c510f7431520ca4d02e061982a77dee661fc94a73f662299ad74212f1c1a7b",
@@ -2598,7 +2632,7 @@
 			}
 		},
 		"coe_talk": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/main.lua",
 				"client/phone.lua",
@@ -2621,13 +2655,13 @@
 				"client/radio.lua": "5f7bfc1a",
 				"client/submix.lua": "aecc1da4",
 				"config.lua": "6cf6e369",
-				"fxmanifest.lua": "6454fa4b",
+				"fxmanifest.lua": "a42b7634",
 				"html/app.js": "236ac73c",
 				"html/index.html": "d515646c",
 				"html/style.css": "686f52a8",
 				"locales/en-us.lua": "7437e97c",
 				"locales/pt-br.lua": "72230605",
-				"server/main.lua": "2ca17ac4",
+				"server/main.lua": "0048728c",
 				"server/routing.lua": "b43d81fc",
 				"shared/rules.lua": "d747deca"
 			},
@@ -2637,19 +2671,19 @@
 				"client/radio.lua": "1b5046f9517269545d94f990e38e1c89d4afe07c541f8405e07798bc438be831",
 				"client/submix.lua": "01f74c1a91b49a3520ae7403ef9f5591939a29d4bdbff967a04398e7893e7bc3",
 				"config.lua": "d36db245abe398edd7c8aeda81c9735992c5d026e44b4ec13f67956b3db3df85",
-				"fxmanifest.lua": "76c6705ea07544d32590a122e8a9428ef75d02fce70c63369e5c93be192ab2e2",
+				"fxmanifest.lua": "71aabf8f157736fc04bb9b8cf356481dd7fdd1e622d2b3d8a4cf212fc3442bd1",
 				"html/app.js": "788f07e4f508368e9941843f79adde2d8fd22ae0b9cdef3da20d0c2c1870e6ad",
 				"html/index.html": "10c5be078e177c5ff33c537a655bc612c4d92bd7207a2a36ce828737b9322da3",
 				"html/style.css": "14074bcedbae1b61e4c0cea71bb39e1f794b205a87be25c654fa284417be7403",
 				"locales/en-us.lua": "9cf9b8fe2e9eedc7409c9f213c396f75082091997536d9648eff7a4a306e15c6",
 				"locales/pt-br.lua": "5a1c6859ceaa04bc7096fca4242c754b546f81eb0f7eae1f13fb3dd22a9480d2",
-				"server/main.lua": "84924171ab906f185c307e74391e076aa86c68c437eb3a8b3ad54dba98e169ed",
+				"server/main.lua": "7cd7282f700b7459acf04a0bd758ab287231b7b839e79b381dc4cb50794a527c",
 				"server/routing.lua": "343535eab243127d1694e8cbbdee9218b8d69dea43312e77ec937b73405c0cac",
 				"shared/rules.lua": "878f6ecfae44ecfcde7efb3faf665dbee5541df4b26f550766ae4ea51ab7a28f"
 			}
 		},
 		"coe_ui": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -2672,15 +2706,15 @@
 			"hashes": {
 				"client.lua": "11890ed4",
 				"config.lua": "e494f55f",
-				"fxmanifest.lua": "2cb0efb7",
+				"fxmanifest.lua": "f3838ec2",
 				"html/apps.css": "7af8f0a6",
 				"html/callout.css": "153e10ab",
-				"html/components.css": "3814aa1d",
-				"html/components.js": "55ecd0ec",
+				"html/components.css": "9f58518c",
+				"html/components.js": "e16f4393",
 				"html/panel.css": "9659b00d",
 				"html/perspective.css": "b393c959",
 				"html/prompt.css": "f6cbc45b",
-				"html/prompt.js": "5f20c565",
+				"html/prompt.js": "54a86d49",
 				"html/styleguide.html": "c6131292",
 				"html/surfaces.css": "e4e0e24f",
 				"html/tokens.css": "77617142",
@@ -2691,15 +2725,15 @@
 			"sha256": {
 				"client.lua": "9290f7095c4321feb919448292d61d5030be9711b951b83556954bcd4292495c",
 				"config.lua": "e533d6d31f6b5c4ef8e7b33bdb8a682677f8c4267336784574312e16cc1059d9",
-				"fxmanifest.lua": "29887916ff6dd78ebf8d8689ec8424e83c85f176e03664cf75c9933052a955d2",
+				"fxmanifest.lua": "5e01c04b3073aaa6ad352e5386d5d948d55d7fb124d6c45c6d4d35521569b7ee",
 				"html/apps.css": "8d4a31be0f45a072c1fb12b8aec437c97e41d241a18f298e2935c9886ea26441",
 				"html/callout.css": "30bb7745687316f0123b7f18ca832beab0ea94746a4b3d35f143ca3bf0e7aa12",
-				"html/components.css": "9b07b3bf95c53b06b1be7bf2a7cfe23a15b296798ee57b622b06b08466383a45",
-				"html/components.js": "a524f106db7a63f8b8d417994dcd3eb06c513a5a9b4ef60bfc3dc53d3c5bad3f",
+				"html/components.css": "f438b59b8f6230634df94dca566b4f146d8c8fff20cf173afb545c94d3678417",
+				"html/components.js": "d4f841e6ee43aa30f1f339e75dedb87ae627bb13f7058b83a81d29441e54e397",
 				"html/panel.css": "5916a0f8c0718d2220180e1f3d3b94c10877727d997818a76b3ed24b3eb84c41",
 				"html/perspective.css": "5a6b91b7ae7e43edcca9ed584c5e7525483869193a13e471e536ba7edefbcb30",
 				"html/prompt.css": "d80d5ae389976b3053bc7950b57e98e7701e8e1e9e7af3cbeee068a4f7937037",
-				"html/prompt.js": "bd1dfa1a0faf1caa6c788b393c0219152c1f53ac7bb9a93839aad5689657a74e",
+				"html/prompt.js": "c692f29d763626dce3592b6b8880d335417418943ad79e64aa3c01e9afe9b2b3",
 				"html/styleguide.html": "88eeeb2421635eea69633558d40e49f3baa93ef9b2882ff7cc29eb9036ae554a",
 				"html/surfaces.css": "9392397ff9e5fc4fc7c6cd4297415aba5434287de3f834a594fb31cfeb358480",
 				"html/tokens.css": "85f91d427f82bf65d882a7a5aa4c43a97528eefb9544e70b472d9e3c3f77904e",
@@ -2709,7 +2743,7 @@
 			}
 		},
 		"coe_vehicle_catalog": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"config.lua",
 				"data/native_vehicles.lua",
@@ -2724,7 +2758,7 @@
 			"hashes": {
 				"config.lua": "d1ae0b55",
 				"data/native_vehicles.lua": "b6825772",
-				"fxmanifest.lua": "7907b2bd",
+				"fxmanifest.lua": "90815350",
 				"server/catalog.lua": "873b33ff",
 				"server/main.lua": "5bc0f98f",
 				"server/migrations.lua": "cf70c3a2",
@@ -2735,7 +2769,7 @@
 			"sha256": {
 				"config.lua": "fbd7ac2da02a5153ad8f1c31abc4edf89d2d68274ae034b6268e1076c03bd6e9",
 				"data/native_vehicles.lua": "63a3f179b395c7c1ccdf3786ce83f6b57ddaa736485a608a5749ba52dc447a34",
-				"fxmanifest.lua": "f07b3df3d4231bb3cb477e32aff8a2580c9fe8db7a002c33be07d7152797e190",
+				"fxmanifest.lua": "c64f0b4f1a7e8fcfead5c50672148e039a53e825653485a40cb5f650134c5268",
 				"server/catalog.lua": "8fc34ecdc893e0069b755152be6c02e4eca2522e41313b74408e0bca0da43bcf",
 				"server/main.lua": "6616861510b2cf191e88d4a32e3ff93692c6846f59384046e27da5fd2a38a250",
 				"server/migrations.lua": "2c538106fd9f45ea6ac96d69ba908978da359c7a8829ebd0e734da1841ba7e20",
@@ -2745,7 +2779,7 @@
 			}
 		},
 		"coe_vehicles": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/keys.lua",
 				"client/mileage.lua",
@@ -2762,14 +2796,14 @@
 				"shared/plate.lua"
 			],
 			"hashes": {
-				"client/keys.lua": "7fdef6e1",
+				"client/keys.lua": "6643aca2",
 				"client/mileage.lua": "a364ea92",
-				"config.lua": "ec7a90a5",
-				"fxmanifest.lua": "45a89317",
-				"locales/en-us.lua": "b065fc55",
-				"locales/pt-br.lua": "4a33b5a3",
+				"config.lua": "f5634ec3",
+				"fxmanifest.lua": "e01306c6",
+				"locales/en-us.lua": "c1a5d05c",
+				"locales/pt-br.lua": "e20984eb",
 				"server/keys.lua": "1d721ffc",
-				"server/main.lua": "5b0309a1",
+				"server/main.lua": "4a03935b",
 				"server/migrations.lua": "db41cb19",
 				"server/persistence.lua": "9a830c64",
 				"server/registry.lua": "e698114c",
@@ -2777,14 +2811,14 @@
 				"shared/plate.lua": "e95e0129"
 			},
 			"sha256": {
-				"client/keys.lua": "09c5325d1e1019513df212b17df5e592f03a76bed67066ffaec4fdb6e0643178",
+				"client/keys.lua": "89ecbba726413a761d30da38b25f5877bbeab794ee02139c7e5bc0a3cb97021a",
 				"client/mileage.lua": "2a22d93f374c32e970ef9c002708a901769bd15160a7537ed0e6d12c05745aac",
-				"config.lua": "fe70281de974a94bafe3cb5ada373ac806f96f06b360bb1423023598c88ad4fe",
-				"fxmanifest.lua": "0d2fee5429880e127718b2220fde1a208db9bcdb9797db78fd8905a0289a23b8",
-				"locales/en-us.lua": "ff829d25be13575166b645201f2846d891d91506d66777205c4ad5db73ec5e3d",
-				"locales/pt-br.lua": "5ed61ed17fcce94fd7652107d8d60e72f9286beb000484357fcba6a3a642f881",
+				"config.lua": "0cfaf8642313b21d55e48d9edc717a308dc2038ef3f5fc197d4d1ba868b5971f",
+				"fxmanifest.lua": "3d9765601f47c465b7613915e62ef83f04979f21199f8cfd1223ccf44251c727",
+				"locales/en-us.lua": "0be0a1396525253eb4e04e22de18bc6cb17a9d669a57fd34a8d12092bae794a3",
+				"locales/pt-br.lua": "19944dd5c5de7716271447603363daec60bef192a2c1f46f92ca4382c0c454bf",
 				"server/keys.lua": "ff9a8e17e4010e53b864a1f3be5cf3265fdb8a0e34e338e8bd3f4547e0ee34e5",
-				"server/main.lua": "0054c435054e8597a406c4f4ebc307538174988d0f30581b6add04b0ca916e9c",
+				"server/main.lua": "975360072dc299f7817c16231cd96b44134d5379861685fe912e33358dd6a075",
 				"server/migrations.lua": "70889f02d39b09dde79b9be0e4ddc2bd0e432941be30f52cd2e8546f664ca3a8",
 				"server/persistence.lua": "caeb912ffa93e5527670428fc164dc3255d74e4b4ee5e0ec6a81ec5ba3084006",
 				"server/registry.lua": "6378c1495121d02a53752f7dc30983d45b954a496af239d4f22ce9b13a8b0320",
@@ -2793,7 +2827,7 @@
 			}
 		},
 		"coe_workpad": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client/main.lua",
 				"config.lua",
@@ -2811,7 +2845,7 @@
 			"hashes": {
 				"client/main.lua": "339b489c",
 				"config.lua": "3c282dcb",
-				"fxmanifest.lua": "2329769e",
+				"fxmanifest.lua": "c113af79",
 				"html/duty.js": "3fbead3b",
 				"html/freejobs.js": "a31742c1",
 				"html/index.html": "78bd0bc8",
@@ -2825,7 +2859,7 @@
 			"sha256": {
 				"client/main.lua": "ac4ee074e847017239177acfb4ecb8e8a30bd0225c676acc08cdfffcf88070a2",
 				"config.lua": "2df75968789606e9c16a1e2249e8df26eff07185c52c85a811fb582426e7a5e3",
-				"fxmanifest.lua": "05b706f3b7a2175f39599f6e4ec73e65d4a81f9a4aa81e2e55479b3778c4b1bb",
+				"fxmanifest.lua": "5912c572642e9c922df806ad7f23789628d819dd7719b4296c21188f6e6b8fe7",
 				"html/duty.js": "c98199a89cefa0f6ab572a8ac65bf66e5f512aac2f8a2fc0d8142d6c9b72884b",
 				"html/freejobs.js": "16d6cbcf11a8733ebc467787ef73ea4b29f460dd5f101af4ae13f43a981c4464",
 				"html/index.html": "a173e792fbf81c9ebc37cffef705c15747f1173ebf87a1c96822035c9821368c",
@@ -2838,7 +2872,7 @@
 			}
 		},
 		"coetarget": {
-			"version": "0.1.0-beta.13",
+			"version": "0.1.0-beta.14",
 			"files": [
 				"client.lua",
 				"config.lua",
@@ -2850,7 +2884,7 @@
 			"hashes": {
 				"client.lua": "996e8201",
 				"config.lua": "d1b94f35",
-				"fxmanifest.lua": "5653bfc1",
+				"fxmanifest.lua": "144ddd3a",
 				"html/app.js": "4ad7324a",
 				"html/index.html": "c8789ece",
 				"html/style.css": "222d2579"
@@ -2858,7 +2892,7 @@
 			"sha256": {
 				"client.lua": "3d209a9369220c981c40b3e529b6d40301ac6f889c2f731d04981b6d99a19f15",
 				"config.lua": "9260d66733899698cf36920f2bfaf26f13aaa0f9f8ebaf513c62bde51e9adaab",
-				"fxmanifest.lua": "feaffde191d3617c4489f5143dd001c91a350c083272968ebce225e3e7013074",
+				"fxmanifest.lua": "147b7b44d080cd900df5dc4fdc147b21542ea76f51f5b96aeb2273a492257f06",
 				"html/app.js": "f456b75b3f2e0ebbe41f5f6e86eda5ff2506678b3acc19201960b37362973947",
 				"html/index.html": "ec23a92830bc07c9e7a78ea3ead6a673c6f1593cc53f6ca400b04a18a34aa425",
 				"html/style.css": "1c5272d37a4f14a76975f9f44b11a7681f884595905f6e086c489cd0b0bd6b30"
