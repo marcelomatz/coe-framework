@@ -110,10 +110,25 @@ Core.Events.OnNet('player.loaded', function()
 end)
 
 -- Interações do Hotel de Nascimento (0.00 ms em idle).
-local function showHelp(text)
-	BeginTextCommandDisplayHelp('STRING')
-	AddTextComponentSubstringPlayerName(text)
-	EndTextCommandDisplayHelp(0, false, true, -1)
+-- Usa o aviso de interação padrão do coe_ui (o mesmo dos imóveis, banco e garagem). Só reenvia quando muda.
+local promptKey = nil
+
+local function setPrompt(key, title, subtitle, label)
+	if key == promptKey then
+		return
+	end
+	promptKey = key
+	if type(SendNUIMessage) ~= 'function' then
+		return
+	end
+	if not key then
+		SendNUIMessage({ action = 'prompt', data = nil })
+		return
+	end
+	SendNUIMessage({
+		action = 'prompt',
+		data = { title = title, subtitle = subtitle, options = { { key = 'E', label = label } } }
+	})
 end
 
 local hotelLoopRunning = false
@@ -149,6 +164,7 @@ local function ensureHotelLoop()
 	CreateThread(function()
 		while true do
 			local sleep = 1000
+			local prompting = false
 			if characterLoaded and currentHotel and currentHotel.enabled then
 				local ped = PlayerPedId()
 				if ped > 0 and DoesEntityExist(ped) and not IsEntityDead(ped) then
@@ -165,7 +181,8 @@ local function ensureHotelLoop()
 					if dEntrance < 15.0 or dExit < 15.0 or dStash < 15.0 then
 						sleep = 0
 						if dEntrance <= 1.8 then
-							showHelp('Pressione ~INPUT_CONTEXT~ para entrar no quarto do hotel')
+							prompting = true
+							setPrompt('entrance', h.name or 'Hotel de Início', 'Entrada', 'Entrar no quarto')
 							if IsControlJustReleased(0, 38) then
 								DoScreenFadeOut(400)
 								Wait(450)
@@ -175,7 +192,8 @@ local function ensureHotelLoop()
 								DoScreenFadeIn(400)
 							end
 						elseif dExit <= 1.8 then
-							showHelp('Pressione ~INPUT_CONTEXT~ para sair para a rua')
+							prompting = true
+							setPrompt('exit', h.name or 'Hotel de Início', 'Saída', 'Sair para a rua')
 							if IsControlJustReleased(0, 38) then
 								DoScreenFadeOut(400)
 								Wait(450)
@@ -185,13 +203,17 @@ local function ensureHotelLoop()
 								DoScreenFadeIn(400)
 							end
 						elseif dStash <= 1.8 then
-							showHelp('Pressione ~INPUT_CONTEXT~ para abrir o baú do quarto')
+							prompting = true
+							setPrompt('stash', h.name or 'Hotel de Início', 'Baú', 'Abrir baú')
 							if IsControlJustReleased(0, 38) then
 								TriggerServerEvent('coe_spawn:openHotelStash')
 							end
 						end
 					end
 				end
+			end
+			if not prompting then
+				setPrompt(nil)
 			end
 			Wait(sleep)
 		end

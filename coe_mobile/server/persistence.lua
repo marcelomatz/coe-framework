@@ -63,6 +63,15 @@ function MobilePersistence.CharacterOf(number)
 	return rows[1] and tostring(rows[1].character_id) or false
 end
 
+---Personagem ativo (não arquivado) pelo ID de cidadão (stateId, o mesmo do /id).
+function MobilePersistence.CharacterByStateId(stateId)
+	local rows, errorCode = query('SELECT character_id FROM coe_characters WHERE state_id = ? AND archived_at IS NULL LIMIT 1', { stateId })
+	if not rows then
+		return nil, errorCode
+	end
+	return rows[1] and tostring(rows[1].character_id) or false
+end
+
 ---Número do personagem; gera um na primeira vez. `generate()` devolve um candidato (pode colidir: tenta de novo).
 function MobilePersistence.EnsureNumber(characterId, generate)
 	local current, errorCode = MobilePersistence.NumberOf(characterId)

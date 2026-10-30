@@ -18,6 +18,7 @@ StaffConfig = {
 			vehicles = 'coe.staff.vehicles',   -- criar, consertar, abastecer, limpar, desvirar, apagar
 			hotel = 'coe.staff.hotel',
 			garages = 'coe.staff.garages',
+			rentals = 'coe.staff.rentals',     -- estações de aluguel: atendente, retirada, devolução e blip
 			world = 'coe.staff.world',         -- hora, clima e aviso para todos
 			businesses = 'coe.staff.businesses' -- criar e editar negócios, dono, equipe e pontos
 		},

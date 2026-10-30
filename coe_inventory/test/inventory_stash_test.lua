@@ -66,4 +66,14 @@ eq((export('RemoveItemByName')(id2, 'scrapmetal', 6)), true, 'remove tudo')
 eq(export('GetItemCount')(id2, 'scrapmetal'), 0, 'zerou')
 eq(select(2, export('RemoveItemByName')(id2, 'scrapmetal', 0)), 'invalid_count', 'contagem inválida')
 
+-- RemoveItemsByMetadata: tira só as chaves do veículo indicado (comparação parcial da metadata).
+export('AddItem')(id2, 'carkey', 1, { vehicleId = '44', plate = 'AAA111' })
+export('AddItem')(id2, 'carkey', 1, { vehicleId = '44', plate = 'AAA111', label = 'Cópia' })
+export('AddItem')(id2, 'carkey', 1, { vehicleId = '55', plate = 'BBB222' })
+eq(export('GetItemCount')(id2, 'carkey', { vehicleId = '44' }, false), 2, 'duas chaves do 44')
+eq(export('RemoveItemsByMetadata')(id2, 'carkey', { vehicleId = '44' }), 2, 'removeu as duas chaves do 44')
+eq(export('GetItemCount')(id2, 'carkey', { vehicleId = '55' }, false), 1, 'chave de outro veículo fica')
+eq(export('RemoveItemsByMetadata')(id2, 'carkey', { vehicleId = '44' }), 0, 'nada mais a remover')
+eq(select(2, export('RemoveItemsByMetadata')(id2, 'carkey', {})), 'invalid_item_metadata', 'filtro vazio recusado')
+
 print('inventory_stash_test: todos os testes passaram')

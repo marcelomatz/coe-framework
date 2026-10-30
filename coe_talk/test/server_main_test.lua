@@ -24,7 +24,7 @@ exports = setmetatable({}, {
 			return { GetPlayerGroups = function() return { job = { name = playerJob } } end }
 		end
 		if res == 'coe_notify' then
-			return { Show = function() end }
+			return { Notify = function() end }
 		end
 		return nil
 	end

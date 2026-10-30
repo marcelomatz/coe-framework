@@ -18,7 +18,14 @@ function exports_coe_staff:Yield() end
 ---@return CoeStaffStatus status
 function exports_coe_staff:Status() end
 
----Registra um provedor de garagens para administração pelo painel staff.
----@param provider table Provedor com funções List, Save e Delete
+---Registra um provedor de garagens para administração pelo painel staff (aba Garagens).
+---@param provider table List(), Save(raw), Delete(id) e `kinds` (tipos editáveis, padrão { 'public' })
 ---@return boolean ok
+---@return string|nil errorCode `invalid_provider`
 function exports_coe_staff:RegisterGaragesProvider(provider) end
+
+---Registra o provedor das estações de aluguel (aba Aluguel). Normalmente o coe_rentals.
+---@param provider table List(), Save(raw), Delete(id) e, opcional, Catalog()
+---@return boolean ok
+---@return string|nil errorCode `invalid_provider`
+function exports_coe_staff:RegisterRentalsProvider(provider) end

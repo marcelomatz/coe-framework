@@ -14,18 +14,18 @@
 | [coe_economy](coe_economy.md) | `IsReady`, `Summary`, `GetBalance`, `Credit`, `Debit`, `Transfer`, `Ledger`, `LedgerStats`, `SocietyBalance`, `SocietyLedger`, `SocietyDeposit`, `SocietyWithdraw`, `SocietyCredit`, `SocietyCollect`, `SocietyCharge`, `BankSocietyPay`, `BankSocietyDeposit`, `BankSocietyDebit`, `BankSocietyCredit`, `BankSocietyTransfer`, `BankSocietyLedger`, `RunPayroll` |
 | [coe_garage](coe_garage.md) | `IsReady`, `ListGarages`, `GetGarage`, `GetVehicleGarage`, `SaveGarage`, `DeleteGarage` |
 | [coe_hud](coe_hud.md) | `SetHidden`, `IsHidden`, `SetLogoVisible`, `IsLogoVisible`, `ToggleLogo` |
-| [coe_inventory](coe_inventory.md) | `CreateInventory`, `DeleteInventory`, `GetInventory`, `GetSlot`, `SwapSlots`, `SplitItem`, `AddItem`, `RemoveItem`, `UseItem`, `SetItemMetadata`, `GetItemCount`, `GetPersistenceStats`, `OpenStash`, `RemoveItemByName`, `RegisterItem`, `Items`, `GetItem`, `GetContainerInventory`, `GetPlayerInventory`, `GetInventoryObject` |
+| [coe_inventory](coe_inventory.md) | `CreateInventory`, `DeleteInventory`, `GetInventory`, `GetSlot`, `SwapSlots`, `SplitItem`, `AddItem`, `RemoveItem`, `UseItem`, `SetItemMetadata`, `GetItemCount`, `GetPersistenceStats`, `OpenStash`, `RemoveItemByName`, `RemoveItemsByMetadata`, `RegisterItem`, `Items`, `GetItem`, `GetContainerInventory`, `GetPlayerInventory`, `GetInventoryObject` |
 | [coe_jobs](coe_jobs.md) | `RegisterJob`, `UnregisterJob`, `ListJobs`, `IsReady`, `GetSession`, `GetProgress`, `GetCareer`, `TabletVisible`, `TabletCall` |
 | [coe_loadscreen](coe_loadscreen.md) | `IsActive`, `Shutdown` |
 | [coe_logging](coe_logging.md) | `Log` |
 | [coe_map](coe_map.md) | `GetMode`, `OpenFull` |
 | [coe_mobile](coe_mobile.md) | `Yield`, `Status`, `NumberOf` |
 | [coe_needs](coe_needs.md) | `GetNeeds`, `SetNeed`, `AddNeed` |
-| [coe_notify](coe_notify.md) | `Notify`, `Show` |
-| [coe_rentals](coe_rentals.md) | `GetActiveRental` |
+| [coe_notify](coe_notify.md) | `Notify`, `Show`, `Prompt` |
+| [coe_rentals](coe_rentals.md) | `GetActiveRental`, `ListStations`, `SaveStation`, `DeleteStation`, `Catalog` |
 | [coe_shops](coe_shops.md) | `IsReady`, `GetShelves`, `IsStore`, `BusinessTablet`, `RegisterPaymentMethod` |
 | [coe_spawn](coe_spawn.md) | `GetStarterHotel`, `SetStarterHotel` |
-| [coe_staff](coe_staff.md) | `Yield`, `Status`, `RegisterGaragesProvider` |
+| [coe_staff](coe_staff.md) | `Yield`, `Status`, `RegisterGaragesProvider`, `RegisterRentalsProvider` |
 | [coe_supervisor](coe_supervisor.md) | `List`, `Restart`, `GetUpdateStatus`, `CheckForUpdates`, `WriteFile`, `ReadFile`, `HashFile`, `DownloadFile`, `CommitFile`, `DiscardFile`, `VerifySignature`, `ApplyUpdate` |
 | [coe_talk](coe_talk.md) | `SetPlayerRadio`, `GetPlayerRadio`, `SetPlayerCall`, `GetPlayerCall`, `GetRadioMembers`, `GetCallMembers`, `GetVoiceRange`, `SetVoiceRange`, `GetRadioChannel`, `SetRadioChannel`, `GetCallChannel`, `SetCallChannel`, `IsTalking`, `IsRadioTransmitting`, `SetVoiceVolume` |
 | [coe_ui](coe_ui.md) | `GetTheme`, `GetThemes`, `SetTheme`, `GetAccent`, `SetAccent` |

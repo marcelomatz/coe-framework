@@ -45,8 +45,8 @@ end
 AddEventHandler = function(name, fn)
 	netEvents[name] = fn
 end
-TriggerClientEvent = function(name, target, payload)
-	sent[#sent + 1] = { name = name, target = target, payload = payload }
+TriggerClientEvent = function(name, target, payload, ...)
+	sent[#sent + 1] = { name = name, target = target, payload = payload, args = { payload, ... } }
 end
 local clock = 1000
 GetGameTimer = function()
@@ -166,8 +166,13 @@ eq(deleted, true, 'staff removeu garagem')
 eq(#exportsMap.ListGarages(), 1, 'uma garagem restante')
 
 -- 5. Retirada respeita a vaga fixa: veículo guardado em outra garagem não sai daqui.
+exportsMap.SaveGarage({
+	id = 'garagem_sandy', label = 'Garagem Sandy Shores', kind = 'public', enabled = true,
+	spots = { { id = 'vaga_1', label = 'Vaga 1', x = 1982.0, y = 3775.0, z = 32.0, heading = 120.0, radius = 3.5 } }
+})
+-- O coe_vehicles devolve ownerCharacterId (não owner_id); o personagem ativo pode ser número.
 local vehicles = {
-	v1 = { id = 'v1', owner_id = 'char_1', state = 'stored', model = 'panto', plate = 'AAA111' }
+	v1 = { id = 'v1', ownerCharacterId = 'char_1', state = 'stored', model = 'panto', plate = 'AAA111' }
 }
 exports.coe_vehicles.Get = function(_, id) return vehicles[id] end
 local spawned = {}
@@ -187,12 +192,47 @@ eq(#spawned, 0, 'nada spawnado')
 memorySlots['v1'] = 'garagem_central'
 eq(retrieve('v1'), Locales['pt-BR']['vehicle_retrieved'], 'retirada na garagem certa')
 eq(spawned[1], 'v1', 'veículo spawnado')
+eq(memorySlots['v1'], 'garagem_central', 'vaga continua registrada na última garagem (volta para ela no reinício)')
 
 memorySlots['v1'] = nil
 vehicles.v1.state = 'stored'
 eq(retrieve('v1'), Locales['pt-BR']['vehicle_retrieved'], 'sem vaga fixa sai em qualquer garagem')
 
-vehicles.v2 = { id = 'v2', owner_id = 'char_9', state = 'stored' }
+memorySlots['v1'] = 'garagem_removida'
+eq(retrieve('v1'), Locales['pt-BR']['vehicle_retrieved'], 'garagem da vaga foi removida: sai em qualquer uma')
+
+vehicles.v2 = { id = 'v2', ownerCharacterId = 'char_9', state = 'stored' }
 eq(retrieve('v2'), Locales['pt-BR']['not_your_vehicle'], 'veículo de outro dono é recusado')
+
+-- 6. Listagem: só mostra o que pode sair desta garagem.
+vehicles.v1.state = 'stored'
+vehicles.v3 = { id = 'v3', ownerCharacterId = 'char_1', state = 'stored', model = 'baller', plate = 'BBB222' }
+memorySlots['v1'] = 'garagem_central'
+memorySlots['v3'] = 'garagem_sandy'
+exports.coe_vehicles.ListByOwner = function() return { vehicles.v1, vehicles.v3 } end
+clock = clock + 5000
+sent = {}
+netEvents['coe_garage:getStoredVehicles']('garagem_central', 'vaga_1')
+local menu = sent[#sent]
+eq(menu and menu.name, 'coe_garage:openMenu', 'menu aberto')
+local listed = menu.args[3]
+eq(#listed, 1, 'só o veículo guardado nesta garagem aparece')
+eq(listed[1].id, 'v1', 'veículo desta garagem')
+eq(menu.args[4].title, 'Garagem Legion Square', 'título da garagem vai para a NUI')
+
+-- 7. Guardar veículo do jogador (ex.: dado pelo admin, com state bag do coe_vehicles).
+vehicles.v4 = { id = '44', ownerCharacterId = 'char_1', state = 'out', model = 'asea', plate = 'CCC333' }
+exports.coe_vehicles.Get = function(_, id) return id == '44' and vehicles.v4 or vehicles[id] end
+local storedIds = {}
+exports.coe_vehicles.Store = function(_, id) storedIds[#storedIds + 1] = id return true end
+NetworkGetEntityFromNetworkId = function() return 900 end
+DoesEntityExist = function() return true end
+Entity = function() return { state = { ['coe:vehicleId'] = 44 } } end
+clock = clock + 5000
+notified = {}
+netEvents['coe_garage:storeVehicle']('garagem_central', 'vaga_1', 12)
+eq(notified[#notified] and notified[#notified][3], Locales['pt-BR']['vehicle_stored'], 'veículo do jogador é guardado')
+eq(storedIds[1], '44', 'id do state bag vira string')
+eq(memorySlots['44'], 'garagem_central', 'vaga registrada na garagem onde foi guardado')
 
 print('coe_garage service_test: ok')

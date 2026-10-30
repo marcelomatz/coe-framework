@@ -321,7 +321,8 @@ Paga o salário do cargo a quem está de ponto, da conta da sociedade; sem saldo
 ---@field delta integer Positivo = entrada, negativo = saída
 ---@field reason string
 ---@field reference string
----@field created_at any
+---@field created_at any texto do banco (fuso do servidor MariaDB)
+---@field at number|string segundos Unix (UNIX_TIMESTAMP), prefira este para exibir datas
 
 ---@class CoeEconomyPayrollSummary
 ---@field paid table[] Pagamentos feitos (`characterId`, `salary`)

@@ -22,3 +22,20 @@ function exports_coe_notify:Notify(playerId, kind, message, duration) end
 ---@return boolean ok
 ---@return string|nil errorCode `invalid_notification`
 function exports_coe_notify:Show(kind, message, duration) end
+
+---@class CoeNotifyPromptOption
+---@field key string tecla mostrada (até 12 caracteres)
+---@field label string ação (até 80 caracteres)
+
+---@class CoeNotifyPrompt
+---@field title string até 64 caracteres
+---@field subtitle string|nil até 64 caracteres
+---@field badge string|nil selo à esquerda (até 3 caracteres; padrão: tecla da primeira opção)
+---@field options CoeNotifyPromptOption[] até 6
+
+---Mostra (ou limpa, com nil) o aviso de interação padrão do resource chamador. Client.
+---Chame só quando o conteúdo mudar; um aviso por resource; o resource parado tem o aviso removido.
+---@param data CoeNotifyPrompt|nil
+---@return boolean ok
+---@return string|nil errorCode `invalid_prompt`
+function exports_coe_notify:Prompt(data) end

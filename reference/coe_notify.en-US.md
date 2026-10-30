@@ -35,8 +35,31 @@ Displays a UI toast notification locally on the client. Client-side.
 - `boolean` `ok`
 - `string|nil` `errorCode` — `invalid_notification`
 
+### `Prompt(data)`
+
+Shows (or clears, with nil) the calling resource's standard interaction prompt. Client-side.
+Call only when the content changes; one prompt per resource; a stopped resource has its prompt removed.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `data` | `CoeNotifyPrompt\|nil` |  |
+
+**Returns**
+
+- `boolean` `ok`
+- `string|nil` `errorCode` — `invalid_prompt`
+
 ## Types
 
 ```lua
 ---@alias CoeNotifyKind 'info'|'success'|'warning'|'error'
+---@class CoeNotifyPromptOption
+---@field key string key shown (up to 12 characters)
+---@field label string action (up to 80 characters)
+
+---@class CoeNotifyPrompt
+---@field title string up to 64 characters
+---@field subtitle string|nil up to 64 characters
+---@field badge string|nil badge on the left (up to 3 characters; default: first option key)
+---@field options CoeNotifyPromptOption[] up to 6
 ```

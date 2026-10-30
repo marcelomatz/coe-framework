@@ -150,6 +150,19 @@ local definitions = {
 		image = 'onion_usb.png',
 		category = 'misc'
 	},
+	-- Contrato de locação (coe_rentals): metadata { label, plate, model, vehicle, renter, stateId, station, rentedAt,
+	-- price, deposit }. Usar mostra o documento; sai do inventário ao devolver ou encerrar o aluguel.
+	rental_contract = {
+		label = 'Contrato de locação',
+		weight = 10,
+		stack = false,
+		maxStack = 1,
+		usable = true,
+		consume = 0,
+		close = true,
+		image = 'rental_contract.svg',
+		category = 'misc'
+	},
 	-- Carteiras cripto frias (coe_crypto): metadata { address, key, label }. Quem carrega usa a carteira.
 	crypto_usb = {
 		label = 'Pen drive (carteira cripto)',

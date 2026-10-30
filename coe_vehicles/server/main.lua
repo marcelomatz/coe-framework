@@ -103,6 +103,119 @@ local function detach(vehicleId)
 	return entity
 end
 
+-- Chave como item (carkey) --------------------------------------------------------------------------------------
+-- Quem recebe o veículo (retirada, painel, concessionária) ganha o item; ao guardar o veículo as chaves somem dos
+-- inventários online, evitando acúmulo. Sem o item o veículo não liga nem tranca. Sem coe_inventory no ar, vale
+-- a regra antiga (dono + chaves emprestadas).
+local KEY_ITEM = config.KeyItem or 'carkey'
+
+local function inventoryReady()
+	return GetResourceState('coe_inventory') == 'started'
+end
+
+local function onlinePlayerOf(characterId)
+	for _, id in ipairs(GetPlayers()) do
+		local playerId = tonumber(id)
+		local active = Core.Players.GetActiveCharacterId(playerId)
+		if active ~= nil and tostring(active) == tostring(characterId) then
+			return playerId
+		end
+	end
+	return nil
+end
+
+local function playerInventory(playerId)
+	if not playerId or not inventoryReady() then
+		return nil
+	end
+	local ok, inventoryId = pcall(function()
+		return exports.coe_inventory:GetPlayerInventory(playerId)
+	end)
+	return ok and type(inventoryId) == 'string' and inventoryId or nil
+end
+
+local function keyCount(inventoryId, filter)
+	local ok, count = pcall(function()
+		return exports.coe_inventory:GetItemCount(inventoryId, KEY_ITEM, filter, false)
+	end)
+	return ok and tonumber(count) or 0
+end
+
+-- Entrega a chave (uma só) ao personagem, se estiver online.
+local function giveKeyItem(characterId, record)
+	if not characterId or type(record) ~= 'table' then
+		return false
+	end
+	local playerId = onlinePlayerOf(characterId)
+	local inventoryId = playerInventory(playerId)
+	if not inventoryId then
+		return false
+	end
+	if keyCount(inventoryId, { vehicleId = record.id }) > 0 then
+		return true
+	end
+	local ok, added = pcall(function()
+		return exports.coe_inventory:AddItem(inventoryId, KEY_ITEM, 1, {
+			label = _t('key_label', { plate = record.plate }),
+			plate = record.plate,
+			vehicleId = record.id
+		})
+	end)
+	if ok and added then
+		TriggerClientEvent('coe_vehicles:keysChanged', playerId)
+		return true
+	end
+	return false
+end
+
+-- Tira as chaves do veículo dos inventários online (e do dono, mesmo offline). `characterId` limita a uma pessoa.
+local function removeKeyItems(vehicleId, characterId, ownerCharacterId)
+	if not inventoryReady() then
+		return
+	end
+	local targets = {}
+	if characterId then
+		targets[#targets + 1] = { playerId = onlinePlayerOf(characterId), characterId = characterId }
+	else
+		for _, id in ipairs(GetPlayers()) do
+			targets[#targets + 1] = { playerId = tonumber(id) }
+		end
+		if ownerCharacterId and not onlinePlayerOf(ownerCharacterId) then
+			targets[#targets + 1] = { characterId = ownerCharacterId }
+		end
+	end
+	for _, target in ipairs(targets) do
+		local inventoryId = playerInventory(target.playerId) or (target.characterId and ('character:' .. tostring(target.characterId)))
+		if inventoryId then
+			local ok, removed = pcall(function()
+				return exports.coe_inventory:RemoveItemsByMetadata(inventoryId, KEY_ITEM, { vehicleId = vehicleId })
+			end)
+			if ok and tonumber(removed) and removed > 0 and target.playerId then
+				TriggerClientEvent('coe_vehicles:keysChanged', target.playerId)
+			end
+		end
+	end
+end
+
+-- O jogador tem a chave do veículo? Registrado: item com vehicleId. Alugado (state bag coe:keyPlate): item com a placa.
+local function playerHasKey(playerId, vehicleId, keyPlate)
+	local characterId = Core.Players.GetActiveCharacterId(playerId)
+	if not characterId then
+		return false
+	end
+	if not inventoryReady() then
+		return vehicleId ~= nil and keys.HasKey(tostring(characterId), vehicleId)
+	end
+	local inventoryId = playerInventory(playerId)
+	if not inventoryId then
+		return false
+	end
+	if vehicleId then
+		return keyCount(inventoryId, { vehicleId = vehicleId }) > 0
+	end
+	return keyPlate ~= nil and keyCount(inventoryId, { plate = keyPlate, rental = true }) > 0
+end
+
 -- Atualiza o state bag (em passos de 100 m) e avisa outros resources do servidor.
 local function publishMileage(vehicleId, entity, total)
 	local bucket = bucketOf(total)
@@ -144,6 +257,9 @@ local function spawn(vehicleId, x, y, z, heading, vehicleType)
 	Core.Platform.Vehicles.SetPlate(entity, record.plate)
 	attach(entity, record)
 	registry.SetState(record.id, 'out')
+	if record.ownerCharacterId then
+		giveKeyItem(record.ownerCharacterId, record)
+	end
 	return entity
 end
 
@@ -172,6 +288,8 @@ local function store(vehicleId)
 	if Core.Platform.Entities.Exists(entity) then
 		Core.Platform.Entities.Delete(entity)
 	end
+	local record = registry.Get(vehicleId)
+	removeKeyItems(vehicleId, nil, record and record.ownerCharacterId)
 	return registry.SetState(vehicleId, 'stored')
 end
 
@@ -277,6 +395,11 @@ local function notifyKeysChanged(characterId)
 end
 
 exports('HasKey', function(characterId, vehicleId)
+	-- Com o inventário no ar a chave é o item: vale para quem está online com ele.
+	if inventoryReady() then
+		local playerId = onlinePlayerOf(characterId)
+		return playerId ~= nil and playerHasKey(playerId, vehicleId, nil)
+	end
 	return keys.HasKey(characterId, vehicleId)
 end)
 
@@ -284,9 +407,16 @@ exports('GiveKey', function(vehicleId, characterId)
 	if not isWriter() then
 		return 'forbidden'
 	end
-	local granted, errorCode = keys.Grant(vehicleId, characterId, nil)
-	if not granted then
-		return errorCode or 'unknown_error'
+	local record = registry.Get(vehicleId)
+	if record and record.ownerCharacterId ~= characterId then
+		local granted, errorCode = keys.Grant(vehicleId, characterId, nil)
+		if not granted then
+			return errorCode or 'unknown_error'
+		end
+	end
+	-- Item só para veículo na rua: guardado, a chave sai junto e voltaria a acumular.
+	if record and trackedByVehicle[record.id] then
+		giveKeyItem(characterId, record)
 	end
 	notifyKeysChanged(characterId)
 	return true
@@ -300,6 +430,7 @@ exports('RevokeKey', function(vehicleId, characterId)
 	if not revoked then
 		return errorCode or 'unknown_error'
 	end
+	removeKeyItems(vehicleId, characterId)
 	notifyKeysChanged(characterId)
 	return true
 end)
@@ -351,6 +482,8 @@ AddEventHandler('entityRemoved', function(entity)
 	CreateThread(function()
 		registry.Flush(vehicleId)
 		registry.SetState(vehicleId, 'stored')
+		local record = registry.Get(vehicleId)
+		removeKeyItems(vehicleId, nil, record and record.ownerCharacterId)
 	end)
 end)
 
@@ -428,17 +561,129 @@ RegisterNetEvent('coe_vehicles:checkKey', function(netId)
 	lastKeyCheck[playerId] = nowMs
 
 	local entity = Core.Platform.Entities.FromNetworkId(netId)
-	local vehicleId = entity and vehicleByEntity[entity]
-	if not vehicleId then
+	if not entity then
 		return
 	end
-	local characterId = Core.Players.GetActiveCharacterId(playerId)
-	TriggerClientEvent('coe_vehicles:keyResult', playerId, netId, characterId ~= nil and keys.HasKey(characterId, vehicleId))
+	local vehicleId = vehicleByEntity[entity]
+	local keyPlate = not vehicleId and Core.Platform.Entities.GetState(entity, 'coe:keyPlate') or nil
+	if not vehicleId and not keyPlate then
+		return
+	end
+	TriggerClientEvent('coe_vehicles:keyResult', playerId, netId, playerHasKey(playerId, vehicleId, keyPlate))
+end)
+
+-- Trancar/destrancar: tecla (padrão L) ou usar a chave no inventário. Precisa do item e estar perto do veículo.
+local lastLock = {}
+
+local function lockableNear(playerId, filter)
+	local origin = Core.Platform.Entities.GetCoords(GetPlayerPed(playerId))
+	if not origin then
+		return nil
+	end
+	local best, bestDistance = nil, config.LockDistanceMeters or 8.0
+	for _, entity in ipairs(GetAllVehicles()) do
+		if Core.Platform.Entities.Exists(entity) then
+			local vehicleId = vehicleByEntity[entity]
+			local keyPlate = not vehicleId and Core.Platform.Entities.GetState(entity, 'coe:keyPlate') or nil
+			if (vehicleId or keyPlate) and (not filter or filter(vehicleId, keyPlate)) then
+				local coords = Core.Platform.Entities.GetCoords(entity)
+				local distance = coords and #(coords - origin) or math.huge
+				if distance <= bestDistance then
+					best, bestDistance = { entity = entity, vehicleId = vehicleId, keyPlate = keyPlate }, distance
+				end
+			end
+		end
+	end
+	return best
+end
+
+local function toggleLock(playerId, target)
+	if not target then
+		reply(playerId, 'error', _t('no_vehicle_near_lock'))
+		return
+	end
+	if not playerHasKey(playerId, target.vehicleId, target.keyPlate) then
+		reply(playerId, 'error', _t('no_key_warning'))
+		return
+	end
+	local locked = not Core.Platform.Vehicles.IsLocked(target.entity)
+	Core.Platform.Vehicles.SetLocked(target.entity, locked)
+	TriggerClientEvent('coe_vehicles:lockChanged', playerId, Core.Platform.Entities.GetNetworkId(target.entity), locked)
+	reply(playerId, locked and 'info' or 'success', _t(locked and 'vehicle_locked' or 'vehicle_unlocked'))
+end
+
+RegisterNetEvent('coe_vehicles:toggleLock', function(netId)
+	local playerId = source
+	local nowMs = GetGameTimer()
+	if lastLock[playerId] and nowMs - lastLock[playerId] < 750 then
+		return
+	end
+	lastLock[playerId] = nowMs
+	local wanted = math.type(netId) == 'integer' and Core.Platform.Entities.FromNetworkId(netId) or nil
+	-- Com o veículo indicado pelo client, confere só ele; senão o mais próximo que o jogador pode trancar.
+	local target = lockableNear(playerId, function(vehicleId, keyPlate)
+		if wanted then
+			return (vehicleId and trackedByVehicle[vehicleId] == wanted) or (keyPlate ~= nil and Core.Platform.Entities.GetState(wanted, 'coe:keyPlate') == keyPlate)
+		end
+		return playerHasKey(playerId, vehicleId, keyPlate)
+	end)
+	toggleLock(playerId, target)
+end)
+
+-- Usar a chave no inventário tranca/destranca o veículo dela, se estiver perto.
+Core.Events.On('inventory.itemUsed', function(inventoryId, _slot, item)
+	if type(item) ~= 'table' or item.name ~= KEY_ITEM or type(item.metadata) ~= 'table' then
+		return
+	end
+	local characterId = type(inventoryId) == 'string' and inventoryId:match('^character:(.+)$')
+	local playerId = characterId and onlinePlayerOf(characterId)
+	if not playerId then
+		return
+	end
+	local keyVehicle = item.metadata.vehicleId and tostring(item.metadata.vehicleId) or nil
+	local keyPlate = item.metadata.rental == true and item.metadata.plate or nil
+	toggleLock(playerId, lockableNear(playerId, function(vehicleId, plate)
+		return (keyVehicle and vehicleId == keyVehicle) or (keyPlate and plate == keyPlate)
+	end))
+end)
+
+-- Chaves de veículos que já foram guardados (reinício, queda) saem do inventário ao carregar o personagem.
+Core.Events.On('player.characterLoaded', function(payload)
+	local playerId = type(payload) == 'table' and tonumber(payload.source) or nil
+	if not playerId or not inventoryReady() then
+		return
+	end
+	CreateThread(function()
+		Wait(2000)
+		local inventoryId = playerInventory(playerId)
+		if not inventoryId then
+			return
+		end
+		local ok, snapshot = pcall(function()
+			return exports.coe_inventory:GetInventory(inventoryId)
+		end)
+		if not ok or type(snapshot) ~= 'table' or type(snapshot.items) ~= 'table' then
+			return
+		end
+		local stale = {}
+		for _, entry in pairs(snapshot.items) do
+			local metadata = type(entry) == 'table' and entry.name == KEY_ITEM and entry.metadata or nil
+			if type(metadata) == 'table' and metadata.vehicleId ~= nil and not trackedByVehicle[tostring(metadata.vehicleId)] then
+				stale[tostring(metadata.vehicleId)] = true
+			end
+		end
+		for vehicleId in pairs(stale) do
+			pcall(function()
+				exports.coe_inventory:RemoveItemsByMetadata(inventoryId, KEY_ITEM, { vehicleId = vehicleId })
+			end)
+		end
+	end)
 end)
 
 AddEventHandler('playerDropped', function()
 	local playerId = source
 	lastKeyCheck[playerId] = nil
+	lastLock[playerId] = nil
 	local characterId = Core.Players.GetActiveCharacterId(playerId)
 	if characterId then
 		keys.Forget(characterId)
@@ -521,6 +766,7 @@ RegisterCommand('chave_emprestar', function(playerId, args)
 		return
 	end
 	local record = registry.Get(vehicleId)
+	giveKeyItem(targetCharacter, record)
 	TriggerClientEvent('coe_vehicles:keysChanged', targetPlayer)
 	reply(playerId, 'success', _t('key_lent', { plate = record.plate }))
 	reply(targetPlayer, 'success', _t('key_received', { plate = record.plate }))
@@ -540,6 +786,7 @@ RegisterCommand('chave_retirar', function(playerId, args)
 		return
 	end
 	local record = registry.Get(vehicleId)
+	removeKeyItems(vehicleId, targetCharacter)
 	TriggerClientEvent('coe_vehicles:keysChanged', targetPlayer)
 	reply(playerId, 'success', _t('key_revoked', { plate = record.plate }))
 	reply(targetPlayer, 'warning', _t('key_revoked_target', { plate = record.plate }))

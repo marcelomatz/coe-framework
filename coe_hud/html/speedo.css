@@ -105,3 +105,29 @@
 .sp-flags span.warn { color: var(--coe-danger); opacity: 1; }
 .sp-flags span[data-flag="left"].on, .sp-flags span[data-flag="right"].on { animation: sp-blink 700ms steps(1) infinite; }
 @keyframes sp-blink { 50% { opacity: 0.25; } }
+
+/* Bicicleta: ciclocomputador de guidão (tela LCD com velocidade e barra). */
+.sp-html.sp-bicycle { width: 160px; min-width: 0; padding: 0; background: none; }
+.sp-bc-screen {
+	display: grid;
+	gap: 4px;
+	padding: 8px 10px 9px;
+	border: 1px solid var(--coe-line-strong);
+	border-radius: 12px;
+	background: linear-gradient(160deg, rgba(var(--coe-ink-rgb), 0.08), rgba(var(--coe-ink-rgb), 0) 55%), var(--sp-bg);
+	box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.25);
+}
+.sp-bc-top { display: flex; align-items: center; justify-content: space-between; }
+.sp-bc-icon { width: 26px; height: 16px; fill: none; stroke: var(--coe-accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sp-bc-unit { font-size: 10px; letter-spacing: 0.12em; color: var(--coe-muted); }
+.sp-bc-speed {
+	font-size: 44px;
+	line-height: 1;
+	font-weight: 700;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.02em;
+}
+.sp-bc-speed .dim { color: rgba(var(--coe-ink-rgb), 0.18); }
+.sp-bc-segs { height: 8px; gap: 2px; }
+.sp-bc-segs i.on { background: var(--coe-accent); }

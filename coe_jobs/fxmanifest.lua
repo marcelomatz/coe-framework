@@ -35,7 +35,8 @@ server_scripts {
 }
 
 client_scripts {
-	'client/main.lua'
+	'client/main.lua',
+	'@coe_ui/theme_bridge.lua'
 }
 
 ui_page 'html/guide.html'

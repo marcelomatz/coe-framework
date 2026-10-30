@@ -5,6 +5,13 @@ VehicleControls = { belt = false, lights = 0, left = false, right = false, vehic
 local CONTROL_VEH_HEADLIGHT = 74
 local CONTROL_VEH_EXIT = 75
 local FLAG_CAN_FLY_THROUGH_WINDSCREEN = 32
+-- Sem cinto: motos (8) e bicicletas (13). Moto: o piloto cai normalmente; bicicleta não tem motor nem farol.
+local NO_BELT_CLASSES = { [8] = true, [13] = true }
+
+---O tipo de veículo do HUD ('motorcycle', 'bicycle', ...) tem cinto de segurança?
+function VehicleControls.HasBelt(kind)
+	return kind ~= 'motorcycle' and kind ~= 'bicycle'
+end
 
 local function notify(kind, message)
 	pcall(function()
@@ -46,6 +53,12 @@ local function toggleBelt()
 	if vehicle == 0 then
 		return
 	end
+	if NO_BELT_CLASSES[GetVehicleClass(vehicle)] then
+		VehicleControls.belt = false
+		SetPedConfigFlag(ped, FLAG_CAN_FLY_THROUGH_WINDSCREEN, true)
+		notify('info', 'Este veículo não tem cinto de segurança.')
+		return
+	end
 	VehicleControls.belt = not VehicleControls.belt
 	SetPedConfigFlag(ped, FLAG_CAN_FLY_THROUGH_WINDSCREEN, not VehicleControls.belt)
 	notify('info', VehicleControls.belt and 'Cinto colocado.' or 'Cinto solto.')
@@ -54,7 +67,7 @@ end
 -- Ciclo: apagado -> baixo -> alto -> apagado.
 local function cycleLights()
 	local _, vehicle = drivingVehicle()
-	if vehicle == 0 then
+	if vehicle == 0 or GetVehicleClass(vehicle) == 13 then
 		return
 	end
 	VehicleControls.lights = (VehicleControls.lights + 1) % 3

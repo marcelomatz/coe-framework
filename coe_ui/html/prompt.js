@@ -1,6 +1,6 @@
 /*
  * Aviso de interação padrão. Cria o próprio elemento e responde à mensagem NUI
- * { action = 'prompt', data = { title, subtitle, options = { { key, label } } } | nil }.
+ * { action = 'prompt', data = { title, subtitle, badge?, options = { { key, label } } } | nil }.
  */
 (function () {
 	'use strict';
@@ -8,6 +8,7 @@
 	let root = null;
 	let title = null;
 	let sub = null;
+	let badgeEl = null;
 	let list = null;
 
 	function build() {
@@ -22,6 +23,7 @@
 		badge.className = 'it-badge';
 		badge.setAttribute('aria-hidden', 'true');
 		badge.textContent = 'E';
+		badgeEl = badge;
 		const text = document.createElement('div');
 		text.className = 'it-text';
 		title = document.createElement('b');
@@ -38,6 +40,7 @@
 	function show(data) {
 		if (!root) { build(); }
 		if (!data) { root.hidden = true; return; }
+		badgeEl.textContent = data.badge || 'E';
 		title.textContent = data.title || '';
 		sub.textContent = data.subtitle || '';
 		list.replaceChildren();

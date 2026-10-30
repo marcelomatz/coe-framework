@@ -141,6 +141,34 @@ function S.RemoveItemByName(id, itemName, count)
 	return true
 end
 
+--- Remove todas as unidades de `itemName` cuja metadata contém `filter` (comparação parcial), ex.: as chaves
+--- de um veículo { vehicleId = '44' }. Retorna quantas unidades saíram (0 quando não havia nenhuma).
+---@param id string
+---@param itemName string
+---@param filter table
+function S.RemoveItemsByMetadata(id, itemName, filter)
+	if type(itemName) ~= 'string' or type(filter) ~= 'table' or next(filter) == nil then
+		return false, 'invalid_item_metadata'
+	end
+	local inventory, errorMessage = S.getInventory(id)
+	if not inventory then
+		return false, errorMessage
+	end
+	local removed = 0
+	for slot = 1, inventory.slots do
+		local item = inventory.items[slot]
+		if item and item.name == itemName and Inventory.Items.MetadataMatches(item.metadata, filter, false) then
+			local count = item.count
+			local ok, removeError = S.RemoveItem(id, slot, count)
+			if not ok then
+				return false, removeError
+			end
+			removed = removed + count
+		end
+	end
+	return removed
+end
+
 local function unwrapExport(fn)
 	return function(...)
 		local args = table.pack(...)
@@ -153,5 +181,6 @@ end
 
 exports('OpenStash', unwrapExport(S.OpenStash))
 exports('RemoveItemByName', unwrapExport(S.RemoveItemByName))
+exports('RemoveItemsByMetadata', unwrapExport(S.RemoveItemsByMetadata))
 
 S.STASH_TOLERANCE = STASH_TOLERANCE

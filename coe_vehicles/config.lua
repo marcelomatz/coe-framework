@@ -11,6 +11,11 @@ CoeVehiclesConfig = {
 	MileageEditors = { coe_vehicles = true },
 	-- Chaves emprestadas por veículo (a do dono é implícita). Raio máximo para emprestar em jogo.
 	MaxLoanedKeysPerVehicle = 5,
+	-- Chave como item do inventário: entregue ao receber o veículo e recolhida ao guardar. Sem o item o veículo
+	-- não liga nem tranca. Tecla padrão de trancar (cada jogador troca em Configurações > Teclas > FiveM).
+	KeyItem = 'carkey',
+	LockKey = 'L',
+	LockDistanceMeters = 8.0,
 	LendDistanceMeters = 10.0,
 	KeyCheckCooldownMs = 250,
 	PlatePattern = 'NNLLLNNN',

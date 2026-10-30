@@ -475,24 +475,24 @@ function ACTIONS.bank_transfer(playerId, me, data)
 	local targetCharId = nil
 	local targetPlayerId = nil
 
+	-- 1) Número de telefone (PIX pelo número).
 	local formattedNumber = MobileRules.Number(rawTarget, config)
 	if formattedNumber then
-		targetCharId = Store.CharacterOf(formattedNumber)
+		targetCharId = Store.CharacterOf(formattedNumber) or nil
 	end
 
-	if not targetCharId and rawTarget:match('^%d+$') then
-		local candidateSource = tonumber(rawTarget)
-		if candidateSource and candidateSource > 0 and candidateSource <= 65535 and GetPlayerPing(candidateSource) > 0 then
-			local activeChar = Core.Players.GetActiveCharacterId(candidateSource)
-			if activeChar then
-				targetCharId = activeChar
-				targetPlayerId = candidateSource
-			end
+	-- 2) ID de cidadão (stateId do /id): online pela sessão, offline pelo cadastro de personagens.
+	if not targetCharId and rawTarget:match('^%w+$') and #rawTarget <= 16 then
+		local stateId = rawTarget:upper()
+		local ok, session = pcall(function()
+			return Core.Players.GetPlayerByStateId(stateId)
+		end)
+		if ok and type(session) == 'table' and type(session.character) == 'table' and session.character.characterId then
+			targetCharId = tostring(session.character.characterId)
+			targetPlayerId = session.source
+		else
+			targetCharId = Store.CharacterByStateId(stateId) or nil
 		end
-	end
-
-	if not targetCharId and rawTarget:match('^%d+$') then
-		targetCharId = tonumber(rawTarget)
 	end
 
 	if not targetCharId then
@@ -519,7 +519,7 @@ function ACTIONS.bank_transfer(playerId, me, data)
 
 	if targetPlayerId then
 		pcall(function()
-			exports.coe_notify:Show(targetPlayerId, 'info', _t('pix_received', { amount = amount, sender = me.name }), 6000)
+			exports.coe_notify:Notify(targetPlayerId, 'info', _t('pix_received', { amount = amount, sender = me.name }), 6000)
 		end)
 	end
 

@@ -386,6 +386,35 @@ eq(act(1, 'garageSave', { id = 'nova', label = 'Nova' }).ok, true, 'salva garage
 eq(act(1, 'garageGoto', { id = 'garagem_central' }).ok, true, 'ir ate garagem')
 eq(act(1, 'garageDelete', { id = 'garagem_central' }).ok, true, 'remove garagem')
 
+-- Funções que atravessam exports chegam como referência chamável (tabela), não como 'function'.
+local function funcref(fn)
+	return setmetatable({}, { __call = function(_, ...) return fn(...) end })
+end
+local savedGarage = nil
+exported.RegisterGaragesProvider({
+	kinds = { 'public' },
+	List = funcref(function() return { { id = 'g_ref', label = 'Ref', kind = 'public', spots = { { x = 1, y = 2, z = 3 } } } } end),
+	Save = funcref(function(raw) savedGarage = raw return raw end),
+	Delete = funcref(function() return { error = 'unknown_garage' } end)
+})
+eq(act(1, 'garages').data.garages[1].id, 'g_ref', 'provedor com referências lista as garagens')
+eq(act(1, 'garages').data.kinds[1], 'public', 'tipos do provedor')
+eq(act(1, 'garageSave', { id = 'g_novo', label = 'Nova' }).ok, true, 'provedor com referências salva')
+eq(savedGarage and savedGarage.id, 'g_novo', 'dados chegaram ao provedor')
+eq(act(1, 'garageDelete', { id = 'x' }).error, 'unknown_garage', 'erro do provedor chega ao painel')
+
+-- Aluguel
+eq(act(1, 'rentals').error, 'rentals_unavailable', 'sem provedor de aluguel')
+exported.RegisterRentalsProvider({
+	List = funcref(function() return { { id = 'pink', label = 'Pink', ped = { x = 1, y = 2, z = 3, h = 0 }, spawns = {} } } end),
+	Save = funcref(function(raw) return raw end),
+	Delete = funcref(function() return true end)
+})
+eq(act(1, 'rentals').data.stations[1].id, 'pink', 'lista estações')
+eq(act(1, 'rentalSave', { id = 'pink' }).ok, true, 'salva estação')
+eq(act(1, 'rentalGoto', { id = 'pink' }).ok, true, 'vai até o atendente')
+eq(act(1, 'rentalDelete', { id = 'pink' }).ok, true, 'remove estação')
+
 -- Pacote assume o painel
 invoking = 'random'
 eq(exported.Yield().error, 'forbidden', 'sem ACE nao assume')

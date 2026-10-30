@@ -1,5 +1,5 @@
 -- Gerador de fotos (servidor): base64, conferência de nome/conteúdo, permissão e sessão.
-local commands, events, saved, clientEvents = {}, {}, {}, {}
+local commands, events, saved, clientEvents, notices = {}, {}, {}, {}, {}
 local aces = { ['7'] = true }
 RegisterCommand = function(name, fn) commands[name] = fn end
 RegisterNetEvent = function(name, fn) events[name] = fn end
@@ -11,6 +11,11 @@ TriggerClientEvent = function(name, target, payload) clientEvents[#clientEvents 
 SaveResourceFile = function(_, path, data, length) saved[path] = { data = data, length = length }; return true end
 GetPlayerName = function() return 'Admin' end
 Wait = function() end
+exports = setmetatable({}, { __index = function(_, res)
+	if res == 'coe_notify' then
+		return { Notify = function(_, target, kind, message) notices[#notices + 1] = { target = target, kind = kind, message = message } end }
+	end
+end })
 
 dofile('config.lua')
 dofile('shared/schema.lua')
@@ -58,8 +63,9 @@ eq(saved['thumbs/male_c11_3.webp'], nil, 'sem sessão não salva')
 
 -- Sem permissão não abre sessão
 commands.coe_fotos_roupas(8, {})
-eq(#clientEvents, 1, 'só a mensagem de recusa')
-eq(clientEvents[1].name, 'chat:addMessage', 'recusa avisada')
+eq(#clientEvents, 0, 'recusa não abre sessão')
+eq(#notices, 1, 'só a mensagem de recusa')
+eq(notices[1].kind, 'error', 'recusa avisada pelo coe_notify')
 
 -- Com permissão: abre a sessão, salva e encerra
 commands.coe_fotos_roupas(7, { 'female', 'refazer' })
@@ -74,7 +80,7 @@ events['coe_appearance:thumbSave']('female_c2_1.webp', url)
 eq(saved['thumbs/female_c2_1.webp'], nil, 'peça fora do catálogo recusada')
 events['coe_appearance:thumbsDone'](false)
 eq(ThumbsServer.sessions[7], nil, 'sessão encerrada')
-eq(clientEvents[#clientEvents].payload.args[2]:match('1 salvas, 1 recusadas') ~= nil, true, 'resumo enviado')
+eq(notices[#notices].message:match('1 salvas, 1 recusadas') ~= nil, true, 'resumo enviado pelo coe_notify')
 
 if failures > 0 then
 	error(('thumbs_server_test: %d falha(s)'):format(failures))

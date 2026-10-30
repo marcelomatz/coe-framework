@@ -18,6 +18,46 @@ Retorna o aluguel ativo de um personagem ou nil.
 
 - `ActiveRentalInfo|nil`
 
+### `ListStations()`
+
+Estações cadastradas. Só `AdminResources`/ACE `coe.rentals.admin` (outros recebem lista vazia).
+
+**Retorno**
+
+- `RentalStationDef[]`
+
+### `SaveStation(raw)`
+
+Cria ou atualiza uma estação. Só `AdminResources`/ACE `coe.rentals.admin`.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `raw` | `RentalStationDef` |  |
+
+**Retorno**
+
+- `RentalStationDef|table` `station` — a estação salva ou { error = código }
+
+### `DeleteStation(stationId)`
+
+Remove uma estação. Só `AdminResources`/ACE `coe.rentals.admin`.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `stationId` | `string` |  |
+
+**Retorno**
+
+- `boolean|table` `ok` — `true` ou { error = código }
+
+### `Catalog()`
+
+Catálogo de veículos do aluguel (config.lua).
+
+**Retorno**
+
+- `RentalVehicleDef[]`
+
 ## Tipos
 
 ```lua
@@ -31,10 +71,12 @@ Retorna o aluguel ativo de um personagem ou nil.
 ---@class RentalStationDef
 ---@field id string
 ---@field label string
----@field coords table
----@field spawn table
----@field returnZone table
----@field blip table
+---@field enabled boolean
+---@field ped table { x, y, z, h, model? } atendente (NPC) e balcão
+---@field spawns table[] pontos de retirada { x, y, z, h } (1 a 8); o veículo sai no primeiro livre
+---@field returnZone table { x, y, z, radius } zona de devolução
+---@field vehicles string[] modelos oferecidos (vazio: todo o catálogo)
+---@field blip table { enabled, sprite, color, scale }
 
 ---@class ActiveRentalInfo
 ---@field entity integer

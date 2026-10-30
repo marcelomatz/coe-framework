@@ -270,6 +270,32 @@ describe('mensagens NUI', () => {
 		assert.deepEqual(calls, [['https://meu_resource/coe_theme_ready', 'POST']]);
 		other.window.close();
 	});
+
+	it('páginas sem "open" pedem o tema de novo até ele chegar', () => {
+		const calls = [];
+		const other = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' });
+		other.window.GetParentResourceName = () => 'coe_notify';
+		other.window.fetch = (url) => {
+			calls.push(url);
+			return Promise.resolve();
+		};
+		let now = 1000000;
+		other.window.Date.now = () => now;
+		other.window.eval(source);
+		const send = (data) => other.window.dispatchEvent(new other.window.MessageEvent('message', { data }));
+		assert.equal(calls.length, 1, 'pedido inicial');
+		send({ action: 'show', message: 'a' });
+		assert.equal(calls.length, 1, 'não repete antes de 2 s');
+		now += 2500;
+		send({ action: 'show', message: 'b' });
+		assert.equal(calls.length, 2, 'sem tema, pede de novo');
+		send({ action: 'coe:theme', theme: 'ocean' });
+		now += 5000;
+		send({ action: 'show', message: 'c' });
+		assert.equal(calls.length, 2, 'com o tema recebido, não pede mais');
+		assert.equal(other.window.document.documentElement.getAttribute('data-coe-theme'), 'ocean');
+		other.window.close();
+	});
 });
 
 describe('internacionalização (i18n / l10n)', () => {

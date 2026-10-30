@@ -196,6 +196,21 @@ Remove `count` unidades de um item por nome, varrendo os slots.
 - `boolean` `ok`
 - `string|nil` `errorCode` — `invalid_count|insufficient_items|persistence_failed`
 
+### `RemoveItemsByMetadata(id, itemName, filter)`
+
+Remove todas as unidades de um item cuja metadata contém `filter` (comparação parcial). Ex.: as chaves de um veículo.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `id` | `string` |  |
+| `itemName` | `string` |  |
+| `filter` | `table` | chaves e valores que a metadata precisa ter |
+
+**Retorno**
+
+- `integer|false` `removed` — unidades removidas (0 quando não havia)
+- `string|nil` `errorCode` — `invalid_item_metadata|persistence_failed`
+
 ### `RegisterItem(definition)`
 
 Registra uma nova definição de item no inventário.

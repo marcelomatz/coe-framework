@@ -24,15 +24,29 @@ Situação do painel básico.
 
 ### `RegisterGaragesProvider(provider)`
 
-Registra um provedor de garagens para administração pelo painel staff.
+Registra um provedor de garagens para administração pelo painel staff (aba Garagens).
 
 | Parâmetro | Tipo | Descrição |
 |---|---|---|
-| `provider` | `table` | Provedor com funções List, Save e Delete |
+| `provider` | `table` | List(), Save(raw), Delete(id) e `kinds` (tipos editáveis, padrão { 'public' }) |
 
 **Retorno**
 
 - `boolean` `ok`
+- `string|nil` `errorCode` — `invalid_provider`
+
+### `RegisterRentalsProvider(provider)`
+
+Registra o provedor das estações de aluguel (aba Aluguel). Normalmente o coe_rentals.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `provider` | `table` | List(), Save(raw), Delete(id) e, opcional, Catalog() |
+
+**Retorno**
+
+- `boolean` `ok`
+- `string|nil` `errorCode` — `invalid_provider`
 
 ## Tipos
 

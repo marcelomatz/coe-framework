@@ -10,11 +10,23 @@
 		{ id: 'vehicles', label: 'Veículos' },
 		{ id: 'hotel', label: 'Hotel' },
 		{ id: 'garages', label: 'Garagens' },
+		{ id: 'rentals', label: 'Aluguel' },
 		{ id: 'world', label: 'Mundo' },
 		{ id: 'businesses', label: 'Negócios' }
 	];
 	const ERRORS = {
 		forbidden: 'Sem permissão.', busy: 'Aguarde um instante.', timeout: 'Sem resposta do servidor.', closed: 'Painel fechado.',
+		garages_unavailable: 'Nenhum resource de garagens registrado (inicie o coe_garage ou um pacote de garagens).',
+		rentals_unavailable: 'O resource coe_rentals não está iniciado.',
+		provider_failed: 'O resource respondeu com erro. Veja o console do servidor.',
+		invalid_id: 'ID inválido: letras minúsculas, números e _.', invalid_label: 'Nome inválido.',
+		invalid_spots: 'Vagas inválidas.', too_many_spots: 'Máximo de 8 vagas.', invalid_spot_coords: 'Coordenadas da vaga inválidas.',
+		invalid_spot_data: 'Dados da vaga inválidos.', invalid_kind: 'Tipo de garagem não suportado aqui.',
+		unknown_garage: 'Garagem inexistente.', has_fleet: 'Remova a frota antes (painel completo).', garage_not_found: 'Garagem sem vagas.',
+		invalid_ped: 'Posição do atendente inválida.', invalid_spawns: 'Informe de 1 a 8 pontos de retirada válidos.',
+		invalid_return: 'Zona de devolução inválida.', invalid_vehicles: 'Lista de veículos inválida.', invalid_blip: 'Blip inválido.',
+		unknown_station: 'Estação inexistente.', rental_not_found: 'Estação sem atendente.', station_in_use: 'Há aluguéis ativos nesta estação.',
+		database_error: 'Falha ao gravar no banco.',
 		no_waypoint: 'Marque um ponto no mapa primeiro.', no_vehicle: 'Nenhum veículo por perto.', invalid_model: 'Modelo inválido.', update_in_progress: 'Uma atualização já está em andamento.', already_updating: 'Uma atualização já está em andamento.', update_download_failed: 'Não foi possível baixar os arquivos da atualização.'
 	};
 	const WEATHERS = {
@@ -35,7 +47,7 @@
 	const state = {
 		modules: {}, toggles: {}, noclip: false, tab: null, update: null,
 		players: null, selected: null, groups: null, itemSearch: '', items: null, itemsLoading: false, itemRequestId: 0,
-		vehicles: null, vehicleSearch: '', hotel: null, garages: null, garageEdit: null, world: null,
+		vehicles: null, vehicleSearch: '', hotel: null, garages: null, garageEdit: null, rentals: null, rentalEdit: null, world: null,
 		businesses: null, business: null
 	};
 	let statusTimer = null;
@@ -156,7 +168,9 @@
 		if (tab === 'players' && !state.players) { loadPlayers(); }
 		if (tab === 'vehicles' && !state.vehicles) { searchVehicles(''); }
 		if (tab === 'hotel' && !state.hotel) { act('hotel', {}, null, function (data) { state.hotel = data; render(); }); }
-		if (tab === 'garages' && !state.garages) { act('garages', {}, null, function (data) { state.garages = data; render(); }); }
+		// Garagens e aluguel: sempre recarrega (outro admin ou o próprio resource pode ter mudado a lista).
+		if (tab === 'garages') { state.garageEdit = null; act('garages', {}, null, function (data) { state.garages = data; render(); }); }
+		if (tab === 'rentals') { state.rentalEdit = null; act('rentals', {}, null, function (data) { state.rentals = data; render(); }); }
 		if (tab === 'world' && !state.world) { act('world', {}, null, function (data) { state.world = data; render(); }); }
 		if (tab === 'businesses' && !state.businesses) { loadBusinesses(); }
 	}
@@ -168,6 +182,7 @@
 			vehicles: renderVehicles,
 			hotel: renderHotel,
 			garages: renderGarages,
+			rentals: renderRentals,
 			world: renderWorld,
 			businesses: renderBusinesses
 		};
@@ -992,26 +1007,93 @@
 		els.body.append(hotelCard);
 	}
 
+	// Pontos no mundo (garagens e aluguel) -------------------------------------------------------------------
+
+	function num(value, fallback) {
+		const parsed = Number(value);
+		return Number.isFinite(parsed) ? parsed : fallback;
+	}
+	function checkbox(label, checked, onChange) {
+		const box = el('input');
+		box.type = 'checkbox';
+		box.checked = checked;
+		box.addEventListener('change', function () { onChange(box.checked); });
+		const wrap = el('label', 'sf-check');
+		wrap.append(box, el('span', null, label));
+		return wrap;
+	}
+	// Linha com X, Y, Z (e heading/raio) ligados ao objeto `point`, mais "Minhas coords".
+	function pointRow(point, opts) {
+		const options = opts || {};
+		const line = row();
+		const fields = [['x', 'X'], ['y', 'Y'], ['z', 'Z']];
+		if (options.heading) { fields.push([options.heading, 'Direção']); }
+		if (options.radius) { fields.push(['radius', 'Raio (m)']); }
+		const inputs = {};
+		if (options.label !== undefined) {
+			const labelInput = input('Rótulo', 'text', point.label || '');
+			labelInput.className += ' sf-narrow';
+			labelInput.maxLength = 32;
+			labelInput.addEventListener('input', function () { point.label = labelInput.value; });
+			line.append(field('Rótulo', labelInput));
+		}
+		fields.forEach(function (pair) {
+			const node = input(pair[1], 'number', point[pair[0]] !== undefined ? point[pair[0]] : '');
+			node.step = pair[0] === 'radius' ? '0.5' : '0.01';
+			node.className += ' sf-coord-input';
+			node.title = pair[1];
+			node.addEventListener('input', function () { point[pair[0]] = num(node.value, point[pair[0]]); });
+			inputs[pair[0]] = node;
+			const wrap = field(pair[1], node);
+			wrap.classList.add('sf-coord-field');
+			line.append(wrap);
+		});
+		line.append(button('Minhas coords', 'sf-small', function () {
+			act('getMyCoords', {}, null, function (c) {
+				if (!c) { return; }
+				point.x = c.x; point.y = c.y; point.z = c.z;
+				inputs.x.value = c.x; inputs.y.value = c.y; inputs.z.value = c.z;
+				if (options.heading) { point[options.heading] = c.h || 0; inputs[options.heading].value = c.h || 0; }
+			});
+		}));
+		if (options.onRemove) { line.append(button('Remover', 'sf-small coe-button--danger', options.onRemove)); }
+		return line;
+	}
+	function blipEditor(blip) {
+		const line = row();
+		line.append(checkbox('Blip no mapa', blip.enabled !== false, function (on) { blip.enabled = on; }));
+		[['sprite', 'Ícone'], ['color', 'Cor'], ['scale', 'Tamanho']].forEach(function (pair) {
+			const node = input(pair[1], 'number', blip[pair[0]]);
+			node.className += ' sf-coord-input';
+			node.title = pair[1];
+			if (pair[0] === 'scale') { node.step = '0.1'; }
+			node.addEventListener('input', function () { blip[pair[0]] = num(node.value, blip[pair[0]]); });
+			line.append(field(pair[1], node));
+		});
+		return line;
+	}
+
 	// Garagens -------------------------------------------------------------------------------------------------
+
+	const GARAGE_KINDS = { public: 'Pública', business: 'Negócio', job: 'Corporação' };
 
 	function renderGarages() {
 		const data = state.garages || {};
 		const garagesList = Array.isArray(data.garages) ? data.garages : [];
+		const kinds = Array.isArray(data.kinds) && data.kinds.length ? data.kinds : ['public'];
 
-		const top = card('Gerenciador de Garagens', 'Cadastre, edite ou remova garagens públicas e frotas de Los Santos.');
+		const top = card('Garagens públicas', 'Cadastre, edite ou remova as garagens públicas.' + (data.source ? ' Fonte: ' + data.source + '.' : ''));
 		const topRow = row();
-		topRow.append(button('+ Nova Garagem Pública', 'coe-button--primary', function () {
+		topRow.append(button('+ Nova garagem pública', 'coe-button--primary', function () {
 			act('getMyCoords', {}, null, function (c) {
-				if (!c) return;
-				const autoId = 'garagem_' + Math.random().toString(36).substring(2, 8);
+				if (!c) { return; }
 				state.garageEdit = {
-					id: autoId,
+					isNew: true,
+					id: 'garagem_' + Math.random().toString(36).substring(2, 8),
 					kind: 'public',
-					label: 'Nova Garagem Pública',
+					label: 'Nova garagem pública',
 					enabled: true,
-					spots: [
-						{ id: 'vaga_1', label: 'Vaga 1', x: c.x, y: c.y, z: c.z, radius: 3.5, heading: c.h || 0.0 }
-					],
+					spots: [{ id: 'vaga_1', label: 'Vaga 1', x: c.x, y: c.y, z: c.z, radius: 3.5, heading: c.h || 0 }],
 					blip: { enabled: true, sprite: 357, color: 3, scale: 0.8 }
 				};
 				render();
@@ -1021,150 +1103,244 @@
 
 		if (state.garageEdit) {
 			const ed = state.garageEdit;
-			const editCard = card('Configurar Garagem: ' + ed.label, 'Defina o nome, vagas e blip da garagem.');
-			
+			const editCard = card('Garagem: ' + ed.label, 'Nome, vagas (onde o jogador abre a garagem e o veículo sai) e blip.');
 			const idInput = input('ID único', 'text', ed.id);
-			idInput.disabled = true;
-			const labelInput = input('Nome da Garagem', 'text', ed.label);
-			
-			const kindSelect = el('select', 'coe-field');
-			[
-				{ val: 'public', label: 'Pública (Cidadãos)' },
-				{ val: 'business', label: 'Negócio (Frota)' },
-				{ val: 'job', label: 'Corporação (Polícia/EMS)' }
-			].forEach(function (opt) {
-				const o = el('option', null, opt.label);
-				o.value = opt.val;
-				if (opt.val === ed.kind) o.selected = true;
-				kindSelect.append(o);
-			});
-
-			const activeCb = el('input');
-			activeCb.type = 'checkbox';
-			activeCb.checked = ed.enabled !== false;
-			const activeLabel = el('label', 'sf-check');
-			activeLabel.append(activeCb, el('span', null, 'Garagem Ativa'));
-
-			const blipCb = el('input');
-			blipCb.type = 'checkbox';
-			blipCb.checked = (ed.blip && ed.blip.enabled) !== false;
-			const blipLabel = el('label', 'sf-check');
-			blipLabel.append(blipCb, el('span', null, 'Exibir Blip no Mapa'));
-
+			idInput.disabled = !ed.isNew;
+			idInput.addEventListener('input', function () { ed.id = idInput.value.trim().toLowerCase(); });
+			const labelInput = input('Nome da garagem', 'text', ed.label);
+			labelInput.maxLength = 48;
+			labelInput.addEventListener('input', function () { ed.label = labelInput.value; });
 			const r1 = row();
-			r1.append(idInput, labelInput, kindSelect, activeLabel, blipLabel);
+			r1.append(field('ID', idInput), field('Nome', labelInput),
+				checkbox('Ativa', ed.enabled !== false, function (on) { ed.enabled = on; }));
 			editCard.append(r1);
 
-			// Vagas
 			const spotsBox = el('div', 'sf-hotel-point');
-			spotsBox.append(el('strong', 'sf-hotel-point-title', 'Vagas / Pontos de Abertura e Saída (' + ed.spots.length + ')'));
-			
+			spotsBox.append(el('strong', 'sf-hotel-point-title', 'Vagas (' + ed.spots.length + '/8)'));
 			ed.spots.forEach(function (spot, idx) {
-				const spotRow = row();
-				const sLabel = input('Rótulo', 'text', spot.label || ('Vaga ' + (idx + 1)));
-				sLabel.className += ' sf-narrow';
-				const sx = input('X', 'number', spot.x); sx.className += ' sf-coord-input';
-				const sy = input('Y', 'number', spot.y); sy.className += ' sf-coord-input';
-				const sz = input('Z', 'number', spot.z); sz.className += ' sf-coord-input';
-				const sh = input('Heading', 'number', spot.heading || 0); sh.className += ' sf-coord-input';
-				
-				spotRow.append(
-					sLabel, sx, sy, sz, sh,
-					button('Minhas Coords', 'sf-small', function () {
-						act('getMyCoords', {}, null, function (c) {
-							if (c) {
-								sx.value = c.x; sy.value = c.y; sz.value = c.z; sh.value = c.h;
-								spot.x = c.x; spot.y = c.y; spot.z = c.z; spot.heading = c.h;
-							}
-						});
-					})
-				);
-				spotsBox.append(spotRow);
+				spotsBox.append(pointRow(spot, {
+					label: true, heading: 'heading', radius: true,
+					onRemove: ed.spots.length > 1 ? function () { ed.spots.splice(idx, 1); render(); } : null
+				}));
 			});
-
-			const spotActions = row();
 			if (ed.spots.length < 8) {
-				spotActions.append(button('+ Adicionar Vaga', 'sf-small', function () {
+				const add = row();
+				add.append(button('+ Adicionar vaga', 'sf-small', function () {
 					act('getMyCoords', {}, null, function (c) {
-						const coords = c || { x: 0, y: 0, z: 0, h: 0 };
-						ed.spots.push({
-							id: 'vaga_' + (ed.spots.length + 1),
-							label: 'Vaga ' + (ed.spots.length + 1),
-							x: coords.x, y: coords.y, z: coords.z,
-							radius: 3.5, heading: coords.h || 0.0
-						});
+						const at = c || { x: 0, y: 0, z: 0, h: 0 };
+						let n = ed.spots.length + 1;
+						while (ed.spots.some(function (sp) { return sp.id === 'vaga_' + n; })) { n += 1; }
+						ed.spots.push({ id: 'vaga_' + n, label: 'Vaga ' + n, x: at.x, y: at.y, z: at.z, radius: 3.5, heading: at.h || 0 });
 						render();
 					});
 				}));
+				spotsBox.append(add);
 			}
-			spotsBox.append(spotActions);
 			editCard.append(spotsBox);
+
+			const blipBox = el('div', 'sf-hotel-point');
+			blipBox.append(el('strong', 'sf-hotel-point-title', 'Blip (um por garagem, na primeira vaga)'));
+			ed.blip = ed.blip || { enabled: true, sprite: 357, color: 3, scale: 0.8 };
+			blipBox.append(blipEditor(ed.blip));
+			editCard.append(blipBox);
 
 			const saveRow = row();
 			saveRow.append(
-				button('Salvar Garagem', 'coe-button--primary', function () {
-					ed.label = labelInput.value.trim() || 'Garagem Pública';
-					ed.kind = kindSelect.value;
-					ed.enabled = activeCb.checked === true;
-					ed.blip = {
-						enabled: blipCb.checked === true,
-						sprite: (ed.blip && ed.blip.sprite) || 357,
-						color: (ed.blip && ed.blip.color) || 3,
-						scale: (ed.blip && ed.blip.scale) || 0.8
-					};
-					act('garageSave', ed, 'Garagem salva com sucesso.', function (res) {
+				button('Salvar garagem', 'coe-button--primary', function () {
+					const payload = JSON.parse(JSON.stringify(ed));
+					delete payload.isNew;
+					payload.label = (payload.label || '').trim() || 'Garagem pública';
+					act('garageSave', payload, 'Garagem salva.', function (res) {
 						state.garages = res;
 						state.garageEdit = null;
 						render();
 					});
 				}),
-				button('Cancelar', '', function () {
-					state.garageEdit = null;
-					render();
-				})
+				button('Cancelar', '', function () { state.garageEdit = null; render(); })
 			);
 			editCard.append(saveRow);
 			els.body.append(top, editCard);
 			return;
 		}
 
-		// Lista de Garagens
-		const listCard = card('Garagens Existentes (' + garagesList.length + ')', 'Garagens cadastradas no servidor.');
+		const listCard = card('Garagens cadastradas (' + garagesList.length + ')', 'Garagens que o servidor conhece agora.');
 		if (!garagesList.length) {
-			listCard.append(empty('Nenhuma garagem cadastrada no momento.'));
-		} else {
-			const kindNames = { public: 'Pública', business: 'Negócio', job: 'Corporação' };
-			garagesList.forEach(function (g) {
-				const gRow = row();
-				const badge = el('span', 'sf-version-badge', kindNames[g.kind] || g.kind);
-				const title = el('strong', null, g.label + ' (' + (g.spots ? g.spots.length : 0) + ' vagas)');
-				const sub = el('small', null, 'ID: ' + g.id + (g.blip && g.blip.enabled ? ' • Blip On' : ' • Blip Off'));
-				
-				const infoBox = el('div', 'sf-inline');
-				infoBox.append(badge, title, sub);
-
-				gRow.append(
-					infoBox,
-					button('Ir até lá', 'sf-small', function () {
-						act('garageGoto', { id: g.id }, 'Teleportado para a garagem.');
-					}),
-					button('Editar', 'sf-small', function () {
-						state.garageEdit = JSON.parse(JSON.stringify(g));
-						render();
-					}),
-					button('Remover', 'sf-small coe-button--danger', function () {
-						if (confirm('Deseja realmente remover a garagem ' + g.label + '?')) {
-							act('garageDelete', { id: g.id }, 'Garagem removida.', function (res) {
-								state.garages = res;
-								render();
-							});
-						}
-					})
-				);
-				listCard.append(gRow);
+			listCard.append(empty('Nenhuma garagem cadastrada.'));
+		}
+		garagesList.forEach(function (g) {
+			const gRow = row();
+			const infoBox = el('div', 'sf-inline');
+			infoBox.append(
+				el('span', 'sf-version-badge', GARAGE_KINDS[g.kind] || g.kind || 'Pública'),
+				el('strong', null, g.label + ' (' + (g.spots ? g.spots.length : 0) + ' vaga' + ((g.spots && g.spots.length === 1) ? '' : 's') + ')'),
+				el('small', null, g.id + (g.enabled === false ? ' · inativa' : '') + (g.blip && g.blip.enabled ? ' · blip' : ''))
+			);
+			const editable = kinds.indexOf(g.kind || 'public') !== -1 && (g.kind || 'public') === 'public';
+			const editButton = button('Editar', 'sf-small', function () {
+				state.garageEdit = JSON.parse(JSON.stringify(g));
+				state.garageEdit.isNew = false;
+				render();
 			});
+			editButton.disabled = !editable;
+			if (!editable) { editButton.title = 'Frotas de negócio/corporação são editadas no painel completo.'; }
+			gRow.append(
+				infoBox,
+				button('Ir até lá', 'sf-small', function () { act('garageGoto', { id: g.id }, 'Teleportado para a garagem.'); }),
+				editButton,
+				button('Remover', 'sf-small coe-button--danger', function () {
+					confirmBox('Remover garagem', 'Remover a garagem ' + g.label + '? Veículos guardados nela poderão sair em qualquer garagem pública.', 'Remover')
+						.then(function (yes) {
+							if (!yes) { return; }
+							act('garageDelete', { id: g.id }, 'Garagem removida.', function (res) { state.garages = res; render(); });
+						});
+				})
+			);
+			listCard.append(gRow);
+		});
+		els.body.append(top, listCard);
+	}
+
+	// Aluguel de veículos --------------------------------------------------------------------------------------
+
+	function renderRentals() {
+		const data = state.rentals || {};
+		const stations = Array.isArray(data.stations) ? data.stations : [];
+
+		const top = card('Aluguel de veículos', 'Estações de aluguel: atendente (NPC e balcão), pontos de retirada, zona de devolução e blip.');
+		const topRow = row();
+		topRow.append(button('+ Nova estação', 'coe-button--primary', function () {
+			act('getMyCoords', {}, null, function (c) {
+				if (!c) { return; }
+				state.rentalEdit = {
+					isNew: true,
+					id: 'aluguel_' + Math.random().toString(36).substring(2, 8),
+					label: 'Nova estação de aluguel',
+					enabled: true,
+					ped: { x: c.x, y: c.y, z: c.z, h: c.h || 0, model: 'a_m_y_business_02' },
+					spawns: [{ x: c.x + 3, y: c.y, z: c.z, h: c.h || 0 }],
+					returnZone: { x: c.x + 3, y: c.y, z: c.z, radius: 5 },
+					blip: { enabled: true, sprite: 226, color: 3, scale: 0.7 },
+					vehicles: []
+				};
+				render();
+			});
+		}));
+		top.append(topRow);
+
+		if (state.rentalEdit) {
+			const ed = state.rentalEdit;
+			const editCard = card('Estação: ' + ed.label, 'O jogador fala com o atendente para alugar ou devolver; o veículo sai no primeiro ponto de retirada livre.');
+			const idInput = input('ID único', 'text', ed.id);
+			idInput.disabled = !ed.isNew;
+			idInput.addEventListener('input', function () { ed.id = idInput.value.trim().toLowerCase(); });
+			const labelInput = input('Nome', 'text', ed.label);
+			labelInput.maxLength = 48;
+			labelInput.addEventListener('input', function () { ed.label = labelInput.value; });
+			const r1 = row();
+			r1.append(field('ID', idInput), field('Nome', labelInput),
+				checkbox('Ativa', ed.enabled !== false, function (on) { ed.enabled = on; }));
+			editCard.append(r1);
+
+			const pedBox = el('div', 'sf-hotel-point');
+			pedBox.append(el('strong', 'sf-hotel-point-title', 'Atendente (NPC) e balcão'));
+			pedBox.append(pointRow(ed.ped, { heading: 'h' }));
+			const modelInput = input('Modelo do NPC', 'text', ed.ped.model || '');
+			modelInput.maxLength = 48;
+			modelInput.addEventListener('input', function () { ed.ped.model = modelInput.value.trim(); });
+			const pr = row();
+			pr.append(field('Modelo do NPC (vazio = padrão)', modelInput));
+			pedBox.append(pr);
+			editCard.append(pedBox);
+
+			const spawnBox = el('div', 'sf-hotel-point');
+			spawnBox.append(el('strong', 'sf-hotel-point-title', 'Pontos de retirada (' + ed.spawns.length + '/8) — o veículo sai no primeiro livre'));
+			ed.spawns.forEach(function (point, idx) {
+				spawnBox.append(pointRow(point, {
+					heading: 'h',
+					onRemove: ed.spawns.length > 1 ? function () { ed.spawns.splice(idx, 1); render(); } : null
+				}));
+			});
+			if (ed.spawns.length < 8) {
+				const add = row();
+				add.append(button('+ Adicionar ponto de retirada', 'sf-small', function () {
+					act('getMyCoords', {}, null, function (c) {
+						const at = c || { x: 0, y: 0, z: 0, h: 0 };
+						ed.spawns.push({ x: at.x, y: at.y, z: at.z, h: at.h || 0 });
+						render();
+					});
+				}));
+				spawnBox.append(add);
+			}
+			editCard.append(spawnBox);
+
+			const returnBox = el('div', 'sf-hotel-point');
+			returnBox.append(el('strong', 'sf-hotel-point-title', 'Zona de devolução (dentro do carro, E devolve)'));
+			returnBox.append(pointRow(ed.returnZone, { radius: true }));
+			editCard.append(returnBox);
+
+			const extraBox = el('div', 'sf-hotel-point');
+			extraBox.append(el('strong', 'sf-hotel-point-title', 'Veículos e blip'));
+			const modelsInput = input('Modelos (vazio = todos)', 'text', (ed.vehicles || []).join(', '));
+			modelsInput.addEventListener('input', function () {
+				ed.vehicles = modelsInput.value.split(',').map(function (m) { return m.trim().toLowerCase(); }).filter(Boolean);
+			});
+			const catalog = Array.isArray(data.catalog) ? data.catalog : [];
+			const vr = row();
+			vr.append(field('Modelos oferecidos, separados por vírgula' + (catalog.length ? ' (' + catalog.map(function (v) { return v.model; }).join(', ') + ')' : ''), modelsInput));
+			extraBox.append(vr);
+			ed.blip = ed.blip || { enabled: true, sprite: 226, color: 3, scale: 0.7 };
+			extraBox.append(blipEditor(ed.blip));
+			editCard.append(extraBox);
+
+			const saveRow = row();
+			saveRow.append(
+				button('Salvar estação', 'coe-button--primary', function () {
+					const payload = JSON.parse(JSON.stringify(ed));
+					delete payload.isNew;
+					act('rentalSave', payload, 'Estação salva.', function (res) {
+						state.rentals = res;
+						state.rentalEdit = null;
+						render();
+					});
+				}),
+				button('Cancelar', '', function () { state.rentalEdit = null; render(); })
+			);
+			editCard.append(saveRow);
+			els.body.append(top, editCard);
+			return;
 		}
 
+		const listCard = card('Estações cadastradas (' + stations.length + ')', 'Clique em Editar para mudar o atendente, os pontos de retirada ou a devolução.');
+		if (!stations.length) {
+			listCard.append(empty('Nenhuma estação cadastrada.'));
+		}
+		stations.forEach(function (st) {
+			const line = row();
+			const info = el('div', 'sf-inline');
+			info.append(
+				el('strong', null, st.label),
+				el('small', null, st.id + ' · ' + (st.spawns ? st.spawns.length : 0) + ' ponto(s) de retirada' +
+					(st.vehicles && st.vehicles.length ? ' · ' + st.vehicles.length + ' modelo(s)' : ' · todos os modelos') +
+					(st.enabled === false ? ' · inativa' : ''))
+			);
+			line.append(
+				info,
+				button('Ir até lá', 'sf-small', function () { act('rentalGoto', { id: st.id }, 'Teleportado para o atendente.'); }),
+				button('Editar', 'sf-small', function () {
+					state.rentalEdit = JSON.parse(JSON.stringify(st));
+					state.rentalEdit.isNew = false;
+					state.rentalEdit.vehicles = state.rentalEdit.vehicles || [];
+					render();
+				}),
+				button('Remover', 'sf-small coe-button--danger', function () {
+					confirmBox('Remover estação', 'Remover a estação ' + st.label + '?', 'Remover').then(function (yes) {
+						if (!yes) { return; }
+						act('rentalDelete', { id: st.id }, 'Estação removida.', function (res) { state.rentals = res; render(); });
+					});
+				})
+			);
+			listCard.append(line);
+		});
 		els.body.append(top, listCard);
 	}
 

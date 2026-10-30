@@ -299,7 +299,7 @@ end
 
 function EconomyPersistence.Ledger(characterId, limit)
 	local rows, errorCode = callDatabase('Query',
-		'SELECT delta, reason, reference, created_at FROM coe_economy_ledger WHERE character_id = ? ORDER BY id DESC LIMIT ' .. math.floor(limit),
+		'SELECT delta, reason, reference, created_at, UNIX_TIMESTAMP(created_at) AS at FROM coe_economy_ledger WHERE character_id = ? ORDER BY id DESC LIMIT ' .. math.floor(limit),
 		{ characterId })
 	if not rows then
 		return nil, errorCode or 'database_error'

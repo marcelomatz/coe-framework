@@ -50,7 +50,7 @@ end
 
 local function notify(src, kind, message)
 	pcall(function()
-		exports.coe_notify:Show(src, kind, message, 3000)
+		exports.coe_notify:Notify(src, kind, message, 3000)
 	end)
 end
 

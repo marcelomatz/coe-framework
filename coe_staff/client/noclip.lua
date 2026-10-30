@@ -22,6 +22,13 @@ local function setGhost(entity, on)
 	SetEntityVelocity(entity, 0.0, 0.0, 0.0)
 end
 
+-- Instruções no aviso de interação padrão do framework (exports.coe_notify:Prompt).
+local function notifyPrompt(data)
+	pcall(function()
+		exports.coe_notify:Prompt(data)
+	end)
+end
+
 local function direction()
 	local rot = GetGameplayCamRot(2)
 	local pitch, yaw = math.rad(rot.x), math.rad(rot.z)
@@ -43,6 +50,7 @@ function StaffNoclip.Set(on, speeds)
 	end
 	CreateThread(function()
 		local current = entity
+		local shownSpeed = nil
 		while StaffNoclip.active do
 			Wait(0)
 			local now = entityOf()
@@ -71,10 +79,22 @@ function StaffNoclip.Set(on, speeds)
 			local target = at + move * step
 			SetEntityCoordsNoOffset(current, target.x, target.y, target.z, true, true, true)
 			SetEntityHeading(current, GetGameplayCamRot(2).z)
-			BeginTextCommandDisplayHelp('STRING')
-			AddTextComponentSubstringPlayerName(('Noclip · velocidade %d/%d · Q/E desce/sobe · Shift rápido · roda do mouse muda'):format(StaffNoclip.speed, #speeds))
-			EndTextCommandDisplayHelp(0, false, false, -1)
+			if shownSpeed ~= StaffNoclip.speed then
+				shownSpeed = StaffNoclip.speed
+				notifyPrompt({
+					title = 'Noclip',
+					subtitle = ('Velocidade %d/%d'):format(StaffNoclip.speed, #speeds),
+					badge = 'NC',
+					options = {
+						{ key = 'W A S D', label = 'Mover' },
+						{ key = 'Q / E', label = 'Descer / subir' },
+						{ key = 'Shift', label = 'Rápido' },
+						{ key = 'Roda', label = 'Mudar velocidade' }
+					}
+				})
+			end
 		end
+		notifyPrompt(nil)
 		setGhost(current, false)
 	end)
 end

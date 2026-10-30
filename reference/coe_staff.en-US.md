@@ -24,15 +24,29 @@ Current status of base staff administration panel.
 
 ### `RegisterGaragesProvider(provider)`
 
-Registers a garage management provider for administration via the staff panel.
+Registers a garage provider for administration via the staff panel (Garages tab).
 
 | Parameter | Type | Description |
 |---|---|---|
-| `provider` | `table` | Provider table defining List, Save, and Delete methods |
+| `provider` | `table` | List(), Save(raw), Delete(id) and `kinds` (editable kinds, default { 'public' }) |
 
 **Returns**
 
 - `boolean` `ok`
+- `string|nil` `errorCode` — `invalid_provider`
+
+### `RegisterRentalsProvider(provider)`
+
+Registers the rental stations provider (Rentals tab). Usually coe_rentals.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `provider` | `table` | List(), Save(raw), Delete(id) and, optionally, Catalog() |
+
+**Returns**
+
+- `boolean` `ok`
+- `string|nil` `errorCode` — `invalid_provider`
 
 ## Types
 

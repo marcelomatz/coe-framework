@@ -5,6 +5,24 @@ RentalsConfig = {
 	InteractRadius = 6.0,
 	-- Intervalo mínimo entre pedidos de aluguel/devolução do mesmo jogador (ms).
 	CooldownMs = 2000,
+	-- Devolver no balcão: o veículo alugado precisa estar a até esta distância (m) do atendente, da zona de
+	-- devolução ou de um ponto de retirada da estação.
+	CounterReturnDistance = 40.0,
+	-- Ponto de retirada ocupado: algum veículo a menos desta distância (m). O aluguel usa o próximo livre.
+	SpawnClearance = 2.5,
+	Limits = { MaxSpawns = 8 },
+
+	-- Quem edita as estações pelos exports. O painel do framework (coe_staff) usa o provedor; painéis de pacotes
+	-- e scripts de terceiros recebem a ACE no server.cfg: add_ace resource.<nome> coe.rentals.admin allow
+	AdminAce = 'coe.rentals.admin',
+	AdminResources = { coe_staff = true },
+
+	-- Atendente (NPC) no balcão de cada estação (coords). A estação pode trocar com ped = { model, h }.
+	-- Só existe no client e só perto da estação (SpawnDistance).
+	Ped = {
+		Model = 'a_m_y_business_02',
+		SpawnDistance = 60.0
+	},
 
 	-- Catálogo de veículos para aluguel inicial
 	-- price: custo do serviço (não reembolsável)
@@ -16,7 +34,9 @@ RentalsConfig = {
 		{ model = 'blista', label = 'Hatch Blista', category = 'carro', price = 220, deposit = 130 }
 	},
 
-	-- Estações de aluguel e devolução espalhadas pelo mapa
+	-- Estações iniciais: só semeiam o banco na primeira vez (depois o painel da staff edita as estações).
+	-- coords = balcão/atendente, spawn = ponto de retirada, returnZone = zona de devolução.
+	-- Opcional por estação: vehicles = { 'tribike', 'faggio' } limita o catálogo oferecido ali.
 	Stations = {
 		{
 			id = 'pink_cage',

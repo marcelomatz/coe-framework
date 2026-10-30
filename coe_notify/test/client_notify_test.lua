@@ -45,4 +45,31 @@ registeredEvents['coe_notify:display']('warning', 'Servidor atualizado.', 3000)
 assertEqual(#messages, 2, 'server notification is displayed')
 assertEqual(messages[2].type, 'warning', 'server notification keeps its type')
 
+-- Aviso de interação padrão (Prompt)
+local invoking = 'coe_rentals'
+GetInvokingResource = function() return invoking end
+local before = #messages
+local ok = registeredExports.Prompt({ title = 'Aluguel', subtitle = 'Locadora', options = { { key = 'E', label = 'Alugar ~r~veículo' } } })
+assertEqual(ok, true, 'valid prompt is accepted')
+local last = messages[#messages]
+assertEqual(last.action, 'prompt', 'prompt reaches NUI')
+assertEqual(last.data.title, 'Aluguel', 'prompt title reaches NUI')
+assertEqual(last.data.badge, 'E', 'badge defaults to first key')
+assertEqual(last.data.options[1].label, 'Alugar veículo', 'GTA color codes are stripped')
+
+invoking = 'coe_admin'
+registeredExports.Prompt({ title = 'Noclip', badge = 'NC', options = {} })
+assertEqual(messages[#messages].data.title, 'Noclip', 'newest prompt wins')
+registeredExports.Prompt(nil)
+assertEqual(messages[#messages].data.title, 'Aluguel', 'clearing restores previous owner prompt')
+
+local bad, badError = registeredExports.Prompt({ subtitle = 'sem título' })
+assertEqual(bad, false, 'prompt without title is rejected')
+assertEqual(badError, 'invalid_prompt', 'invalid prompt has explicit error')
+
+invoking = 'coe_rentals'
+registeredExports.Prompt(nil)
+assertEqual(messages[#messages].data, nil, 'clearing last prompt hides it')
+assert(#messages > before)
+
 print('client notification tests passed')

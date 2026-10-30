@@ -14,6 +14,25 @@ local function notify(playerId, kind, message)
 	end)
 end
 
+-- Dono do veículo: o coe_vehicles devolve ownerCharacterId (string); o personagem ativo pode vir como número.
+local function ownsVehicle(record, characterId)
+	return type(record) == 'table' and record.ownerCharacterId ~= nil
+		and tostring(record.ownerCharacterId) == tostring(characterId)
+end
+
+local function catalogInfo(model)
+	local ok, info = pcall(function()
+		return exports.coe_vehicle_catalog:GetVehicleInfo(model)
+	end)
+	return ok and type(info) == 'table' and info or nil
+end
+
+-- Vaga registrada: o veículo só sai da garagem onde foi guardado. Sem registro (veículo novo) ou com a
+-- garagem removida, qualquer garagem pública serve na primeira retirada.
+local function slotAllows(slotGarage, garageId)
+	return slotGarage == nil or slotGarage == garageId or garages[slotGarage] == nil
+end
+
 local function broadcastStations()
 	local stations = GarageDomain.BuildStationList(garages)
 	TriggerClientEvent('coe_garage:syncStations', -1, stations)
@@ -45,6 +64,7 @@ local function registerStaffProvider()
 	pcall(function()
 		exports.coe_staff:RegisterGaragesProvider({
 			resource = GetCurrentResourceName(),
+			kinds = { 'public' },
 			List = function()
 				local list = {}
 				for _, g in pairs(garages) do
@@ -79,9 +99,18 @@ local function registerStaffProvider()
 	end)
 end
 
+-- O coe_staff pode (re)iniciar depois do boot: registra de novo assim que ele terminar de subir.
 AddEventHandler('onResourceStart', function(resourceName)
 	if resourceName == 'coe_staff' then
-		registerStaffProvider()
+		CreateThread(function()
+			for _ = 1, 20 do
+				Wait(500)
+				if GetResourceState('coe_staff') == 'started' then
+					registerStaffProvider()
+					return
+				end
+			end
+		end)
 	end
 end)
 
@@ -199,18 +228,21 @@ RegisterNetEvent('coe_garage:getStoredVehicles', function(garageId, spotId)
 	for _, veh in ipairs(allVehicles) do
 		local vId = tostring(veh.id)
 		local assignedGarage = slots[vId]
-		local isStored = veh.state == 'stored'
-		-- Pode retirar se o veículo estiver guardado e pertencer a esta garagem ou sem vaga fixa
-		if isStored and (not assignedGarage or assignedGarage == garageId) then
+		if veh.state == 'stored' and slotAllows(assignedGarage, garageId) then
+			local info = catalogInfo(veh.model)
 			available[#available + 1] = {
-				id = veh.id,
+				id = vId,
 				model = veh.model,
+				label = info and info.name or veh.model,
 				plate = veh.plate
 			}
 		end
 	end
 
-	TriggerClientEvent('coe_garage:openMenu', src, garageId, spotId, available)
+	TriggerClientEvent('coe_garage:openMenu', src, garageId, spotId, available, {
+		title = g.label,
+		spotLabel = targetSpot.label
+	})
 end)
 
 RegisterNetEvent('coe_garage:retrieveVehicle', function(garageId, spotId, vehicleId)
@@ -246,8 +278,9 @@ RegisterNetEvent('coe_garage:retrieveVehicle', function(garageId, spotId, vehicl
 		return
 	end
 
+	vehicleId = tostring(vehicleId or '')
 	local veh = exports.coe_vehicles:Get(vehicleId)
-	if not veh or tostring(veh.owner_id) ~= tostring(characterId) then
+	if not ownsVehicle(veh, characterId) then
 		return notify(src, 'error', _t('not_your_vehicle'))
 	end
 
@@ -255,19 +288,20 @@ RegisterNetEvent('coe_garage:retrieveVehicle', function(garageId, spotId, vehicl
 		return notify(src, 'error', _t('vehicle_not_stored'))
 	end
 
-	-- Mesma regra da listagem: veículo com vaga fixa só sai da garagem onde foi guardado.
+	-- Mesma regra da listagem: veículo com vaga registrada só sai da garagem onde foi guardado.
 	local slots = GaragePersistence.SlotsOf(characterId) or {}
-	local assignedGarage = slots[tostring(vehicleId)]
-	if assignedGarage and assignedGarage ~= garageId then
+	if not slotAllows(slots[vehicleId], garageId) then
 		return notify(src, 'error', _t('wrong_garage'))
 	end
 
-	local netId = exports.coe_vehicles:Spawn(vehicleId, targetSpot.x, targetSpot.y, targetSpot.z, targetSpot.heading, 'automobile')
+	local info = catalogInfo(veh.model)
+	local netId = exports.coe_vehicles:Spawn(vehicleId, targetSpot.x, targetSpot.y, targetSpot.z, targetSpot.heading, info and info.type or 'automobile')
 	if not netId or type(netId) ~= 'number' then
 		return notify(src, 'error', _t('spawn_failed'))
 	end
 
-	exports.coe_vehicles:GiveKey(vehicleId, characterId)
+	-- A vaga continua registrada nesta garagem: se o servidor reiniciar com o veículo na rua, o coe_vehicles
+	-- devolve o estado 'stored' e ele volta a aparecer aqui (última garagem).
 	GaragePersistence.SaveSlot(vehicleId, garageId, characterId, 'car')
 
 	notify(src, 'success', _t('vehicle_retrieved'))
@@ -314,6 +348,9 @@ RegisterNetEvent('coe_garage:storeVehicle', function(garageId, spotId, netId)
 
 	local stateBag = Entity(entity).state
 	local vehicleId = stateBag and stateBag['coe:vehicleId']
+	if vehicleId ~= nil then
+		vehicleId = tostring(vehicleId)
+	end
 	if not vehicleId then
 		-- Fallback pelo GetByPlate
 		local plate = GetVehicleNumberPlateText(entity)
@@ -328,7 +365,7 @@ RegisterNetEvent('coe_garage:storeVehicle', function(garageId, spotId, netId)
 	end
 
 	local vehRecord = exports.coe_vehicles:Get(vehicleId)
-	if not vehRecord or tostring(vehRecord.owner_id) ~= tostring(characterId) then
+	if not ownsVehicle(vehRecord, characterId) then
 		return notify(src, 'error', _t('not_your_vehicle'))
 	end
 
