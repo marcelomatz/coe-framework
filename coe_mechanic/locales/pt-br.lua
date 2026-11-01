@@ -1,0 +1,30 @@
+Locales = (type(Locales) == 'table' and Locales) or {}
+
+Locales['pt-BR'] = {
+	quote_received = 'Seu orçamento chegou. Abra o showroom para aprovar.',
+	quote_requested = 'Novo pedido de orçamento: %{plate}.',
+	quote_approved = 'Orçamento de %{plate} aprovado. Pode executar o serviço.',
+	bench_label = 'Bancada · %{shop}',
+	stash_label = '%{station} · %{shop}',
+	err_not_staff = 'Só a equipe da oficina pode usar isto.',
+	err_too_far = 'Chegue mais perto.',
+	err_missing_items = 'Faltam materiais.',
+	err_craft_busy = 'Você já está produzindo algo.',
+	err_inventory_full = 'Sem espaço na mochila.',
+	err_craft_interrupted = 'Produção interrompida.',
+	err_container_limit = 'Feche um baú antes de abrir outro.',
+	err_inventory_unavailable = 'Inventário indisponível.',
+	err_not_ready = 'Serviço ainda iniciando.',
+	err_no_station = 'Estação não encontrada.',
+	generic_error = 'Não foi possível concluir.',
+	plate_required = 'Informe a placa.',
+	vehicle_not_found = 'Veículo não encontrado.',
+	inspection_failed = 'Falha ao inspecionar.',
+	inspection_printed = 'Inspeção de %{plate} impressa no console do servidor.',
+	service_completed = 'Revisão concluída.',
+	mileage_adjusted = 'Quilometragem de %{plate} ajustada.',
+	invalid_args = 'Argumentos inválidos.',
+	appearance_updated = 'Aparência atualizada.',
+	quote_total = 'Orçamento: %{total}',
+	action_failed = 'Falha: %{error}'
+}

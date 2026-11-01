@@ -11,7 +11,7 @@
 [![Suíte de Testes](https://img.shields.io/badge/tests-83%20lua%20%7C%208%20node%20%7C%209%20mariadb%20%7C%20strict%20contracts-blue.svg)](#garantia-de-qualidade-e-anti-regressao-no-ci)
 [![Internacionalização](https://img.shields.io/badge/i18n-445%20keys%20%7C%20100%25%20parity%20%7C%20pt--BR%20%26%20en--US-green.svg)](https://docs.coeroleplay.app/#doc=I18N_LOCALIZATION.md)
 [![Platform HAL](https://img.shields.io/badge/platform%20hal-decoupled%20natives%20%7C%20zero%20legacy-purple.svg)](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.md)
-[![Resources First-Party](https://img.shields.io/badge/resources-29%20first--party%20MIT-purple.svg)](https://docs.coeroleplay.app/#doc=PACKS.md)
+[![Resources First-Party](https://img.shields.io/badge/resources-55%20first--party%20MIT-purple.svg)](https://docs.coeroleplay.app/#doc=PACKS.md)
 [![Plataforma](https://img.shields.io/badge/platform-FiveM%20for%20GTAV%20Enhanced%20%28Gen9%20DX12%29-lightgrey.svg)](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows)
 [![Arquitetura](https://img.shields.io/badge/architecture-clean%20%2F%20server--authoritative-orange.svg)](https://docs.coeroleplay.app/#doc=ARCHITECTURE.md)
 [![AI Ready](https://img.shields.io/badge/AI%20Agents-5%20Rules%20%7C%208%20Skills-teal.svg)](#como-conectar-os-agentes-de-ia-do-coe-no-seu-ambiente)
@@ -32,7 +32,7 @@
 >
 > *Quero deixar registrado o meu mais profundo respeito e gratidão a todos os pioneiros e desenvolvedores de frameworks como **ESX**, **QBCore**, **Qbox** e **Ox**, que desbravaram caminhos, criaram os alicerces onde todos nós pisamos e continuam fazendo um trabalho admirável pelo ecossistema. Da mesma forma, meu agradecimento sincero a cada **modder**, criador de conteúdo e administrador de servidor que dedica noites e fins de semana para tornar o ambiente do FiveM cada vez melhor.*
 >
-> *O COE Framework nasce como uma contribuição de coração aberto: 29 resources em arquitetura limpa, com desempenho inegociável (0.00ms idle), totalmente orientados ao servidor, desacoplados via Platform HAL e com banco assíncrono MariaDB 11. Que ele sirva como ferramenta, inspiração e base sólida para que a comunidade continue criando o futuro do roleplay."*
+> *O COE Framework nasce como uma contribuição de coração aberto: 55 resources em arquitetura limpa, com desempenho inegociável (0.00ms idle), totalmente orientados ao servidor, desacoplados via Platform HAL e com banco assíncrono MariaDB 11. Que ele sirva como ferramenta, inspiração e base sólida para que a comunidade continue criando o futuro do roleplay."*
 >
 > — **Marcelo Matz**
 
@@ -71,7 +71,7 @@ Nunca montou um servidor no **FiveM for GTAV Enhanced** ou está vindo de bases 
    https://www.coeroleplay.app/recipe.yaml
    ```
 5. Informe a senha do seu **MariaDB** e a sua chave de licença Cfx.re ([Keymaster / Portal Cfx.re](https://portal.cfx.re/)).
-6. Clique em **Run Recipe (Executar Receita)**! O txAdmin fará tudo sozinho: baixará os resources padrão da Cfx.re, baixará os **29 resources abertos do COE Framework**, criará o banco de dados com todas as tabelas automaticamente e iniciará o servidor!
+6. Clique em **Run Recipe (Executar Receita)**! O txAdmin fará tudo sozinho: baixará os resources padrão da Cfx.re, baixará os **55 resources abertos do COE Framework**, criará o banco de dados com todas as tabelas automaticamente e iniciará o servidor!
 
 > [!TIP]
 > **Prefere instalar manualmente ou usar o ambiente completo de desenvolvimento?**
@@ -186,7 +186,7 @@ flowchart TD
     subgraph Server["Servidor Autorizador (Server-Authoritative)"]
         Val["Validação de Sessão, Cooldown & Permissões"]
         Platform["Camada de Isolamento Core.Platform (HAL)"]
-        Domain["Regras de Negócio (29 Resources)"]
+        Domain["Regras de Negócio (55 Resources)"]
         Locale["Motor i18n Core.Locale (_t)"]
     end
 
@@ -246,8 +246,8 @@ A tabela abaixo sintetiza as diferenças técnicas profundas entre o **COE Frame
 
 | Critério Técnico | ESX Legacy (2017–2024) | QBCore / Qbox (2020–2024) | vRP (Legado / vRPex) | COE Framework (Enhanced) |
 |---|---|---|---|---|
-| **Arquitetura Base** | Monolítica, loops pesados de thread | Modular parcial, dependência de 40+ repositórios terceiros | Sistema de proxies/túneis de alta latência | **8 Camadas Estritas (29 resources first-party integrados)** |
-| **Consumo de CPU (*Resmon*)** | `1.5ms – 3.5ms` em repouso no cliente | `0.8ms – 2.0ms` | `1.2ms – 2.5ms` | **`< 0.15ms` somando todos os 29 resources** |
+| **Arquitetura Base** | Monolítica, loops pesados de thread | Modular parcial, dependência de 40+ repositórios terceiros | Sistema de proxies/túneis de alta latência | **8 Camadas Estritas (55 resources first-party integrados)** |
+| **Consumo de CPU (*Resmon*)** | `1.5ms – 3.5ms` em repouso no cliente | `0.8ms – 2.0ms` | `1.2ms – 2.5ms` | **`< 0.15ms` somando todos os 55 resources** |
 | **Modelo de Segurança** | Confiante no cliente (vulnerável a executores Lua) | Verificação parcial por callbacks | Verificação por metatables vulneráveis | **Servidor Autoritativo estrito + Auditoria durável (`coe_audit`)** |
 | **Banco de Dados** | Queries síncronas bloqueantes (`MySQL.Sync`) | ORM pesado ou wrappers em Lua | Queries diretas sem integridade | **Node.js 22 assíncrono, Pool MariaDB 11, Transações ACID** |
 | **Integridade Relacional** | JSON solto em colunas longas, sem foreign keys | JSON serializado em colunas de inventário | Tabela única desnormalizada | **Modelagem 3NF, Chaves `RESTRICT`, Migrações idempotentes** |
@@ -260,7 +260,7 @@ A tabela abaixo sintetiza as diferenças técnicas profundas entre o **COE Frame
 
 ---
 
-## 💎 Funcionalidades Essenciais do Framework (29 Resources Open-Source)
+## 💎 Funcionalidades Essenciais do Framework (55 Resources Open-Source)
 
 O termo **Enhanced** não se limita apenas ao novo executável do GTA V: representa uma nova era de engenharia limpa e estável a 64 Hz com 0.00ms de resmon.
 
@@ -309,9 +309,9 @@ Abaixo, os principais subsistemas abertos que compõem o COE Framework:
 
 ---
 
-## 🏛️ As Camadas da Arquitetura (29 Resources)
+## 🏛️ As Camadas da Arquitetura (55 Resources)
 
-Para garantir dependências unidirecionais estritas, os 29 resources abertos organizam-se na seguinte hierarquia:
+Para garantir dependências unidirecionais estritas, os 55 resources abertos organizam-se na seguinte hierarquia:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -345,7 +345,7 @@ Para garantir dependências unidirecionais estritas, os 29 resources abertos org
 Todo o código é permanentemente submetido a uma esteira rigorosa no GitHub Actions, garantindo que nenhum erro de sintaxe, manifesto ou quebra de contrato chegue à branch principal:
 
 1. **Validação de Contratos e Manifestos (`tools/check_contracts.lua --strict --audit-natives --audit-locales`)**:
-   - **29 resources** verificados contra seus manifestos `fxmanifest.lua`;
+   - **55 resources** verificados contra seus manifestos `fxmanifest.lua`;
    - Exports públicos mapeados, validados e documentados;
    - Chamadas cruzadas (*cross-resource*) auditadas e aprovadas;
    - Eventos de rede registrados e disparos validados (zero eventos órfãos);
@@ -359,11 +359,31 @@ Todo o código é permanentemente submetido a uma esteira rigorosa no GitHub Act
 
 ---
 
+## 📦 Scripts Avançados (antigos pacotes Tier 3) — agora open-source
+
+A suíte completa de scripts que era vendida à parte (`coe-resources`) agora faz parte deste repositório, sob a mesma licença MIT:
+
+| Grupo | Resources |
+|---|---|
+| COE OS Suite | `coe_phone`, `coe_tablet`, `coe_apps`, `coe_telecom`, `coe_mail`, `coe_elos`, `coe_news` |
+| Automotivo | `coe_mechanic`, `coe_handling`, `coe_fuel`, `coe_garages` |
+| Cyber & Submundo | `coe_deepweb`, `coe_crypto`, `coe_loot`, `coe_amzg`, `coe_factions`, `coe_races` |
+| Segurança Pública | `coe_police`, `coe_ems`, `coe_dispatch`, `coe_mdt` |
+| Empresas & Governo | `coe_banking`, `coe_housing`, `coe_doors`, `coe_crafting`, `coe_admin` |
+
+Cinco resources básicos têm substituto avançado e **ficam fora do build oficial e da recipe do txAdmin**: `coe_mobile` → `coe_phone`, `coe_workpad` → `coe_tablet`, `coe_bank` → `coe_banking`, `coe_staff` → `coe_admin`, `coe_garage` → `coe_garages`. Eles continuam no repositório por compatibilidade: quem ainda roda um básico só adiciona o avançado, o `coe_supervisor` segura o básico e o avançado importa os dados dele (ver [`UPGRADES.md`](UPGRADES.md)).
+
+Dependências de terceiros sem build pronto (`screenshot-basic`, usado pela câmera do `coe_apps`) vêm pré-compiladas em [`[vendor]`]([vendor]/README.md), sob a licença MIT da Cfx.re.
+
+Os scripts avançados recebem as capacidades do framework pelo [`permissions.cfg`](permissions.cfg) (`exec permissions.cfg` no `server.cfg`, antes dos `ensure`). A recipe e o build do COE Build Manager já fazem isso.
+
+---
+
 ## 🛠️ Para Desenvolvedores da Comunidade FiveM: Criando Novos Scripts
 
 O COE Framework foi desenhado para empoderar a comunidade de desenvolvedores, scripters e modders de FiveM. Você **nunca precisa alterar o núcleo** do framework para criar novos empregos, sistemas, negócios ou minijogos:
 
-- **100% Open-Source (MIT)**: 29 resources autossuficientes e abertos no repositório `coe-framework` para você estudar, usar e estender livremente.
+- **100% Open-Source (MIT)**: 55 resources autossuficientes e abertos no repositório `coe-framework` para você estudar, usar e estender livremente.
 - **Pontos de Extensão Desacoplados**: Adicione abas no tablet de empresas (`coe_businesses:RegisterTab`), registre novos meios de pagamento em lojas (`coe_shops:RegisterPaymentMethod`) ou adicione provedores de dados sem editar uma única linha do framework original.
 - **Segurança Nativa por ACE**: Conceda acessos finos a banco de dados e economia no `server.cfg` através de `add_ace resource.<nome> coe.<capacidade> allow`.
 
@@ -378,13 +398,13 @@ Navegue pelos documentos aprofundados para entender cada subsistema em detalhes:
 | Documento | Foco & Descrição |
 |---|---|
 | [`DEVELOPER_GUIDE.md`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.md) ([`en-US`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.en-US.md)) | **Guia do Desenvolvedor**: Manual passo a passo com exemplos práticos para criar scripts sobre o Core do COE. |
-| [`ARCHITECTURE.md`](https://docs.coeroleplay.app/#doc=ARCHITECTURE.md) | **Arquitetura Geral**: Camadas funcionais, diagrama de dependências, detalhamento dos 29 resources abertos, tabela de exports públicos e ciclo de vida. |
+| [`ARCHITECTURE.md`](https://docs.coeroleplay.app/#doc=ARCHITECTURE.md) | **Arquitetura Geral**: Camadas funcionais, diagrama de dependências, detalhamento dos 55 resources abertos, tabela de exports públicos e ciclo de vida. |
 | [`PLATFORM_HAL.md`](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.md) | **Camada de Plataforma CFX**: Hardware Abstraction Layer (`Core.Platform`), desacoplamento de natives, adaptadores OOP e backend de mock offline. |
 | [`I18N_LOCALIZATION.md`](https://docs.coeroleplay.app/#doc=I18N_LOCALIZATION.md) | **Internacionalização**: Arquitetura multi-idioma (`Core.Locale`), dicionários `pt-BR` e `en-US` com paridade estrita, helper defensivo `_t` e auditoria estática. |
 | [`DESIGN_RULES.md`](https://docs.coeroleplay.app/#doc=DESIGN_RULES.md) | **Regras de Projeto**: Princípios inegociáveis de segurança (servidor como fonte da verdade, concorrência atômica, migrações idempotentes e anti-padrões evitados). |
 | [`ROADMAP.md`](https://docs.coeroleplay.app/#doc=ROADMAP.md) | **Roadmap & Marcos**: Evolução do framework, ondas de internacionalização concluídas (Waves 1 a 4), suíte smoke boot e próximas etapas de engenharia. |
 | [`ANNOTATIONS.md`](https://docs.coeroleplay.app/#doc=ANNOTATIONS.md) | **Convenção de Contratos**: Padrão de anotações LuaLS, arquivos `types.lua`, referências geradas e o novo visualizador interativo de APIs. |
-| [`PACKS.md`](https://docs.coeroleplay.app/#doc=PACKS.md) | **Módulos Abertos**: Catálogo detalhado dos 29 resources sob licença MIT e guia de extensão. |
+| [`PACKS.md`](https://docs.coeroleplay.app/#doc=PACKS.md) | **Módulos Abertos**: Catálogo detalhado dos 55 resources sob licença MIT e guia de extensão. |
 | [`INGAME_CHECKLIST.md`](https://docs.coeroleplay.app/#doc=INGAME_CHECKLIST.md) | **Checklist In-Game**: Cenários de teste interativo dentro do FXServer Enhanced com orientações de medição de telemetria (`resmon 1` e `profiler`). |
 | [`DESIGN_PLAYER_V1.md`](https://docs.coeroleplay.app/#doc=DESIGN_PLAYER_V1.md) | **Desenho: Player v1**: Estrutura de contas (`userId`), personagens (`charId`), identidade pública (`stateId`) e slots por jogador. |
 | [`DESIGN_GROUPS.md`](https://docs.coeroleplay.app/#doc=DESIGN_GROUPS.md) | **Desenho: Grupos & Permissões**: Modelo de dados, sincronização idempotente de definições e herança de permissões ACE. |

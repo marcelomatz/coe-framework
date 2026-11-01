@@ -345,6 +345,18 @@ local accessContracts = {
 		methods = setOf({ 'List', 'Restart', 'GetUpdateStatus', 'CheckForUpdates', 'ApplyUpdate' }) }
 }
 
+-- ACEs concedidas no permissions.cfg da raiz (add_ace resource.<nome> <ace> allow) valem como allowlist: é assim que
+-- os scripts avançados recebem acesso no servidor (o server.cfg gerado e a recipe incluem esse arquivo).
+local permissionsCfg = readFile('permissions.cfg') or ''
+for line in permissionsCfg:gmatch('[^\n]+') do
+	local res, ace = line:match('^%s*add_ace%s+resource%.([%w_%-]+)%s+([%w_%.%-]+)%s+allow')
+	if res then
+		for _, contract in ipairs(accessContracts) do
+			if contract.ace == ace then contract.allow[res] = true end
+		end
+	end
+end
+
 local totalAccessChecked = 0
 local function checkAccess(res, target, method, file, line)
 	for _, contract in ipairs(accessContracts) do

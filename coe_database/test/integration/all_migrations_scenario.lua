@@ -68,7 +68,31 @@ local migrationDefs = {
 	-- coe_needs usa o formato { resource, versions } do CoeMigrations; roda pelo próprio Initialize.
 	{ resource = 'coe_needs', file = 'coe_needs/adapters/migrations.lua', extra = 'coe_needs/adapters/persistence.lua',
 		initialize = function() return NeedsPersistence.Initialize() end },
-	{ resource = 'coe_spawn', file = 'coe_spawn/server/migrations.lua', get = function() return SpawnMigrations end }
+	{ resource = 'coe_spawn', file = 'coe_spawn/server/migrations.lua', get = function() return SpawnMigrations end },
+	-- Scripts avançados (ex-coe-resources), na ordem das dependências entre eles.
+	{ resource = 'coe_admin', file = 'coe_admin/server/migrations.lua', get = function() return AdminMigrations end },
+	{ resource = 'coe_amzg', file = 'coe_amzg/server/migrations.lua', get = function() return AmzgMigrations end },
+	{ resource = 'coe_apps', file = 'coe_apps/server/migrations.lua', get = function() return AppsMigrations end },
+	{ resource = 'coe_banking', file = 'coe_banking/server/migrations.lua', get = function() return BankingMigrations end },
+	{ resource = 'coe_factions', file = 'coe_factions/server/migrations.lua', get = function() return FactionsMigrations end },
+	{ resource = 'coe_crafting', file = 'coe_crafting/server/migrations.lua', get = function() return CraftingMigrations end },
+	{ resource = 'coe_crypto', file = 'coe_crypto/server/migrations.lua', get = function() return CryptoMigrations end },
+	{ resource = 'coe_deepweb', file = 'coe_deepweb/server/migrations.lua', get = function() return DeepwebMigrations end },
+	{ resource = 'coe_doors', file = 'coe_doors/server/migrations.lua', get = function() return DoorsMigrations end },
+	{ resource = 'coe_elos', file = 'coe_elos/server/migrations.lua', get = function() return ElosMigrations end },
+	{ resource = 'coe_ems', file = 'coe_ems/server/migrations.lua', get = function() return EmsMigrations end },
+	{ resource = 'coe_fuel', file = 'coe_fuel/server/migrations.lua', get = function() return FuelMigrations end },
+	{ resource = 'coe_garages', file = 'coe_garages/server/migrations.lua', get = function() return GaragesMigrations end },
+	{ resource = 'coe_mechanic', file = 'coe_mechanic/server/migrations.lua', get = function() return MechanicMigrations end },
+	{ resource = 'coe_handling', file = 'coe_handling/server/migrations.lua', get = function() return HandlingMigrations end },
+	{ resource = 'coe_housing', file = 'coe_housing/server/migrations.lua', get = function() return HousingMigrations end },
+	{ resource = 'coe_mail', file = 'coe_mail/server/migrations.lua', get = function() return MailMigrations end },
+	{ resource = 'coe_police', file = 'coe_police/server/migrations.lua', get = function() return PoliceMigrations end },
+	{ resource = 'coe_mdt', file = 'coe_mdt/server/migrations.lua', get = function() return MdtMigrations end },
+	{ resource = 'coe_news', file = 'coe_news/server/migrations.lua', get = function() return NewsMigrations end },
+	{ resource = 'coe_phone', file = 'coe_phone/server/migrations.lua', get = function() return PhoneMigrations end },
+	{ resource = 'coe_races', file = 'coe_races/server/migrations.lua', get = function() return RacesMigrations end },
+	{ resource = 'coe_telecom', file = 'coe_telecom/server/migrations.lua', get = function() return TelecomMigrations end }
 }
 
 -- Nenhum arquivo de migrations do repositório pode ficar fora da lista acima.

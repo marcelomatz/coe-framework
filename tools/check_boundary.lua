@@ -11,7 +11,7 @@
 
 local BASELINE = 'tools/boundary_baseline.txt'
 -- Nomes do framework que não são resources (namespace de evento do Core.Locale).
-local notResources = { coe_locale = true }
+local notResources = { coe_locale = true, coe_paint = true, coe_livery = true, coe_tune = true } -- coe_paint/livery/tune: comandos do coe_mechanic
 local update = (arg and arg[1] == '--update') or os.getenv('COE_BOUNDARY_UPDATE') == '1'
 
 local function run(command)
@@ -28,7 +28,8 @@ local windows = package.config:sub(1, 1) == '\\'
 
 local function listFiles()
 	if windows then
-		return run('git ls-files "*.lua" "*.js" "*.html"')
+		-- --others: arquivos novos ainda não commitados também contam (a suíte local roda antes do commit)
+		return run('git ls-files --cached --others --exclude-standard "*.lua" "*.js" "*.html"')
 	end
 	return run("find . -type f \\( -name '*.lua' -o -name '*.js' -o -name '*.html' \\) 2>/dev/null")
 end
@@ -107,7 +108,7 @@ local notResourceCalls = {
 }
 local callPattern = '([%w_%.:]+)%(%s*[\'"](coe[%w_]+)[\'"]'
 
-local skipDir = { test = true, tests = true, tools = true, node_modules = true, ['.git'] = true }
+local skipDir = { test = true, tests = true, tools = true, node_modules = true, ['.git'] = true, ['[vendor]'] = true } -- [vendor]: código de terceiros
 
 local found = {}
 for _, file in ipairs(listFiles()) do

@@ -48,6 +48,10 @@ jobs:
         shell: pwsh
         run: lua tools/smoke_boot_test.lua
 
+      - name: Run Smoke Boot Suite (advanced scripts)
+        shell: pwsh
+        run: lua tools/smoke_boot_scripts_test.lua
+
       - name: Open-core Boundary
         shell: pwsh
         run: lua tools/check_boundary.lua

@@ -1,0 +1,50 @@
+/* E-mail (coe_mail). Usa os tokens do coe_ui; serve o smartphone e o tablet. */
+.ml-page { display: flex; flex-direction: column; gap: var(--coe-space-3); }
+.ml-brand { display: flex; align-items: center; gap: var(--coe-space-2); }
+.ml-brand strong { display: block; font-size: 18px; }
+.ml-brand small { display: block; }
+.ml-logo { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; overflow: hidden; }
+.ml-logo svg { width: 24px; height: 24px; }
+.ml-form { display: flex; flex-direction: column; gap: var(--coe-space-2); }
+.ml-field { display: flex; flex-direction: column; gap: 4px; font-size: var(--coe-text-xs); }
+.ml-field > span { font-weight: 600; color: var(--coe-muted); }
+.ml-address, .ml-to { display: flex; align-items: center; gap: 6px; }
+.ml-address .coe-field, .ml-to .coe-field { flex: 1; min-width: 0; }
+.ml-note { margin: 0; font-size: var(--coe-text-xs); }
+.ml-owned { display: flex; flex-direction: column; gap: 6px; }
+.ml-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ml-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ml-bar > .ml-actions { margin-left: auto; }
+.ml-account { flex: 1; min-width: 0; }
+.ml-icon-button { padding-left: 10px; padding-right: 10px; }
+.ml-folders { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+.ml-folders::-webkit-scrollbar { display: none; }
+.ml-folders .tb-tab { white-space: nowrap; }
+.ml-tools { display: flex; gap: 6px; }
+.ml-search { flex: 1; min-width: 0; }
+.ml-list { display: flex; flex-direction: column; border-top: 1px solid var(--coe-line); }
+.ml-row { display: grid; grid-template-columns: 34px 1fr auto; gap: var(--coe-space-2); align-items: start; padding: 9px 4px; border-bottom: 1px solid var(--coe-line); cursor: pointer; }
+.ml-row:hover { background: rgba(var(--coe-ink-rgb), 0.04); }
+.ml-row-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ml-row-top { display: flex; justify-content: space-between; gap: 6px; }
+.ml-who, .ml-subject, .ml-snippet { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ml-who { font-size: var(--coe-text-xs); }
+.ml-when { font-size: 11px; color: var(--coe-muted); flex: none; font-variant-numeric: tabular-nums; }
+.ml-subject { font-size: var(--coe-text-xs); }
+.ml-snippet { font-size: 11px; color: var(--coe-muted); }
+.ml-row.is-unread .ml-who, .ml-row.is-unread .ml-subject { font-weight: 700; }
+.ml-row.is-unread .ml-when { color: #3a7bd5; font-weight: 700; }
+.ml-draft-tag { color: #c0605a; font-weight: 600; }
+.ml-avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; background: #3a7bd5; flex: none; }
+.ml-star { background: transparent; border: 0; padding: 2px 4px; min-width: 0; font-size: 18px; line-height: 1; color: var(--coe-muted); box-shadow: none; }
+.ml-star.is-on { color: #e0a82c; }
+.ml-message { display: flex; flex-direction: column; gap: var(--coe-space-3); }
+.ml-title { margin: 0; font-size: 16px; line-height: 1.3; word-break: break-word; }
+.ml-head { display: flex; gap: var(--coe-space-2); align-items: flex-start; }
+.ml-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: var(--coe-text-xs); word-break: break-word; }
+.ml-head-text small { display: block; }
+.ml-body { white-space: pre-wrap; word-break: break-word; font-size: var(--coe-text-sm, 13px); line-height: 1.5; user-select: text; }
+.ml-reply { justify-content: flex-start; }
+.ml-editor { min-height: 180px; resize: vertical; font-family: inherit; line-height: 1.45; }
+.ml-signature { min-height: 64px; resize: vertical; font-family: inherit; }
+.ml-counter { text-align: right; }

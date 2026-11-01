@@ -1,0 +1,31 @@
+Locales = (type(Locales) == 'table' and Locales) or {}
+
+Locales['pt-BR'] = {
+	fuel_empty = 'O combustível acabou.',
+	refuel_success = '%{station}: %{liters} L de %{fuel} por %{total}.',
+	err_too_far = 'Fique perto da bomba.',
+	err_not_ready = 'Posto ainda abrindo.',
+	err_station_closed = 'Posto fechado.',
+	err_busy = 'Aguarde um instante.',
+	err_no_vehicle = 'Nenhum veículo perto da bomba.',
+	err_wrong_fuel = 'Combustível errado para este motor.',
+	err_tank_full = 'O tanque já está cheio.',
+	err_no_tank = 'Este veículo não usa combustível.',
+	err_can_empty = 'O galão está vazio.',
+	err_no_can = 'Galão não encontrado.',
+	err_timeout = 'Sem resposta do posto.',
+	err_no_character = 'Personagem não carregado.',
+	err_not_fleet = 'Este veículo não é da frota de um posto.',
+	err_not_at_refinery = 'Leve o veículo até a refinaria.',
+	err_not_at_station = 'Descarregue no posto dono deste veículo.',
+	err_empty_cargo = 'O veículo está vazio.',
+	err_tanks_full = 'Os tanques do posto estão cheios.',
+	err_forbidden = 'Seu cargo não faz carregamentos deste posto.',
+	err_load_failed = 'Não foi possível carregar.',
+	err_unload_failed = 'Não foi possível descarregar.',
+	unload_leftover = 'Os tanques do posto encheram. Sobraram %{liters} L na carga.',
+	meter_loading = 'Carregando na refinaria',
+	meter_unloading = 'Descarregando no posto',
+	target_load = 'Carregar combustível',
+	target_unload = 'Descarregar no posto'
+}

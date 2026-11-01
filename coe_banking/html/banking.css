@@ -1,0 +1,101 @@
+/*
+ * Agência e caixa eletrônico (coe_banking). Visual do coe_ui: painel chanfrado com colchetes de acento, tokens
+ * --coe-* do tema do servidor e da cor escolhida pelo jogador em /hud. Sem cores literais fora da arte dos cartões.
+ */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+/* O body centraliza o painel (o transform do painel fica livre para a animação de entrada do coe_ui). */
+body { display: flex; align-items: center; justify-content: center; font-family: var(--coe-font); color: var(--coe-text); font-size: var(--coe-text-md); }
+[hidden] { display: none !important; }
+input, select, button { color-scheme: dark; font: inherit; }
+kbd { margin-left: 6px; padding: 0 4px; border: 1px solid var(--coe-line-strong); color: var(--coe-muted); font-size: 10px; font-family: inherit; }
+
+/* Painel ----------------------------------------------------------------------------------------------- */
+.bank {
+	display: flex;
+	flex-direction: column;
+	width: min(920px, calc(100vw - 48px));
+	height: min(640px, calc(100vh - 64px));
+}
+.bank.atm { width: min(500px, calc(100vw - 48px)); height: auto; max-height: calc(100vh - 64px); }
+
+.bank-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--coe-space-4);
+	padding: var(--coe-space-4) var(--coe-space-5);
+	border-bottom: 1px solid var(--coe-line);
+}
+.bank-actions { display: flex; gap: var(--coe-space-2); }
+.bank-brand { display: flex; align-items: center; gap: var(--coe-space-3); min-width: 0; }
+.bank-logo {
+	display: grid;
+	place-items: center;
+	width: 46px;
+	height: 46px;
+	border: 1px solid rgba(var(--coe-accent-rgb), 0.5);
+	background: var(--coe-accent-soft);
+	color: var(--coe-accent);
+	font-weight: 700;
+	font-size: 13px;
+	line-height: 1;
+	letter-spacing: 0.08em;
+	clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.bank-logo small { font-size: 8px; letter-spacing: 0.2em; color: var(--coe-muted); }
+.bank-title { min-width: 0; }
+.bank-eyebrow { margin: 0 0 2px; color: var(--coe-accent); font-size: var(--coe-text-xs); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+.bank-title h1 { margin: 0; font-size: var(--coe-text-lg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bank-sub { margin: 2px 0 0; color: var(--coe-muted); font-size: var(--coe-text-sm); }
+
+.bank-layout { display: grid; grid-template-columns: 230px 1fr; flex: 1; min-height: 0; }
+.bank.atm .bank-layout { grid-template-columns: 1fr; }
+
+.bank-side {
+	display: flex;
+	flex-direction: column;
+	gap: var(--coe-space-4);
+	padding: var(--coe-space-4);
+	border-right: 1px solid var(--coe-line);
+	background: rgba(var(--coe-ink-rgb), 0.02);
+	min-height: 0;
+	overflow-y: auto;
+}
+.bank.atm .bank-side { border-right: 0; border-bottom: 1px solid var(--coe-line); padding-bottom: var(--coe-space-3); }
+.bank.atm .bank-nav { display: none; }
+
+.bank-body { min-height: 0; overflow-y: auto; padding: var(--coe-space-4) var(--coe-space-5) var(--coe-space-5); }
+.bank-body::-webkit-scrollbar, .bank-side::-webkit-scrollbar { width: 6px; }
+.bank-body::-webkit-scrollbar-thumb, .bank-side::-webkit-scrollbar-thumb { background: var(--coe-line-strong); }
+
+/* Resumo lateral ----------------------------------------------------------------------------------------- */
+.bank-summary { display: grid; gap: var(--coe-space-2); }
+.bank.atm .bank-summary { grid-template-columns: 1fr 1fr; }
+
+/* Navegação ---------------------------------------------------------------------------------------------- */
+.bank-nav { display: grid; gap: 2px; margin-top: auto; }
+.bank-tab {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--coe-space-2);
+	padding: 10px var(--coe-space-3);
+	border: 0;
+	background: transparent;
+	color: var(--coe-muted);
+	font-size: var(--coe-text-sm);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	text-align: left;
+	cursor: pointer;
+	box-shadow: inset 2px 0 transparent;
+	transition: color var(--coe-dur) var(--coe-ease), background var(--coe-dur) var(--coe-ease), box-shadow var(--coe-dur) var(--coe-ease);
+}
+.bank-tab:hover { color: var(--coe-text); background: rgba(var(--coe-ink-rgb), 0.04); }
+.bank-tab.is-active { color: var(--coe-accent); background: var(--coe-accent-soft); box-shadow: inset 2px 0 var(--coe-accent); }
+.bank-tab .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--coe-danger); }
+
+@media (prefers-reduced-motion: reduce) {
+	.bank-tab { transition: none; }
+}

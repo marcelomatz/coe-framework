@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>COE Admin</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/perspective.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="tools.css">
+</head>
+<body>
+	<main id="admin-shell" class="admin-shell coe-stage" aria-hidden="true">
+		<aside class="coe-panel coe-panel-enter sidebar">
+			<div class="brand-lockup">
+				<div class="brand-mark" aria-hidden="true">C</div>
+				<div><strong>COE</strong><span>ADMIN</span></div>
+			</div>
+			<div class="server-label"><span class="online-indicator"></span> PAINEL DO SERVIDOR</div>
+			<nav class="primary-nav" aria-label="Navegação administrativa">
+				<button class="nav-link is-active" type="button" data-view="overview"><span class="nav-icon">◫</span>Visão geral</button>
+				<button class="nav-link" type="button" data-view="players" data-permission="viewPlayers"><span class="nav-icon">☺</span>Jogadores</button>
+					<button class="nav-link" type="button" data-view="items" data-permission="giveItems"><span class="nav-icon">▦</span>Itens</button>
+				<button class="nav-link" type="button" data-view="staff" data-permission="manageStaff"><span class="nav-icon">♙</span>Equipe</button>
+				<button class="nav-link" type="button" data-view="groups" data-permission="manageGroups"><span class="nav-icon">⚑</span>Grupos</button>
+				<button class="nav-link" type="button" data-view="businesses" data-permission="manageBusinesses"><span class="nav-icon">⌂</span>Negócios</button>
+				<button class="nav-link" type="button" data-view="housing" data-permission="manageBusinesses"><span class="nav-icon">⌂</span>Imóveis</button>
+				<button class="nav-link" type="button" data-view="garages" data-permission="manageBusinesses"><span class="nav-icon">⛟</span>Garagens</button>
+				<button class="nav-link" type="button" data-view="rentals" data-permission="manageBusinesses"><span class="nav-icon">⛍</span>Aluguel</button>
+				<button class="nav-link" type="button" data-view="doors" data-permission="manageBusinesses"><span class="nav-icon">⚿</span>Portas</button>
+				<button class="nav-link" type="button" data-view="amzg" data-permission="manageBusinesses"><span class="nav-icon">▣</span>Amzg</button>
+				<button class="nav-link" type="button" data-view="news" data-permission="manageNews" hidden><span class="nav-icon">✎</span>Imprensa</button>
+				<button class="nav-link" type="button" data-view="banking" data-permission="manageBanking" hidden><span class="nav-icon">$</span>Banco</button>
+				<button class="nav-link" type="button" data-view="deepweb" data-permission="manageDeepweb" hidden><span class="nav-icon">◉</span>DeepWeb</button>
+				<button class="nav-link" type="button" data-view="crypto" data-permission="manageCrypto"><span class="nav-icon">◈</span>Cripto</button>
+				<button class="nav-link" type="button" data-view="framework" data-permission="manageResources"><span class="nav-icon">⟳</span>Framework</button>
+				<button class="nav-link" type="button" data-view="appearance" data-permission="manageTheme"><span class="nav-icon">◐</span>Aparência</button>
+			</nav>
+			<div class="sidebar-bottom">
+				<div class="sidebar-meta"><span class="online-indicator"></span><span>Conectado</span><strong id="sidebar-player-count">0</strong></div>
+				<button id="open-tools" class="sidebar-close" type="button" hidden><span>⚒</span> Ferramentas da staff</button>
+				<button id="close-panel" class="sidebar-close" type="button"><span>×</span> Fechar painel</button>
+			</div>
+		</aside>
+
+		<section class="coe-panel coe-panel-enter workspace">
+			<header class="topbar">
+				<div class="breadcrumbs"><span>Administração</span><b>/</b><strong id="current-section">Visão geral</strong></div>
+				<div class="topbar-actions">
+					<button id="refresh-panel" class="icon-button" type="button" title="Atualizar painel" aria-label="Atualizar painel">↻</button>
+					<div class="admin-identity"><span id="admin-avatar" class="avatar">A</span><span><strong id="admin-name">Administrador</strong><small>Equipe administrativa</small></span></div>
+				</div>
+			</header>
+
+			<div class="workspace-scroll">
+				<section id="view-overview" class="view is-visible">
+					<div class="page-heading">
+						<div><p class="eyebrow">CENTRAL DE OPERAÇÕES</p><h1>Visão geral</h1><p class="page-description">Resumo da sessão atual e acesso às ferramentas da equipe.</p></div>
+						<div class="live-chip"><span class="online-indicator"></span> AO VIVO</div>
+					</div>
+					<div class="metric-grid">
+						<article class="metric-panel"><span class="metric-label">JOGADORES ONLINE</span><strong id="metric-players">0</strong><small>Conectados agora</small></article>
+						<article class="metric-panel"><span class="metric-label">ITENS REGISTRADOS</span><strong id="metric-items">0</strong><small>Disponíveis no catálogo</small></article>
+						<article class="metric-panel"><span class="metric-label">MEMBROS DA EQUIPE</span><strong id="metric-staff">0</strong><small>Com cargo administrativo</small></article>
+					</div>
+					<div class="overview-grid">
+						<section class="content-panel"><div class="panel-heading"><div><p class="eyebrow">ACESSO RÁPIDO</p><h2>Ferramentas</h2></div></div><div class="quick-actions"><button class="quick-action" type="button" data-open-view="items" data-permission="giveItems"><span class="quick-icon">▦</span><span><strong>Entregar item</strong><small>Adicionar item ao inventário de um jogador</small></span><span class="quick-arrow">→</span></button><button class="quick-action" type="button" data-open-view="staff" data-permission="manageStaff"><span class="quick-icon">♙</span><span><strong>Gerenciar equipe</strong><small>Administrar cargos e acessos do painel</small></span><span class="quick-arrow">→</span></button><button class="quick-action" type="button" data-open-view="crypto" data-permission="manageCrypto"><span class="quick-icon">◈</span><span><strong>Criptomoeda</strong><small>Cotação, corretora, carteiras, mineração e explorador</small></span><span class="quick-arrow">→</span></button></div></section>
+						<section class="content-panel session-panel"><div class="panel-heading"><div><p class="eyebrow">SESSÃO</p><h2>Servidor ativo</h2></div><span class="session-status">ONLINE</span></div><div class="session-row"><span>Jogadores</span><strong id="session-count">0</strong></div><div class="session-row"><span>Catálogo</span><strong id="session-catalog-count">0 itens</strong></div><div class="session-row"><span>Minha permissão</span><strong id="session-role">Staff</strong></div></section>
+					</div>
+					<section class="content-panel analytics-panel"><div class="panel-heading"><div><p class="eyebrow">ANALYTICS</p><h2>Panorama do servidor</h2></div></div><div id="analytics-grid" class="analytics-grid"></div></section>
+					<section class="content-panel online-panel"><div class="panel-heading"><div><p class="eyebrow">PRESENÇA</p><h2>Jogadores online</h2></div><span id="online-summary" class="subtle-count">0 jogadores</span></div><div id="online-list" class="online-list"></div></section>
+				</section>
+
+				<section id="view-players" class="view">
+					<div class="page-heading"><div><p class="eyebrow">CONSULTA</p><h1>Perfil do jogador</h1><p class="page-description">Identidade, inventário, veículos, imóveis, negócios e economia de um personagem, online ou não. Somente leitura.</p></div></div>
+					<section class="content-panel profile-search"><div id="profile-search-slot"></div></section>
+					<p id="profile-message" class="form-message" aria-live="polite"></p>
+					<div id="profile-body"></div>
+				</section>
+
+				<section id="view-items" class="view">
+					<div class="page-heading"><div><p class="eyebrow">GESTÃO DE INVENTÁRIO</p><h1>Entregar itens</h1><p class="page-description">Selecione o jogador, o item e a quantidade a conceder.</p></div></div>
+					<div class="item-workspace">
+						<section class="content-panel delivery-form-panel"><div class="panel-heading"><div><p class="eyebrow">NOVA ENTREGA</p><h2>Dados da entrega</h2></div><span class="step-indicator">01 / 02</span></div>
+							<label class="field-label" for="target-player">Jogador</label><select id="target-player" class="coe-field field-control"><option value="">Selecione um jogador</option></select>
+							<div id="target-summary" class="selection-summary">Escolha um jogador online para continuar.</div>
+							<label class="field-label" for="item-search">Item</label><nav id="category-menu" class="category-menu" aria-label="Categorias do catálogo"></nav><div class="search-field"><span aria-hidden="true">⌕</span><input id="item-search" type="search" placeholder="Buscar no catálogo" autocomplete="off"></div>
+							<div id="item-results" class="item-results" role="region" aria-label="Itens do catálogo"></div>
+							<label class="field-group"><span class="field-label">Metadata JSON <small>opcional · aplicada a todos</small></span><input id="item-metadata" class="coe-field field-control" type="text" placeholder='{"quality":100}' autocomplete="off"></label>
+							<p id="form-message" class="form-message" aria-live="polite"></p>
+							<button id="give-item" class="coe-button coe-button--primary primary-button" type="button" disabled><span>Confirmar entrega</span><b>→</b></button>
+						</section>
+						<aside class="delivery-aside"><section class="content-panel selected-preview"><p class="eyebrow">RESUMO</p><h2>Entrega selecionada</h2><div class="cart-summary"><span id="delivery-count">0 itens</span><button id="clear-cart" class="clear-cart" type="button" title="Limpar carrinho" aria-label="Limpar carrinho" disabled>×</button></div><div id="delivery-preview" class="delivery-preview"><span class="preview-empty">Adicione itens ao carrinho para montar a entrega.</span></div></section><section class="notice-panel"><span class="notice-mark">i</span><p>A entrega é validada e salva pelo servidor. O player ID é resolvido novamente no envio.</p></section></aside>
+					</div>
+				</section>
+
+				<section id="view-staff" class="view">
+					<div class="page-heading"><div><p class="eyebrow">ACESSO E PERMISSÕES</p><h1>Equipe</h1><p class="page-description">Atribua um cargo a jogadores e revise os acessos atuais.</p></div></div>
+					<div class="staff-grid">
+						<section class="content-panel staff-form-panel"><div class="panel-heading"><div><p class="eyebrow">ATRIBUIR ACESSO</p><h2>Novo membro</h2></div></div><label class="field-label" for="staff-player">Jogador online</label><select id="staff-player" class="coe-field field-control"><option value="">Selecione um jogador</option></select><label class="field-label" for="staff-role">Cargo</label><select id="staff-role" class="coe-field field-control"><option value="">Selecione um cargo</option></select><p id="staff-message" class="form-message" aria-live="polite"></p><button id="assign-staff" class="coe-button coe-button--primary primary-button" type="button" disabled><span>Salvar cargo</span><b>→</b></button></section>
+						<section class="content-panel staff-list-panel"><div class="panel-heading"><div><p class="eyebrow">ACESSOS ATIVOS</p><h2>Membros</h2></div><span id="staff-count" class="subtle-count">0 membros</span></div><div id="staff-list" class="staff-list"></div></section>
+					</div>
+				</section>
+
+				<section id="view-groups" class="view">
+					<div class="page-heading"><div><p class="eyebrow">JOGABILIDADE</p><h1>Grupos</h1><p class="page-description">Facções ilegais: gangues, máfias, guetos e desmanches. Defina graus, membros (inclusive offline) e quais crafts cada uma libera. Empregos ficam nos negócios.</p></div></div>
+					<p id="fac-message" class="form-message" aria-live="polite"></p>
+					<div class="biz-grid">
+						<section class="content-panel biz-list-panel"><div class="panel-heading"><div><p class="eyebrow">CADASTRADAS</p><h2>Facções</h2></div><button id="fac-new" class="coe-button biz-small-button" type="button">+ Nova</button></div><div id="fac-list" class="biz-list"></div></section>
+						<section class="content-panel biz-editor-panel"><div id="fac-editor"></div></section>
+					</div>
+				</section>
+
+				<section id="view-businesses" class="view">
+					<div class="page-heading"><div><p class="eyebrow">ECONOMIA</p><h1>Negócios</h1><p class="page-description">Cadastre negócios por categoria: marque a área, escolha onde ficam baús e mesas de craft e defina as regras.</p></div></div>
+					<div id="biz-categories" class="biz-categories" role="tablist"></div>
+					<p id="biz-message" class="form-message" aria-live="polite"></p>
+					<div class="biz-grid">
+						<section class="content-panel biz-list-panel"><div class="panel-heading"><div><p class="eyebrow">CADASTRADOS</p><h2 id="biz-list-title">Negócios</h2></div><button id="biz-new" class="coe-button biz-small-button" type="button">+ Novo</button></div><div id="biz-list" class="biz-list"></div></section>
+						<section class="content-panel biz-editor-panel"><div id="biz-editor"></div></section>
+					</div>
+				</section>
+
+				<section id="view-housing" class="view">
+					<div class="page-heading"><div><p class="eyebrow">IMÓVEIS</p><h1>Moradias</h1><p class="page-description">Apartamento inicial, hotéis e casas. Marque a porta e o interior, defina a diária e os ciclos de cobrança.</p></div></div>
+					<div id="hou-kinds" class="biz-categories" role="tablist"></div>
+					<p id="hou-message" class="form-message" aria-live="polite"></p>
+					<section id="hou-realty" class="content-panel" hidden></section>
+					<div id="hou-grid" class="biz-grid">
+						<section class="content-panel biz-list-panel"><div class="panel-heading"><div><p class="eyebrow">CADASTRADOS</p><h2 id="hou-list-title">Imóveis</h2></div><button id="hou-new" class="coe-button biz-small-button" type="button">+ Novo</button></div><div id="hou-list" class="biz-list"></div></section>
+						<section class="content-panel biz-editor-panel"><div id="hou-editor"></div></section>
+					</div>
+				</section>
+
+				<section id="view-garages" class="view">
+					<div class="page-heading"><div><p class="eyebrow">VEÍCULOS</p><h1>Garagens</h1><p class="page-description">Garagens públicas, de negócios e de corporações (polícia, hospital, bombeiros). Marque as vagas, o blip no mapa e a frota.</p></div></div>
+					<div id="gar-kinds" class="biz-categories" role="tablist"></div>
+					<p id="gar-message" class="form-message" aria-live="polite"></p>
+					<div class="biz-grid">
+						<section class="content-panel biz-list-panel"><div class="panel-heading"><div><p class="eyebrow">CADASTRADAS</p><h2 id="gar-list-title">Garagens</h2></div><button id="gar-new" class="coe-button biz-small-button" type="button">+ Nova</button></div><div id="gar-list" class="biz-list"></div></section>
+						<section class="content-panel biz-editor-panel"><div id="gar-editor"></div></section>
+					</div>
+				</section>
+
+				<section id="view-rentals" class="view">
+					<div class="page-heading"><div><p class="eyebrow">VEÍCULOS</p><h1>Aluguel de veículos</h1><p class="page-description">Estações do aluguel: o atendente (NPC e balcão), os pontos de retirada (o veículo sai no primeiro livre), a zona de devolução, os modelos oferecidos e o blip.</p></div></div>
+					<p id="rent-message" class="form-message" aria-live="polite"></p>
+					<div class="biz-grid">
+						<section class="content-panel biz-list-panel"><div class="panel-heading"><div><p class="eyebrow">CADASTRADAS</p><h2>Estações</h2></div><button id="rent-new" class="coe-button biz-small-button" type="button">+ Nova</button></div><div id="rent-list" class="biz-list"></div></section>
+						<section class="content-panel biz-editor-panel"><div id="rent-editor"></div></section>
+					</div>
+				</section>
+
+				<section id="view-doors" class="view">
+					<div class="page-heading"><div><p class="eyebrow">SEGURANÇA</p><h1>Portas e fechaduras</h1><p class="page-description">Portas do mapa e de MLOs: mire para cadastrar, defina quem abre (negócio, facção, personagem, item ou chave), senha no teclado e trancamento automático.</p></div></div>
+					<p id="door-message" class="form-message" aria-live="polite"></p>
+					<div class="biz-grid">
+						<section class="content-panel biz-list-panel"><div class="panel-heading"><div><p class="eyebrow">CADASTRADAS</p><h2>Portas</h2></div><button id="door-new" class="coe-button biz-small-button" type="button">+ Nova</button></div><div class="search-field"><span aria-hidden="true">⌕</span><input id="door-search" type="search" placeholder="Filtrar por nome ou ID" autocomplete="off"></div><div id="door-list" class="biz-list"></div></section>
+						<section class="content-panel biz-editor-panel"><div id="door-editor"></div></section>
+					</div>
+				</section>
+
+				<section id="view-amzg" class="view">
+					<div class="page-heading"><div><p class="eyebrow">COMÉRCIO</p><h1>Amzg</h1><p class="page-description">Catálogo da loja virtual do smartphone e do tablet: cada produto é um item do inventário com preço e categoria. As compras chegam numa caixa dentro do imóvel escolhido.</p></div></div>
+					<div id="amzg-categories" class="biz-categories" role="tablist"></div>
+					<p id="amzg-message" class="form-message" aria-live="polite"></p>
+					<div class="biz-grid">
+						<section class="content-panel biz-list-panel"><div class="panel-heading"><div><p class="eyebrow">CATÁLOGO</p><h2>Produtos <small id="amzg-count" class="subtle-count"></small></h2></div><button id="amzg-new" class="coe-button biz-small-button" type="button">+ Novo</button></div><div class="search-field"><span aria-hidden="true">⌕</span><input id="amzg-search" type="search" placeholder="Filtrar por nome ou item" autocomplete="off"></div><div id="amzg-list" class="biz-list"></div></section>
+						<section class="content-panel biz-editor-panel"><div id="amzg-editor"></div></section>
+					</div>
+				</section>
+
+				<section id="view-deepweb" class="view">
+					<div class="page-heading"><div><p class="eyebrow">REDE ONION</p><h1>DeepWeb</h1><p class="page-description">Sites montados por blocos, fornecedores NPC do Deep Market, pedidos em disputa ou sem entrega, moderação do Rabbit e mensagens dos perfis da staff.</p></div></div>
+					<div id="deepweb-tabs" class="biz-categories" role="tablist"></div>
+					<p id="deepweb-message" class="form-message" aria-live="polite"></p>
+					<div class="biz-grid">
+						<section class="content-panel biz-list-panel"><div class="panel-heading"><div><p class="eyebrow" id="deepweb-list-eyebrow">LISTA</p><h2 id="deepweb-list-title">Itens</h2></div><button id="deepweb-new" class="coe-button biz-small-button" type="button">+ Novo</button></div><div id="deepweb-list" class="biz-list"></div></section>
+						<section class="content-panel biz-editor-panel"><div id="deepweb-editor"></div></section>
+					</div>
+				</section>
+
+				<section id="view-news" class="view">
+					<div class="page-heading"><div><p class="eyebrow">MÍDIA</p><h1>Imprensa</h1><p class="page-description">Veículos de comunicação do COE OS: negócio e recursos, linha editorial, equipe e cargos, equipamentos e frota, publicidade e moderação das matérias.</p></div></div>
+					<div id="news-outlets" class="biz-categories" role="tablist"></div>
+					<div id="news-sections" class="biz-sections" role="tablist"></div>
+					<p id="news-message" class="form-message" aria-live="polite"></p>
+					<section class="content-panel"><div id="news-body"></div></section>
+				</section>
+
+				<section id="view-banking" class="view">
+					<div class="page-heading"><div><p class="eyebrow">ECONOMIA</p><h1>Banco</h1><p class="page-description">Níveis do cartão de crédito e atendimento a clientes: liberar crédito e limite, pontos, cartões e empréstimos. Restrito ao alto nível da staff.</p></div></div>
+					<div id="bank-tabs" class="biz-categories" role="tablist"></div>
+					<p id="bank-message" class="form-message" aria-live="polite"></p>
+					<section class="content-panel"><div id="bank-body"></div></section>
+				</section>
+
+				<section id="view-crypto" class="view">
+					<div class="page-heading"><div><p class="eyebrow">ECONOMIA</p><h1>Criptomoeda</h1><p class="page-description">Identidade da moeda, limites de carteiras, taxas de transferência, corretora, cotação em tempo real e emissão por mineração do coe_crypto.</p></div></div>
+					<div id="crypto-tabs" class="biz-categories" role="tablist"></div>
+					<p id="crypto-message" class="form-message" aria-live="polite"></p>
+					<section class="content-panel"><div id="crypto-body"></div></section>
+				</section>
+
+				<section id="view-framework" class="view">
+					<div class="page-heading"><div><p class="eyebrow">OPERAÇÃO</p><h1>Framework</h1><p class="page-description">Reinicie resources do framework respeitando a ordem de dependências, sem reiniciar o servidor.</p></div></div>
+					<section class="content-panel"><div class="panel-heading"><div><p class="eyebrow">RESOURCES</p><h2>Estado e dependências</h2></div><span id="framework-count" class="subtle-count">0 resources</span></div><div class="search-field resource-search"><span aria-hidden="true">⌕</span><input id="framework-search" type="search" placeholder="Filtrar por nome, descrição, categoria ou estado" autocomplete="off"></div><p id="framework-message" class="form-message" aria-live="polite"></p><div id="framework-list" class="resource-groups"></div></section>
+				</section>
+
+				<section id="view-appearance" class="view">
+					<div class="page-heading"><div><p class="eyebrow">INTERFACE</p><h1>Aparência</h1><p class="page-description">Escolha o tema de cores aplicado a todas as interfaces do framework, para todos os jogadores.</p></div></div>
+					<section class="content-panel"><div class="panel-heading"><div><p class="eyebrow">TEMAS</p><h2>Paleta do servidor</h2></div></div><p id="theme-message" class="form-message" aria-live="polite"></p><div id="theme-list" class="theme-list"></div></section>
+				</section>
+			</div>
+			<div id="toast-region" class="toast-region" aria-live="polite"></div>
+		</section>
+	</main>
+	<script src="app.js"></script>
+	<script src="garages.js"></script>
+	<script src="rentals.js"></script>
+	<script src="housing.js"></script>
+	<script src="realty.js"></script>
+	<script src="doors.js"></script>
+<script src="crafting.js"></script>
+	<script src="banking.js"></script>
+	<script src="crypto.js"></script>
+	<script src="amzg.js"></script>
+	<script src="deepweb.js"></script>
+	<script src="news.js"></script>
+	<!-- Ferramentas da staff (as do painel básico coe_staff): abas por módulo liberado, montadas por tools.js. -->
+	<main id="staff" class="sf coe-panel coe-panel-enter" hidden aria-labelledby="sf-title">
+		<header class="sf-head">
+			<div class="sf-brand">
+				<span class="sf-logo" aria-hidden="true">COE<small>STAFF</small></span>
+				<div>
+					<p class="sf-eyebrow">Ferramentas da staff</p>
+					<h1 id="sf-title">Ferramentas de teste</h1>
+				</div>
+			</div>
+			<button id="sf-close" class="coe-button" type="button">Fechar <kbd>Esc</kbd></button>
+		</header>
+		<div class="sf-layout">
+			<nav id="sf-tabs" class="sf-tabs" aria-label="Módulos"></nav>
+			<section id="sf-body" class="sf-body"></section>
+		</div>
+		<p id="sf-status" class="sf-status" role="status" aria-live="polite"></p>
+	</main>
+	<script src="tools.js"></script>
+</body>
+</html>
+

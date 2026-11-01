@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Tablet de corridas</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="pad.css">
+	<link rel="stylesheet" href="hud.css">
+</head>
+<body>
+	<main id="pad" class="pad" aria-hidden="true">
+		<div class="pad-shell">
+			<i class="pad-tape pad-tape--tl"></i>
+			<i class="pad-tape pad-tape--br"></i>
+			<div class="pad-screen">
+				<header class="pad-bar">
+					<span class="pad-signal"><i></i><i></i><i></i><i></i></span>
+					<span class="pad-net">RACHA//NET</span>
+					<span id="pad-status" class="pad-status" role="status"></span>
+					<span id="pad-clock" class="pad-clock"></span>
+					<button id="pad-close" class="pad-close" type="button" aria-label="Fechar">✕</button>
+				</header>
+				<div id="pad-app" class="pad-app"></div>
+			</div>
+			<span class="pad-cam"></span>
+		</div>
+	</main>
+	<section id="hud" class="hud" aria-live="polite"></section>
+	<script src="pad.js"></script>
+	<script src="app.js"></script>
+	<script src="hud.js"></script>
+</body>
+</html>

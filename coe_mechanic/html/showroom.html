@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>COE Oficina</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="showroom.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/perspective.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/prompt.css">
+	<script src="nui://coe_ui/html/prompt.js"></script>
+</head>
+<body>
+	<main id="showroom" class="showroom" aria-hidden="true">
+		<div id="sr-stage" class="sr-stage" aria-hidden="true"></div>
+
+		<section class="sr-main coe-panel coe-panel-enter">
+			<header class="sr-head">
+				<div class="sr-title">
+					<strong id="sr-shop"></strong>
+					<span id="sr-vehicle" class="sr-muted"></span>
+				</div>
+				<button id="sr-close" class="coe-button" type="button">Sair</button>
+			</header>
+			<nav id="sr-tabs" class="sr-tabs" aria-label="Categorias"></nav>
+			<div id="sr-options" class="sr-options"></div>
+		</section>
+
+		<aside class="sr-cart coe-panel coe-panel--compact coe-panel-enter">
+			<h3>Sua lista</h3>
+			<div id="sr-lines" class="sr-lines"></div>
+			<div id="sr-total" class="sr-total"></div>
+			<div id="sr-order" class="sr-order"></div>
+			<div class="sr-actions">
+				<button id="sr-reset" class="coe-button" type="button">Limpar</button>
+				<button id="sr-request" class="coe-button coe-button--primary" type="button">Pedir orçamento</button>
+			</div>
+		</aside>
+
+		<div class="sr-camera coe-panel coe-panel--compact">
+			<div id="sr-presets" class="sr-presets"></div>
+			<button id="sr-auto" class="coe-button" type="button" aria-pressed="false">Giro automático</button>
+			<button id="sr-free" class="coe-button" type="button">Câmera livre</button>
+			<span class="sr-muted sr-hint-drag">Arraste para girar · roda para aproximar</span>
+		</div>
+
+		<div id="sr-freehint" class="sr-freehint coe-panel coe-panel--compact">
+			<strong>Câmera livre</strong>
+			<span>W A S D mover · Mouse olhar · E / Q subir e descer · Shift rápido · Ctrl lento · Backspace voltar</span>
+		</div>
+
+		<footer id="sr-status" class="sr-status" role="status"></footer>
+	</main>
+
+	<script src="labels.js"></script>
+	<script src="showroom.js"></script>
+</body>
+</html>

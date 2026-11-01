@@ -1,0 +1,31 @@
+Locales = (type(Locales) == 'table' and Locales) or {}
+
+Locales['en-US'] = {
+	fuel_empty = 'Out of fuel.',
+	refuel_success = '%{station}: %{liters} L of %{fuel} for %{total}.',
+	err_too_far = 'Stay near the pump.',
+	err_not_ready = 'Gas station still opening.',
+	err_station_closed = 'Gas station closed.',
+	err_busy = 'Please wait a moment.',
+	err_no_vehicle = 'No vehicle near the pump.',
+	err_wrong_fuel = 'Wrong fuel type for this engine.',
+	err_tank_full = 'The tank is already full.',
+	err_no_tank = 'This vehicle does not use fuel.',
+	err_can_empty = 'The jerrycan is empty.',
+	err_no_can = 'Jerrycan not found.',
+	err_timeout = 'No response from gas station.',
+	err_no_character = 'Character not loaded.',
+	err_not_fleet = 'This vehicle is not part of a gas station fleet.',
+	err_not_at_refinery = 'Take the vehicle to the refinery.',
+	err_not_at_station = 'Unload at the station that owns this vehicle.',
+	err_empty_cargo = 'The vehicle is empty.',
+	err_tanks_full = 'The station tanks are full.',
+	err_forbidden = 'Your role cannot run supply trips for this station.',
+	err_load_failed = 'Could not load fuel.',
+	err_unload_failed = 'Could not unload fuel.',
+	unload_leftover = 'The station tanks are full. %{liters} L left in the cargo.',
+	meter_loading = 'Loading at the refinery',
+	meter_unloading = 'Unloading at the station',
+	target_load = 'Load fuel',
+	target_unload = 'Unload at the station'
+}

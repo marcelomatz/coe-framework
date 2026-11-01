@@ -1,0 +1,229 @@
+/*
+ * Componentes da interface bancária (coe_banking), sem estilo de página: usados pela agência e pelo caixa eletrônico
+ * (html/index.html) e pela conta empresarial dentro do app do negócio no tablet. Só tokens --coe-* do coe_ui;
+ * as cores fixas são só a arte dos cartões. Carregar depois de tokens.css e components.css.
+ */
+.bank-ui, .bank-ui * { box-sizing: border-box; }
+.bank-ui { color: var(--coe-text); font-family: var(--coe-font); font-size: var(--coe-text-md); }
+.bank-ui > * + * { margin-top: var(--coe-space-4); }
+.kpi {
+	display: grid;
+	gap: 2px;
+	padding: var(--coe-space-3);
+	border: 1px solid var(--coe-line);
+	background: rgba(var(--coe-ink-rgb), 0.03);
+	box-shadow: inset 2px 0 transparent;
+}
+.kpi span { color: var(--coe-muted); font-size: var(--coe-text-xs); letter-spacing: 0.1em; text-transform: uppercase; }
+.kpi strong { font-size: var(--coe-text-lg); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi small { color: var(--coe-subtle); font-size: var(--coe-text-xs); }
+.kpi.is-main { box-shadow: inset 2px 0 var(--coe-accent); background: var(--coe-accent-soft); border-color: rgba(var(--coe-accent-rgb), 0.3); }
+.kpi.is-main strong { font-size: 24px; }
+
+/* Blocos ------------------------------------------------------------------------------------------------- */
+.section-title { display: flex; align-items: center; justify-content: space-between; gap: var(--coe-space-2); margin: var(--coe-space-5) 0 var(--coe-space-2); }
+.section-title:first-child { margin-top: 0; }
+.section-title .tb-section { margin: 0; }
+.box {
+	display: grid;
+	gap: var(--coe-space-3);
+	padding: var(--coe-space-4);
+	border: 1px solid var(--coe-line);
+	background: rgba(var(--coe-ink-rgb), 0.03);
+	min-width: 0;
+}
+.box.is-alert { border-color: rgba(var(--coe-danger-rgb), 0.45); box-shadow: inset 2px 0 var(--coe-danger); }
+.box-head { display: flex; align-items: center; justify-content: space-between; gap: var(--coe-space-3); }
+.box-head strong { font-size: var(--coe-text-md); }
+.box-head .amount { font-size: var(--coe-text-lg); font-variant-numeric: tabular-nums; }
+.box-title { display: flex; align-items: center; gap: var(--coe-space-2); flex-wrap: wrap; min-width: 0; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--coe-space-3); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--coe-space-3); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--coe-space-2); }
+.span-all { grid-column: 1 / -1; }
+
+.field-label { display: grid; gap: 6px; color: var(--coe-muted); font-size: var(--coe-text-xs); letter-spacing: 0.06em; text-transform: uppercase; }
+.row { display: flex; gap: var(--coe-space-2); align-items: center; min-width: 0; }
+.row > .coe-field { flex: 1 1 0; width: 0; min-width: 0; }
+.row > .coe-button { flex: none; white-space: nowrap; }
+.row.wrap { flex-wrap: wrap; }
+.row.wrap > .coe-button { flex: 1 1 auto; }
+.row.end { justify-content: flex-end; }
+.coe-field.upper { text-transform: uppercase; }
+.hint { margin: 0; color: var(--coe-muted); font-size: var(--coe-text-xs); line-height: 1.5; }
+
+.cell { display: grid; gap: 2px; padding: var(--coe-space-2) var(--coe-space-3); background: rgba(var(--coe-ink-rgb), 0.03); border: 1px solid var(--coe-line); min-width: 0; }
+.cell span { color: var(--coe-muted); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+.cell strong { font-size: var(--coe-text-md); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.meter { position: relative; height: 6px; background: var(--coe-line); }
+.meter > i { position: absolute; inset: 0 auto 0 0; background: var(--coe-accent); }
+.meter.is-usage > i { background: var(--coe-warning); }
+.meter.is-usage.is-full > i { background: var(--coe-danger); }
+
+/* Extrato ------------------------------------------------------------------------------------------------ */
+.ledger { display: grid; border: 1px solid var(--coe-line); }
+.ledger-row { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: var(--coe-space-3); padding: 8px var(--coe-space-3); border-bottom: 1px solid var(--coe-line); }
+.ledger-row:last-child { border-bottom: 0; }
+.ledger-row:nth-child(even) { background: rgba(var(--coe-ink-rgb), 0.025); }
+.ledger-icon { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--coe-line-strong); color: var(--coe-muted); font-size: 12px; }
+.ledger-row.is-in .ledger-icon { color: var(--coe-success); border-color: rgba(var(--coe-success-rgb), 0.4); }
+.ledger-row.is-out .ledger-icon { color: var(--coe-danger); border-color: rgba(var(--coe-danger-rgb), 0.4); }
+.ledger-text { min-width: 0; }
+.ledger-text div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ledger-text small { display: block; color: var(--coe-muted); font-size: var(--coe-text-xs); }
+.ledger-value { font-variant-numeric: tabular-nums; font-weight: 600; }
+.ledger-row.is-in .ledger-value { color: var(--coe-success); }
+.ledger-row.is-out .ledger-value { color: var(--coe-danger); }
+.ledger-row.is-neutral .ledger-value { color: var(--coe-muted); font-weight: 400; }
+.empty { margin: 0; padding: var(--coe-space-4); color: var(--coe-muted); font-size: var(--coe-text-sm); text-align: center; border: 1px dashed var(--coe-line-strong); }
+
+/* Badges --------------------------------------------------------------------------------------------- */
+.coe-badge.is-ok { border-color: rgba(var(--coe-success-rgb), 0.45); color: var(--coe-success); }
+.coe-badge.is-bad { border-color: rgba(var(--coe-danger-rgb), 0.45); color: var(--coe-danger); }
+.coe-badge.is-accent { border-color: rgba(var(--coe-accent-rgb), 0.5); color: var(--coe-accent); }
+.coe-badge.is-warn { border-color: var(--coe-warning); color: var(--coe-warning); }
+
+/* Cartão (arte do plástico: as cores por nível são o acabamento do cartão, não do tema) --------------------- */
+.card-row { display: flex; align-items: center; gap: var(--coe-space-4); }
+.card-row .hint { flex: 1; }
+.bank-card {
+	position: relative;
+	flex: none;
+	display: grid;
+	grid-template-rows: auto 1fr auto auto;
+	width: 230px;
+	aspect-ratio: 1.586;
+	padding: 12px 14px;
+	border: 1px solid rgba(var(--coe-accent-rgb), 0.35);
+	color: #fff;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+	overflow: hidden;
+	background: linear-gradient(135deg, rgba(var(--coe-accent-rgb), 0.55), rgba(var(--coe-panel-rgb), 1) 75%);
+	clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+.bank-card::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 85% 12%, rgba(255, 255, 255, 0.2), transparent 55%); pointer-events: none; }
+.bank-card.off { filter: grayscale(1); opacity: 0.55; }
+.bank-card.sm { width: 150px; padding: 8px 10px; }
+.bank-card.sm .bank-card-number { font-size: 11px; }
+.bank-card-top { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.bank-card-chip { width: 30px; height: 22px; align-self: center; background: linear-gradient(135deg, #e8d18a, #b8954a); clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px); }
+.bank-card-number { font-family: Consolas, monospace; font-size: 14px; letter-spacing: 0.08em; }
+.bank-card-holder { font-size: 10px; letter-spacing: 0.1em; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bank-card.tier-essential { background: linear-gradient(135deg, #2f6f8f, #173a4d); border-color: #2f6f8f; }
+.bank-card.tier-gold { background: linear-gradient(135deg, #c9a24a, #7a5a1c); border-color: #c9a24a; }
+.bank-card.tier-platinum { background: linear-gradient(135deg, #a9b3bd, #5c6670); border-color: #a9b3bd; }
+.bank-card.tier-black { background: linear-gradient(135deg, #2b2b2b, #050505); border-color: #555; }
+
+/* Lista de cartões -------------------------------------------------------------------------------------- */
+.card-list { display: grid; gap: var(--coe-space-2); }
+.card-item { display: grid; grid-template-columns: auto 1fr; gap: var(--coe-space-3); align-items: center; padding: var(--coe-space-3); border: 1px solid var(--coe-line); background: rgba(var(--coe-ink-rgb), 0.03); }
+.card-item-info { display: grid; gap: var(--coe-space-2); min-width: 0; }
+.card-item-info .row .coe-field { max-width: 120px; }
+
+/* Relacionamento e níveis -------------------------------------------------------------------------------- */
+.score-value { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.score-value small { color: var(--coe-muted); font-size: var(--coe-text-sm); font-weight: 400; }
+.score-track { position: relative; height: 8px; background: var(--coe-line); }
+.score-track > i { position: absolute; inset: 0 auto 0 0; background: var(--coe-accent); }
+.score-track > b { position: absolute; top: -4px; width: 2px; height: 16px; background: var(--coe-text); opacity: 0.45; }
+.score-track > b.is-reached { background: var(--coe-accent); opacity: 0.9; }
+.score-legend { position: relative; height: 14px; color: var(--coe-subtle); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.score-legend span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.score-legend span:first-child { transform: none; }
+.goal { display: flex; align-items: center; gap: var(--coe-space-2); padding: var(--coe-space-2) var(--coe-space-3); background: rgba(var(--coe-ink-rgb), 0.03); box-shadow: inset 2px 0 var(--coe-accent); font-size: var(--coe-text-sm); }
+.goal.is-ready { background: var(--coe-accent-soft); color: var(--coe-accent); }
+
+.tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--coe-space-2); }
+.tier { display: grid; gap: var(--coe-space-2); align-content: start; padding: var(--coe-space-3); border: 1px solid var(--coe-line); background: rgba(var(--coe-ink-rgb), 0.03); border-top: 3px solid var(--tier, var(--coe-line-strong)); min-width: 0; }
+.tier.tier-essential { --tier: #2f6f8f; }
+.tier.tier-gold { --tier: #c9a24a; }
+.tier.tier-platinum { --tier: #a9b3bd; }
+.tier.tier-black { --tier: #555; }
+.tier.is-current { border-color: rgba(var(--coe-accent-rgb), 0.55); border-top-color: var(--tier, var(--coe-accent)); background: var(--coe-accent-soft); }
+.tier.is-included { opacity: 0.7; }
+.tier.is-locked { opacity: 0.55; }
+.tier-head { display: flex; align-items: center; justify-content: space-between; gap: var(--coe-space-2); }
+.tier ul { margin: 0; padding-left: 14px; display: grid; gap: 3px; color: var(--coe-muted); font-size: var(--coe-text-xs); }
+
+/* Negócios ---------------------------------------------------------------------------------------------- */
+.business { display: grid; gap: var(--coe-space-3); }
+.business + .business { margin-top: var(--coe-space-5); padding-top: var(--coe-space-5); border-top: 1px solid var(--coe-line); }
+
+/* Caixa eletrônico -------------------------------------------------------------------------------------- */
+.atm-cards { display: grid; gap: var(--coe-space-2); }
+.atm-card {
+	display: flex;
+	align-items: center;
+	gap: var(--coe-space-3);
+	padding: var(--coe-space-3);
+	border: 1px solid var(--coe-line);
+	background: rgba(var(--coe-ink-rgb), 0.03);
+	color: var(--coe-text);
+	text-align: left;
+	cursor: pointer;
+	transition: border-color var(--coe-dur) var(--coe-ease), background var(--coe-dur) var(--coe-ease);
+}
+.atm-card:hover:not(:disabled) { border-color: rgba(var(--coe-accent-rgb), 0.55); background: var(--coe-accent-soft); }
+.atm-card:disabled { opacity: 0.5; cursor: not-allowed; }
+.atm-card div { display: grid; gap: 2px; }
+.atm-card small { color: var(--coe-muted); font-size: var(--coe-text-xs); }
+
+.pin { display: grid; justify-items: center; gap: var(--coe-space-3); padding: var(--coe-space-2) 0; }
+.pin-label { color: var(--coe-muted); font-size: var(--coe-text-xs); letter-spacing: 0.14em; text-transform: uppercase; }
+.pin-dots { display: flex; gap: var(--coe-space-3); }
+.pin-dots i { width: 14px; height: 14px; border: 1px solid var(--coe-line-strong); transform: rotate(45deg); transition: background var(--coe-dur) var(--coe-ease), border-color var(--coe-dur) var(--coe-ease); }
+.pin-dots i.is-on { background: var(--coe-accent); border-color: var(--coe-accent); }
+.pin-warn { min-height: 18px; margin: 0; color: var(--coe-danger); font-size: var(--coe-text-sm); }
+.keypad { display: grid; grid-template-columns: repeat(3, 76px); gap: var(--coe-space-2); }
+.keypad .coe-button { min-height: 46px; font-size: var(--coe-text-lg); }
+
+.quick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--coe-space-2); }
+.quick .coe-button { min-height: 42px; font-variant-numeric: tabular-nums; }
+
+/* Conta empresarial ---------------------------------------------------------------------------------- */
+.chips { display: flex; flex-wrap: wrap; gap: var(--coe-space-1); }
+.chip {
+	padding: 6px 12px;
+	border: 1px solid var(--coe-line-strong);
+	background: transparent;
+	color: var(--coe-muted);
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.06em;
+	cursor: pointer;
+}
+.chip:hover { color: var(--coe-text); }
+.chip.is-active { border-color: var(--coe-accent); color: var(--coe-accent); background: var(--coe-accent-soft); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--coe-space-2); }
+.toolbar .coe-field { width: auto; min-width: 170px; }
+.ledger-row .ledger-who { color: var(--coe-subtle); }
+.account-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--coe-space-3); }
+.account-tile {
+	display: grid;
+	gap: var(--coe-space-2);
+	padding: var(--coe-space-4);
+	border: 1px solid var(--coe-line);
+	background: rgba(var(--coe-ink-rgb), 0.03);
+	color: var(--coe-text);
+	text-align: left;
+	cursor: pointer;
+	box-shadow: inset 2px 0 transparent;
+	transition: border-color var(--coe-dur) var(--coe-ease), background var(--coe-dur) var(--coe-ease), box-shadow var(--coe-dur) var(--coe-ease);
+}
+.account-tile:hover { border-color: rgba(var(--coe-accent-rgb), 0.55); background: var(--coe-accent-soft); box-shadow: inset 2px 0 var(--coe-accent); }
+.account-tile .eyebrow { color: var(--coe-accent); font-size: var(--coe-text-xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.account-tile strong { font-size: var(--coe-text-lg); }
+.account-tile small { color: var(--coe-muted); font-size: var(--coe-text-xs); }
+.people { display: grid; border: 1px solid var(--coe-line); }
+.person { display: grid; grid-template-columns: 1fr auto auto; gap: var(--coe-space-3); align-items: center; padding: 8px var(--coe-space-3); border-bottom: 1px solid var(--coe-line); font-size: var(--coe-text-sm); }
+.person:last-child { border-bottom: 0; }
+.person:nth-child(even) { background: rgba(var(--coe-ink-rgb), 0.025); }
+.person small { display: block; color: var(--coe-muted); font-size: var(--coe-text-xs); }
+.person .amount { font-variant-numeric: tabular-nums; }
+.box-head .amount { font-size: var(--coe-text-lg); font-variant-numeric: tabular-nums; }
+.net-in { color: var(--coe-success); }
+.net-out { color: var(--coe-danger); }
+
+@media (prefers-reduced-motion: reduce) {
+	.atm-card, .pin-dots i, .account-tile { transition: none; }
+}

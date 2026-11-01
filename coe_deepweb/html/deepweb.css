@@ -1,0 +1,30 @@
+/* Navegador onion (coe_deepweb). Usa os tokens do coe_ui e as classes tb-* dos apps do COE OS. */
+.dw-app { display: grid; gap: var(--coe-space-4); align-content: start; }
+.dw-app .coe-field { box-sizing: border-box; }
+.dw-body { display: grid; gap: var(--coe-space-4); }
+.dw-field { display: grid; gap: 4px; }
+.dw-form { max-width: 520px; }
+
+.dw-head {
+	display: flex; align-items: center; justify-content: space-between; gap: var(--coe-space-4); flex-wrap: wrap;
+	padding: var(--coe-space-3) var(--coe-space-4); background: rgba(120, 90, 200, 0.07); box-shadow: inset 2px 0 #9a7fe0;
+}
+.dw-brand { display: flex; align-items: baseline; gap: var(--coe-space-2); }
+.dw-brand strong { font-size: var(--coe-text-lg); letter-spacing: 0.12em; text-transform: lowercase; color: #b9a5f0; }
+.dw-onion { width: 10px; height: 12px; background: #9a7fe0; border-radius: 50% 50% 45% 45%; display: inline-block; align-self: center; }
+.dw-tier { display: grid; gap: 2px; justify-items: end; }
+.dw-levels { display: flex; gap: 3px; }
+.dw-level {
+	width: 18px; height: 18px; display: grid; place-items: center; font-size: 10px; color: var(--coe-subtle);
+	border: 1px solid var(--coe-line-strong);
+}
+.dw-level.is-on { color: var(--coe-on-accent); background: #9a7fe0; border-color: transparent; }
+.dw-handle { font-family: ui-monospace, Consolas, monospace; }
+
+.dw-features { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--coe-space-3); }
+.dw-feature { display: grid; gap: var(--coe-space-2); padding: var(--coe-space-3); background: rgba(var(--coe-ink-rgb), 0.03); border: 1px solid var(--coe-line); }
+.dw-feature.is-locked, .dw-feature.is-soon { opacity: 0.6; }
+.dw-feature.is-link { cursor: pointer; }
+.dw-feature.is-link:hover { border-color: rgba(154, 127, 224, 0.6); }
+.dw-connecting { animation: dw-pulse 1.2s ease-in-out infinite; }
+@keyframes dw-pulse { 50% { opacity: 0.4; } }

@@ -1,0 +1,31 @@
+/* Aba Posto do app do negócio (coe_businesses, tablet). Carregado por nui://coe_fuel/html/business.css. */
+.fub { display: flex; flex-direction: column; gap: 10px; }
+.fub-head { box-shadow: inset 4px 0 0 var(--brand); }
+.fub-note { margin: 0; color: var(--coe-muted); font-size: var(--coe-text-sm); }
+.fub-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.fub-kpi { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--coe-line); border-radius: 8px; }
+.fub-kpi strong { font-size: 1.05em; font-variant-numeric: tabular-nums; }
+.fub-kpi small { color: var(--coe-muted); font-size: var(--coe-text-xs); }
+.fub-tanks { display: flex; flex-direction: column; gap: 6px; }
+.fub-tank { display: grid; grid-template-columns: 5px minmax(0, 1.1fr) minmax(0, 1fr) auto; grid-template-areas: 'sw name level price' 'sw up up up'; align-items: center; gap: 6px 12px; padding: 10px 12px; border: 1px solid var(--coe-line); border-radius: 8px; }
+.fub-swatch { grid-area: sw; align-self: stretch; border-radius: 3px; background: var(--fuel); }
+.fub-tank-name { grid-area: name; display: flex; flex-direction: column; min-width: 0; }
+.fub-tank-name small, .fub-tank-level small, .fub-upgrade small, .fub-buy small { color: var(--coe-muted); font-size: var(--coe-text-xs); }
+.fub-tank-level { grid-area: level; display: flex; flex-direction: column; gap: 4px; }
+.fub-gauge { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.fub-gauge i { display: block; height: 100%; background: var(--fuel); }
+.fub-price { grid-area: price; display: flex; align-items: center; gap: 6px; }
+.fub-price span { color: var(--coe-muted); font-size: var(--coe-text-xs); }
+.fub-price input { width: 70px; }
+.fub-upgrade { grid-area: up; display: flex; align-items: center; gap: 10px; }
+.fub-fleet { display: flex; flex-direction: column; gap: 8px; }
+.fub-tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fub-tier { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px dashed var(--coe-line); border-radius: 8px; opacity: 0.75; }
+.fub-tier.is-owned { border-style: solid; border-color: var(--brand); opacity: 1; }
+.fub-tier small { color: var(--coe-muted); font-size: var(--coe-text-xs); }
+.fub-tier-tag { font-size: var(--coe-text-xs); }
+.fub-buy { display: flex; align-items: center; gap: 10px; }
+.fub-vehicle { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; padding: 8px 0; border-top: 1px solid var(--coe-line); font-size: var(--coe-text-sm); }
+.fub-vehicle small { color: var(--coe-muted); }
+.fub-refinery { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--coe-line); border-radius: 8px; }
+.fub-refinery small { flex: 1; color: var(--coe-muted); font-size: var(--coe-text-xs); }
