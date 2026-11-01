@@ -125,11 +125,13 @@ Ações do app Carreira: `profile` (carreira e últimos trabalhos) e `guide` (`p
 ---@field levelBonus number|nil Bônus de pagamento por nível acima do 1 (padrão 0.05)
 ---@field vehicle table|nil `{ model, spawn, plate?, deposit?, returnRadius? }`
 ---@field tool table|nil Prop na mão durante a ação: `{ model, bone?, offset?, rotation? }`
----@field gather table|nil `{ nodes, sell = { points, price, ped?, label? }, seconds?, yield?, capacity?, nodeCooldown?, xp?, nodeProp?, animation?, unit?, units?, actionLabel? }`
+---@field uniform table|nil Uniforme opcional (só visual) vestido no NPC: `{ label?, male?, female? }`, cada roupa `{ components = { [slot] = { drawable, texture } }, props = { [slot] = { drawable, texture } } }` (drawable -1 em prop tira)
+---@field shop table|nil Loja do emprego: `{ label?, ped?, points, items = { { item, label, price, level?, max?, kind?, description?, stats? } } }` (itens do coe_inventory; `level` = nível do emprego)
+---@field gather table|nil `{ nodes?, fields?, world?, fishing?, products?, order?, haul?, process?, soil?, sell = { points, price?, ped?, label? }, seconds?, yield?, capacity?, nodeCooldown?, xp?, nodeProp?, animation?, unit?, units?, actionLabel? }`.
 ---@field skills string[]|nil Habilidades que o emprego treina (`Career.skills`)
 ---@field tips string[]|nil Até 6 dicas somadas ao guia "Como funciona" (NPC e app Carreira)
 ---@field requires table|nil `{ career?, reputation?, skills? = { id = nível } }` para começar
----@field route table|nil `{ stops, pay, mode? ('deliver'|'collect'|'passenger'|'zone'), perRoute?, payPerKm?, bonus?, xp?, stopRadius?, vehicleRange?, stopProp?, carry?, carryAnimation?, recipients?, actionLabel?, pickupLabel?, dropLabel? }`; modo `zone`: `{ zones, perZone?, binModels, binCooldown?, rearDoor?, openLabel?, closeLabel? }` no lugar de `stops`
+---@field route table|nil `{ stops, pay, mode? ('deliver'|'collect'|'passenger'|'zone'), perRoute?, payPerKm?, bonus?, xp?, stopRadius?, vehicleRange?, stopProp?, carry?, carryAnimation?, pickAnimation?, dropAnimation?, recipients?, actionLabel?, pickupLabel?, dropLabel? }`; modo `zone`: `{ zones, perZone?, binModels, binCooldown?, rearDoor?, openLabel?, closeLabel? }` no lugar de `stops`
 
 ---@class CoeJobProgress
 ---@field xp integer

@@ -4,6 +4,8 @@ JobGuide = {}
 
 local KIND_LABELS = {
 	gather = 'Coleta e venda',
+	fishing = 'Pesca livre',
+	haul = 'Corte, transporte e beneficiamento',
 	deliver = 'Rota de entregas',
 	collect = 'Rota de coleta',
 	passenger = 'Corridas com passageiros',
@@ -36,7 +38,7 @@ local function duration(seconds)
 end
 
 function JobGuide.KindLabel(job)
-	return KIND_LABELS[job.gather and 'gather' or job.route.mode or 'deliver']
+	return KIND_LABELS[job.gather and (job.gather.haul and 'haul' or job.gather.fishing and 'fishing' or 'gather') or job.route.mode or 'deliver']
 end
 
 function JobGuide.PerkText(perk, value)
@@ -44,18 +46,81 @@ function JobGuide.PerkText(perk, value)
 	return pattern and pattern:format(percent(value)) or perk
 end
 
+local function yieldText(yield, item)
+	local amount = yield[1] == yield[2] and tostring(yield[1]) or ('%d a %d'):format(yield[1], yield[2])
+	return ('%s %s'):format(amount, yield[2] == 1 and item.unit or item.units)
+end
+
+-- Produtos em ordem de exibição (o primeiro é o padrão).
+local function productList(g)
+	local list = {}
+	for _, id in ipairs(g.productOrder or {}) do
+		list[#list + 1] = g.products[id]
+	end
+	return list
+end
+
 local function gatherSteps(job)
 	local g = job.gather
-	local yield = g.yield[1] == g.yield[2] and tostring(g.yield[1]) or ('%d a %d'):format(g.yield[1], g.yield[2])
-	return {
-		'Fale com o responsável aqui e escolha "Começar".',
-		('Vá aos pontos marcados no mapa e use "%s". Cada ação leva cerca de %s e rende %s %s.'):format(
-			g.actionLabel, duration(g.seconds), yield, g.yield[2] == 1 and g.unit or g.units),
-		('Você carrega até %d %s. Cada ponto usado volta em %s.'):format(g.capacity, g.units, duration(g.nodeCooldown)),
-		('Leve a carga ao comprador marcado no mapa e use "%s". Só a venda paga: %s por %s.'):format(
-			g.sell.label, money(g.sell.price), g.unit),
-		'Repita quanto quiser. Para parar, venda o que carrega, volte aqui e escolha "Encerrar o trabalho".'
-	}
+	local products = productList(g)
+	local steps = { 'Fale com o responsável aqui e escolha "Começar".' }
+	if g.haul then
+		local raw = g.products[g.haul.product]
+		local output = g.process and g.products[g.process.product]
+		if job.vehicle then
+			steps[#steps + 1] = job.vehicle.deposit > 0
+				and ('A pickup da empresa sai na vaga ao lado, com depósito de %s devolvido quando você a traz de volta e encerra.'):format(money(job.vehicle.deposit))
+				or 'A pickup da empresa sai na vaga ao lado.'
+		end
+		local place = g.world[1] and g.world[1].label or 'a área marcada'
+		steps[#steps + 1] = ('Leve a pickup até %s (o círculo no mapa). Qualquer árvore de lá serve: use "%s" (cerca de %s); ela tomba e deixa %s no chão.'):format(
+			place, raw.actionLabel, duration(raw.seconds), yieldText(raw.yield, raw))
+		steps[#steps + 1] = ('Use "%s" em cada tora e "%s" na pickup. Cabem %d %s na caçamba.'):format(g.haul.takeLabel, g.haul.loadLabel, g.haul.capacity, raw.units)
+		if output then
+			steps[#steps + 1] = ('Volte à madeireira com a pickup e use "%s" na serra: cada %s vira %d %s.'):format(g.process.label, raw.unit, g.process.ratio, output.units)
+			steps[#steps + 1] = ('Venda no comprador ("%s"): %s por %s. Só a venda paga.'):format(g.sell.label, money(output.price), output.unit)
+		end
+		steps[#steps + 1] = 'Para parar, venda o que tem, traga a pickup até aqui e escolha "Encerrar o trabalho".'
+		return steps
+	end
+	if g.fishing then
+		local f = g.fishing
+		local areas = {}
+		for _, zone in ipairs(f.areas) do
+			areas[#areas + 1] = zone.label
+		end
+		local rod, bait = f.rods[f.rodOrder[1]], f.baits[f.baitOrder[1]]
+		steps[1] = ('Compre uma vara e iscas na %s (a mais simples: %s e %s).'):format(job.shop and job.shop.label:lower() or 'loja', rod.label:lower(), bait.label:lower())
+		steps[#steps + 1] = ('Vá a uma área de pesca (%s) e use a vara no inventário para pegá-la na mão. Do alto do píer também vale.'):format(table.concat(areas, ', '))
+		steps[#steps + 1] = 'De frente para a água, segure E para carregar a força e solte para arremessar. Mais longe chega em água funda: a mordida vem antes e aparecem mais raros. X guarda a vara.'
+		steps[#steps + 1] = 'Cada arremesso gasta uma isca. Usar uma isca no inventário escolhe qual vai no anzol; sem escolher, vai a mais simples que você tiver.'
+		steps[#steps + 1] = 'Quando morder, aperte E na hora para fisgar. Depois, segure e solte E para manter o peixe dentro da faixa até a barra de progresso encher; se esvaziar, ele escapa.'
+		steps[#steps + 1] = ('Você leva até %d peixes. Venda num comprador marcado no mapa ("%s"): cada espécie tem o seu preço.'):format(g.capacity, g.sell.label)
+		steps[#steps + 1] = 'Varas e iscas melhores pedem nível no emprego: o peixe morde antes, a faixa é maior e aparecem mais raros.'
+		return steps
+	end
+	if #products == 1 then
+		local item = products[1]
+		steps[#steps + 1] = ('Vá aos pontos marcados no mapa e use "%s". Cada ação leva cerca de %s e rende %s.'):format(
+			item.actionLabel, duration(item.seconds), yieldText(item.yield, item))
+		steps[#steps + 1] = ('Você carrega até %d %s. Cada ponto usado volta em %s.'):format(g.capacity, item.units, duration(item.cooldown))
+		steps[#steps + 1] = ('Leve a carga ao comprador marcado no mapa e use "%s". Só a venda paga: %s por %s.'):format(
+			g.sell.label, money(item.price), item.unit)
+	else
+		local fields = {}
+		for _, field in ipairs(g.fields or {}) do
+			fields[#fields + 1] = field.label
+		end
+		steps[#steps + 1] = ('Escolha um campo no mapa (%s) e use a opção de colher em cada pé. Cada produto tem seu tempo e rendimento.'):format(
+			#fields > 0 and table.concat(fields, ', ') or 'pontos marcados')
+		steps[#steps + 1] = ('Você carrega até %d itens somando todos os produtos. Cada pé colhido volta depois de alguns minutos.'):format(g.capacity)
+		steps[#steps + 1] = ('Leve a colheita a um comprador marcado no mapa e use "%s". Só a venda paga, e cada produto tem o seu preço.'):format(g.sell.label)
+	end
+	steps[#steps + 1] = 'Repita quanto quiser. Para parar, venda o que carrega, volte aqui e escolha "Encerrar o trabalho".'
+	if job.uniform then
+		steps[#steps + 1] = ('Opcional: trabalhando, peça "%s" ao responsável. Sai ao tirar ou ao encerrar.'):format('Vestir ' .. job.uniform.label:lower())
+	end
+	return steps
 end
 
 local function routeSteps(job)
@@ -91,13 +156,20 @@ local function routeSteps(job)
 	end
 	steps[#steps + 1] = job.vehicle and 'Para parar, traga o veículo até aqui e escolha "Encerrar o trabalho".'
 		or 'Para parar, volte aqui e escolha "Encerrar o trabalho".'
+	if job.uniform then
+		steps[#steps + 1] = ('Opcional: trabalhando, peça "%s" ao responsável. Sai ao tirar ou ao encerrar.'):format('Vestir ' .. job.uniform.label:lower())
+	end
 	return steps
 end
 
 local function payLines(job)
 	local lines = {}
 	if job.gather then
-		lines[#lines + 1] = { label = 'Por ' .. job.gather.unit, value = money(job.gather.sell.price) }
+		for _, item in ipairs(productList(job.gather)) do
+			if item.price > 0 then
+				lines[#lines + 1] = { label = 'Por ' .. item.unit, value = money(item.price) }
+			end
+		end
 	else
 		local r = job.route
 		local value = money(r.pay) .. (r.payPerKm > 0 and (' + %s por km'):format(money(r.payPerKm)) or '')
@@ -119,6 +191,9 @@ local function rules(job)
 	local list = {}
 	if job.gather then
 		list[#list + 1] = 'A carga não vira item: encerrar o trabalho com carga descarta o que você carrega.'
+		if job.gather.haul then
+			list[#list + 1] = 'Árvores derrubadas somem para todos e rebrotam depois de um tempo.'
+		end
 		list[#list + 1] = 'Cada venda conta como trabalho concluído e sobe a reputação.'
 	else
 		list[#list + 1] = 'Cada rota concluída sobe a reputação.'

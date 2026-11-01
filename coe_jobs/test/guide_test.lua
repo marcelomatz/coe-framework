@@ -36,14 +36,31 @@ for _, raw in ipairs(JobsCatalog) do
 end
 
 -- coleta: venda é o que paga e encerrar com carga descarta
-has(guides.farmer.steps, 'Só a venda paga: %$8 por repolho', 'fazendeiro explica a venda')
-has(guides.farmer.steps, 'até 40 repolhos', 'carga do fazendeiro')
-has(guides.farmer.steps, 'volta em 3 min', 'cooldown em minutos')
+has(guides.miner.steps, 'Só a venda paga: %$20 por minério', 'mineiro explica a venda')
+has(guides.miner.steps, 'até 20 minérios', 'carga do mineiro')
+has(guides.miner.steps, 'volta em 2,5 min', 'cooldown em minutos')
 has(guides.farmer.rules, 'descarta', 'aviso do descarte')
+-- fazendeiro com vários produtos: cada um com o seu preço e os campos no passo a passo
 has(guides.farmer.pay, 'Por repolho %$8', 'preco por unidade')
+has(guides.farmer.pay, 'Por abóbora %$16', 'preco da abobora')
+has(guides.farmer.pay, 'Por cacho %$7', 'preco da uva')
+has(guides.farmer.steps, 'Vinhedo Marlowe', 'campos listados')
+has(guides.farmer.steps, 'até 40 itens', 'carga somando produtos')
 eq(guides.farmer.kind, 'Coleta e venda', 'tipo da coleta')
 eq(guides.farmer.requires, nil, 'fazendeiro sem requisito')
-has(guides.fisher.steps, 'rende 1 peixe', 'rendimento no singular')
+has(guides.farmer.steps, 'Vestir macacão de fazendeiro', 'uniforme opcional')
+-- lenhador: corta árvore do mapa, leva na pickup, desdobra e vende
+eq(guides.lumberjack.kind, 'Corte, transporte e beneficiamento', 'tipo do lenhador')
+has(guides.lumberjack.steps, 'Floresta de Paleto', 'area da floresta')
+has(guides.lumberjack.steps, 'Cabem 8 toras na caçamba', 'capacidade da pickup')
+has(guides.lumberjack.steps, 'cada tora vira 4 tábuas', 'desdobro')
+has(guides.lumberjack.pay, 'Por tábua %$7', 'preco da tabua')
+eq(#guides.lumberjack.pay, 3, 'tora sem preco nao aparece (tabua, deposito, nivel)')
+eq(guides.fisher.kind, 'Pesca livre', 'tipo do pescador')
+has(guides.fisher.steps, 'loja de pesca', 'pescador compra na loja')
+has(guides.fisher.steps, 'Píer de Paleto Cove', 'areas de pesca listadas')
+has(guides.fisher.steps, 'alto do píer', 'pesca de cima do pier')
+has(guides.fisher.pay, 'Por atum %$95', 'preco por especie')
 
 -- rotas: modos
 eq(guides.taxi.kind, 'Corridas com passageiros', 'tipo do taxi')

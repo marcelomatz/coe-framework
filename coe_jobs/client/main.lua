@@ -6,7 +6,18 @@ local catalog = {}      -- id -> definição pública
 local centerBlips = {}
 local centerPeds = {}   -- id -> ped
 local session = nil     -- visão do servidor
-local work = { props = {}, peds = {}, blips = {}, routeBlip = nil, zoneBlip = nil, binModels = nil, carrying = nil, busy = false, vehicleTarget = nil, passenger = nil, asked = 0 }
+local work = {
+	props = {}, peds = {}, blips = {}, routeBlip = nil, zoneBlip = nil, binModels = nil, carrying = nil, busy = false,
+	vehicleTarget = nil, passenger = nil, asked = 0, worldModels = nil, ground = {}, groundKey = nil, areaBlips = {},
+	offSoil = {}, soilOff = {}
+}
+local felled = {}       -- chave -> { x, y, z, model, until } (árvores escondidas para todos)
+local racks = {}        -- veículo -> props desenhados na caçamba (state bag coe:jobLoad)
+local wearing = nil     -- roupa guardada enquanto o uniforme está vestido
+local shopPeds = {}     -- "<emprego>:<índice>" -> vendedor da loja do emprego
+local fishingState = nil -- lance de pesca em andamento (visão do servidor)
+local nuiOpen = nil     -- 'guide' | 'shop' (tela com foco do mouse)
+local cancelFishing, putAwayRod -- definidas na seção da pesca (usadas antes, no fim do trabalho)
 
 local function show(kind, message)
 	pcall(function() exports.coe_notify:Show(kind, message, 4000) end)
@@ -40,6 +51,19 @@ local _t = function(k, params)
 end
 
 local function loadModel(name)
+	-- Lista de candidatos: o primeiro modelo que existir nesta versão do jogo.
+	if type(name) == 'table' then
+		for _, candidate in ipairs(name) do
+			local found = loadModel(candidate)
+			if found then
+				return found
+			end
+		end
+		return nil
+	end
+	if type(name) ~= 'string' then
+		return nil
+	end
 	local hash = joaat(name)
 	if not IsModelInCdimage(hash) then
 		return nil
@@ -94,13 +118,36 @@ local function spawnPed(model, spot, scenario)
 	return ped
 end
 
-local function spawnProp(model, spot)
+-- Chão de verdade sob o ponto (o z do config é aproximado): sonda de cima para baixo e devolve z e material.
+local function probeGround(spot)
+	local handle = StartExpensiveSynchronousShapeTestLosProbe(spot.x, spot.y, spot.z + 25.0, spot.x, spot.y, spot.z - 25.0, 1, 0, 7)
+	local _, hit, endCoords, _, material = GetShapeTestResultIncludingMaterial(handle)
+	if hit == 1 or hit == true then
+		return endCoords.z, material
+	end
+	local found, groundZ = GetGroundZFor_3dCoord(spot.x, spot.y, spot.z + 25.0, false)
+	return found and groundZ or nil, nil
+end
+
+-- Materiais de chão de plantio (terra, lama, argila): pontos fora deles não ganham prop.
+local soilHashes = nil
+local function isSoil(material)
+	if not soilHashes then
+		soilHashes = {}
+		for _, name in ipairs(config.SoilMaterials or {}) do
+			soilHashes[joaat(name)] = true
+		end
+	end
+	return material == nil or material == 0 or soilHashes[material] == true
+end
+
+local function spawnProp(model, spot, ground)
 	local hash = loadModel(model) or loadModel('prop_cs_cardbox_01')
 	if not hash then
 		return nil
 	end
-	local found, groundZ = GetGroundZFor_3dCoord(spot.x, spot.y, spot.z + 2.0, false)
-	local object = CreateObject(hash, spot.x, spot.y, found and groundZ or spot.z, false, false, false)
+	local groundZ = ground or probeGround(spot)
+	local object = CreateObject(hash, spot.x, spot.y, groundZ or spot.z, false, false, false)
 	SetModelAsNoLongerNeeded(hash)
 	if not object or object == 0 then
 		return nil
@@ -151,9 +198,38 @@ local function stopAnimation(animation)
 	end
 end
 
--- Ação com duração: animação + ferramenta; cancela se o jogador se afastar, entrar em veículo ou morrer.
-local function timedAction(seconds, animation, tool)
+-- Animação curta (pegar, jogar): toca uma vez e espera `ms`, sem prender o jogador.
+local function playOnce(animation)
+	if not animation or not loadDict(animation.dict) then
+		return
+	end
 	local ped = PlayerPedId()
+	TaskPlayAnim(ped, animation.dict, animation.name, 8.0, -8.0, animation.ms, animation.flag or 48, 0.0, false, false, false)
+	Wait(animation.ms)
+	StopAnimTask(ped, animation.dict, animation.name, 2.0)
+end
+
+-- Controle de rede do veículo antes de mexer em porta (o caminhão nasce no servidor e pode ser de outro client).
+local function control(entity)
+	if NetworkHasControlOfEntity(entity) then
+		return true
+	end
+	NetworkRequestControlOfEntity(entity)
+	local deadline = GetGameTimer() + 1500
+	while not NetworkHasControlOfEntity(entity) and GetGameTimer() < deadline do
+		Wait(50)
+		NetworkRequestControlOfEntity(entity)
+	end
+	return NetworkHasControlOfEntity(entity)
+end
+
+-- Ação com duração: animação + ferramenta; cancela se o jogador se afastar, entrar em veículo ou morrer.
+local function timedAction(seconds, animation, tool, face)
+	local ped = PlayerPedId()
+	if face then
+		TaskTurnPedToFaceCoord(ped, face.x, face.y, face.z, 600)
+		Wait(600)
+	end
 	local origin = GetEntityCoords(ped)
 	local held = attachProp(tool)
 	playAnimation(animation)
@@ -172,6 +248,75 @@ local function timedAction(seconds, animation, tool)
 	return ok
 end
 
+-- Uniforme (opcional, só visual) -------------------------------------------------------------------------
+
+-- Roupa do uniforme para o modelo do ped (freemode masculino ou feminino); nil se o emprego não tiver.
+local function outfitFor(job)
+	local uniform = job and job.uniform
+	if not uniform then
+		return nil
+	end
+	local model = GetEntityModel(PlayerPedId())
+	if model == joaat('mp_m_freemode_01') then
+		return uniform.male
+	elseif model == joaat('mp_f_freemode_01') then
+		return uniform.female
+	end
+	return nil
+end
+
+local function wearUniform(job)
+	local outfit = outfitFor(job)
+	if not outfit then
+		show('warning', _t('uniform_unavailable'))
+		return
+	end
+	local ped = PlayerPedId()
+	if not wearing then
+		-- Guarda a roupa atual inteira para devolver igual ao tirar.
+		wearing = { components = {}, props = {} }
+		for slot = 0, 11 do
+			wearing.components[#wearing.components + 1] = { slot, GetPedDrawableVariation(ped, slot), GetPedTextureVariation(ped, slot), GetPedPaletteVariation(ped, slot) }
+		end
+		for slot = 0, 9 do
+			wearing.props[#wearing.props + 1] = { slot, GetPedPropIndex(ped, slot), GetPedPropTextureIndex(ped, slot) }
+		end
+	end
+	for _, part in ipairs(outfit.components) do
+		SetPedComponentVariation(ped, part[1], part[2], part[3], 0)
+	end
+	for _, part in ipairs(outfit.props) do
+		if part[2] < 0 then
+			ClearPedProp(ped, part[1])
+		else
+			SetPedPropIndex(ped, part[1], part[2], part[3], true)
+		end
+	end
+	wearing.jobId = job.id
+	show('success', _t('uniform_on', { label = job.uniform.label }))
+end
+
+local function removeUniform(silent)
+	if not wearing then
+		return
+	end
+	local ped = PlayerPedId()
+	for _, part in ipairs(wearing.components) do
+		SetPedComponentVariation(ped, part[1], part[2], part[3], part[4] or 0)
+	end
+	for _, part in ipairs(wearing.props) do
+		if part[2] < 0 then
+			ClearPedProp(ped, part[1])
+		else
+			SetPedPropIndex(ped, part[1], part[2], part[3], true)
+		end
+	end
+	wearing = nil
+	if not silent then
+		show('info', _t('uniform_off'))
+	end
+end
+
 -- Centros (NPC de cada emprego) ---------------------------------------------------------------------------
 
 local function clearCenters()
@@ -182,6 +327,10 @@ local function clearCenters()
 	for id, ped in pairs(centerPeds) do
 		deleteEntity(ped)
 		centerPeds[id] = nil
+	end
+	for key, ped in pairs(shopPeds) do
+		deleteEntity(ped)
+		shopPeds[key] = nil
 	end
 end
 
@@ -197,7 +346,56 @@ local function paintCenters()
 		AddTextComponentSubstringPlayerName(job.label)
 		EndTextCommandSetBlipName(blip)
 		centerBlips[id] = blip
+		-- Loja do emprego e áreas de pesca ficam no mapa sempre (compra-se a vara antes de começar).
+		for index, spot in ipairs(job.shop and job.shop.points or {}) do
+			local shopBlip = AddBlipForCoord(spot.x, spot.y, spot.z)
+			SetBlipSprite(shopBlip, 52)
+			SetBlipColour(shopBlip, job.blip.color)
+			SetBlipScale(shopBlip, 0.7)
+			SetBlipAsShortRange(shopBlip, true)
+			BeginTextCommandSetBlipName('STRING')
+			AddTextComponentSubstringPlayerName(job.shop.label)
+			EndTextCommandSetBlipName(shopBlip)
+			centerBlips[id .. ':shop' .. index] = shopBlip
+		end
+		local fishing = job.gather and job.gather.fishing
+		for index, zone in ipairs(fishing and fishing.areas or {}) do
+			local radiusBlip = AddBlipForRadius(zone.x, zone.y, zone.z, zone.radius)
+			SetBlipColour(radiusBlip, 3)
+			SetBlipAlpha(radiusBlip, 70)
+			centerBlips[id .. ':area' .. index] = radiusBlip
+			local areaBlip = AddBlipForCoord(zone.x, zone.y, zone.z)
+			SetBlipSprite(areaBlip, 68)
+			SetBlipColour(areaBlip, 3)
+			SetBlipScale(areaBlip, 0.6)
+			SetBlipAsShortRange(areaBlip, true)
+			BeginTextCommandSetBlipName('STRING')
+			AddTextComponentSubstringPlayerName(('Pesca: %s'):format(zone.label))
+			EndTextCommandSetBlipName(areaBlip)
+			centerBlips[id .. ':areac' .. index] = areaBlip
+		end
 	end
+end
+
+-- Encerrar fora do NPC (compradores e loja): só empregos sem veículo da empresa, como a pesca livre.
+local function stopOptions(job)
+	if job.vehicle then
+		return {}
+	end
+	return {
+		{
+			label = 'Encerrar o trabalho',
+			distance = 2.5,
+			canInteract = function() return session ~= nil and session.jobId == job.id end,
+			onSelect = function() TriggerServerEvent('coe_jobs:stop') end
+		},
+		{
+			label = 'Descartar a carga e encerrar',
+			distance = 2.5,
+			canInteract = function() return session ~= nil and session.jobId == job.id and (session.cargo or 0) > 0 end,
+			onSelect = function() TriggerServerEvent('coe_jobs:stop', true) end
+		}
+	}
 end
 
 local function centerOptions(job)
@@ -220,6 +418,19 @@ local function centerOptions(job)
 			distance = 2.5,
 			canInteract = function() return session ~= nil and session.jobId == job.id and (session.cargo or 0) > 0 end,
 			onSelect = function() TriggerServerEvent('coe_jobs:stop', true) end
+		},
+		{
+			-- Uniforme é opcional: só aparece trabalhando nesse emprego, se ele tiver um para o seu modelo.
+			label = ('Vestir %s'):format(job.uniform and job.uniform.label:lower() or 'uniforme'),
+			distance = 2.5,
+			canInteract = function() return session ~= nil and session.jobId == job.id and wearing == nil and outfitFor(job) ~= nil end,
+			onSelect = function() wearUniform(job) end
+		},
+		{
+			label = 'Tirar o uniforme',
+			distance = 2.5,
+			canInteract = function() return wearing ~= nil and wearing.jobId == job.id end,
+			onSelect = function() removeUniform(false) end
 		},
 		{
 			label = 'Como funciona',
@@ -260,6 +471,21 @@ local function clearWork()
 		pcall(function() exports.coetarget:RemoveTargetModel(name) end)
 	end
 	work.binModels = nil
+	for _, name in ipairs(work.worldModels or {}) do
+		pcall(function() exports.coetarget:RemoveTargetModel(name) end)
+	end
+	work.worldModels = nil
+	for index, object in pairs(work.ground) do
+		deleteEntity(object)
+		work.ground[index] = nil
+	end
+	work.groundKey = nil
+	work.offSoil = {}
+	work.soilOff = {}
+	for key, blip in pairs(work.areaBlips) do
+		RemoveBlip(blip)
+		work.areaBlips[key] = nil
+	end
 	if work.carrying then
 		deleteEntity(work.carrying.prop)
 		stopAnimation(work.carrying.animation)
@@ -295,14 +521,25 @@ local function onCooldown(index)
 	return false
 end
 
+-- Produto de um ponto (ou da coleta, se não houver produtos) e o tempo da ação com o bônus de Campo.
+local function productOf(job, id)
+	return job.gather.products and job.gather.products[id or job.gather.defaultProduct] or nil
+end
+
+local function actionSeconds(job, item)
+	local base = (item and item.seconds) or job.gather.seconds
+	return math.max(1, base * ((session and session.speed) or 1))
+end
+
 local function gatherNode(job, index)
 	if work.busy then
 		return
 	end
 	work.busy = true
+	local node = job.gather.nodes[index]
+	local item = productOf(job, node.product)
 	CreateThread(function()
-		-- Tempo já com o bônus de habilidade (Campo) vindo do servidor.
-		local ok = timedAction(session and session.seconds or job.gather.seconds, job.gather.animation, job.tool)
+		local ok = timedAction(actionSeconds(job, item), (item and item.animation) or job.gather.animation, job.tool, node)
 		work.busy = false
 		if ok then
 			TriggerServerEvent('coe_jobs:gather', job.id, index)
@@ -311,6 +548,244 @@ local function gatherNode(job, index)
 		end
 	end)
 end
+
+-- Haul (lenhador): estado do que está no chão, na mão e na caçamba.
+local function haulState()
+	return session and session.haul or nil
+end
+
+local function insideArea(zone)
+	local here = GetEntityCoords(PlayerPedId())
+	return #(vector2(here.x, here.y) - vector2(zone.x, zone.y)) <= zone.radius
+end
+
+-- Árvore tombando: cópia local do modelo no lugar da original (escondida), girando até deitar.
+local function fallTree(entry)
+	local hash = entry.model
+	RequestModel(hash)
+	local deadline = GetGameTimer() + 3000
+	while not HasModelLoaded(hash) and GetGameTimer() < deadline do
+		Wait(25)
+	end
+	if not HasModelLoaded(hash) then
+		return
+	end
+	local object = CreateObjectNoOffset(hash, entry.x, entry.y, entry.z, false, false, false)
+	SetModelAsNoLongerNeeded(hash)
+	if not object or object == 0 then
+		return
+	end
+	SetEntityCollision(object, false, false)
+	FreezeEntityPosition(object, true)
+	local heading = math.random(0, 359) + 0.0
+	local started = GetGameTimer()
+	-- Cai devagar no começo e acelera (como uma árvore de verdade), em ~2,2 s.
+	while GetGameTimer() - started < 2200 do
+		local t = (GetGameTimer() - started) / 2200
+		SetEntityRotation(object, 88.0 * t * t, 0.0, heading, 2, true)
+		Wait(0)
+	end
+	SetEntityRotation(object, 88.0, 0.0, heading, 2, true)
+	Wait(3500)
+	DeleteEntity(object)
+end
+
+local function hideTree(entry, animate)
+	local key = JobRules.BinKey(entry)
+	if felled[key] then
+		return
+	end
+	entry.until_ = GetGameTimer() + (entry.seconds or 600) * 1000
+	felled[key] = entry
+	CreateModelHide(entry.x, entry.y, entry.z, 2.0, entry.model, true)
+	if animate and #(GetEntityCoords(PlayerPedId()) - vector3(entry.x, entry.y, entry.z)) < 150.0 then
+		CreateThread(function() fallTree(entry) end)
+	end
+end
+
+RegisterNetEvent('coe_jobs:felled', function(entry)
+	if type(entry) == 'table' and type(entry.model) == 'number' then
+		hideTree(entry, true)
+	end
+end)
+
+RegisterNetEvent('coe_jobs:felledList', function(list)
+	for _, entry in ipairs(type(list) == 'table' and list or {}) do
+		if type(entry.model) == 'number' then
+			hideTree(entry, false)
+		end
+	end
+end)
+
+-- Árvores voltam quando o cooldown do servidor passa.
+CreateThread(function()
+	while true do
+		Wait(5000)
+		local now = GetGameTimer()
+		for key, entry in pairs(felled) do
+			if entry.until_ <= now then
+				RemoveModelHide(entry.x, entry.y, entry.z, 2.0, entry.model, false)
+				felled[key] = nil
+			end
+		end
+	end
+end)
+
+-- Objetos do mapa da coleta (árvores): os modelos de cada área ganham a opção enquanto o jogador está nela.
+local function paintWorld(job)
+	if work.worldModels or not job.gather or not job.gather.world or #job.gather.world == 0 then
+		return
+	end
+	work.worldModels = {}
+	for worldIndex, source in ipairs(job.gather.world) do
+		local item = productOf(job, source.product)
+		local option = {
+			{
+				label = (item and item.actionLabel) or job.gather.actionLabel,
+				distance = 3.0,
+				canInteract = function(entity)
+					if work.busy or not session or session.jobId ~= job.id or IsPedInAnyVehicle(PlayerPedId(), false) then
+						return false
+					end
+					local haul = haulState()
+					if haul and (haul.ground > 0 or haul.carrying or haul.loaded >= haul.capacity) then
+						return false
+					end
+					if felled[JobRules.BinKey(GetEntityCoords(entity))] then
+						return false
+					end
+					return insideArea(source.area)
+				end,
+				onSelect = function(entity)
+					if work.busy then
+						return
+					end
+					work.busy = true
+					local spot = GetEntityCoords(entity)
+					local modelHash = GetEntityModel(entity)
+					CreateThread(function()
+						local ok = timedAction(actionSeconds(job, item), (item and item.animation) or job.gather.animation, job.tool, spot)
+						work.busy = false
+						if ok then
+							TriggerServerEvent('coe_jobs:gatherWorld', job.id, worldIndex, { x = spot.x, y = spot.y, z = spot.z }, modelHash)
+						else
+							show('warning', _t('action_cancelled'))
+						end
+					end)
+				end
+			}
+		}
+		for _, name in ipairs(source.models) do
+			work.worldModels[#work.worldModels + 1] = name
+			pcall(function() exports.coetarget:AddTargetModel(name, option) end)
+		end
+	end
+end
+
+-- Toras no chão ao lado da árvore cortada: uma prop por unidade, cada uma com "Pegar".
+local function paintGround(job)
+	local haul = haulState()
+	local key = haul and haul.spot and ('%s:%d'):format(JobRules.BinKey(haul.spot), haul.ground) or nil
+	if key == work.groundKey then
+		return
+	end
+	work.groundKey = key
+	for index, object in pairs(work.ground) do
+		deleteEntity(object)
+		work.ground[index] = nil
+	end
+	if not haul or haul.ground <= 0 or not haul.spot then
+		return
+	end
+	local spec = job.gather.haul
+	for index = 1, haul.ground do
+		-- Espalhadas em leque a 2-3 m do tronco.
+		local angle = math.rad(index * (360 / haul.ground) + 20)
+		local spot = { x = haul.spot.x + math.cos(angle) * 2.6, y = haul.spot.y + math.sin(angle) * 2.6, z = haul.spot.z, h = math.deg(angle) }
+		local object = spawnProp(spec.groundProp, spot)
+		if object then
+			target(object, {
+				{
+					label = spec.takeLabel,
+					distance = 2.5,
+					canInteract = function() local h = haulState() return h ~= nil and not h.carrying and h.ground > 0 and not work.busy end,
+					onSelect = function()
+						work.busy = true
+						CreateThread(function()
+							playOnce({ dict = 'anim@mp_snowball', name = 'pickup_snowball', ms = 900, flag = 48 })
+							work.busy = false
+							TriggerServerEvent('coe_jobs:take', job.id)
+						end)
+					end
+				}
+			})
+			work.ground[index] = object
+		end
+	end
+end
+
+-- Carga visível na caçamba: qualquer client perto desenha as props pela state bag do veículo.
+local function clearRack(vehicle)
+	for _, object in ipairs(racks[vehicle] or {}) do
+		deleteEntity(object)
+	end
+	racks[vehicle] = nil
+end
+
+local function drawRack(vehicle, count)
+	clearRack(vehicle)
+	local tag = Entity(vehicle).state['coe:jobVehicle']
+	local job = type(tag) == 'string' and catalog[tag:match('^([^:]+)')] or nil
+	local rack = job and job.gather and job.gather.haul and job.gather.haul.rack
+	if not rack or (count or 0) <= 0 then
+		return
+	end
+	local hash = loadModel(rack.model)
+	if not hash then
+		return
+	end
+	local list = {}
+	for index = 1, math.min(count, #rack.slots) do
+		local slot = rack.slots[index]
+		local object = CreateObject(hash, 0.0, 0.0, 0.0, false, false, false)
+		SetEntityCollision(object, false, false)
+		AttachEntityToEntity(object, vehicle, 0, slot[1], slot[2], slot[3], slot[4], slot[5], slot[6], false, false, false, false, 2, true)
+		list[#list + 1] = object
+	end
+	SetModelAsNoLongerNeeded(hash)
+	racks[vehicle] = list
+end
+
+AddStateBagChangeHandler('coe:jobLoad', nil, function(bagName, _, value)
+	CreateThread(function()
+		local deadline = GetGameTimer() + 3000
+		local vehicle = GetEntityFromStateBagName(bagName)
+		while (vehicle == 0 or not DoesEntityExist(vehicle)) and GetGameTimer() < deadline do
+			Wait(100)
+			vehicle = GetEntityFromStateBagName(bagName)
+		end
+		if vehicle ~= 0 and DoesEntityExist(vehicle) then
+			drawRack(vehicle, tonumber(value) or 0)
+		end
+	end)
+end)
+
+-- Caçambas que saíram do alcance (veículo apagado) liberam as props.
+CreateThread(function()
+	while true do
+		Wait(3000)
+		for vehicle in pairs(racks) do
+			if not DoesEntityExist(vehicle) then
+				for _, object in ipairs(racks[vehicle]) do
+					if DoesEntityExist(object) then
+						DeleteEntity(object)
+					end
+				end
+				racks[vehicle] = nil
+			end
+		end
+	end
+end)
 
 local function paintRoute(job)
 	if work.routeBlip then
@@ -368,15 +843,82 @@ local function jobVehicle()
 	return vehicle ~= 0 and DoesEntityExist(vehicle) and vehicle or nil
 end
 
--- Jogador atrás do veículo (traseira, onde fica a caçamba do caminhão de lixo).
+-- Jogador na traseira do veículo (onde fica a caçamba do caminhão de lixo). O coetarget mede a distância até o
+-- centro do veículo, e o caminhão tem ~10 m: por isso a opção usa um alcance largo e esta checagem fina na traseira.
 local function behind(vehicle)
+	local minimum, maximum = GetModelDimensions(GetEntityModel(vehicle))
+	local rear = GetOffsetFromEntityInWorldCoords(vehicle, 0.0, minimum.y - 0.4, 0.0)
 	local offset = GetOffsetFromEntityGivenWorldCoords(vehicle, GetEntityCoords(PlayerPedId()))
-	local minimum = GetModelDimensions(GetEntityModel(vehicle))
-	return offset.y < minimum.y + 1.5
+	return #(GetEntityCoords(PlayerPedId()) - rear) <= 2.6 and offset.y < minimum.y + 1.2
+		and math.abs(offset.x) <= (maximum.x - minimum.x) / 2 + 0.6
+end
+
+-- Alcance da opção no veículo: metade do comprimento + o braço do jogador.
+local function vehicleReach(vehicle)
+	local minimum, maximum = GetModelDimensions(GetEntityModel(vehicle))
+	return math.max(maximum.y, -minimum.y) + 2.5
 end
 
 local function rearOpen(vehicle, door)
 	return GetVehicleDoorAngleRatio(vehicle, door) > 0.1
+end
+
+-- Porta da caçamba: o caminhão de lixo usa a porta 5 (traseira); se o modelo não tiver, tenta a 4 e a 6.
+local function rearDoor(vehicle, door)
+	if GetIsDoorValid(vehicle, door) then
+		return door
+	end
+	for _, other in ipairs({ 5, 4, 6, 2 }) do
+		if GetIsDoorValid(vehicle, other) then
+			return other
+		end
+	end
+	return door
+end
+
+local function setRear(vehicle, door, open)
+	CreateThread(function()
+		control(vehicle)
+		local actual = rearDoor(vehicle, door)
+		if open then
+			SetVehicleDoorOpen(vehicle, actual, false, false)
+		else
+			SetVehicleDoorShut(vehicle, actual, false)
+		end
+	end)
+end
+
+-- Lenhador: colocar a tora da mão na caçamba da pickup (lateral ou traseira, perto da caçamba).
+local function paintHaulTarget(job)
+	local vehicle = jobVehicle()
+	if work.vehicleTarget or not vehicle then
+		return
+	end
+	local spec = job.gather.haul
+	target(vehicle, {
+		{
+			label = spec.loadLabel,
+			distance = vehicleReach(vehicle),
+			canInteract = function(entity)
+				local haul = haulState()
+				if not haul or not haul.carrying or work.busy or IsPedInAnyVehicle(PlayerPedId(), false) then
+					return false
+				end
+				-- Perto da caçamba (metade de trás do veículo).
+				local offset = GetOffsetFromEntityGivenWorldCoords(entity, GetEntityCoords(PlayerPedId()))
+				return offset.y < 0.5 and #(vector2(offset.x, offset.y)) < 4.5
+			end,
+			onSelect = function()
+				work.busy = true
+				CreateThread(function()
+					playOnce({ dict = 'anim@heists@narcotics@trash', name = 'throw_b', ms = 1100, flag = 48 })
+					work.busy = false
+					TriggerServerEvent('coe_jobs:load', job.id)
+				end)
+			end
+		}
+	})
+	work.vehicleTarget = vehicle
 end
 
 local function paintVehicleTarget(job)
@@ -393,26 +935,46 @@ local function paintVehicleTarget(job)
 	if job.route.mode == 'zone' then
 		-- Traseira do caminhão: abrir/fechar a caçamba (só visual) e jogar o saco com ela aberta.
 		local door = job.route.rearDoor or 5
+		local reach = vehicleReach(vehicle)
+		local function isOpen(entity)
+			return rearOpen(entity, rearDoor(entity, door))
+		end
 		target(vehicle, {
 			{
 				label = job.route.openLabel,
-				distance = 4.0,
-				canInteract = function(entity) return not IsPedInAnyVehicle(PlayerPedId(), false) and behind(entity) and not rearOpen(entity, door) end,
-				onSelect = function(entity) SetVehicleDoorOpen(entity, door, false, false) end
+				distance = reach,
+				canInteract = function(entity) return not IsPedInAnyVehicle(PlayerPedId(), false) and behind(entity) and not isOpen(entity) end,
+				onSelect = function(entity) setRear(entity, door, true) end
 			},
 			{
 				label = job.route.dropLabel,
-				distance = 4.0,
+				distance = reach,
 				canInteract = function(entity)
-					return work.carrying ~= nil and session and session.route and session.route.picked and behind(entity) and rearOpen(entity, door)
+					return work.carrying ~= nil and not work.busy and session and session.route and session.route.picked and behind(entity) and isOpen(entity)
 				end,
-				onSelect = function() TriggerServerEvent('coe_jobs:deliver', job.id) end
+				onSelect = function(entity)
+					-- Vira para a caçamba, arremessa o saco e só então o servidor conta.
+					work.busy = true
+					CreateThread(function()
+						local ped = PlayerPedId()
+						local minimum = GetModelDimensions(GetEntityModel(entity))
+						local rear = GetOffsetFromEntityInWorldCoords(entity, 0.0, minimum.y, 0.5)
+						TaskTurnPedToFaceCoord(ped, rear.x, rear.y, rear.z, 500)
+						Wait(500)
+						if work.carrying then
+							stopAnimation(work.carrying.animation)
+						end
+						playOnce(job.route.dropAnimation)
+						work.busy = false
+						TriggerServerEvent('coe_jobs:deliver', job.id)
+					end)
+				end
 			},
 			{
 				label = job.route.closeLabel,
-				distance = 4.0,
-				canInteract = function(entity) return work.carrying == nil and behind(entity) and rearOpen(entity, door) end,
-				onSelect = function(entity) SetVehicleDoorShut(entity, door, false) end
+				distance = reach,
+				canInteract = function(entity) return work.carrying == nil and behind(entity) and isOpen(entity) end,
+				onSelect = function(entity) setRear(entity, door, false) end
 			}
 		})
 	elseif job.route.mode == 'collect' then
@@ -457,8 +1019,19 @@ local function paintBins(job)
 				return #(vector2(here.x, here.y) - vector2(zone.x, zone.y)) <= zone.radius
 			end,
 			onSelect = function(entity)
+				if work.busy then
+					return
+				end
 				local spot = GetEntityCoords(entity)
-				TriggerServerEvent('coe_jobs:pickup', job.id, { x = spot.x, y = spot.y, z = spot.z })
+				work.busy = true
+				CreateThread(function()
+					-- Abaixa e pega o saco antes de ele aparecer na mão.
+					TaskTurnPedToFaceCoord(PlayerPedId(), spot.x, spot.y, spot.z, 500)
+					Wait(500)
+					playOnce(job.route.pickAnimation)
+					work.busy = false
+					TriggerServerEvent('coe_jobs:pickup', job.id, { x = spot.x, y = spot.y, z = spot.z })
+				end)
 			end
 		}
 	}
@@ -530,11 +1103,56 @@ local function applySession(view)
 	if not previous or previous.jobId ~= view.jobId then
 		clearWork()
 		if job.gather then
-			for index, spot in ipairs(job.gather.sell.points) do
-				pointBlip('sell' .. index, spot, 500, 2, job.gather.sell.label)
+			local g = job.gather
+			for index, spot in ipairs(g.sell.points) do
+				pointBlip('sell' .. index, spot, 500, 2, g.sell.label)
 			end
-			for index, spot in ipairs(job.gather.nodes) do
-				pointBlip('node' .. index, spot, 1, 25, job.gather.actionLabel)
+			for index, spot in ipairs(g.process and g.process.points or {}) do
+				pointBlip('process' .. index, spot, 566, 47, g.process.label)
+			end
+			-- Campos em grade: um blip no meio de cada campo (não um por pé); pontos soltos ganham o seu.
+			local inField = {}
+			for fieldIndex, field in ipairs(g.fields or {}) do
+				local sx, sy, sz = 0.0, 0.0, 0.0
+				for index = field.first, field.first + field.count - 1 do
+					local node = g.nodes[index]
+					sx, sy, sz = sx + node.x, sy + node.y, sz + node.z
+					inField[index] = true
+				end
+				local spot = { x = sx / field.count, y = sy / field.count, z = sz / field.count }
+				pointBlip('field' .. fieldIndex, spot, 1, 25, field.label)
+			end
+			for index, spot in ipairs(g.nodes) do
+				if not inField[index] then
+					pointBlip('node' .. index, spot, 1, 25, g.actionLabel)
+				end
+			end
+			-- Áreas do mapa (floresta): círculo e blip no centro.
+			for index, source in ipairs(g.world or {}) do
+				local zone = source.area
+				local radiusBlip = AddBlipForRadius(zone.x, zone.y, zone.z, zone.radius)
+				SetBlipColour(radiusBlip, 25)
+				SetBlipAlpha(radiusBlip, 80)
+				work.areaBlips['world' .. index] = radiusBlip
+				pointBlip('worldc' .. index, zone, 1, 25, source.label)
+			end
+		end
+	end
+	if job.gather then
+		paintWorld(job)
+		local haul = view.haul
+		if haul then
+			paintGround(job)
+			local spec = job.gather.haul
+			if haul.carrying and not work.carrying then
+				-- Tora no ombro: prop e andar de carga até a pickup.
+				local prop = attachProp(spec.carry)
+				playAnimation(spec.carryAnimation)
+				work.carrying = { prop = prop, animation = spec.carryAnimation }
+			elseif not haul.carrying and work.carrying then
+				deleteEntity(work.carrying.prop)
+				stopAnimation(work.carrying.animation)
+				work.carrying = nil
 			end
 		end
 	end
@@ -587,30 +1205,375 @@ end)
 
 RegisterNetEvent('coe_jobs:ended', function()
 	session = nil
+	if fishingState then
+		cancelFishing(false)
+	end
+	putAwayRod()
 	clearWork()
+	removeUniform(true)
 	ClearGpsPlayerWaypoint()
 end)
 
 -- Guia "Como funciona" (NUI): abre com o foco do mouse e fecha pelo botão ou Esc.
-local guideOpen = false
-
 RegisterNetEvent('coe_jobs:guide', function(guide)
 	if type(guide) ~= 'table' then
 		return
 	end
-	guideOpen = true
+	nuiOpen = 'guide'
 	SendNUIMessage({ action = 'guide:open', guide = guide })
 	SetNuiFocus(true, true)
 end)
 
 RegisterNUICallback('close', function(_, cb)
-	guideOpen = false
+	nuiOpen = nil
 	SetNuiFocus(false, false)
 	cb({ ok = true })
 end)
 
+-- Loja do emprego (NUI): vitrine com nível, preço e itens bloqueados; o servidor cobra e entrega no inventário.
+RegisterNetEvent('coe_jobs:shop', function(view)
+	if type(view) ~= 'table' then
+		return
+	end
+	SendNUIMessage({ action = nuiOpen == 'shop' and 'shop:update' or 'shop:open', shop = view })
+	if nuiOpen ~= 'shop' then
+		nuiOpen = 'shop'
+		SetNuiFocus(true, true)
+	end
+end)
+
+RegisterNUICallback('shopBuy', function(data, cb)
+	if type(data) == 'table' and type(data.jobId) == 'string' and type(data.item) == 'string' then
+		TriggerServerEvent('coe_jobs:buy', data.jobId, tonumber(data.point), data.item, tonumber(data.quantity) or 1)
+	end
+	cb({ ok = true })
+end)
+
+-- Pesca livre ------------------------------------------------------------------------------------------------
+-- Usar a vara no inventário põe a vara (prop próprio, não o do cenário) na mão. Com ela: segurar E carrega a força
+-- e soltar arremessa; X guarda. Na mordida, E fisga; depois vem a briga: segurar/soltar E move a faixa para manter
+-- o peixe dentro até o progresso encher. Laço por quadro só enquanto a vara está na mão.
+
+local rod = nil          -- { jobId, item, prop, phase, ... } com a vara na mão
+
+local FISH_ANIM_DICT = 'amb@world_human_stand_fishing@base'
+local FISH_ANIM_CAST = { dict = 'amb@world_human_stand_fishing@idle_a', name = 'idle_c' }
+local BLOCKED_CONTROLS = { 24, 25, 37, 44, 140, 141, 142, 257, 263, 264 }
+
+local function fishingOf(jobId)
+	local job = catalog[jobId]
+	return job, job and job.gather and job.gather.fishing or nil
+end
+
+-- Água num ponto: sonda vertical de cima (altura do jogador) até 45 m abaixo.
+local function waterAt(x, y, z)
+	local hit = TestProbeAgainstWater(x, y, z + 1.0, x, y, z - 45.0)
+	if hit == true or hit == 1 then
+		return true
+	end
+	local found, height = GetWaterHeight(x, y, z + 1.0)
+	if found and height < z + 1.0 then
+		local groundFound, ground = GetGroundZFor_3dCoord(x, y, z + 1.0, false)
+		return not groundFound or ground <= height + 0.1
+	end
+	return false
+end
+
+-- Onde a linha cai com a força do arremesso (4 a 18 m à frente).
+local function landingOf(power)
+	local ped = PlayerPedId()
+	local here = GetEntityCoords(ped)
+	local forward = GetEntityForwardVector(ped)
+	local distance = 4.0 + power * 14.0
+	return here.x + forward.x * distance, here.y + forward.y * distance, here.z
+end
+
+local function holdAnimation(full)
+	local ped = PlayerPedId()
+	if not loadDict(FISH_ANIM_DICT) then
+		return
+	end
+	-- Parado pescando: corpo inteiro; só com a vara na mão: tronco (dá para andar).
+	TaskPlayAnim(ped, FISH_ANIM_DICT, 'base', 4.0, -4.0, -1, full and 1 or 49, 0.0, false, false, false)
+end
+
+local function hint(text)
+	SendNUIMessage({ action = 'fish:hint', text = text })
+end
+
+local function setPhase(phase)
+	if rod then
+		rod.phase = phase
+		rod.phaseAt = GetGameTimer()
+	end
+end
+
+-- Volta para "vara na mão" (sem lance), sem guardar a vara.
+function cancelFishing(notifyServer)
+	local state = fishingState
+	fishingState = nil
+	work.busy = false
+	if notifyServer and state then
+		TriggerServerEvent('coe_jobs:castCancel', state.jobId)
+	end
+	if rod then
+		setPhase('idle')
+		holdAnimation(false)
+		hint(_t('fish_hint_idle'))
+	end
+end
+
+function putAwayRod()
+	if not rod then
+		return
+	end
+	if fishingState then
+		cancelFishing(true)
+	end
+	local state = rod
+	rod = nil
+	deleteEntity(state.prop)
+	StopAnimTask(PlayerPedId(), FISH_ANIM_DICT, 'base', 2.0)
+	SendNUIMessage({ action = 'fish:hide' })
+end
+
+-- Varas soltas no chão por perto (as que o cenário antigo largava): some com elas ao pegar a vara.
+local function clearLooseRods(spec)
+	local hash = joaat(spec.model)
+	local here = GetEntityCoords(PlayerPedId())
+	for _, object in ipairs(GetGamePool('CObject')) do
+		if GetEntityModel(object) == hash and not IsEntityAttached(object) and #(GetEntityCoords(object) - here) < 8.0 then
+			SetEntityAsMissionEntity(object, true, true)
+			DeleteEntity(object)
+		end
+	end
+end
+
+-- Arremesso: confere área e água onde a linha cai e pede o lance ao servidor.
+local function throwLine(power)
+	local job, fishing = fishingOf(rod.jobId)
+	if not fishing then
+		return putAwayRod()
+	end
+	local here = GetEntityCoords(PlayerPedId())
+	if not JobRules.FishingArea(fishing, { x = here.x, y = here.y, z = here.z }) then
+		setPhase('idle')
+		hint(_t('fish_hint_idle'))
+		return show('warning', _t('err_no_fishing_area'))
+	end
+	local x, y, z = landingOf(power)
+	if not waterAt(x, y, z) then
+		setPhase('idle')
+		hint(_t('fish_hint_idle'))
+		return show('warning', _t('fish_no_water'))
+	end
+	setPhase('casting')
+	rod.power = power
+	CreateThread(function()
+		local ped = PlayerPedId()
+		if loadDict(FISH_ANIM_CAST.dict) then
+			TaskPlayAnim(ped, FISH_ANIM_CAST.dict, FISH_ANIM_CAST.name, 8.0, -4.0, 1500, 48, 0.0, false, false, false)
+		end
+		Wait(900)
+		if rod and rod.phase == 'casting' then
+			TriggerServerEvent('coe_jobs:cast', job.id, rod.item, power)
+		end
+	end)
+end
+
+local function reel(caught)
+	local state = fishingState
+	if not state or not rod then
+		return
+	end
+	setPhase('reeling')
+	TriggerServerEvent('coe_jobs:reel', state.jobId, caught)
+end
+
+-- Briga: física simples da faixa (segurar E sobe, soltar cai) e do peixe (vai a alvos sorteados).
+local function startFight(fight)
+	rod.fight = {
+		fish = 0.5, target = math.random(), retarget = GetGameTimer() + 800,
+		bar = 0.5 - fight.bar / 2, velocity = 0.0, progress = fight.start, started = GetGameTimer(), last = GetGameTimer()
+	}
+	setPhase('fight')
+end
+
+local function stepFight(fight)
+	local state = rod.fight
+	local now = GetGameTimer()
+	local dt = math.min(0.1, (now - state.last) / 1000)
+	state.last = now
+	-- Peixe: troca de alvo a cada 0,5-1,4 s (mais agitado = mais rápido) e nada até ele com tremidas.
+	if now >= state.retarget then
+		state.target = math.random()
+		state.retarget = now + math.floor((500 + math.random() * 900) / math.max(0.5, fight.speed / 0.3))
+	end
+	local step = fight.speed * dt
+	local delta = state.target - state.fish
+	state.fish = math.max(0, math.min(1, state.fish + math.max(-step, math.min(step, delta)) + (math.random() - 0.5) * 0.01))
+	-- Faixa: E segurado acelera para cima, solto cai; para nas bordas.
+	if IsDisabledControlPressed(0, 38) then
+		state.velocity = math.min(1.2, state.velocity + 2.4 * dt)
+	else
+		state.velocity = math.max(-1.2, state.velocity - 2.0 * dt)
+	end
+	state.bar = state.bar + state.velocity * dt
+	if state.bar < 0 then
+		state.bar, state.velocity = 0, 0
+	elseif state.bar > 1 - fight.bar then
+		state.bar, state.velocity = 1 - fight.bar, 0
+	end
+	local inside = state.fish >= state.bar and state.fish <= state.bar + fight.bar
+	state.progress = math.max(0, math.min(1, state.progress + (inside and fight.fill or -fight.drain) * dt))
+	SendNUIMessage({ action = 'fish:fight', fish = state.fish, bar = state.bar, size = fight.bar, progress = state.progress, inside = inside })
+	if state.progress >= 1 then
+		SendNUIMessage({ action = 'fish:end', hit = true })
+		reel(true)
+	elseif state.progress <= 0 or now - state.started > fight.maxMs then
+		SendNUIMessage({ action = 'fish:end', hit = false })
+		reel(false)
+	end
+end
+
+-- Laço da vara na mão.
+local function rodLoop()
+	local lastAnim = 0
+	while rod do
+		Wait(0)
+		local ped = PlayerPedId()
+		for _, control in ipairs(BLOCKED_CONTROLS) do
+			DisableControlAction(0, control, true)
+		end
+		DisableControlAction(0, 38, true)
+		DisableControlAction(0, 73, true)
+		if IsPedInAnyVehicle(ped, true) or IsPedSwimming(ped) or IsPedDeadOrDying(ped, true) or IsPedRagdoll(ped) then
+			putAwayRod()
+			break
+		end
+		local phase = rod.phase
+		local now = GetGameTimer()
+		if phase == 'idle' then
+			if now - lastAnim > 1500 and not IsEntityPlayingAnim(ped, FISH_ANIM_DICT, 'base', 3) then
+				holdAnimation(false)
+				lastAnim = now
+			end
+			if IsDisabledControlJustPressed(0, 73) then
+				putAwayRod()
+				break
+			elseif IsDisabledControlJustPressed(0, 38) then
+				setPhase('charging')
+			end
+		elseif phase == 'charging' then
+			-- Força vai e volta (1,2 s por ida): soltar na hora certa é parte do arremesso.
+			local power = JobRules.MarkerAt(now - rod.phaseAt, 1 / 2.4)
+			SendNUIMessage({ action = 'fish:power', power = power })
+			if not IsDisabledControlPressed(0, 38) then
+				throwLine(power)
+			end
+		elseif phase == 'waiting' then
+			if IsDisabledControlJustPressed(0, 73) or #(GetEntityCoords(ped) - rod.origin) > 2.0 then
+				show('info', _t('fish_cancelled'))
+				cancelFishing(true)
+			elseif fishingState and now >= rod.biteAt then
+				PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+				local rare = fishingState.tier == 'rare'
+				SendNUIMessage({ action = 'fish:hook', text = rare and _t('fish_bite_big') or _t('fish_bite'), ms = fishingState.fight.hookMs, rare = rare })
+				setPhase('hook')
+			end
+		elseif phase == 'hook' then
+			if IsDisabledControlJustPressed(0, 38) then
+				startFight(fishingState.fight)
+			elseif now - rod.phaseAt > fishingState.fight.hookMs then
+				SendNUIMessage({ action = 'fish:end', hit = false })
+				reel(false)
+			end
+		elseif phase == 'fight' then
+			if #(GetEntityCoords(ped) - rod.origin) > 2.5 then
+				SendNUIMessage({ action = 'fish:end', hit = false })
+				reel(false)
+			else
+				stepFight(fishingState.fight)
+			end
+		end
+	end
+end
+
+local function takeRod(jobId, item)
+	local _, fishing = fishingOf(jobId)
+	if not fishing or work.busy then
+		return
+	end
+	local spec = fishing.rodProp
+	clearLooseRods(spec)
+	local prop = attachProp(spec)
+	rod = { jobId = jobId, item = item, prop = prop, phase = 'idle', phaseAt = GetGameTimer() }
+	holdAnimation(false)
+	hint(_t('fish_hint_idle'))
+	CreateThread(rodLoop)
+end
+
+RegisterNetEvent('coe_jobs:fishUse', function(data)
+	if type(data) ~= 'table' then
+		return
+	end
+	-- Usar a vara de novo guarda (ou troca de vara, se for outra).
+	if rod then
+		local same = rod.item == data.rod
+		if rod.phase ~= 'idle' and rod.phase ~= 'charging' then
+			return
+		end
+		putAwayRod()
+		if same then
+			return
+		end
+	end
+	local ped = PlayerPedId()
+	if IsPedInAnyVehicle(ped, false) or IsPedSwimming(ped) or IsPedDeadOrDying(ped, true) then
+		return
+	end
+	takeRod(data.jobId, data.rod)
+end)
+
+RegisterNetEvent('coe_jobs:fishCast', function(data)
+	if type(data) ~= 'table' or not rod or rod.phase ~= 'casting' then
+		if type(data) == 'table' then
+			TriggerServerEvent('coe_jobs:castCancel', data.jobId)
+		end
+		return
+	end
+	fishingState = data
+	work.busy = true
+	rod.origin = GetEntityCoords(PlayerPedId())
+	rod.biteAt = GetGameTimer() + data.bite
+	setPhase('waiting')
+	holdAnimation(true)
+	hint(_t('fish_hint_wait', { bait = data.bait:lower() }))
+end)
+
+RegisterNetEvent('coe_jobs:fishResult', function()
+	if not fishingState then
+		return
+	end
+	fishingState = nil
+	-- Mostra o resultado e volta à vara na mão (a mesma vara: nada cai no chão).
+	CreateThread(function()
+		Wait(1400)
+		work.busy = false
+		if rod and rod.phase == 'reeling' then
+			setPhase('idle')
+			holdAnimation(false)
+			hint(_t('fish_hint_idle'))
+		end
+	end)
+end)
+
 RegisterNetEvent('coe_jobs:result', function()
 	work.busy = false
+	-- Lance recusado pelo servidor (sem isca, cheio...): solta o jogador.
+	if fishingState then
+		cancelFishing(false)
+	end
 end)
 
 RegisterNetEvent('coe_jobs:catalog', function(list)
@@ -627,6 +1590,32 @@ RegisterNetEvent('coe_jobs:catalog', function(list)
 		clearWork()
 	end
 end)
+
+-- Venda: com um produto, o rótulo mostra o preço ("$8 por repolho"); com vários, o guia lista cada preço.
+local function sellLabel(job)
+	local g = job.gather
+	local order = g.productOrder or {}
+	local priced = {}
+	for _, id in ipairs(order) do
+		if g.products[id].price > 0 then
+			priced[#priced + 1] = g.products[id]
+		end
+	end
+	if #priced == 1 then
+		return ('%s ($%d por %s)'):format(g.sell.label, priced[1].price, priced[1].unit)
+	end
+	return g.sell.label
+end
+
+local function sellable(job)
+	for id, amount in pairs(session and session.goods or {}) do
+		local item = job.gather.products[id]
+		if amount > 0 and item and item.price > 0 then
+			return true
+		end
+	end
+	return false
+end
 
 -- Laço de proximidade (1 s): cria e remove NPCs e objetos perto do jogador.
 CreateThread(function()
@@ -651,20 +1640,108 @@ CreateThread(function()
 				centerPeds[id] = nil
 			end
 		end
+		-- Lojas dos empregos: sempre (sem precisar ter começado o trabalho).
+		for id, shopJob in pairs(catalog) do
+			for index, spot in ipairs(shopJob.shop and shopJob.shop.points or {}) do
+				local key = id .. ':' .. index
+				local distance = #(coords - vector3(spot.x, spot.y, spot.z))
+				if distance < range and not shopPeds[key] then
+					local ped = spawnPed(shopJob.shop.ped, spot, 'WORLD_HUMAN_STAND_IMPATIENT')
+					if ped then
+						local options = {
+							{
+								label = shopJob.shop.label,
+								distance = 2.5,
+								onSelect = function() TriggerServerEvent('coe_jobs:shop', shopJob.id, index) end
+							}
+						}
+						for _, option in ipairs(stopOptions(shopJob)) do
+							options[#options + 1] = option
+						end
+						target(ped, options)
+						shopPeds[key] = ped
+					end
+				elseif distance > range + 20.0 and shopPeds[key] then
+					deleteEntity(shopPeds[key])
+					shopPeds[key] = nil
+				end
+			end
+		end
 		local job = currentJob()
 		if job and job.gather then
+			if job.gather.haul then
+				paintHaulTarget(job)
+			end
 			for index, spot in ipairs(job.gather.nodes) do
 				local key = 'node' .. index
 				local distance = #(coords - vector3(spot.x, spot.y, spot.z))
-				if distance < range and not work.props[key] and not onCooldown(index) then
-					local object = spawnProp(job.gather.nodeProp or 'prop_cs_cardbox_01', spot)
+				if distance < range and not work.props[key] and not onCooldown(index) and not work.offSoil[index] then
+					local item = productOf(job, spot.product)
+					local groundZ, material = probeGround(spot)
+					-- Campo de plantio: ponto que cai fora da terra (estrada, grama, cerca) fica sem prop.
+					if spot.field and job.gather.fields[spot.field].soil and not work.soilOff[spot.field] and not isSoil(material) then
+						work.offSoil[index] = true
+						-- Campo inteiro fora da lista de materiais (mapa diferente): desliga o filtro nele em vez de sumir.
+						local field = job.gather.fields[spot.field]
+						local all = true
+						for other = field.first, field.first + field.count - 1 do
+							all = all and work.offSoil[other] == true
+						end
+						if all then
+							work.soilOff[spot.field] = true
+							for other = field.first, field.first + field.count - 1 do
+								work.offSoil[other] = nil
+							end
+						end
+					else
+						local object = spawnProp((item and item.prop) or job.gather.nodeProp or 'prop_cs_cardbox_01', spot, groundZ)
+						if object then
+							target(object, {
+								{
+									label = (item and item.actionLabel) or job.gather.actionLabel,
+									distance = 2.5,
+									canInteract = function() return not work.busy and session ~= nil and (session.cargo or 0) < (session.capacity or job.gather.capacity) end,
+									onSelect = function() gatherNode(job, index) end
+								}
+							})
+							work.props[key] = object
+						end
+					end
+				elseif distance > range + 20.0 and work.props[key] then
+					deleteEntity(work.props[key])
+					work.props[key] = nil
+				end
+			end
+			-- Beneficiamento (serra da madeireira): bancada com a opção de desdobrar a carga da caçamba.
+			for index, spot in ipairs(job.gather.process and job.gather.process.points or {}) do
+				local key = 'process' .. index
+				local distance = #(coords - vector3(spot.x, spot.y, spot.z))
+				local process = job.gather.process
+				if distance < range and not work.props[key] then
+					local object = spawnProp(process.prop or 'prop_tool_bench02', spot)
 					if object then
 						target(object, {
 							{
-								label = job.gather.actionLabel,
-								distance = 2.5,
-								canInteract = function() return not work.busy and session ~= nil and (session.cargo or 0) < (session.capacity or job.gather.capacity) end,
-								onSelect = function() gatherNode(job, index) end
+								label = process.label,
+								distance = 2.8,
+								canInteract = function() local h = haulState() return h ~= nil and h.loaded > 0 and not work.busy and not h.carrying end,
+								onSelect = function()
+									local h = haulState()
+									if work.busy or not h then
+										return
+									end
+									work.busy = true
+									CreateThread(function()
+										local seconds = math.min(process.maxSeconds, process.seconds * h.loaded)
+										local ok = timedAction(seconds, process.animation, nil, spot)
+										work.busy = false
+										if ok then
+											TriggerServerEvent('coe_jobs:process', job.id, index)
+										else
+											show('warning', _t('action_cancelled'))
+										end
+									end)
+								end
 							}
 						})
 						work.props[key] = object
@@ -680,14 +1757,18 @@ CreateThread(function()
 				if distance < range and not work.peds[key] then
 					local ped = spawnPed(job.gather.sell.ped, spot)
 					if ped then
-						target(ped, {
+						local options = {
 							{
-								label = ('%s ($%d por %s)'):format(job.gather.sell.label, job.gather.sell.price, job.gather.unit),
+								label = sellLabel(job),
 								distance = 2.5,
-								canInteract = function() return session ~= nil and (session.cargo or 0) > 0 end,
+								canInteract = function() return session ~= nil and sellable(job) end,
 								onSelect = function() TriggerServerEvent('coe_jobs:sell', job.id, index) end
 							}
-						})
+						}
+						for _, option in ipairs(stopOptions(job)) do
+							options[#options + 1] = option
+						end
+						target(ped, options)
 						work.peds[key] = ped
 					end
 				elseif distance > range + 20.0 and work.peds[key] then
@@ -757,10 +1838,25 @@ end)
 
 AddEventHandler('onResourceStop', function(resource)
 	if resource == GetCurrentResourceName() then
-		if guideOpen then
+		if nuiOpen then
 			SetNuiFocus(false, false)
 		end
+		if fishingState then
+			cancelFishing(false)
+		end
+		putAwayRod()
 		clearCenters()
 		clearWork()
+		removeUniform(true)
+		for key, entry in pairs(felled) do
+			RemoveModelHide(entry.x, entry.y, entry.z, 2.0, entry.model, false)
+			felled[key] = nil
+		end
+		for vehicle in pairs(racks) do
+			for _, object in ipairs(racks[vehicle]) do
+				deleteEntity(object)
+			end
+			racks[vehicle] = nil
+		end
 	end
 end)

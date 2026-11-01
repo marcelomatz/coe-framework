@@ -31,11 +31,54 @@ end
 --   rota: dirigir a ~18 m/s pela distância média + ~75 s parando e entregando (passageiro: ida até o embarque e
 --   corrida, + ~60 s); bônus no fim da rota. Zona: ~45 s por saco mais a viagem entre áreas.
 local function hourly(job)
-	if job.gather then
+	if job.gather and job.gather.haul then
+		-- transporte: árvores até encher a caçamba (ação + ~15 s até a próxima), ~12 s por tora carregada,
+		-- ~150 s de ida e volta à madeireira, o tempo da serra e a venda das tábuas.
 		local g = job.gather
-		local units = 3600 / (g.seconds + 15) * (g.yield[1] + g.yield[2]) / 2
-		local selling = units / g.capacity * 150
-		return math.floor((3600 - selling) / 3600 * units * g.sell.price)
+		local raw = g.products[g.haul.product]
+		local output = g.products[g.process.product]
+		local cap = g.haul.capacity
+		local trees = cap / ((raw.yield[1] + raw.yield[2]) / 2)
+		local seconds = trees * (raw.seconds + 15) + cap * 12 + 150 + math.min(g.process.maxSeconds, g.process.seconds * cap)
+		return math.floor(3600 / seconds * cap * g.process.ratio * output.price)
+	end
+	if job.gather and job.gather.fishing then
+		-- pesca com a vara e a isca básicas na primeira área: arremesso (~2 s) + espera média + fisgar (~1 s) + briga
+		-- (~1,4x o mínimo da espécie); acerta ~(faixa da briga x 0,6 + 55%); venda a cada carga cheia (~150 s);
+		-- desconta a isca de cada lance.
+		local g, f = job.gather, job.gather.fishing
+		local rod, bait = f.rods[f.rodOrder[1]], f.baits[f.baitOrder[1]]
+		local zone = f.areas[1]
+		local total, value, fightMs = 0, 0, 0
+		for _, entry in ipairs(zone.species) do
+			local item = g.products[entry.id]
+			total, value = total + entry.weight, value + entry.weight * item.price
+			fightMs = fightMs + entry.weight * JobRules.FightParams(f, rod, item).minMs * 1.4
+		end
+		local bar = JobRules.FightParams(f, rod, g.products[zone.species[1].id]).bar
+		local seconds = 2 + f.castSeconds + (f.biteSeconds[1] + f.biteSeconds[2]) / 2 * rod.speed * bait.speed + 1 + fightMs / total / 1000
+		local casts = 3600 / seconds
+		local fish = casts * math.min(0.95, bar * 0.6 + 0.55)
+		local selling = fish / g.capacity * 150
+		local baitPrice = 0
+		for _, entry in ipairs(job.shop.items) do
+			if entry.item == bait.item then baitPrice = entry.price end
+		end
+		return math.floor((3600 - selling) / 3600 * (fish * value / total - casts * baitPrice))
+	end
+	if job.gather then
+		-- média dos pontos (cada um com o seu produto): ação + ~15 s até o próximo; venda a cada carga cheia.
+		local g = job.gather
+		local seconds, units, value = 0, 0, 0
+		for _, node in ipairs(g.nodes) do
+			local item = g.products[node.product]
+			local each = (item.yield[1] + item.yield[2]) / 2
+			seconds, units, value = seconds + item.seconds + 15, units + each, value + each * item.price
+		end
+		local perHour = 3600 / (seconds / #g.nodes)
+		local unitsHour = perHour * units / #g.nodes
+		local selling = unitsHour / g.capacity * 150
+		return math.floor((3600 - selling) / 3600 * perHour * value / #g.nodes)
 	end
 	local r = job.route
 	local distance = averageDistance(r.stops)

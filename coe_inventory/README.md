@@ -141,6 +141,11 @@ Os exports pertencem ao resource `coe_inventory`:
 
 O item `sim_card` (chip de celular) carrega `metadata.iccid`; usar coloca o chip no celular em uso (`coe_phone`).
 
+Varas (`fishing_rod`, `fishing_rod_fiber`, `fishing_rod_carbon`) e iscas (`bait_bread`, `bait_worm`, `bait_shrimp`,
+`bait_lure`) ficam em `data/coe_fishing.lua`: são vendidas na loja de pesca do `coe_jobs`, usáveis e não consumidas
+ao usar (o `coe_jobs` ouve `inventory.itemUsed`: a vara lança a linha, a isca escolhe qual vai no anzol, e cada
+lance remove uma isca).
+
 O item `fuel_can` (galão, `data/coe_shop_items.lua`) carrega `metadata.fuel` e `metadata.liters`; usar não consome o item: o `coe_fuel` despeja no veículo mais perto e baixa os litros.
 
 Leituras retornam snapshots, não referências mutáveis. Operações retornam `false` ou `nil` e uma chave de erro como segundo valor em caso de falha. Metadata em string é normalizada para `{ type = value }`; `GetItemCount` compara metadata exatamente por padrão, e `strict = false` permite filtrar pelas propriedades fornecidas.

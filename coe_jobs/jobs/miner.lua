@@ -19,7 +19,14 @@ JobsCatalog[#JobsCatalog + 1] = {
 	},
 	-- Histórico pedido: força de outro emprego braçal.
 	requires = { skills = { strength = 2 } },
-	tool = { model = 'prop_tool_pickaxe', bone = 57005, offset = { 0.09, -0.53, -0.22 }, rotation = { 252.0, 180.0, 0.0 } },
+	-- Uniforme opcional: capacete, colete refletivo e botina. Valores provisórios: confira no jogo.
+	uniform = {
+		label = 'Uniforme de mineiro',
+		male = { components = { [3] = { 0, 0 }, [4] = { 36, 0 }, [6] = { 25, 0 }, [8] = { 59, 0 }, [11] = { 56, 0 } }, props = { [0] = { 0, 0 } } },
+		female = { components = { [3] = { 0, 0 }, [4] = { 35, 0 }, [6] = { 25, 0 }, [8] = { 36, 0 }, [11] = { 49, 0 } }, props = { [0] = { 0, 0 } } }
+	},
+	-- Picareta na mão direita: cabo na palma, ponta para frente (golpe no chão).
+	tool = { model = 'prop_tool_pickaxe', bone = 57005, offset = { 0.18, -0.02, -0.02 }, rotation = { -100.0, 0.0, -10.0 } },
 	gather = {
 		actionLabel = 'Quebrar rocha',
 		nodeProp = 'prop_rock_1_d',
@@ -28,7 +35,7 @@ JobsCatalog[#JobsCatalog + 1] = {
 			{ 2970.8, 2797.4, 41.0 }, { 2957.3, 2805.8, 41.9 }, { 2944.5, 2795.3, 40.6 }, { 2933.9, 2785.0, 39.5 },
 			{ 2939.0, 2812.6, 42.8 }, { 2985.6, 2806.1, 43.4 }
 		},
-		seconds = 8,
+		seconds = 7,
 		yield = { 1, 2 },
 		capacity = 20,
 		nodeCooldown = 150,

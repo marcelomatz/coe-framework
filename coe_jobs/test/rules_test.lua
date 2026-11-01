@@ -176,4 +176,56 @@ _, err = JobRules.Validate(zoneRaw)
 eq(err, 'invalid_zones', 'pelo menos duas zonas')
 eq(JobRules.BinKey({ x = 10.4, y = -3.6, z = 29.5 }), '10:-4:30', 'chave da lixeira arredondada')
 
+-- uniforme opcional: normalizado em listas e validado
+local dressed = assert(JobRules.Validate(gatherJob({ uniform = { label = 'Roupa', male = { components = { [11] = { 56, 0 }, [4] = { 36, 1 } }, props = { [0] = { 5, 0 } } } } })))
+eq(dressed.uniform.male.components[1][1], 4, 'componentes em ordem')
+eq(dressed.uniform.male.props[1][1], 0, 'prop do slot 0 preservado')
+eq(dressed.uniform.female, nil, 'sem roupa feminina')
+eq(JobRules.Public(dressed).uniform.label, 'Roupa', 'uniforme vai ao client')
+eq(code(gatherJob({ uniform = { male = { components = { [12] = { 1, 0 } } } } })), 'invalid_uniform', 'slot invalido')
+eq(code(gatherJob({ uniform = {} })), 'invalid_uniform', 'uniforme vazio')
+
+-- campos em grade e produtos
+local fieldJob = gatherJob()
+fieldJob.gather = {
+	products = { repolho = { unit = 'repolho', units = 'repolhos', price = 8, prop = { 'prop_a', 'prop_b' } }, milho = { unit = 'espiga', units = 'espigas', price = 5, seconds = 3 } },
+	nodes = { { 1, 1, 1, product = 'milho' } },
+	fields = { { product = 'repolho', origin = { 100, 100, 40 }, heading = 0, rows = 2, cols = 3, spacing = 4 } },
+	sell = { points = { { 0, 0, 0 } } }
+}
+local fielded = assert(JobRules.Validate(fieldJob))
+eq(#fielded.gather.nodes, 7, 'ponto solto + 2x3 do campo')
+eq(fielded.gather.nodes[1].product, 'milho', 'produto do ponto solto')
+eq(fielded.gather.nodes[3].y, 104, 'heading 0: fileira para o norte')
+eq(fielded.gather.nodes[5].x, 104, 'fileiras lado a lado para o leste')
+eq(fielded.gather.fields[1].first, 2, 'campo comeca depois dos pontos soltos')
+eq(fielded.gather.products.milho.seconds, 3, 'tempo proprio do produto')
+eq(fielded.gather.products.repolho.prop[2], 'prop_b', 'lista de modelos candidatos')
+fieldJob.gather.nodes[1].product = 'nada'
+eq(code(fieldJob), 'invalid_nodes:1', 'produto desconhecido no ponto')
+
+-- transporte exige veiculo e o beneficiamento exige transporte
+local haulJob = gatherJob()
+haulJob.gather = {
+	products = { tora = { unit = 'tora', units = 'toras', price = 0 }, tabua = { unit = 'tábua', units = 'tábuas', price = 7 } },
+	world = { { product = 'tora', area = { 0, 0, 0, radius = 50 }, models = { 'prop_tree_pine_01' }, fell = true } },
+	haul = { capacity = 6, carry = { model = 'prop_log_02' } },
+	process = { product = 'tabua', ratio = 4, points = { { 1, 1, 1 } } },
+	sell = { points = { { 0, 0, 0 } } }
+}
+local hauled = assert(JobRules.Validate(haulJob))
+eq(hauled.gather.capacity, 6, 'capacidade vem da cacamba')
+eq(hauled.gather.haul.product, 'tora', 'produto que vai na cacamba')
+eq(hauled.gather.world[1].fell, true, 'arvore tomba')
+haulJob.vehicle = nil
+eq(code(haulJob), 'invalid_haul', 'transporte sem veiculo')
+haulJob.vehicle = { model = 'bison', spawn = { 1, 1, 1 } }
+haulJob.gather.products.tabua.price = 0
+eq(code(haulJob), 'invalid_price', 'algo precisa ter preco')
+
+-- animacoes curtas do lixeiro (pegar e jogar)
+local quick = assert(JobRules.Validate(routeJob({ route = { mode = 'collect', stops = { { 1, 0, 0 }, { 2, 0, 0 } }, perRoute = 2, pay = 5,
+	carry = { model = 'prop_a' }, pickAnimation = { dict = 'd', name = 'n', ms = 900 } } })))
+eq(quick.route.pickAnimation.ms, 900, 'duracao da animacao curta')
+
 print('coe_jobs rules tests passed')

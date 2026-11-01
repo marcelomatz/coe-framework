@@ -47,6 +47,7 @@ shared_scripts {
 	'data/coe_parts.lua',
 	'data/coe_ingredients.lua',
 	'data/coe_shop_items.lua',
+	'data/coe_fishing.lua',
 	'domain/config_schema.lua'
 }
 

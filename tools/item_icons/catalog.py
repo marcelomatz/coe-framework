@@ -329,3 +329,14 @@ reg('trash_bread', obj(I.trash, 204, k='bread'))
 reg('trash_burger', obj(I.trash, 204, k='burger'))
 reg('trash_can', obj(I.trash, 204, k='can'))
 reg('trash_chips', obj(I.trash, 204, k='chips'))
+
+# --- pesca (coe_jobs: loja de pesca) ---
+import fishing as FI  # noqa: E402
+
+reg('fishing_rod', obj(FI.rod, 236, rotate=-40, blank='tan', grip='wood', nodes=True))
+reg('fishing_rod_fiber', obj(FI.rod, 236, rotate=-40, blank='yellow', grip='rubber', reel='blue'))
+reg('fishing_rod_carbon', obj(FI.rod, 236, rotate=-40, blank='polymer', grip='rubber', reel='gunmetal', stripe='#c4df9b'))
+reg('bait_bread', obj(FI.bread_bait, 200))
+reg('bait_worm', obj(FI.worm_can, 200))
+reg('bait_shrimp', obj(FI.shrimp, 200))
+reg('bait_lure', obj(FI.lure, 210, rotate=-15))

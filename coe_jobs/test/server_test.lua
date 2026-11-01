@@ -19,6 +19,7 @@ function GetEntityCoords(e)
 	return p and { x = p.x, y = p.y, z = p.z } or { x = 0, y = 0, z = 0 }
 end
 function joaat(s) return #s end
+function GetHashKey(s) return #s + 1000 end
 function CreateVehicleServerSetter(_, _, x, y, z)
 	nextEntity = nextEntity + 1
 	entities[nextEntity] = { x = x, y = y, z = z }
@@ -42,7 +43,28 @@ math.randomseed(7)
 local clock = 1792000000
 os.time = function() return clock end
 
-Core = { Players = { GetActiveCharacterId = function(id) return characters[id] end }, Events = { On = function() end } }
+local coreHandlers = {}
+Core = { Players = { GetActiveCharacterId = function(id) return characters[id] end }, Events = { On = function(name, fn) coreHandlers[name] = fn end } }
+function GetPlayers() return { '1', '2', '3' } end
+-- Inventário simulado: personagem -> item -> quantidade.
+local bags = {}
+local function bagOf(inventoryId) local c = inventoryId:match('^character:(.+)$'); bags[c] = bags[c] or {}; return bags[c] end
+local inventoryMock = {
+	GetPlayerInventory = function(_, id) return characters[id] and ('character:' .. characters[id]) or nil end,
+	GetItemCount = function(_, inv, item) return bagOf(inv)[item] or 0 end,
+	RemoveItemByName = function(_, inv, item, count)
+		local bag = bagOf(inv)
+		if (bag[item] or 0) < count then return false, 'insufficient_items' end
+		bag[item] = bag[item] - count
+		return true
+	end,
+	AddItem = function(_, inv, item, count)
+		if item == 'full_test' then return false, 'inventory_full' end
+		local bag = bagOf(inv)
+		bag[item] = (bag[item] or 0) + count
+		return true, 1
+	end
+}
 exports = setmetatable({}, {
 	__call = function(_, name, fn) exported[name] = fn end,
 	__index = function(_, resource)
@@ -54,6 +76,9 @@ exports = setmetatable({}, {
 					balances[id] = balances[id] - amount; debits[#debits + 1] = { id = id, amount = amount, reason = reason }; return true
 				end
 			}
+		end
+		if resource == 'coe_inventory' then
+			return inventoryMock
 		end
 		if resource == 'coe_notify' then
 			return { Notify = function(_, id, kind, message) notices[#notices + 1] = { id = id, kind = kind, message = message } end }
@@ -470,5 +495,235 @@ eq(tabletGuide.ok, true, 'guia no tablet')
 eq(tabletGuide.data.player.tasks >= 1, true, 'tarefas no guia')
 eq(exported.TabletCall(2, 'career', 'guide', { jobId = 'nada' }).error, 'invalid_payload', 'emprego desconhecido')
 
+
+-- lenhador com transporte: arvore do mapa -> toras no chao -> carregar na pickup -> desdobrar -> vender as tabuas
+local mill = {
+	id = 'mill', label = 'Madeireira', kind = 'gather', center = { 500, 0, 0 }, skills = { 'strength' },
+	vehicle = { model = 'bison', spawn = { 503, 0, 0 }, deposit = 0 },
+	gather = {
+		seconds = 4,
+		products = { tora = { unit = 'tora', units = 'toras', price = 0, yield = { 2, 2 } }, tabua = { unit = 'tábua', units = 'tábuas', price = 5 } },
+		world = { { product = 'tora', fell = true, cooldown = 600, area = { 600, 0, 0, radius = 50 }, models = { 'prop_tree_pine_01' } } },
+		haul = { capacity = 3, carry = { model = 'prop_log_02' } },
+		process = { product = 'tabua', ratio = 4, seconds = 2, points = { { 520, 0, 0 } } },
+		sell = { points = { { 530, 0, 0 } } }
+	}
+}
+eq(exported.RegisterJob(mill), true, 'emprego com transporte registra')
+positions[3] = { x = 500, y = 0, z = 0 }
+net('coe_jobs:start', 3, 'mill')
+local millView = lastEvent('coe_jobs:session').payload
+eq(millView.haul.capacity, 3, 'capacidade da cacamba')
+local pine = GetHashKey('prop_tree_pine_01')
+local tree = { x = 601, y = 0, z = 0 }
+positions[3] = { x = 600, y = 0, z = 0 }
+now = now + 5000
+net('coe_jobs:gatherWorld', 3, 'mill', 1, tree, 12345)
+eq(lastEvent('coe_jobs:result').payload.error, 'too_far', 'modelo fora da lista recusado')
+now = now + 5000
+net('coe_jobs:gatherWorld', 3, 'mill', 1, { x = 700, y = 0, z = 0 }, pine)
+eq(lastEvent('coe_jobs:result').payload.error, 'outside_zone', 'arvore fora da area')
+now = now + 5000
+net('coe_jobs:gatherWorld', 3, 'mill', 1, tree, pine)
+millView = lastEvent('coe_jobs:session').payload
+eq(millView.haul.ground, 2, 'toras no chao')
+eq(lastEvent('coe_jobs:felled').target, -1, 'arvore some para todos')
+eq(lastEvent('coe_jobs:felled').payload.model, pine, 'modelo da arvore no aviso')
+now = now + 5000
+positions[3] = { x = 605, y = 0, z = 0 }
+net('coe_jobs:gatherWorld', 3, 'mill', 1, { x = 606, y = 0, z = 0 }, pine)
+eq(lastEvent('coe_jobs:result').payload.error, 'ground_left', 'carregar antes de cortar outra')
+now = now + 5000
+positions[3] = { x = 600, y = 0, z = 0 }
+net('coe_jobs:gatherWorld', 3, 'mill', 1, tree, pine)
+eq(lastEvent('coe_jobs:result').payload.error, 'cooldown', 'arvore cortada nao corta de novo')
+net('coe_jobs:load', 3, 'mill')
+eq(lastEvent('coe_jobs:result').payload.error, 'wrong_step', 'sem tora na mao')
+net('coe_jobs:take', 3, 'mill')
+eq(lastEvent('coe_jobs:session').payload.haul.carrying, true, 'tora na mao')
+net('coe_jobs:take', 3, 'mill')
+eq(lastEvent('coe_jobs:result').payload.error, 'wrong_step', 'uma tora por vez')
+net('coe_jobs:load', 3, 'mill')
+eq(lastEvent('coe_jobs:result').payload.error, 'vehicle_far', 'pickup longe')
+local millVehicle = millView.vehicle - 10000
+entities[millVehicle] = { x = 603, y = 0, z = 0 }
+net('coe_jobs:load', 3, 'mill')
+eq(lastEvent('coe_jobs:session').payload.haul.loaded, 1, 'tora na cacamba')
+net('coe_jobs:take', 3, 'mill')
+net('coe_jobs:load', 3, 'mill')
+millView = lastEvent('coe_jobs:session').payload
+eq(millView.haul.loaded, 2, 'duas toras na cacamba')
+eq(millView.cargo, 2, 'carga conta o que esta na cacamba')
+-- toras nao se vendem
+positions[3] = { x = 530, y = 0, z = 0 }
+net('coe_jobs:sell', 3, 'mill', 1)
+eq(lastEvent('coe_jobs:result').payload.error, 'empty', 'tora sem preco nao vende')
+-- serra: pickup perto do ponto
+positions[3] = { x = 520, y = 0, z = 0 }
+net('coe_jobs:process', 3, 'mill', 1)
+eq(lastEvent('coe_jobs:result').payload.error, 'vehicle_far', 'serra exige a pickup por perto')
+entities[millVehicle] = { x = 525, y = 0, z = 0 }
+now = now + 5000
+net('coe_jobs:process', 3, 'mill', 1)
+millView = lastEvent('coe_jobs:session').payload
+eq(millView.haul.loaded, 0, 'cacamba vazia')
+eq(millView.goods.tabua, 8, 'cada tora vira 4 tabuas')
+positions[3] = { x = 530, y = 0, z = 0 }
+local before = balances['55']
+net('coe_jobs:sell', 3, 'mill', 1)
+eq(balances['55'] - before, 40, 'vende as tabuas pelo preco')
+net('coe_jobs:catalog', 3)
+eq(#lastEvent('coe_jobs:felledList').payload, 1, 'quem entra recebe as arvores cortadas')
+
+-- varios produtos: cada ponto colhe o seu e a venda soma os precos
+local farm = {
+	id = 'farm', label = 'Fazenda', kind = 'gather', center = { 800, 0, 0 }, skills = { 'outdoor' },
+	gather = {
+		seconds = 3, capacity = 30,
+		products = { couve = { unit = 'couve', units = 'couves', price = 3, yield = { 2, 2 } }, abobora = { unit = 'abóbora', units = 'abóboras', price = 10, yield = { 1, 1 } } },
+		nodes = { { 810, 0, 0, product = 'couve' } },
+		fields = { { product = 'abobora', origin = { 820, 0, 0 }, rows = 2, cols = 2, spacing = 3 } },
+		sell = { points = { { 830, 0, 0 } } }
+	}
+}
+eq(exported.RegisterJob(farm), true, 'emprego com produtos registra')
+positions[3] = { x = 500, y = 0, z = 0 }
+net('coe_jobs:stop', 3)
+positions[3] = { x = 800, y = 0, z = 0 }
+net('coe_jobs:start', 3, 'farm')
+positions[3] = { x = 810, y = 0, z = 0 }
+now = now + 5000
+net('coe_jobs:gather', 3, 'farm', 1)
+positions[3] = { x = 820, y = 0, z = 0 }
+now = now + 5000
+net('coe_jobs:gather', 3, 'farm', 2)
+local farmView = lastEvent('coe_jobs:session').payload
+eq(farmView.goods.couve, 2, 'couve colhida')
+eq(farmView.goods.abobora, 1, 'abobora colhida no campo')
+eq(farmView.cargo, 3, 'carga soma os produtos')
+positions[3] = { x = 830, y = 0, z = 0 }
+before = balances['55']
+net('coe_jobs:sell', 3, 'farm', 1)
+eq(balances['55'] - before, 16, 'venda soma os precos de cada produto')
+eq(lastNotice().message:find('1 abóbora, 2 couves') ~= nil, true, 'aviso lista os produtos')
+
+-- loja e pesca livre: vara e isca do inventario, area de pesca, lance, minigame e venda por especie
+local char1 = tostring(characters[1])
+balances[char1] = 1000
+local fishing = {
+	id = 'angler', label = 'Pescador', kind = 'gather', center = { 900, 0, 0 }, skills = { 'outdoor' }, levels = { 0, 10, 1000 },
+	shop = { points = { { 905, 0, 0 } }, items = {
+		{ item = 'rod_a', label = 'Vara A', price = 100, level = 1, max = 1 },
+		{ item = 'rod_b', label = 'Vara B', price = 500, level = 2, max = 1 },
+		{ item = 'bait_a', label = 'Isca A', price = 2, level = 1, max = 50 }
+	} },
+	gather = {
+		seconds = 10, capacity = 3,
+		products = { peixe = { unit = 'peixe', units = 'peixes', price = 10, xp = 6 }, raro = { unit = 'raro', units = 'raros', price = 80, tier = 'rare' } },
+		fishing = {
+			castSeconds = 1, biteSeconds = { 4, 4 }, hookSeconds = 1.5, fightSeconds = 30,
+			rods = { { item = 'rod_a', level = 1, window = 0.2 }, { item = 'rod_b', level = 2, window = 0.3, rarity = 1 } },
+			baits = { { item = 'bait_a', level = 1 }, { item = 'bait_b', level = 2, keep = 0.5 } },
+			areas = { { 1000, 0, 0, radius = 50, label = 'Lago', water = 'fresh', species = { peixe = 9, raro = 1 } } }
+		},
+		sell = { points = { { 910, 0, 0 } } }
+	}
+}
+eq(exported.RegisterJob(fishing), true, 'emprego de pesca registra')
+eq(JobRules.Validate({ id = 'shop', label = 'x', kind = 'gather', center = { 0, 0, 0 }, gather = fishing.gather }), nil, 'id shop reservado')
+
+-- loja: perto do vendedor, nivel do emprego, dinheiro em maos antes do banco
+positions[1] = { x = 800, y = 0, z = 0 }
+net('coe_jobs:shop', 1, 'angler', 1)
+eq(lastEvent('coe_jobs:result').payload.error, 'too_far', 'loja so perto do vendedor')
+positions[1] = { x = 905, y = 0, z = 0 }
+net('coe_jobs:shop', 1, 'angler', 1)
+local shop = lastEvent('coe_jobs:shop').payload
+eq(#shop.items, 3, 'vitrine com os itens')
+eq(shop.items[2].locked, true, 'vara B bloqueada no nivel 1')
+bags[char1] = { money = 150 }
+local bank11 = balances[char1]
+net('coe_jobs:buy', 1, 'angler', 1, 'rod_a', 1)
+eq(bags[char1].rod_a, 1, 'vara no inventario')
+eq(bags[char1].money, 50, 'pagou em dinheiro')
+eq(balances[char1], bank11, 'banco intacto')
+net('coe_jobs:buy', 1, 'angler', 1, 'bait_a', 30)
+eq(bags[char1].bait_a, 30, 'iscas no inventario')
+eq(balances[char1], bank11 - 60, 'sem dinheiro suficiente: cobra no banco')
+net('coe_jobs:buy', 1, 'angler', 1, 'rod_b', 1)
+eq(lastEvent('coe_jobs:result').payload.error, 'shop_locked', 'item bloqueado pelo nivel')
+net('coe_jobs:buy', 1, 'angler', 1, 'rod_a', 2)
+eq(lastEvent('coe_jobs:result').payload.error, 'wrong_step', 'vara uma por vez')
+
+-- usar a vara pega a vara na mao (em qualquer lugar); a area e conferida no arremesso
+coreHandlers['inventory.itemUsed']('character:' .. char1, 1, { name = 'rod_a' })
+eq(lastEvent('coe_jobs:fishUse').payload.rod, 'rod_a', 'vara na mao')
+net('coe_jobs:cast', 1, 'angler', 'rod_a', 0.5)
+eq(lastEvent('coe_jobs:result').payload.error, 'no_fishing_area', 'arremesso fora da area de pesca')
+positions[1] = { x = 1000, y = 0, z = 0 }
+coreHandlers['inventory.itemUsed']('character:' .. char1, 1, { name = 'rod_b' })
+eq(lastEvent('coe_jobs:result').payload.error, 'gear_locked', 'vara acima do nivel')
+
+-- lance: abre o trabalho sozinho, gasta a isca e sorteia a especie
+net('coe_jobs:cast', 1, 'angler', 'rod_b')
+eq(lastEvent('coe_jobs:result').payload.error, 'gear_locked', 'lance com vara bloqueada')
+net('coe_jobs:cast', 1, 'angler', 'rod_a')
+local fishCast = lastEvent('coe_jobs:fishCast').payload
+eq(math.abs(fishCast.fight.bar - 0.44) < 1e-9, true, 'faixa da briga vem da vara')
+eq(fishCast.bite, 4000, 'espera pela mordida')
+local fightMin = fishCast.fight.minMs
+eq(exported.GetSession(1).jobId, 'angler', 'pesca abriu o trabalho longe do NPC')
+eq(bags[char1].bait_a, 29, 'isca gasta no lance')
+net('coe_jobs:cast', 1, 'angler', 'rod_a')
+eq(lastEvent('coe_jobs:result').payload.error, 'casting', 'um lance por vez')
+-- puxar cedo demais e recusado
+net('coe_jobs:reel', 1, 'angler', true)
+eq(lastEvent('coe_jobs:result').payload.error, 'too_fast', 'reel antes da mordida')
+-- fisgar logo depois da mordida, sem brigar o tempo minimo, e recusado
+now = now + 2000
+net('coe_jobs:cast', 1, 'angler', 'rod_a')
+now = now + 4000
+net('coe_jobs:reel', 1, 'angler', true)
+eq(lastEvent('coe_jobs:result').payload.error, 'too_fast', 'briga curta demais')
+-- lance certo: espera a mordida e briga o tempo minimo
+now = now + 2000
+net('coe_jobs:cast', 1, 'angler', 'rod_a')
+now = now + 4000 + fightMin
+net('coe_jobs:reel', 1, 'angler', true)
+local result = lastEvent('coe_jobs:fishResult').payload
+eq(result.ok, true, 'peixe fisgado')
+local caught = lastEvent('coe_jobs:session').payload.goods
+eq((caught.peixe or 0) + (caught.raro or 0), 1, 'peixe na carga')
+-- errar o minigame perde o peixe
+now = now + 2000
+net('coe_jobs:cast', 1, 'angler', 'rod_a')
+now = now + 4000
+net('coe_jobs:reel', 1, 'angler', false)
+eq(lastEvent('coe_jobs:fishResult').payload.ok, false, 'errou a fisgada')
+eq(bags[char1].bait_a, 26, 'cada lance gastou uma isca')
+-- sem isca nao lanca
+bags[char1].bait_a = 0
+now = now + 2000
+net('coe_jobs:cast', 1, 'angler', 'rod_a')
+eq(lastEvent('coe_jobs:result').payload.error, 'no_bait', 'sem isca')
+-- encerra no comprador (sem veiculo, a pesca nao volta ao NPC)
+positions[1] = { x = 910, y = 0, z = 0 }
+net('coe_jobs:sell', 1, 'angler', 1)
+eq(lastEvent('coe_jobs:session').payload.cargo, 0, 'peixes vendidos')
+net('coe_jobs:stop', 1)
+eq(exported.GetSession(1), nil, 'encerrou no comprador')
+
+-- sorteio: o bonus da vara/isca aumenta os raros
+local zone = { species = { { id = 'peixe', weight = 9 }, { id = 'raro', weight = 1 } } }
+local products = { peixe = { tier = 'common' }, raro = { tier = 'rare' } }
+eq(JobRules.RollSpecies(zone, products, 0, function() return 0.95 end), 'raro', 'fim da roleta e raro')
+eq(JobRules.RollSpecies(zone, products, 0, function() return 0.85 end), 'peixe', 'sem bonus 85% cai no comum')
+eq(JobRules.RollSpecies(zone, products, 1, function() return 0.85 end), 'raro', 'com bonus o raro cresce')
+local params = JobRules.FightParams({ hookSeconds = 1.5, fightSeconds = 30 }, { window = 0.27 }, { tier = 'rare', difficulty = 1.25 })
+eq(math.abs(params.bar - 0.594) < 1e-9, true, 'faixa maior com vara melhor')
+eq(params.minMs, math.floor(0.7 / 0.065 * 1000), 'raro exige briga mais longa')
+eq(JobRules.FightParams(nil, { window = 0.16 }, { tier = 'common', difficulty = 0.7 }).minMs, math.floor(0.7 / 0.11 * 1000), 'comum: ~6 s no minimo')
+eq(JobRules.MarkerAt(250, 1), 0.5, 'marcador no meio da ida')
+eq(JobRules.MarkerAt(750, 1), 0.5, 'marcador no meio da volta')
 
 print('coe_jobs server tests passed')

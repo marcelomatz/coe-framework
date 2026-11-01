@@ -18,6 +18,12 @@ JobsCatalog[#JobsCatalog + 1] = {
 		'Na traseira do caminhão, abra a caçamba antes de jogar o saco.',
 		'Recolher lixo treina Força e Direção ao mesmo tempo.'
 	},
+	-- Uniforme opcional: macacão laranja refletivo e luvas. Valores provisórios: confira no jogo.
+	uniform = {
+		label = 'Uniforme da limpeza urbana',
+		male = { components = { [3] = { 64, 0 }, [4] = { 36, 0 }, [6] = { 25, 0 }, [8] = { 59, 0 }, [11] = { 56, 0 } }, props = {} },
+		female = { components = { [3] = { 75, 0 }, [4] = { 35, 0 }, [6] = { 25, 0 }, [8] = { 36, 0 }, [11] = { 49, 0 } }, props = {} }
+	},
 	vehicle = { model = 'trash', plate = 'LIXO', spawn = { -337.2, -1561.3, 25.2, 60.0 }, deposit = 400, returnRadius = 45.0 },
 	route = {
 		-- zone: área com raio; o jogador procura as lixeiras do mapa e guarda no caminhão (que precisa estar na área).
@@ -33,11 +39,15 @@ JobsCatalog[#JobsCatalog + 1] = {
 		bonus = 180,
 		xp = 6,
 		binCooldown = 600,
+		-- Saco pendurado na mão direita, ao lado da perna, com o andar de quem carrega lixo; abaixa para pegar e
+		-- arremessa na caçamba (anim@heists@narcotics@trash).
 		carry = {
-			model = 'prop_cs_rub_binbag_01', fallback = 'hei_prop_heist_binbag', bone = 57005,
-			offset = { 0.12, 0.0, -0.05 }, rotation = { 220.0, 120.0, 0.0 }
+			model = 'hei_prop_heist_binbag', fallback = 'prop_cs_rub_binbag_01', bone = 57005,
+			offset = { 0.40, 0.0, 0.0 }, rotation = { 0.0, 270.0, 60.0 }
 		},
-		carryAnimation = { dict = 'missfbi4prepp1', name = '_bag_walk_garbage_man', flag = 49 },
+		carryAnimation = { dict = 'anim@heists@narcotics@trash', name = 'walk', flag = 49 },
+		pickAnimation = { dict = 'anim@heists@narcotics@trash', name = 'pickup', flag = 48, ms = 1000 },
+		dropAnimation = { dict = 'anim@heists@narcotics@trash', name = 'throw_b', flag = 48, ms = 1300 },
 		-- Lixeiras, caçambas e sacos do mapa onde dá para recolher.
 		binModels = {
 			'prop_bin_01a', 'prop_bin_02a', 'prop_bin_03a', 'prop_bin_04a', 'prop_bin_05a', 'prop_bin_06a', 'prop_bin_07a',

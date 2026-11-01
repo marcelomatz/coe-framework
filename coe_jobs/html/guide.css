@@ -78,3 +78,224 @@ body {
 .guide-body::-webkit-scrollbar-thumb {
 	background: rgba(var(--coe-accent-rgb), 0.45);
 }
+
+/* Loja dos empregos ---------------------------------------------------------------------------------------- */
+.shop-panel {
+	width: min(1040px, 94vw);
+}
+
+.shop-top {
+	display: grid;
+	gap: 6px;
+	margin-bottom: 16px;
+}
+
+.shop-heading {
+	margin: 0;
+	color: var(--coe-text);
+	font-size: 24px;
+	font-weight: 600;
+}
+
+.shop-sub {
+	margin: 0;
+	color: var(--coe-muted);
+	line-height: 1.45;
+}
+
+.shop-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 12px;
+}
+
+.shop-card {
+	display: grid;
+	gap: 10px;
+	align-content: start;
+	padding: 14px 16px;
+	border: 1px solid var(--coe-line);
+	background: rgba(var(--coe-ink-rgb), 0.025);
+	color: var(--coe-text);
+}
+
+.shop-card.is-locked {
+	opacity: 0.6;
+}
+
+.shop-head {
+	display: grid;
+	grid-template-columns: 48px minmax(0, 1fr) auto;
+	gap: 12px;
+	align-items: center;
+}
+
+.shop-icon {
+	width: 48px;
+	height: 48px;
+	object-fit: contain;
+}
+
+.shop-title {
+	display: grid;
+	gap: 2px;
+}
+
+.shop-kind {
+	color: var(--coe-muted);
+	font-size: var(--coe-text-xs);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.shop-price {
+	color: var(--coe-accent);
+	font-weight: 600;
+}
+
+.shop-desc {
+	margin: 0;
+	color: var(--coe-muted);
+	line-height: 1.4;
+}
+
+.shop-stats {
+	display: grid;
+	gap: 4px;
+	margin: 0;
+	padding-left: 18px;
+	font-size: var(--coe-text-sm);
+}
+
+.shop-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding-top: 10px;
+	border-top: 1px solid var(--coe-line);
+}
+
+.shop-qty {
+	width: 80px;
+}
+
+.shop-note {
+	color: var(--coe-muted);
+	font-size: var(--coe-text-sm);
+}
+
+.shop-lock {
+	color: var(--coe-danger);
+	font-size: var(--coe-text-sm);
+}
+
+/* Pesca: dica da vara, força do arremesso, fisgada e briga (sem foco: fica no rodapé da tela) ----------- */
+.fish {
+	position: fixed;
+	left: 50%;
+	bottom: 12vh;
+	display: grid;
+	gap: 8px;
+	width: min(460px, 82vw);
+	padding: 12px 16px 12px;
+	transform: translateX(-50%);
+	border: 1px solid var(--coe-line-strong);
+	background: var(--coe-panel);
+	color: var(--coe-text);
+	transition: opacity var(--coe-dur-slow) var(--coe-ease), border-color var(--coe-dur) var(--coe-ease);
+}
+
+.fish.is-hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.fish-prompt {
+	margin: 0;
+	font-size: var(--coe-text-md);
+	font-weight: 600;
+	text-align: center;
+}
+
+.fish-prompt:empty,
+.fish-hint:empty {
+	display: none;
+}
+
+.fish-hint {
+	margin: 0;
+	color: var(--coe-muted);
+	font-size: var(--coe-text-sm);
+	text-align: center;
+}
+
+.fish-meter {
+	height: 8px;
+	background: rgba(var(--coe-ink-rgb), 0.1);
+}
+
+.fish-meter i {
+	display: block;
+	width: 0;
+	height: 100%;
+	background: var(--coe-accent);
+}
+
+.fish-progress i {
+	background: var(--coe-success);
+}
+
+.fish-track {
+	position: relative;
+	height: 26px;
+	background: rgba(var(--coe-ink-rgb), 0.1);
+	overflow: hidden;
+}
+
+.fish-zone {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	background: rgba(var(--coe-accent-rgb), 0.3);
+	border-left: 2px solid var(--coe-accent);
+	border-right: 2px solid var(--coe-accent);
+}
+
+.fish-track.is-inside .fish-zone {
+	background: rgba(var(--coe-success-rgb), 0.4);
+	border-color: var(--coe-success);
+}
+
+.fish-dot {
+	position: absolute;
+	top: 50%;
+	width: 14px;
+	height: 14px;
+	margin: -7px 0 0 -7px;
+	border-radius: 50%;
+	background: var(--coe-text);
+	box-shadow: 0 0 0 2px rgba(var(--coe-ink-rgb), 0.35);
+}
+
+.fish.is-rare .fish-dot {
+	background: var(--coe-warning);
+}
+
+.fish:not(.is-power) .fish-power,
+.fish:not(.is-fight) .fish-track,
+.fish:not(.is-fight):not(.is-hook) .fish-progress {
+	display: none;
+}
+
+.fish.is-hook {
+	border-color: var(--coe-accent);
+}
+
+.fish.is-hit {
+	border-color: var(--coe-success);
+}
+
+.fish.is-miss {
+	border-color: var(--coe-danger);
+}
