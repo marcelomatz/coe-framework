@@ -37,6 +37,8 @@ dofile([=[data/coe_misc.lua]=])
 dofile([=[data/coe_parts.lua]=])
 dofile([=[data/coe_ingredients.lua]=])
 dofile([=[data/coe_shop_items.lua]=])
+dofile([=[data/coe_fishing.lua]=])
+assert(Inventory.Items.Get('fishing_rod') and Inventory.Items.Get('bait_lure'), 'itens de pesca registrados')
 
 local storage = {
 	['inventory:player:license:legacy'] = 'untouched legacy value'

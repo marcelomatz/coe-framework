@@ -68,13 +68,18 @@ function JobsPersistence.AllProgress(characterId)
 	return out
 end
 
+-- Parâmetros nunca levam nil: um buraco na lista vira tabela não sequencial no msgpack e o coe_database recusa o
+-- comando inteiro (invalid_parameters). Antes do primeiro trabalho encerrado, first_at/last_at ainda não existem:
+-- gravamos o momento atual (o encerramento corrige com o início do trabalho).
 function JobsPersistence.Save(characterId, jobId, progress)
+	local now = os.time()
 	return execute([[
 		INSERT INTO coe_jobs_progress (character_id, job_id, xp, tasks, earned, seconds, first_at, last_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE xp = VALUES(xp), tasks = VALUES(tasks), earned = VALUES(earned), seconds = VALUES(seconds),
 			first_at = VALUES(first_at), last_at = VALUES(last_at), updated_at = VALUES(updated_at)
-	]], { characterId, jobId, progress.xp, progress.tasks, progress.earned, progress.seconds or 0, progress.firstAt, progress.lastAt, os.time() })
+	]], { characterId, jobId, progress.xp or 0, progress.tasks or 0, progress.earned or 0, progress.seconds or 0,
+		progress.firstAt or now, progress.lastAt or now, now })
 end
 
 -- Reputação e contadores do personagem nos empregos (zerados se não existir); nil em erro.
@@ -102,7 +107,8 @@ function JobsPersistence.SaveSession(characterId, entry)
 	return execute([[
 		INSERT INTO coe_jobs_sessions (character_id, job_id, started_at, ended_at, tasks, xp, earned, discarded, reason)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	]], { characterId, entry.jobId, entry.startedAt, entry.endedAt, entry.tasks, entry.xp, entry.earned, entry.discarded, entry.reason })
+	]], { characterId, entry.jobId, entry.startedAt or entry.endedAt or os.time(), entry.endedAt or os.time(), entry.tasks or 0,
+		entry.xp or 0, entry.earned or 0, entry.discarded or 0, entry.reason or 'stop' })
 end
 
 -- Últimos trabalhos do personagem, do mais recente ao mais antigo; nil em erro.

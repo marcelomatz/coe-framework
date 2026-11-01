@@ -125,11 +125,19 @@ Handles Career app queries: `profile` (career stats and recent work history) and
 ---@field levelBonus number|nil Payout multiplier bonus per level above 1 (default 0.05)
 ---@field vehicle table|nil `{ model, spawn, plate?, deposit?, returnRadius? }`
 ---@field tool table|nil Handheld prop during actions: `{ model, bone?, offset?, rotation? }`
----@field gather table|nil `{ nodes, sell = { points, price, ped?, label? }, seconds?, yield?, capacity?, nodeCooldown?, xp?, nodeProp?, animation?, unit?, units?, actionLabel? }`
+---@field uniform table|nil Optional uniform (visual only) put on at the NPC: `{ label?, male?, female? }`, each outfit `{ components = { [slot] = { drawable, texture } }, props = { [slot] = { drawable, texture } } }` (drawable -1 on a prop removes it)
+---@field shop table|nil Job shop: `{ label?, ped?, points, items = { { item, label, price, level?, max?, kind?, description?, stats? } } }` (coe_inventory items; `level` = job level)
+---@field gather table|nil `{ nodes?, fields?, world?, fishing?, products?, order?, haul?, process?, soil?, sell = { points, price?, ped?, label? }, seconds?, yield?, capacity?, nodeCooldown?, xp?, nodeProp?, animation?, unit?, units?, actionLabel? }`.
+---`products = { id = { unit, units, price, prop?, animation?, seconds?, yield?, xp?, cooldown?, actionLabel?, label? } }` (without it: a single product from unit/units/sell.price);
+---`nodes[i].product`; `fields = { { product, origin, heading?, rows, cols, spacing?, rowSpacing?, soil?, label? } }` (grid of plants);
+---`world = { { product, models, area = { x, y, z, radius, label? }, fell?, cooldown? } }` (map objects, e.g. trees);
+---`haul = { capacity, carry, carryAnimation?, groundProp?, takeLabel?, loadLabel?, rack? = { model, slots = { { x, y, z, rx, ry, rz } } } }` (requires `vehicle`);
+---`process = { product, points, ratio?, seconds?, maxSeconds?, vehicleRange?, prop?, animation?, label? }` (vehicle load becomes the product)
+---`fishing = { areas = { { x, y, z, radius, label?, water?, species = { product = weight } } }, rods, baits, castSeconds?, biteSeconds?, hookSeconds?, fightSeconds?, rodProp? }`, rod/bait `{ item, label?, level?, speed?, window?, rarity?, keep? }`; products take `tier?` and `difficulty?`
 ---@field skills string[]|nil Skills trained by this occupation (`Career.skills`)
 ---@field tips string[]|nil Up to 6 operational tips displayed in the guide (NPC and Tablet)
 ---@field requires table|nil `{ career?, reputation?, skills? = { id = level } }` prerequisites
----@field route table|nil `{ stops, pay, mode? ('deliver'|'collect'|'passenger'|'zone'), perRoute?, payPerKm?, bonus?, xp?, stopRadius?, vehicleRange?, stopProp?, carry?, carryAnimation?, recipients?, actionLabel?, pickupLabel?, dropLabel? }`; mode `zone`: `{ zones, perZone?, binModels, binCooldown?, rearDoor?, openLabel?, closeLabel? }` in place of `stops`
+---@field route table|nil `{ stops, pay, mode? ('deliver'|'collect'|'passenger'|'zone'), perRoute?, payPerKm?, bonus?, xp?, stopRadius?, vehicleRange?, stopProp?, carry?, carryAnimation?, pickAnimation?, dropAnimation?, recipients?, actionLabel?, pickupLabel?, dropLabel? }`; mode `zone`: `{ zones, perZone?, binModels, binCooldown?, rearDoor?, openLabel?, closeLabel? }` in place of `stops`
 
 ---@class CoeJobProgress
 ---@field xp integer Cumulative experience points

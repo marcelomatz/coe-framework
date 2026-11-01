@@ -252,6 +252,20 @@ local function sessionView(session)
 			view.route.phase = route.index % 2 == 1 and 'pickup' or 'dropoff'
 		end
 	end
+	if job.gather then
+		-- Carga por produto e, no transporte, o que está no chão, na mão e no veículo.
+		view.goods = {}
+		for id, amount in pairs(session.goods or {}) do
+			if amount > 0 then
+				view.goods[id] = amount
+			end
+		end
+		view.speed = mods.seconds / job.gather.seconds
+		if job.gather.haul then
+			local haul = session.haul
+			view.haul = { ground = haul.ground, spot = haul.spot, carrying = haul.carrying, loaded = haul.loaded, capacity = mods.capacity }
+		end
+	end
 	local now = os.time()
 	for node, untilAt in pairs(session.nodeCooldowns or {}) do
 		if untilAt > now then
@@ -285,6 +299,17 @@ local function vehicleCoords(session)
 	return { x = c.x, y = c.y, z = c.z }
 end
 
+-- Toras (ou outra carga) visíveis na caçamba: todos os clients perto desenham pela state bag.
+local function setVehicleLoad(session, count)
+	if not session.vehicleNet then
+		return
+	end
+	local entity = NetworkGetEntityFromNetworkId(session.vehicleNet)
+	if entity and entity ~= 0 and DoesEntityExist(entity) then
+		Entity(entity).state:set('coe:jobLoad', count, true)
+	end
+end
+
 local function spawnVehicle(playerId, job)
 	local spec = job.vehicle
 	local entity = CreateVehicleServerSetter(joaat(spec.model), 'automobile', spec.spawn.x, spec.spawn.y, spec.spawn.z, spec.spawn.h)
@@ -301,6 +326,28 @@ local function spawnVehicle(playerId, job)
 end
 
 -- Sessões ---------------------------------------------------------------------------------------------
+
+-- Carga total da sessão (a que se perde ao encerrar sem vender): produtos + chão + mão + veículo.
+local function refreshCargo(session)
+	local total = 0
+	for _, amount in pairs(session.goods or {}) do
+		total = total + amount
+	end
+	local haul = session.haul
+	if haul then
+		total = total + haul.ground + haul.loaded + (haul.carrying and 1 or 0)
+	end
+	session.cargo = total
+	return total
+end
+
+local function goodsTotal(session)
+	local total = 0
+	for _, amount in pairs(session.goods or {}) do
+		total = total + amount
+	end
+	return total
+end
 
 local function newRoute(job)
 	return { stops = JobRules.PickStops(#job.route.stops, JobRules.RouteStops(job.route)), index = 1, picked = false, collected = 0 }
@@ -365,7 +412,8 @@ local function endSession(playerId, reason)
 	return refund, summary
 end
 
-local function startSession(playerId, jobId)
+-- anywhere: abre sem estar no NPC (pesca livre: usar a vara numa área de pesca já começa o trabalho).
+local function startSession(playerId, jobId, anywhere)
 	local job = jobs[jobId]
 	if not job then
 		return nil, 'unknown_job'
@@ -378,7 +426,7 @@ local function startSession(playerId, jobId)
 		return nil, 'no_character'
 	end
 	local coords = coordsOf(playerId)
-	if not coords or not JobRules.Near(coords, job.center, config.CenterRadius, config.PointHeight) then
+	if not coords or (not anywhere and not JobRules.Near(coords, job.center, config.CenterRadius, config.PointHeight)) then
 		return nil, 'too_far'
 	end
 	local record = recordOf(character)
@@ -393,8 +441,11 @@ local function startSession(playerId, jobId)
 	local session = {
 		jobId = jobId, character = character, record = record, cargo = 0, deposit = 0,
 		startedAt = GetGameTimer(), lastTaskAt = GetGameTimer(), nodeCooldowns = {},
-		openedAt = os.time(), stats = { tasks = 0, xp = 0, earned = 0 }
+		openedAt = os.time(), stats = { tasks = 0, xp = 0, earned = 0 }, goods = {}
 	}
+	if job.gather and job.gather.haul then
+		session.haul = { ground = 0, spot = nil, carrying = false, loaded = 0 }
+	end
 	if job.vehicle then
 		local deposit = mods.deposit or 0
 		if deposit > 0 then
@@ -430,7 +481,11 @@ local ERRORS = {
 	full = 'err_full', empty = 'err_empty', vehicle_far = 'err_vehicle_far',
 	payment_failed = 'err_payment_failed', wrong_step = 'err_wrong_step',
 	outside_zone = 'err_outside_zone',
-	bin_empty = 'err_bin_empty', locked = 'err_locked'
+	bin_empty = 'err_bin_empty', locked = 'err_locked',
+	ground_left = 'err_ground_left', vehicle_full = 'err_vehicle_full',
+	no_inventory = 'err_no_inventory', no_money = 'err_no_money', inventory_full = 'err_inventory_full',
+	shop_locked = 'err_shop_locked', no_rod = 'err_no_rod', no_bait = 'err_no_bait', gear_locked = 'err_gear_locked',
+	no_fishing_area = 'err_no_fishing_area', casting = 'err_casting'
 }
 
 local function failure(playerId, code, detail)
@@ -455,12 +510,64 @@ local function sessionFor(playerId, jobId, kind)
 	return session, job
 end
 
+local function unitName(item, amount)
+	return amount == 1 and item.unit or item.units
+end
+
+-- Tempo da ação de um produto já com o bônus de Campo (mesma proporção do tempo base da coleta).
+local function actionSeconds(job, mods, item)
+	return math.max(1, (item.seconds or job.gather.seconds) * mods.seconds / job.gather.seconds)
+end
+
+-- Soma o que foi colhido: na coleta comum vai para a carga do jogador; no transporte cai no chão ao lado.
+local function harvest(playerId, session, job, item, mods, spot)
+	local haul = session.haul
+	local room = mods.capacity - (haul and (haul.loaded + haul.ground + (haul.carrying and 1 or 0)) or goodsTotal(session))
+	local amount = math.min(math.random(item.yield[1], item.yield[2]), room)
+	if haul then
+		haul.ground = amount
+		haul.spot = { x = spot.x, y = spot.y, z = spot.z }
+	else
+		session.goods[item.id] = (session.goods[item.id] or 0) + amount
+	end
+	refreshCargo(session)
+	session.lastTaskAt = GetGameTimer()
+	grant(playerId, session, item.xp, 0)
+	if haul then
+		notify(playerId, 'info', ('%d %s no chão: leve uma por vez até o veículo (%d/%d na caçamba).'):format(
+			amount, unitName(item, amount), haul.loaded, mods.capacity))
+	else
+		notify(playerId, 'info', ('+%d %s (%d/%d).'):format(amount, unitName(item, amount), goodsTotal(session), mods.capacity))
+	end
+	reply(playerId, 'session', sessionView(session))
+end
+
+-- Pode colher agora? Confere tempo da ação, espaço e (no transporte) se o chão e a mão estão livres.
+local function canHarvest(session, job, mods, item)
+	if GetGameTimer() - session.lastTaskAt < actionSeconds(job, mods, item) * 1000 * config.GatherTimeSlack then
+		return 'too_fast'
+	end
+	local haul = session.haul
+	if haul then
+		if haul.ground > 0 or haul.carrying then
+			return 'ground_left'
+		end
+		if haul.loaded >= mods.capacity then
+			return 'vehicle_full'
+		end
+	elseif goodsTotal(session) >= mods.capacity then
+		return 'full'
+	end
+	return nil
+end
+
 local function gather(playerId, jobId, nodeIndex)
 	local session, job = sessionFor(playerId, jobId, 'gather')
 	if not session then
 		return failure(playerId, 'not_working')
 	end
-	local node = job.gather.nodes[math.tointeger(nodeIndex) or -1]
+	nodeIndex = math.tointeger(nodeIndex) or -1
+	local node = job.gather.nodes[nodeIndex]
 	local coords = coordsOf(playerId)
 	if not node or not coords or not JobRules.Near(coords, node, config.PointRadius, config.PointHeight) then
 		return failure(playerId, 'too_far')
@@ -469,19 +576,175 @@ local function gather(playerId, jobId, nodeIndex)
 	if (session.nodeCooldowns[nodeIndex] or 0) > now then
 		return failure(playerId, 'cooldown')
 	end
+	local item = job.gather.products[node.product]
 	local mods = modifiersOf(job, session.record)
-	if GetGameTimer() - session.lastTaskAt < mods.seconds * 1000 * config.GatherTimeSlack then
+	local blocked = canHarvest(session, job, mods, item)
+	if blocked then
+		return failure(playerId, blocked)
+	end
+	session.nodeCooldowns[nodeIndex] = now + item.cooldown
+	harvest(playerId, session, job, item, mods, node)
+end
+
+-- Objetos do mapa já usados (árvores cortadas, por posição): chave -> { until, x, y, z, model }.
+local worldUsed, worldCount = {}, 0
+
+local function felledList()
+	local list, now = {}, os.time()
+	for _, entry in pairs(worldUsed) do
+		if entry.fell and entry.untilAt > now then
+			list[#list + 1] = { x = entry.x, y = entry.y, z = entry.z, model = entry.model, seconds = entry.untilAt - now }
+		end
+	end
+	return list
+end
+
+-- Colheita num objeto do mapa (árvore) dentro da área: o client manda a posição e o modelo mirados.
+local function gatherWorld(playerId, jobId, worldIndex, rawSpot, modelHash)
+	local session, job = sessionFor(playerId, jobId, 'gather')
+	if not session then
+		return failure(playerId, 'not_working')
+	end
+	local origin = job.gather.world[math.tointeger(worldIndex) or -1]
+	local spot = JobRules.ValidSpot(rawSpot)
+	local coords = coordsOf(playerId)
+	if not origin or not spot or not coords then
+		return failure(playerId, 'too_far')
+	end
+	local known = false
+	for _, name in ipairs(origin.models) do
+		known = known or GetHashKey(name) == modelHash
+	end
+	if not known then
+		return failure(playerId, 'too_far')
+	end
+	if not JobRules.Near(coords, origin.area, origin.area.radius, 120.0) or not JobRules.Near(spot, origin.area, origin.area.radius, 120.0) then
+		return failure(playerId, 'outside_zone')
+	end
+	if not JobRules.Near(coords, spot, 4.0, 6.0) then
+		return failure(playerId, 'too_far')
+	end
+	local now = os.time()
+	local key = JobRules.BinKey(spot)
+	local used = worldUsed[key]
+	if used and used.untilAt > now then
+		return failure(playerId, 'cooldown')
+	end
+	local item = job.gather.products[origin.product]
+	local mods = modifiersOf(job, session.record)
+	local blocked = canHarvest(session, job, mods, item)
+	if blocked then
+		return failure(playerId, blocked)
+	end
+	if worldCount > 2000 then
+		for other, entry in pairs(worldUsed) do
+			if entry.untilAt <= now then
+				worldUsed[other] = nil
+				worldCount = worldCount - 1
+			end
+		end
+	end
+	if not used then
+		worldCount = worldCount + 1
+	end
+	worldUsed[key] = { untilAt = now + origin.cooldown, x = spot.x, y = spot.y, z = spot.z, model = modelHash, fell = origin.fell }
+	if origin.fell then
+		-- Todos os clients escondem a árvore (e quem estiver perto a vê tombar) até o cooldown passar.
+		TriggerClientEvent('coe_jobs:felled', -1, { x = spot.x, y = spot.y, z = spot.z, model = modelHash, seconds = origin.cooldown, by = playerId })
+	end
+	harvest(playerId, session, job, item, mods, spot)
+end
+
+-- Transporte: pega uma unidade do chão (perto de onde caiu).
+local function take(playerId, jobId)
+	local session, job = sessionFor(playerId, jobId, 'gather')
+	if not session or not session.haul then
+		return failure(playerId, 'not_working')
+	end
+	local haul = session.haul
+	local coords = coordsOf(playerId)
+	if haul.ground <= 0 or haul.carrying then
+		return failure(playerId, 'wrong_step')
+	end
+	if not coords or not haul.spot or not JobRules.Near(coords, haul.spot, 10.0, config.PointHeight) then
+		return failure(playerId, 'too_far')
+	end
+	haul.ground = haul.ground - 1
+	haul.carrying = true
+	refreshCargo(session)
+	reply(playerId, 'session', sessionView(session))
+end
+
+-- Transporte: guarda a unidade da mão no veículo do emprego.
+local function loadHaul(playerId, jobId)
+	local session, job = sessionFor(playerId, jobId, 'gather')
+	if not session or not session.haul then
+		return failure(playerId, 'not_working')
+	end
+	local haul = session.haul
+	if not haul.carrying then
+		return failure(playerId, 'wrong_step')
+	end
+	local coords, vehicle = coordsOf(playerId), vehicleCoords(session)
+	if not coords or not vehicle or not JobRules.Near(coords, vehicle, config.VehicleReach, config.PointHeight) then
+		return failure(playerId, 'vehicle_far')
+	end
+	local mods = modifiersOf(job, session.record)
+	if haul.loaded >= mods.capacity then
+		return failure(playerId, 'vehicle_full')
+	end
+	haul.carrying = false
+	haul.loaded = haul.loaded + 1
+	refreshCargo(session)
+	setVehicleLoad(session, haul.loaded)
+	if haul.ground == 0 then
+		if haul.loaded >= mods.capacity then
+			notify(playerId, 'success', ('Caçamba cheia (%d/%d). Leve até "%s" no mapa.'):format(haul.loaded, mods.capacity, job.gather.process and job.gather.process.label or job.gather.sell.label))
+		else
+			notify(playerId, 'info', ('Caçamba: %d/%d. Corte outra árvore ou leve para a madeireira.'):format(haul.loaded, mods.capacity))
+		end
+	end
+	reply(playerId, 'session', sessionView(session))
+end
+
+-- Duração do beneficiamento de `count` unidades (o client anima; o servidor exige a fração do tempo).
+local function processSeconds(process, count)
+	return math.min(process.maxSeconds, process.seconds * count)
+end
+
+-- Beneficiamento: a carga do veículo (perto do ponto) vira o produto de saída.
+local function processLoad(playerId, jobId, pointIndex)
+	local session, job = sessionFor(playerId, jobId, 'gather')
+	local process = job and job.gather.process
+	if not session or not session.haul or not process then
+		return failure(playerId, 'not_working')
+	end
+	local spot = process.points[math.tointeger(pointIndex) or -1]
+	local coords, vehicle = coordsOf(playerId), vehicleCoords(session)
+	if not spot or not coords or not JobRules.Near(coords, spot, config.PointRadius, config.PointHeight) then
+		return failure(playerId, 'too_far')
+	end
+	if not vehicle or not JobRules.Near(vehicle, spot, process.vehicleRange, 20.0) then
+		return failure(playerId, 'vehicle_far')
+	end
+	local haul = session.haul
+	if haul.loaded <= 0 then
+		return failure(playerId, 'empty')
+	end
+	if GetGameTimer() - session.lastTaskAt < processSeconds(process, haul.loaded) * 1000 * config.GatherTimeSlack then
 		return failure(playerId, 'too_fast')
 	end
-	if session.cargo >= mods.capacity then
-		return failure(playerId, 'full')
-	end
-	local amount = math.min(math.random(job.gather.yield[1], job.gather.yield[2]), mods.capacity - session.cargo)
-	session.cargo = session.cargo + amount
+	local input = haul.loaded
+	local output = input * process.ratio
+	local item = job.gather.products[process.product]
+	haul.loaded = 0
+	session.goods[item.id] = (session.goods[item.id] or 0) + output
 	session.lastTaskAt = GetGameTimer()
-	session.nodeCooldowns[nodeIndex] = now + job.gather.nodeCooldown
-	grant(playerId, session, job.gather.xp, 0)
-	notify(playerId, 'info', ('+%d %s (%d/%d).'):format(amount, amount == 1 and job.gather.unit or job.gather.units, session.cargo, mods.capacity))
+	refreshCargo(session)
+	setVehicleLoad(session, 0)
+	grant(playerId, session, item.xp, 0)
+	notify(playerId, 'success', ('%s: %d %s viraram %d %s. Venda no comprador.'):format(process.label, input,
+		unitName(job.gather.products[job.gather.haul.product], input), output, unitName(item, output)))
 	reply(playerId, 'session', sessionView(session))
 end
 
@@ -495,18 +758,31 @@ local function sell(playerId, jobId, pointIndex)
 	if not spot or not coords or not JobRules.Near(coords, spot, config.PointRadius, config.PointHeight) then
 		return failure(playerId, 'too_far')
 	end
-	if session.cargo <= 0 then
+	-- Só o que tem preço sai na venda (no lenhador, as toras precisam virar tábuas antes).
+	local base, parts, sold = 0, {}, {}
+	for _, id in ipairs(job.gather.productOrder) do
+		local item = job.gather.products[id]
+		local amount = session.goods[id] or 0
+		if amount > 0 and item.price > 0 then
+			base = base + amount * item.price
+			sold[id] = amount
+			parts[#parts + 1] = ('%d %s'):format(amount, unitName(item, amount))
+		end
+	end
+	if base <= 0 then
 		return failure(playerId, 'empty')
 	end
-	local units = session.cargo
-	local amount = pay(session, units * job.gather.sell.price)
+	local amount = pay(session, base)
 	if not amount then
 		return failure(playerId, 'payment_failed')
 	end
-	session.cargo = 0
+	for id in pairs(sold) do
+		session.goods[id] = nil
+	end
+	refreshCargo(session)
 	addEarned(session, amount)
 	reputationEvent(session.character, session.record, 'complete')
-	notify(playerId, 'success', ('Vendeu %d %s por %s.'):format(units, units == 1 and job.gather.unit or job.gather.units, money(amount)))
+	notify(playerId, 'success', ('Vendeu %s por %s.'):format(table.concat(parts, ', '), money(amount)))
 	reply(playerId, 'session', sessionView(session))
 end
 
@@ -561,16 +837,7 @@ local function binReady(key, now)
 	return true
 end
 
-local function validSpot(spot)
-	if type(spot) ~= 'table' then
-		return nil
-	end
-	local x, y, z = tonumber(spot.x), tonumber(spot.y), tonumber(spot.z)
-	if not x or not y or not z or x ~= x or y ~= y or z ~= z or math.abs(x) > 10000 or math.abs(y) > 10000 or math.abs(z) > 3000 then
-		return nil
-	end
-	return { x = x, y = y, z = z }
-end
+local validSpot = JobRules.ValidSpot
 
 -- Recolhe numa lixeira do mapa dentro da zona atual (o client manda a posição da lixeira mirada).
 local function zonePickup(playerId, session, job, rawSpot)
@@ -735,6 +1002,330 @@ local function deliver(playerId, jobId)
 	reply(playerId, 'session', sessionView(session))
 end
 
+-- Inventário (opcional: sem o coe_inventory a loja e a pesca com vara respondem `no_inventory`) -------------------
+
+local function inventory(method, ...)
+	local args = table.pack(...)
+	local ok, a, b = pcall(function()
+		return exports.coe_inventory[method](exports.coe_inventory, table.unpack(args, 1, args.n))
+	end)
+	if not ok then
+		return nil, 'no_inventory'
+	end
+	return a, b
+end
+
+local function inventoryOf(playerId)
+	local id = inventory('GetPlayerInventory', playerId)
+	return type(id) == 'string' and id or nil
+end
+
+local function countOf(inventoryId, item)
+	return tonumber((inventory('GetItemCount', inventoryId, item))) or 0
+end
+
+local function playerOfCharacter(characterId)
+	for _, id in ipairs(GetPlayers()) do
+		local playerId = tonumber(id)
+		if playerId and characterOf(playerId) == tostring(characterId) then
+			return playerId
+		end
+	end
+	return nil
+end
+
+local function jobLevelOf(job, record)
+	local progress = record.progress[job.id]
+	return JobRules.Level(job.levels, progress and progress.xp or 0)
+end
+
+-- Loja do emprego --------------------------------------------------------------------------------------------
+
+local function shopView(job, record, pointIndex)
+	local level = jobLevelOf(job, record)
+	local items = {}
+	for _, entry in ipairs(job.shop.items) do
+		items[#items + 1] = {
+			item = entry.item, label = entry.label, description = entry.description, price = entry.price, level = entry.level,
+			max = entry.max, kind = entry.kind, stats = entry.stats, locked = level < entry.level
+		}
+	end
+	return { jobId = job.id, point = pointIndex, label = job.shop.label, job = job.label, level = level, maxLevel = #job.levels, items = items }
+end
+
+local function nearShop(playerId, job, pointIndex)
+	local spot = job.shop and job.shop.points[math.tointeger(pointIndex) or -1]
+	local coords = coordsOf(playerId)
+	return spot and coords and JobRules.Near(coords, spot, config.PointRadius, config.PointHeight)
+end
+
+local function openShop(playerId, jobId, pointIndex)
+	local job = jobs[jobId]
+	local character = characterOf(playerId)
+	if not job or not job.shop or not character then
+		return failure(playerId, 'unknown_job')
+	end
+	if not nearShop(playerId, job, pointIndex) then
+		return failure(playerId, 'too_far')
+	end
+	local record = recordOf(character)
+	if not record then
+		return failure(playerId, 'database_error')
+	end
+	reply(playerId, 'shop', shopView(job, record, pointIndex))
+end
+
+-- Cobra em dinheiro vivo (item `money`) se der; senão no banco (coe_economy). Devolve o meio ou nil.
+local function charge(character, inventoryId, amount, jobId)
+	if countOf(inventoryId, 'money') >= amount then
+		local ok = inventory('RemoveItemByName', inventoryId, 'money', amount)
+		if ok == true then
+			return 'cash'
+		end
+	end
+	if exports.coe_economy:Debit(character, amount, config.LedgerPrefix .. 'shop', jobId) then
+		return 'bank'
+	end
+	return nil
+end
+
+local function refund(character, inventoryId, amount, method, jobId)
+	if method == 'cash' then
+		inventory('AddItem', inventoryId, 'money', amount)
+	else
+		exports.coe_economy:Credit(character, amount, config.LedgerPrefix .. 'shop', jobId)
+	end
+end
+
+local function buy(playerId, jobId, pointIndex, itemName, quantity)
+	local job = jobs[jobId]
+	local character = characterOf(playerId)
+	if not job or not job.shop or not character then
+		return failure(playerId, 'unknown_job')
+	end
+	if not nearShop(playerId, job, pointIndex) then
+		return failure(playerId, 'too_far')
+	end
+	local entry
+	for _, candidate in ipairs(job.shop.items) do
+		if candidate.item == itemName then
+			entry = candidate
+		end
+	end
+	local count = math.tointeger(tonumber(quantity))
+	if not entry or not count or count < 1 or count > entry.max then
+		return failure(playerId, 'wrong_step')
+	end
+	local record = recordOf(character)
+	if not record then
+		return failure(playerId, 'database_error')
+	end
+	if jobLevelOf(job, record) < entry.level then
+		return failure(playerId, 'shop_locked', ('%s nível %d'):format(job.label:lower(), entry.level))
+	end
+	local inventoryId = inventoryOf(playerId)
+	if not inventoryId then
+		return failure(playerId, 'no_inventory')
+	end
+	local total = entry.price * count
+	local method = charge(character, inventoryId, total, job.id)
+	if not method then
+		return failure(playerId, 'no_money')
+	end
+	local added = inventory('AddItem', inventoryId, entry.item, count)
+	if added ~= true then
+		refund(character, inventoryId, total, method, job.id)
+		return failure(playerId, 'inventory_full')
+	end
+	log('info', 'gameplay', 'jobs_shop_bought', { character_id = character, target = job.id, item = entry.item, count = count, amount = total })
+	notify(playerId, 'success', ('Comprou %dx %s por %s (%s).'):format(count, entry.label, money(total), method == 'cash' and 'dinheiro' or 'banco'))
+	reply(playerId, 'shop', shopView(job, record, pointIndex))
+end
+
+-- Pesca livre ---------------------------------------------------------------------------------------------
+
+local baitChoice = {}   -- characterId -> item da isca escolhida (usar a isca no inventário)
+
+-- Emprego e tipo (vara/isca) de um item de pesca.
+local function gearOf(itemName)
+	for _, job in pairs(jobs) do
+		local fishing = job.gather and job.gather.fishing
+		if fishing then
+			if fishing.rods[itemName] then
+				return job, fishing.rods[itemName]
+			elseif fishing.baits[itemName] then
+				return job, fishing.baits[itemName]
+			end
+		end
+	end
+	return nil
+end
+
+-- Isca do lance: a escolhida (se ainda tiver e estiver liberada) ou a primeira da lista que tiver.
+local function pickBait(job, character, inventoryId, level)
+	local fishing = job.gather.fishing
+	local chosen = baitChoice[character]
+	if chosen and fishing.baits[chosen] and fishing.baits[chosen].level <= level and countOf(inventoryId, chosen) > 0 then
+		return fishing.baits[chosen]
+	end
+	for _, id in ipairs(fishing.baitOrder) do
+		local bait = fishing.baits[id]
+		if bait.level <= level and countOf(inventoryId, id) > 0 then
+			return bait
+		end
+	end
+	return nil
+end
+
+local function gearUsed(playerId, job, gear)
+	local character = characterOf(playerId)
+	local record = character and recordOf(character)
+	if not record then
+		return failure(playerId, 'database_error')
+	end
+	if jobLevelOf(job, record) < gear.level then
+		return failure(playerId, 'gear_locked', ('%s nível %d'):format(job.label:lower(), gear.level))
+	end
+	if gear.kind == 'bait' then
+		baitChoice[character] = gear.item
+		return notify(playerId, 'info', ('%s no anzol. Use a vara de frente para a água.'):format(gear.label))
+	end
+	-- Usar a vara pega (ou guarda) a vara na mão; o arremesso é no client e a área é conferida no lance.
+	reply(playerId, 'fishUse', { jobId = job.id, rod = gear.item })
+end
+
+Core.Events.On('inventory.itemUsed', function(inventoryId, _slot, item)
+	local characterId = type(inventoryId) == 'string' and inventoryId:match('^character:(.+)$')
+	if not ready or not characterId or type(item) ~= 'table' or type(item.name) ~= 'string' then
+		return
+	end
+	local job, gear = gearOf(item.name)
+	local playerId = job and playerOfCharacter(characterId)
+	if playerId then
+		gearUsed(playerId, job, gear)
+	end
+end)
+
+-- power (0-1): força do arremesso. Mais longe = água mais funda: mordida um pouco antes e mais chance de raros.
+local function cast(playerId, jobId, rodName, power)
+	local job = jobs[jobId]
+	local fishing = job and job.gather and job.gather.fishing
+	local character = characterOf(playerId)
+	if not fishing or not character or type(rodName) ~= 'string' then
+		return failure(playerId, 'not_working')
+	end
+	local coords = coordsOf(playerId)
+	local areaIndex, zone = JobRules.FishingArea(fishing, coords or { x = 0, y = 0, z = -9999 })
+	if not coords or not areaIndex then
+		return failure(playerId, 'no_fishing_area')
+	end
+	local rod = fishing.rods[rodName]
+	local record = recordOf(character)
+	if not rod or not record then
+		return failure(playerId, rod and 'database_error' or 'no_rod')
+	end
+	local level = jobLevelOf(job, record)
+	if level < rod.level then
+		return failure(playerId, 'gear_locked', ('%s nível %d'):format(job.label:lower(), rod.level))
+	end
+	local inventoryId = inventoryOf(playerId)
+	if not inventoryId then
+		return failure(playerId, 'no_inventory')
+	end
+	if countOf(inventoryId, rod.item) < 1 then
+		return failure(playerId, 'no_rod')
+	end
+	-- Pesca livre: o trabalho começa no primeiro lance, onde o jogador estiver.
+	local session = sessions[playerId]
+	if session and session.jobId ~= jobId then
+		return failure(playerId, 'already_working')
+	end
+	if not session then
+		local opened, errorCode, detail = startSession(playerId, jobId, true)
+		if not opened then
+			return failure(playerId, errorCode, detail)
+		end
+		session = opened
+		log('info', 'gameplay', 'jobs_started', { character_id = character, target = jobId })
+		notify(playerId, 'success', ('%s: trabalho iniciado. Venda os peixes num comprador do mapa; para encerrar, fale com ele ou com a loja.'):format(job.label))
+	end
+	if session.cast then
+		return failure(playerId, 'casting')
+	end
+	local mods = modifiersOf(job, record)
+	if goodsTotal(session) >= mods.capacity then
+		return failure(playerId, 'full')
+	end
+	local bait = pickBait(job, character, inventoryId, level)
+	if not bait then
+		return failure(playerId, 'no_bait')
+	end
+	-- Isca artificial pode sobrar (keep); as outras se gastam no lance, fisgando ou não.
+	if math.random() >= bait.keep then
+		if inventory('RemoveItemByName', inventoryId, bait.item, 1) ~= true then
+			return failure(playerId, 'no_bait')
+		end
+	end
+	power = math.max(0, math.min(1, tonumber(power) or 0))
+	if power ~= power then
+		power = 0
+	end
+	local species = JobRules.RollSpecies(zone, job.gather.products, rod.rarity + bait.rarity + power * 0.15)
+	local item = job.gather.products[species]
+	-- Espera pela mordida com os bônus da vara, da isca, do arremesso e de Campo (mesma proporção da coleta).
+	local speed = rod.speed * bait.speed * (1 - power * 0.15) * (mods.seconds / job.gather.seconds)
+	local biteMs = math.floor(math.random(fishing.biteSeconds[1] * 1000, fishing.biteSeconds[2] * 1000) * speed)
+	local castMs = math.floor(fishing.castSeconds * 1000)
+	local fight = JobRules.FightParams(fishing, rod, item)
+	session.cast = { rod = rod.item, bait = bait.item, area = areaIndex, species = species, at = GetGameTimer(), bite = castMs + biteMs, fight = fight }
+	session.lastTaskAt = GetGameTimer()
+	reply(playerId, 'fishCast', {
+		jobId = jobId, cast = castMs, bite = biteMs, fight = fight, tier = item.tier, bait = bait.label, area = zone.label
+	})
+	reply(playerId, 'session', sessionView(session))
+end
+
+local function reel(playerId, jobId, caught)
+	local session, job = sessionFor(playerId, jobId, 'gather')
+	local hook = session and session.cast
+	if not hook then
+		return failure(playerId, 'wrong_step')
+	end
+	session.cast = nil
+	local elapsed = GetGameTimer() - hook.at
+	local item = job.gather.products[hook.species]
+	local fight = hook.fight
+	if caught ~= true or elapsed > hook.bite + fight.hookMs + fight.maxMs + 3000 then
+		notify(playerId, 'warning', _t('fish_escaped'))
+		return reply(playerId, 'fishResult', { ok = false })
+	end
+	-- Fisgada válida só depois da mordida e de uma briga com o tempo mínimo (peixe sempre dentro da faixa).
+	if elapsed < (hook.bite + fight.minMs) * 0.9 then
+		log('warn', 'gameplay', 'jobs_too_fast', { player_id = playerId, target = job.id })
+		reply(playerId, 'fishResult', { ok = false })
+		return failure(playerId, 'too_fast')
+	end
+	local mods = modifiersOf(job, session.record)
+	if goodsTotal(session) >= mods.capacity then
+		reply(playerId, 'fishResult', { ok = false })
+		return failure(playerId, 'full')
+	end
+	session.goods[item.id] = (session.goods[item.id] or 0) + 1
+	refreshCargo(session)
+	grant(playerId, session, item.xp, 0)
+	local tier = item.tier == 'rare' and ' (raro!)' or item.tier == 'uncommon' and ' (incomum)' or ''
+	notify(playerId, 'success', ('Fisgou: %s%s. %d/%d peixes.'):format(item.label, tier, goodsTotal(session), mods.capacity))
+	reply(playerId, 'fishResult', { ok = true, species = item.id, label = item.label, tier = item.tier })
+	reply(playerId, 'session', sessionView(session))
+end
+
+local function cancelCast(playerId, jobId)
+	local session = sessionFor(playerId, jobId, 'gather')
+	if session then
+		session.cast = nil
+	end
+end
+
 -- Últimos trabalhos do personagem (opcionalmente só de um emprego), com o nome do emprego.
 local function sessionsView(record, jobId)
 	local list = {}
@@ -825,6 +1416,8 @@ RegisterNetEvent('coe_jobs:catalog', function()
 	local playerId = source
 	if not throttled(playerId) then
 		TriggerClientEvent('coe_jobs:catalog', playerId, publicCatalog())
+		-- Árvores já cortadas por outros jogadores continuam escondidas para quem acabou de entrar.
+		TriggerClientEvent('coe_jobs:felledList', playerId, felledList())
 	end
 end)
 
@@ -839,7 +1432,10 @@ RegisterNetEvent('coe_jobs:start', function(jobId)
 	end
 	local job = jobs[jobId]
 	log('info', 'gameplay', 'jobs_started', { character_id = session.character, target = jobId })
-	local hint = job.kind == 'gather'
+	local hint = job.kind == 'gather' and job.gather.haul
+		and ('Leve o veículo até a área marcada, %s, carregue a caçamba e leve até "%s".'):format(job.gather.actionLabel:lower(),
+			job.gather.process and job.gather.process.label or job.gather.sell.label)
+		or job.kind == 'gather'
 		and ('Vá até os pontos marcados (%s) e venda no comprador do mapa: só a venda paga.'):format(job.gather.actionLabel:lower())
 		or (job.route.mode == 'zone' and 'Leve o caminhão até a área marcada no GPS e recolha o lixo das lixeiras de lá.')
 		or 'Siga o GPS até a primeira parada.'
@@ -858,12 +1454,22 @@ RegisterNetEvent('coe_jobs:stop', function(discard)
 	local session = sessions[playerId]
 	local job = jobs[session.jobId]
 	local coords = coordsOf(playerId)
-	if job and (not coords or not JobRules.Near(coords, job.center, config.CenterRadius * 2, config.PointHeight)) then
+	-- Sem veículo da empresa, também dá para encerrar num comprador ou na loja (a pesca não volta ao NPC).
+	local nearOther = false
+	if job and not job.vehicle and coords then
+		for _, spot in ipairs(job.gather and job.gather.sell.points or {}) do
+			nearOther = nearOther or JobRules.Near(coords, spot, config.CenterRadius, config.PointHeight)
+		end
+		for _, spot in ipairs(job.shop and job.shop.points or {}) do
+			nearOther = nearOther or JobRules.Near(coords, spot, config.CenterRadius, config.PointHeight)
+		end
+	end
+	if job and not nearOther and (not coords or not JobRules.Near(coords, job.center, config.CenterRadius * 2, config.PointHeight)) then
 		return failure(playerId, 'too_far')
 	end
 	if job and job.gather and session.cargo > 0 and discard ~= true then
-		notify(playerId, 'warning', ('Você ainda carrega %d %s. Venda no comprador marcado no mapa (%s) ou escolha "Descartar a carga e encerrar".'):format(
-			session.cargo, session.cargo == 1 and job.gather.unit or job.gather.units, job.gather.sell.label))
+		notify(playerId, 'warning', ('Você ainda tem %d %s na carga. Venda no comprador marcado no mapa (%s) ou escolha "Descartar a carga e encerrar".'):format(
+			session.cargo, session.cargo == 1 and 'unidade' or 'unidades', job.gather.sell.label))
 		return reply(playerId, 'result', { ok = false, error = 'cargo_left' })
 	end
 	local label = job and job.label or session.jobId
@@ -871,7 +1477,9 @@ RegisterNetEvent('coe_jobs:stop', function(discard)
 	local text = ('%s encerrado: %d %s, +%d XP, %s ganhos.'):format(label, summary.tasks, summary.tasks == 1 and 'tarefa' or 'tarefas',
 		summary.xp, money(summary.earned))
 	if summary.discarded > 0 and job and job.gather then
-		text = text .. (' %d %s descartados.'):format(summary.discarded, summary.discarded == 1 and job.gather.unit or job.gather.units)
+		local single = #job.gather.productOrder == 1 and not job.gather.haul and job.gather.products[job.gather.defaultProduct]
+		local noun = single and (summary.discarded == 1 and single.unit or single.units) or (summary.discarded == 1 and 'item' or 'itens')
+		text = text .. (' %d %s descartados.'):format(summary.discarded, noun)
 	end
 	if refund and refund > 0 then
 		text = text .. (' Depósito de %s devolvido.'):format(money(refund))
@@ -883,6 +1491,70 @@ RegisterNetEvent('coe_jobs:gather', function(jobId, nodeIndex)
 	local playerId = source
 	if ready and type(jobId) == 'string' and not throttled(playerId) then
 		gather(playerId, jobId, nodeIndex)
+	end
+end)
+
+RegisterNetEvent('coe_jobs:gatherWorld', function(jobId, worldIndex, spot, modelHash)
+	local playerId = source
+	if ready and type(jobId) == 'string' and type(modelHash) == 'number' and not throttled(playerId) then
+		gatherWorld(playerId, jobId, worldIndex, spot, modelHash)
+	end
+end)
+
+RegisterNetEvent('coe_jobs:take', function(jobId)
+	local playerId = source
+	if ready and type(jobId) == 'string' and not throttled(playerId) then
+		take(playerId, jobId)
+	end
+end)
+
+RegisterNetEvent('coe_jobs:load', function(jobId)
+	local playerId = source
+	if ready and type(jobId) == 'string' and not throttled(playerId) then
+		loadHaul(playerId, jobId)
+	end
+end)
+
+RegisterNetEvent('coe_jobs:process', function(jobId, pointIndex)
+	local playerId = source
+	if ready and type(jobId) == 'string' and not throttled(playerId) then
+		processLoad(playerId, jobId, pointIndex)
+	end
+end)
+
+RegisterNetEvent('coe_jobs:shop', function(jobId, pointIndex)
+	local playerId = source
+	if ready and type(jobId) == 'string' and not throttled(playerId) then
+		openShop(playerId, jobId, pointIndex)
+	end
+end)
+
+RegisterNetEvent('coe_jobs:buy', function(jobId, pointIndex, itemName, quantity)
+	local playerId = source
+	if ready and type(jobId) == 'string' and type(itemName) == 'string' and not throttled(playerId) then
+		buy(playerId, jobId, pointIndex, itemName, quantity)
+	end
+end)
+
+RegisterNetEvent('coe_jobs:cast', function(jobId, rodName, power)
+	local playerId = source
+	if ready and type(jobId) == 'string' and not throttled(playerId) then
+		cast(playerId, jobId, rodName, power)
+	end
+end)
+
+-- O reel não passa pelo throttle: chega logo depois do minigame e o tempo já é conferido pelo lance.
+RegisterNetEvent('coe_jobs:reel', function(jobId, caught)
+	local playerId = source
+	if ready and type(jobId) == 'string' then
+		reel(playerId, jobId, caught)
+	end
+end)
+
+RegisterNetEvent('coe_jobs:castCancel', function(jobId)
+	local playerId = source
+	if ready and type(jobId) == 'string' then
+		cancelCast(playerId, jobId)
 	end
 end)
 

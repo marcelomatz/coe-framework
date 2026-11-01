@@ -18,6 +18,11 @@ JobsCatalog[#JobsCatalog + 1] = {
 		'Devolva o caminhão no porto para receber o depósito de volta.'
 	},
 	requires = { skills = { driving = 2 }, reputation = 0 },
+	uniform = {
+		label = 'Roupa de caminhoneiro',
+		male = { components = { [3] = { 1, 0 }, [4] = { 4, 0 }, [6] = { 12, 0 }, [8] = { 15, 0 }, [11] = { 66, 0 } }, props = { [0] = { 58, 0 } } },
+		female = { components = { [3] = { 3, 0 }, [4] = { 3, 0 }, [6] = { 4, 0 }, [8] = { 14, 0 }, [11] = { 60, 0 } }, props = { [0] = { 58, 0 } } }
+	},
 	vehicle = { model = 'mule3', plate = 'CARG', spawn = { 1179.6, -3239.6, 6.0, 90.0 }, deposit = 800, returnRadius = 50.0 },
 	route = {
 		actionLabel = 'Entregar a carga',
@@ -28,7 +33,8 @@ JobsCatalog[#JobsCatalog + 1] = {
 		bonus = 200,
 		xp = 20,
 		vehicleRange = 45.0,
-		carry = { model = 'prop_cs_cardbox_01', bone = 28422, offset = { 0.0, -0.03, -0.12 }, rotation = { 0.0, 0.0, 0.0 } },
+		-- Caixa segurada com as duas mãos na frente do peito (osso da mão esquerda + andar de carga).
+		carry = { model = 'prop_cs_cardbox_01', bone = 60309, offset = { 0.025, 0.08, 0.255 }, rotation = { -145.0, 290.0, 0.0 } },
 		carryAnimation = { dict = 'anim@heists@box_carry@', name = 'idle', flag = 49 },
 		recipients = { 's_m_y_dockwork_01', 's_m_m_dockwork_01', 's_m_y_construct_02', 's_m_m_gaffer_01' },
 		stops = {

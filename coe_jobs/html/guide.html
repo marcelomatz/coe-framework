@@ -8,7 +8,7 @@
 	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
 	<script src="nui://coe_ui/html/components.js"></script>
 	<link rel="stylesheet" href="guide.css">
-	<title>Como funciona</title>
+	<title>Empregos</title>
 </head>
 <body>
 	<div id="guide" class="guide-overlay is-hidden" aria-hidden="true">
@@ -20,7 +20,28 @@
 			<div id="guide-body" class="guide-body"></div>
 		</section>
 	</div>
+	<div id="shop" class="guide-overlay is-hidden" aria-hidden="true">
+		<section class="guide-panel shop-panel coe-panel" role="dialog" aria-modal="true" aria-labelledby="shop-brand">
+			<header class="guide-bar">
+				<p id="shop-brand" class="guide-brand">COE · LOJA</p>
+				<button id="shop-close" class="coe-button" type="button">Fechar <kbd>Esc</kbd></button>
+			</header>
+			<div id="shop-body" class="guide-body"></div>
+		</section>
+	</div>
+	<div id="fish" class="fish is-hidden" aria-hidden="true">
+		<p id="fish-prompt" class="fish-prompt"></p>
+		<div id="fish-power" class="fish-meter fish-power"><i></i></div>
+		<div id="fish-track" class="fish-track">
+			<i id="fish-zone" class="fish-zone"></i>
+			<i id="fish-dot" class="fish-dot"></i>
+		</div>
+		<div id="fish-progress" class="fish-meter fish-progress"><i></i></div>
+		<p id="fish-hint" class="fish-hint"></p>
+	</div>
 	<script src="guide-view.js"></script>
 	<script src="guide.js"></script>
+	<script src="shop.js"></script>
+	<script src="fish.js"></script>
 </body>
 </html>

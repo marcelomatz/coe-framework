@@ -18,6 +18,11 @@ JobsCatalog[#JobsCatalog + 1] = {
 		'Corridas longas pagam mais: o valor cresce a cada km.'
 	},
 	requires = { career = 2 },
+	uniform = {
+		label = 'Camisa da Downtown Cab',
+		male = { components = { [3] = { 0, 0 }, [4] = { 10, 0 }, [6] = { 10, 0 }, [8] = { 15, 0 }, [11] = { 13, 0 } }, props = {} },
+		female = { components = { [3] = { 14, 0 }, [4] = { 6, 0 }, [6] = { 13, 0 }, [8] = { 14, 0 }, [11] = { 27, 0 } }, props = {} }
+	},
 	vehicle = { model = 'taxi', plate = 'TAXI', spawn = { 909.1, -177.0, 74.2, 238.0 }, deposit = 250, returnRadius = 40.0 },
 	route = {
 		-- passenger: embarque na parada e desembarque na seguinte, com o táxi parado e o jogador ao volante.

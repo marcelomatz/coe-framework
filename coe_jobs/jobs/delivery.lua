@@ -18,6 +18,11 @@ JobsCatalog[#JobsCatalog + 1] = {
 		'Entregar treina Direção, exigida pelo caminhoneiro.'
 	},
 	-- Van da empresa: depósito devolvido ao encerrar com ela de volta no pátio.
+	uniform = {
+		label = 'Uniforme da GoPostal',
+		male = { components = { [3] = { 0, 0 }, [4] = { 10, 0 }, [6] = { 10, 0 }, [8] = { 15, 0 }, [11] = { 38, 0 } }, props = { [0] = { 63, 0 } } },
+		female = { components = { [3] = { 14, 0 }, [4] = { 6, 0 }, [6] = { 10, 0 }, [8] = { 14, 0 }, [11] = { 25, 0 } }, props = { [0] = { 63, 0 } } }
+	},
 	vehicle = { model = 'boxville2', plate = 'POST', spawn = { 66.0, 120.0, 79.1, 160.0 }, deposit = 300, returnRadius = 40.0 },
 	route = {
 		actionLabel = 'Entregar encomenda',
@@ -27,7 +32,8 @@ JobsCatalog[#JobsCatalog + 1] = {
 		bonus = 120,
 		xp = 8,
 		vehicleRange = 45.0,
-		carry = { model = 'prop_cs_cardbox_01', bone = 28422, offset = { 0.0, -0.03, -0.12 }, rotation = { 0.0, 0.0, 0.0 } },
+		-- Caixa segurada com as duas mãos na frente do peito (osso da mão esquerda + andar de carga).
+		carry = { model = 'prop_cs_cardbox_01', bone = 60309, offset = { 0.025, 0.08, 0.255 }, rotation = { -145.0, 290.0, 0.0 } },
 		carryAnimation = { dict = 'anim@heists@box_carry@', name = 'idle', flag = 49 },
 		recipients = { 'a_m_y_hipster_01', 'a_f_y_hipster_02', 'a_m_m_bevhills_01', 'a_f_y_business_02', 'a_m_y_business_01' },
 		stops = {

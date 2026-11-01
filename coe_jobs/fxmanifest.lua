@@ -15,6 +15,8 @@ dependencies {
 	'coetarget'
 }
 
+-- coe_inventory é opcional: sem ele, a loja e a pesca com vara respondem "inventário indisponível".
+
 shared_scripts {
 	'@coe_core/lib/init.lua',
 	'locales/pt-br.lua',
@@ -46,5 +48,7 @@ files {
 	'html/guide.css',
 	'html/guide.js',
 	'html/guide-view.js',
+	'html/shop.js',
+	'html/fish.js',
 	'html/career.js'
 }
