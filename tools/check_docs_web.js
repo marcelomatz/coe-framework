@@ -112,7 +112,8 @@ const VERSION_RE = /\bv\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?\b/g;
 
 // Totais antigos de resources (para achar contagens esquecidas sem confundir com contagens por camada).
 function priorTotals(releases) {
-	const totals = new Set([27]);
+	// 24, 27 e 29: totais de fases antigas que ainda aparecem em textos escritos à mão.
+	const totals = new Set([24, 27, 29]);
 	for (const r of releases || []) if (Number.isInteger(r.resourcesCount)) totals.add(r.resourcesCount);
 	totals.delete(facts.resourceCount);
 	return totals;
@@ -134,7 +135,17 @@ function tierCounts() {
 // ---------------------------------------------------------------------------------------------------
 // Contagens de resources em textos
 // ---------------------------------------------------------------------------------------------------
-const COUNT_RE = /(?<![\w.#\/-])(\d{1,3})(?![\w.])((?:\*\*|`|\s|%20|--|-)+(?:[\wÀ-ÿ\-.,/]+(?:\s|%20|--|-)+){0,4}?(?:resources?|Resources?|recursos|first-party|First-Party))/g;
+const COUNT_RE = /(?<![\w.#\/-])(\d{1,3})(?![\w.])((?:\*\*|`|\s|%20|--|-)+(?:[\wÀ-ÿ\-.,/]+(?:\s|%20|--|-)+){0,4}?(?:resources?|recursos|first-party|scripts?|módulos|modules))(?![\wÀ-ÿ])/gi;
+
+// Contagens que não vêm antes da palavra: selo do menu ("Catálogo de scripts <span class="nav-badge">N</span>"),
+// estatística da home (<dt>recursos first-party</dt><dd>N</dd>) e "N/N" (ex.: "27/27 Nativos").
+const COUNT_AFTER_RES = [
+	/((?:scripts?|cat[áa]logo|catalog)[^<\n]{0,40}<span class="nav-badge">)(\d{1,3})(<)/gi,
+	/(<dt>[^<]*(?:first-party|recursos|resources|scripts)[^<]*<\/dt>\s*<dd[^>]*>)(\d{1,3})(<\/dd>)/gi,
+	/((?:scripts?|resources?|recursos)\s*\()(\d{1,3})(\))/gi,
+	/((?:resources?|recursos)\s*:\s*)(\d{1,3})(;)/gi,
+];
+const SLASH_RE = /(?<![\w.\/])(\d{1,3})\/(\d{1,3})(?![\w.\/])/g;
 
 /**
  * Confere/corrige contagens num texto. Retorna o texto (corrigido se FIX).
@@ -179,6 +190,20 @@ function checkCounts(file, text, opts = {}) {
 			err('contagens', `${rel(file)}:${i + 1} diz ${n} ${kind === 'total' ? 'resources' : kind} (o framework tem ${expected})`, '--fix corrige');
 			return whole;
 		});
+	}
+	// Contagens depois da palavra e "N/N" (só totais antigos conhecidos)
+	for (let i = 0; i < lines.length; i++) {
+		if (/coe-count-ignore|rel-row|rel-latest|data-release-version/.test(lines[i])) continue;
+		if (opts.skipLine && opts.skipLine(lines[i], i)) continue;
+		const fixOne = (whole, n, make) => {
+			if (!totals.has(n) || n === facts.resourceCount) return whole;
+			if (FIX) { changed = true; didFix('contagens', `${rel(file)}:${i + 1} ${n} → ${facts.resourceCount}`); return make(facts.resourceCount); }
+			err('contagens', `${rel(file)}:${i + 1} diz ${n} resources (o framework tem ${facts.resourceCount})`, '--fix corrige');
+			return whole;
+		};
+		for (const re of COUNT_AFTER_RES)
+			lines[i] = lines[i].replace(re, (whole, pre, num, post) => fixOne(whole, Number(num), v => `${pre}${v}${post}`));
+		lines[i] = lines[i].replace(SLASH_RE, (whole, a, b) => (a === b ? fixOne(whole, Number(a), v => `${v}/${v}`) : whole));
 	}
 	// Selo do shields.io: resources-<N>%20first--party
 	let out = lines.join('\n').replace(/(img\.shields\.io\/badge\/resources-)(\d+)(%20first--party)/g, (whole, pre, num, post) => {
@@ -401,7 +426,11 @@ function checkWebsite() {
 		}
 		if (FIX && html !== read(file)) write(file, html);
 	}
-	for (const file of ['catalog.js', 'catalog_en.js', 'i18n.js', 'script_extras.js', 'generate_site.js'].map(f => path.join(tools, f)).filter(exists)) {
+	const siteExtras = [
+		...['catalog.js', 'catalog_en.js', 'i18n.js', 'script_extras.js', 'generate_site.js'].map(f => path.join(tools, f)),
+		...listFiles(path.join(WEBSITE, 'assets', 'js'), n => n.endsWith('.js')),
+	];
+	for (const file of siteExtras.filter(exists)) {
 		let text = read(file);
 		const counts = checkCounts(file, text, { priorTotals: totals });
 		checkExportCalls(file, counts.text);
@@ -558,9 +587,10 @@ function checkDocs() {
 	const tiers = tierCounts();
 	const files = [
 		...listFiles(DOCS, n => n.endsWith('.md') && !n.startsWith('CHANGELOG')),
-		path.join(DOCS, 'public', 'index.html'),
-		path.join(DOCS, 'public', 'js', 'portal.js'),
-		path.join(DOCS, 'tools', 'generate_portal.js'),
+		...listFiles(path.join(DOCS, 'public'), n => n.endsWith('.html')),
+		...listFiles(path.join(DOCS, 'public', 'js'), n => n.endsWith('.js')),
+		...listFiles(path.join(DOCS, 'tools'), n => n.endsWith('.js')),
+		path.join(DOCS, 'server.js'),
 	].filter(exists);
 	for (const file of files) {
 		let text = read(file);
