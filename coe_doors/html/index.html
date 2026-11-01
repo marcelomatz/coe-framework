@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="nui://coe_ui/html/perspective.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/prompt.css">
+	<script src="nui://coe_ui/html/prompt.js"></script>
+	<link rel="stylesheet" href="doors.css">
+</head>
+<body>
+	<main id="pin" class="pin" hidden>
+		<header>
+			<div><h1 id="title">Porta</h1><p id="subtitle">Digite a senha</p></div>
+			<button id="close" type="button" aria-label="Fechar">✕</button>
+		</header>
+		<div id="display" class="display" aria-live="polite"></div>
+		<div id="keys" class="keys"></div>
+	</main>
+	<script src="doors.js"></script>
+</body>
+</html>

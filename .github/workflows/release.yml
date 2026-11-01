@@ -70,6 +70,10 @@ jobs:
         shell: pwsh
         run: lua tools/smoke_boot_test.lua
 
+      - name: Run Smoke Boot Suite (advanced scripts)
+        shell: pwsh
+        run: lua tools/smoke_boot_scripts_test.lua
+
       - name: Open-core Boundary
         shell: pwsh
         run: lua tools/check_boundary.lua
@@ -111,8 +115,17 @@ jobs:
           if (Test-Path $stageRoot) { Remove-Item -Recurse -Force $stageRoot }
           New-Item -ItemType Directory -Path $outGroup -Force | Out-Null
 
+          # Básicos que têm script avançado (coe_supervisor_replaces no fxmanifest do avançado) ficam fora do pacote.
+          $replaced = @{}
+          foreach ($manifest in Get-ChildItem -Path . -Filter fxmanifest.lua -Recurse -Depth 1) {
+            $text = (Get-Content -Raw $manifest.FullName) -replace '--[^\n]*', ''
+            foreach ($m in [regex]::Matches($text, "coe_supervisor_replaces\s*\(?\s*['`"]([\w\-]+)['`"]")) { $replaced[$m.Groups[1].Value] = $manifest.Directory.Name }
+          }
+          foreach ($k in $replaced.Keys) { Write-Host "fora do pacote: $k (substituído por $($replaced[$k]))" }
+
           foreach ($resProp in $verJson.resources.PSObject.Properties) {
             $resName = $resProp.Name
+            if ($replaced.ContainsKey($resName)) { continue }
             $files = $resProp.Value.files
             foreach ($rel in $files) {
               $srcFile = Join-Path $resName $rel
@@ -125,9 +138,13 @@ jobs:
             }
           }
 
+          # Dependências de terceiros ([vendor]/screenshot-basic...): vão inteiras, ao lado dos resources
+          if (Test-Path -LiteralPath "[vendor]") { Copy-Item -LiteralPath "[vendor]" -Destination (Join-Path $outGroup "[vendor]") -Recurse -Force }
+
           Copy-Item -Path "version.json" -Destination (Join-Path $stageRoot "version.json") -Force
           if (Test-Path "version.json.sig") { Copy-Item -Path "version.json.sig" -Destination (Join-Path $stageRoot "version.json.sig") -Force }
           Copy-Item -Path "recipe.yaml" -Destination (Join-Path $stageRoot "recipe.yaml") -Force
+          Copy-Item -Path "permissions.cfg" -Destination (Join-Path $stageRoot "permissions.cfg") -Force
 
           $zipPath = Join-Path $PWD "coe-framework-dist.zip"
           if (Test-Path $zipPath) { Remove-Item -Force $zipPath }
@@ -146,9 +163,9 @@ jobs:
             $verJson.notes,
             "",
             "### Como instalar ou atualizar",
-            "- **Em um servidor já instalado:** abra o painel **F10** (`coe_staff`) e clique em **Atualizar scripts agora**, ou execute `coe_update apply` no console do FXServer.",
+            "- **Em um servidor já instalado:** abra o painel **F10** (`coe_admin`) e clique em **Atualizar scripts agora**, ou execute `coe_update apply` no console do FXServer.",
             "- **Nova instalação via txAdmin Recipe:** utilize a URL do `recipe.yaml` deste repositório.",
-            "- **Instalação manual:** baixe o `coe-framework-dist.zip` abaixo e extraia em `resources/`."
+            "- **Instalação manual:** baixe o `coe-framework-dist.zip` abaixo, extraia em `resources/` e inclua o `permissions.cfg` no `server.cfg` (antes dos `ensure`)."
           ) | Set-Content -Path $notesFile -Encoding UTF8
 
       - name: Publish GitHub Release

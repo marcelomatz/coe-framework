@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>COE Craft</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/perspective.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/prompt.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<script src="nui://coe_ui/html/prompt.js"></script>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<section id="craft" class="cr-craft" hidden>
+		<div class="cr-box coe-panel">
+			<header class="cr-head">
+				<strong id="cr-title">Bancada</strong>
+				<button id="cr-close" class="coe-button" type="button">Fechar</button>
+			</header>
+			<div id="cr-recipes" class="cr-recipes"></div>
+			<footer>
+				<div id="cr-progress" class="cr-progress"><i></i></div>
+				<div id="cr-status" class="cr-status" role="status"></div>
+			</footer>
+		</div>
+	</section>
+	<script src="app.js"></script>
+</body>
+</html>

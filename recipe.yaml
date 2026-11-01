@@ -4,7 +4,7 @@ $onesync: on
 name: "COE Framework - FiveM Enhanced Gen9"
 version: "0.1.0-beta.14"
 author: "COE Roleplay Team"
-description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 29 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
+description: "Framework nativo FiveM Enhanced Gen9 (DX12) de ultra-baixa latência (<0.08ms) com 50 recursos integrados, HUD vetorial, inventário por slots, supervisor de boot e banco assíncrono."
 
 tasks:
   # 1. Download official CitizenFX default server data (chat, spawnmanager, baseevents, etc.)
@@ -30,6 +30,23 @@ tasks:
 
   - action: remove_path
     path: ./resources/[coe-framework]/tools
+
+  # 4b. Básicos que têm script avançado ficam de fora (o avançado faz o upgrade e importa os dados do básico)
+  - action: remove_path
+    path: ./resources/[coe-framework]/coe_bank
+  - action: remove_path
+    path: ./resources/[coe-framework]/coe_garage
+  - action: remove_path
+    path: ./resources/[coe-framework]/coe_mobile
+  - action: remove_path
+    path: ./resources/[coe-framework]/coe_staff
+  - action: remove_path
+    path: ./resources/[coe-framework]/coe_workpad
+
+  # 4c. ACEs dos scripts avançados ao lado do server.cfg
+  - action: move_path
+    src: ./resources/[coe-framework]/permissions.cfg
+    dest: ./permissions.cfg
 
   # 5. Connect to Database (auto creates the database if not existing)
   - action: connect_database
@@ -86,10 +103,14 @@ tasks:
       add_ace group.admin command.quit deny
       {{addPrincipalsMaster}}
 
-      ## Permissões da Staff (COE Staff Open-Source)
-      ## Módulos por grupo (opcional): coe.staff.players, coe.staff.vehicles, coe.staff.world, coe.staff.self,
-      ## coe.staff.businesses, coe.staff.garages, coe.staff.hotel, coe.staff.yield
+      ## Permissões da Staff (coe_admin). As ACEs coe.staff.* antigas continuam valendo.
+      ## Módulos por grupo (opcional): coe_admin.tools.<módulo>; acesso total: coe_admin.root
       add_ace group.admin coe.staff.all allow
+      add_ace group.admin coe_admin.tools.all allow
+      add_ace group.admin coe_admin.root allow
+
+      ## Capacidades (ACE) dos scripts avançados. Precisa vir antes dos ensure.
+      exec permissions.cfg
 
       ## --------------------------------------------------------------------
       ## Recursos Base do CitizenFX
@@ -102,35 +123,56 @@ tasks:
       ## Permissões de Sistema de Arquivos (COE Auto-Updater / Supervisor)
       ## Permite ao coe_supervisor aplicar atualizações diretamente nos resources
       ## --------------------------------------------------------------------
-      add_filesystem_permission coe_supervisor write coe_supervisor
-      add_filesystem_permission coe_supervisor write coetarget
+      add_filesystem_permission coe_supervisor write coe_admin
+      add_filesystem_permission coe_supervisor write coe_amzg
       add_filesystem_permission coe_supervisor write coe_appearance
+      add_filesystem_permission coe_supervisor write coe_apps
       add_filesystem_permission coe_supervisor write coe_audit
-      add_filesystem_permission coe_supervisor write coe_bank
+      add_filesystem_permission coe_supervisor write coe_banking
       add_filesystem_permission coe_supervisor write coe_businesses
       add_filesystem_permission coe_supervisor write coe_characters
       add_filesystem_permission coe_supervisor write coe_core
+      add_filesystem_permission coe_supervisor write coe_crafting
+      add_filesystem_permission coe_supervisor write coe_crypto
       add_filesystem_permission coe_supervisor write coe_database
+      add_filesystem_permission coe_supervisor write coe_deepweb
+      add_filesystem_permission coe_supervisor write coe_dispatch
+      add_filesystem_permission coe_supervisor write coe_doors
       add_filesystem_permission coe_supervisor write coe_economy
-      add_filesystem_permission coe_supervisor write coe_garage
+      add_filesystem_permission coe_supervisor write coe_elos
+      add_filesystem_permission coe_supervisor write coe_ems
+      add_filesystem_permission coe_supervisor write coe_factions
+      add_filesystem_permission coe_supervisor write coe_fuel
+      add_filesystem_permission coe_supervisor write coe_garages
+      add_filesystem_permission coe_supervisor write coe_handling
+      add_filesystem_permission coe_supervisor write coe_housing
       add_filesystem_permission coe_supervisor write coe_hud
       add_filesystem_permission coe_supervisor write coe_inventory
       add_filesystem_permission coe_supervisor write coe_jobs
       add_filesystem_permission coe_supervisor write coe_loadscreen
       add_filesystem_permission coe_supervisor write coe_logging
+      add_filesystem_permission coe_supervisor write coe_loot
+      add_filesystem_permission coe_supervisor write coe_mail
       add_filesystem_permission coe_supervisor write coe_map
-      add_filesystem_permission coe_supervisor write coe_mobile
+      add_filesystem_permission coe_supervisor write coe_mdt
+      add_filesystem_permission coe_supervisor write coe_mechanic
       add_filesystem_permission coe_supervisor write coe_needs
+      add_filesystem_permission coe_supervisor write coe_news
       add_filesystem_permission coe_supervisor write coe_notify
+      add_filesystem_permission coe_supervisor write coe_phone
+      add_filesystem_permission coe_supervisor write coe_police
+      add_filesystem_permission coe_supervisor write coe_races
       add_filesystem_permission coe_supervisor write coe_rentals
       add_filesystem_permission coe_supervisor write coe_shops
       add_filesystem_permission coe_supervisor write coe_spawn
-      add_filesystem_permission coe_supervisor write coe_staff
+      add_filesystem_permission coe_supervisor write coe_supervisor
+      add_filesystem_permission coe_supervisor write coe_tablet
       add_filesystem_permission coe_supervisor write coe_talk
+      add_filesystem_permission coe_supervisor write coe_telecom
       add_filesystem_permission coe_supervisor write coe_ui
-      add_filesystem_permission coe_supervisor write coe_vehicles
       add_filesystem_permission coe_supervisor write coe_vehicle_catalog
-      add_filesystem_permission coe_supervisor write coe_workpad
+      add_filesystem_permission coe_supervisor write coe_vehicles
+      add_filesystem_permission coe_supervisor write coetarget
 
       ## --------------------------------------------------------------------
       ## Ordem Estrita de Boot - COE Framework
@@ -157,15 +199,41 @@ tasks:
       ensure coe_inventory
       ensure coe_map
       ensure coe_talk
-      ensure coe_mobile
       ensure coe_businesses
       ensure coe_economy
       ensure coe_shops
-      ensure coe_bank
       ensure coe_jobs
-      ensure coe_workpad
-      ensure coe_staff
       ensure coe_vehicle_catalog
       ensure coe_vehicles
-      ensure coe_garage
       ensure coe_rentals
+
+      ## Dependências de terceiros (vêm em [coe-framework]/[vendor])
+      ensure screenshot-basic
+
+      ## Scripts avançados (telefone, tablet, banco, admin, polícia, EMS, DeepWeb...)
+      ensure coe_admin
+      ensure coe_amzg
+      ensure coe_apps
+      ensure coe_banking
+      ensure coe_crafting
+      ensure coe_crypto
+      ensure coe_deepweb
+      ensure coe_dispatch
+      ensure coe_doors
+      ensure coe_elos
+      ensure coe_ems
+      ensure coe_factions
+      ensure coe_fuel
+      ensure coe_garages
+      ensure coe_handling
+      ensure coe_housing
+      ensure coe_loot
+      ensure coe_mail
+      ensure coe_mdt
+      ensure coe_mechanic
+      ensure coe_news
+      ensure coe_phone
+      ensure coe_police
+      ensure coe_races
+      ensure coe_tablet
+      ensure coe_telecom

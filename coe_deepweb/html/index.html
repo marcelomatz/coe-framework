@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Computador</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/apps.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="computer.css">
+</head>
+<body>
+	<main id="pc" class="pc" aria-hidden="true">
+		<div class="pc-frame">
+			<div class="pc-screen">
+				<section id="pc-lock" class="pc-lock" hidden>
+					<div class="pc-lock-box coe-panel">
+						<strong id="pc-lock-title">Computador</strong>
+						<span class="tb-muted">Digite a senha para entrar.</span>
+						<input id="pc-lock-input" class="coe-field" type="password" autocomplete="off">
+						<button id="pc-lock-face" class="coe-button pc-lock-face" type="button" hidden>◉ Reconhecimento facial</button>
+						<div class="tb-actions">
+							<button id="pc-lock-off" class="coe-button" type="button">Desligar</button>
+							<button id="pc-lock-go" class="coe-button coe-button--primary" type="button">Entrar</button>
+						</div>
+						<small id="pc-lock-error" class="pc-lock-error"></small>
+					</div>
+				</section>
+				<section id="pc-desktop" class="pc-desktop" hidden>
+					<div id="pc-icons" class="pc-icons"></div>
+					<div id="pc-window" class="pc-window coe-panel" hidden>
+						<header class="pc-window-bar">
+							<i id="pc-window-icon" class="pc-icon-tile"></i>
+							<strong id="pc-window-title"></strong>
+							<button id="pc-window-close" class="pc-window-close" type="button" aria-label="Fechar janela">✕</button>
+						</header>
+						<div id="pc-app" class="pc-app"></div>
+					</div>
+				</section>
+				<footer class="pc-taskbar">
+					<span class="pc-brand"><i></i><strong id="pc-model">COE</strong><span id="pc-level"></span></span>
+					<div id="pc-tasks" class="pc-tasks"></div>
+					<span id="pc-status" class="pc-status" role="status"></span>
+					<span id="pc-clock" class="pc-clock"></span>
+					<button id="pc-power" class="pc-power" type="button" aria-label="Desligar">⏻</button>
+				</footer>
+			</div>
+		</div>
+		<div class="pc-base"></div>
+	</main>
+	<script src="computer.js"></script>
+</body>
+</html>

@@ -11,7 +11,7 @@
 [![Test Suite](https://img.shields.io/badge/tests-83%20lua%20%7C%208%20node%20%7C%209%20mariadb%20%7C%20strict%20contracts-blue.svg)](https://docs.coeroleplay.app/#doc=INGAME_CHECKLIST.en-US.md)
 [![Internationalization](https://img.shields.io/badge/i18n-445%20keys%20%7C%20100%25%20parity%20%7C%20en--US%20%26%20pt--BR-green.svg)](https://docs.coeroleplay.app/#doc=I18N_LOCALIZATION.en-US.md)
 [![Platform HAL](https://img.shields.io/badge/platform%20hal-decoupled%20natives%20%7C%20zero%20legacy-purple.svg)](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.en-US.md)
-[![First-Party Resources](https://img.shields.io/badge/resources-29%20first--party%20MIT-purple.svg)](https://docs.coeroleplay.app/#doc=PACKS.en-US.md)
+[![First-Party Resources](https://img.shields.io/badge/resources-55%20first--party%20MIT-purple.svg)](https://docs.coeroleplay.app/#doc=PACKS.en-US.md)
 [![Platform](https://img.shields.io/badge/platform-FiveM%20for%20GTAV%20Enhanced%20%28Gen9%20DX12%29-lightgrey.svg)](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows)
 [![Architecture](https://img.shields.io/badge/architecture-clean%20%2F%20server--authoritative-orange.svg)](https://docs.coeroleplay.app/#doc=ARCHITECTURE.en-US.md)
 [![AI Ready](https://img.shields.io/badge/AI%20Agents-5%20Rules%20%7C%208%20Skills-teal.svg)](#how-to-connect-coe-ai-agents-in-your-environment)
@@ -32,7 +32,7 @@
 >
 > *I want to express my deepest respect and heartfelt gratitude to the pioneers and brilliant minds behind frameworks like **ESX**, **QBCore**, **Qbox**, and **Ox**. They laid the very foundation on which we all stand today, and they continue to do tireless, incredible work for the ecosystem. Likewise, my warmest thanks go out to every single **modder**, creator, and server administrator who dedicates their nights and weekends to making FiveM an ever-evolving, richer platform.*
 >
-> *The COE Framework is offered to the community with an open heart: 29 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
+> *The COE Framework is offered to the community with an open heart: 55 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
 >
 > — **Marcelo Matz**
 
@@ -71,7 +71,7 @@ New to setting up a **FiveM for GTAV Enhanced** server or migrating from older b
    https://www.coeroleplay.app/recipe.yaml
    ```
 5. Enter your **MariaDB** password and your Cfx.re license key ([Cfx.re Portal / Keymaster](https://portal.cfx.re/)).
-6. Click **Run Recipe**! txAdmin will handle everything automatically: downloading the default Cfx.re resources, pulling all **29 open-source COE Framework resources**, provisioning the database schema, and launching your server!
+6. Click **Run Recipe**! txAdmin will handle everything automatically: downloading the default Cfx.re resources, pulling all **55 open-source COE Framework resources**, provisioning the database schema, and launching your server!
 
 > [!TIP]
 > **Prefer manual installation or using the full developer workspace?**
@@ -184,7 +184,7 @@ flowchart TD
     subgraph Server["Server Authority (Server-Authoritative)"]
         Val["Session Validation, Cooldown & Security"]
         Platform["Isolation Layer Core.Platform (HAL)"]
-        Domain["Business Domain Logic (29 Resources)"]
+        Domain["Business Domain Logic (55 Resources)"]
         Locale["i18n Engine Core.Locale (_t)"]
     end
 
@@ -253,11 +253,31 @@ The [`@coe_core/lib/platform.lua`](https://docs.coeroleplay.app/#doc=PLATFORM_HA
 
 ---
 
+## 📦 Advanced Scripts (formerly the Tier 3 packs) — now open-source
+
+The full script suite that used to be sold separately (`coe-resources`) is now part of this repository under the same MIT license:
+
+| Group | Resources |
+|---|---|
+| COE OS Suite | `coe_phone`, `coe_tablet`, `coe_apps`, `coe_telecom`, `coe_mail`, `coe_elos`, `coe_news` |
+| Automotive | `coe_mechanic`, `coe_handling`, `coe_fuel`, `coe_garages` |
+| Cyber & Underworld | `coe_deepweb`, `coe_crypto`, `coe_loot`, `coe_amzg`, `coe_factions`, `coe_races` |
+| Public Safety | `coe_police`, `coe_ems`, `coe_dispatch`, `coe_mdt` |
+| Enterprise & Governance | `coe_banking`, `coe_housing`, `coe_doors`, `coe_crafting`, `coe_admin` |
+
+Five basic resources have an advanced replacement and are **left out of the official build and the txAdmin recipe**: `coe_mobile` → `coe_phone`, `coe_workpad` → `coe_tablet`, `coe_bank` → `coe_banking`, `coe_staff` → `coe_admin`, `coe_garage` → `coe_garages`. They stay in the repository for compatibility: a server that still runs a basic one just adds the advanced script, and `coe_supervisor` holds the basic back and the advanced one imports its data (see [`UPGRADES.md`](UPGRADES.md)).
+
+Third-party dependencies without a ready-made build (`screenshot-basic`, used by the camera in `coe_apps`) ship precompiled in [`[vendor]`]([vendor]/README.md), MIT-licensed by Cfx.re.
+
+The advanced scripts receive their framework capabilities through [`permissions.cfg`](permissions.cfg) (`exec permissions.cfg` in `server.cfg`, before the `ensure` lines). The recipe and the COE Build Manager build already do this.
+
+---
+
 ## 🛠️ For FiveM Community Developers: Building Custom Scripts
 
 The COE Framework is committed to empowering FiveM developers and modders. You never need to fork or hack the core framework to create custom jobs, businesses, missions, or minigames:
 
-- **100% MIT Open Source**: 29 standalone resources you can explore, extend, and deploy for free.
+- **100% MIT Open Source**: 55 standalone resources you can explore, extend, and deploy for free.
 - **Runtime Extension Points**: Register new corporate tablet tabs (`coe_businesses:RegisterTab`), payment providers (`coe_shops:RegisterPaymentMethod`), and custom items (`coe_inventory:RegisterItem`) without modifying framework files.
 - **FiveM ACE Security**: Grant fine-grained permissions via `add_ace resource.<name> coe.<capability> allow`.
 
@@ -271,7 +291,7 @@ The COE Framework is committed to empowering FiveM developers and modders. You n
 |---|---|
 | [`DEVELOPER_GUIDE.en-US.md`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.en-US.md) ([`pt-BR`](https://docs.coeroleplay.app/#doc=DEVELOPER_GUIDE.md)) | **Developer Guide**: Complete manual with practical examples for creating scripts on COE Core. |
 | [`ARCHITECTURE.en-US.md`](https://docs.coeroleplay.app/#doc=ARCHITECTURE.en-US.md) | **Technical Architecture**: Deep dive into the 8 layers, database lifecycles, and export contracts. |
-| [`PACKS.en-US.md`](https://docs.coeroleplay.app/#doc=PACKS.en-US.md) | **Open Modules**: Detailed catalog of the 29 open-source resources under MIT license. |
+| [`PACKS.en-US.md`](https://docs.coeroleplay.app/#doc=PACKS.en-US.md) | **Open Modules**: Detailed catalog of the 55 open-source resources under MIT license. |
 | [`LICENSING.en-US.md`](https://docs.coeroleplay.app/#doc=LICENSING.en-US.md) | **Governance & Licensing**: Open Core model (MIT on GitHub) and Contributor License Agreement guidelines. |
 | [`PLATFORM_HAL.en-US.md`](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.en-US.md) | **Platform HAL**: CFX native isolation, entity adapters, and test mock backend. |
 | [`I18N_LOCALIZATION.en-US.md`](https://docs.coeroleplay.app/#doc=I18N_LOCALIZATION.en-US.md) | **Internationalization**: `Core.Locale` guide, dictionary syntax, dynamic NUI translation, and CI linter. |

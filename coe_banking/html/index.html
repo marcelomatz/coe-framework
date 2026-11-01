@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/surfaces.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/apps.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="nui://coe_ui/html/perspective.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/prompt.css">
+	<script src="nui://coe_ui/html/prompt.js"></script>
+	<link rel="stylesheet" href="bank-ui.css">
+	<link rel="stylesheet" href="banking.css">
+</head>
+<body>
+	<!-- Agência e caixa eletrônico: mesmo painel; o modo (agency/atm) troca a classe e o layout. -->
+	<main id="panel" class="bank coe-panel coe-panel-enter" hidden aria-labelledby="title">
+		<header class="bank-head">
+			<div class="bank-brand">
+				<span class="bank-logo" aria-hidden="true">COE<small>BANK</small></span>
+				<div class="bank-title">
+					<p id="eyebrow" class="bank-eyebrow"></p>
+					<h1 id="title"></h1>
+					<p id="subtitle" class="bank-sub"></p>
+				</div>
+			</div>
+			<div class="bank-actions">
+				<button id="switch" class="coe-button" type="button" hidden>Trocar conta</button>
+				<button id="close" class="coe-button" type="button">Fechar <kbd>Esc</kbd></button>
+			</div>
+		</header>
+		<div class="bank-layout">
+			<aside class="bank-side">
+				<div id="summary" class="bank-summary"></div>
+				<nav id="tabs" class="bank-nav" aria-label="Seções"></nav>
+			</aside>
+			<section id="body" class="bank-body bank-ui"></section>
+		</div>
+	</main>
+	<script src="business.js"></script>
+	<script src="banking.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+body { margin: 0; background: transparent; color: var(--coe-text); font-family: var(--coe-font); }
+.cr-craft { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.35); z-index: 6; }
+.cr-craft[hidden] { display: none !important; }
+.cr-box { width: min(640px, 92vw); max-height: 82vh; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; padding: 16px 18px; box-sizing: border-box; }
+.cr-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cr-head strong { font-size: var(--coe-text-lg); }
+.cr-recipes { overflow-y: auto; display: grid; gap: 8px; align-content: start; padding-right: 4px; }
+.cr-recipe { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 9px 11px; border: 1px solid var(--coe-line); border-radius: 8px; background: rgba(var(--coe-panel-rgb), 0.5); }
+.cr-recipe.is-ready { border-color: var(--coe-line-strong); }
+.cr-recipe h4 { margin: 0 0 4px; font-size: var(--coe-text-md); }
+.cr-inputs { display: flex; flex-wrap: wrap; gap: 6px; }
+.cr-input { font-size: 11px; padding: 2px 7px; border-radius: 10px; border: 1px solid var(--coe-line); color: var(--coe-muted); font-variant-numeric: tabular-nums; }
+.cr-input.is-ok { color: var(--coe-text); border-color: var(--coe-accent); }
+.cr-input.is-missing { color: var(--coe-danger); border-color: var(--coe-danger); }
+.cr-output { font-size: 11px; color: var(--coe-muted); margin-top: 4px; }
+.cr-time { font-size: 11px; color: var(--coe-muted); margin-left: 8px; }
+.cr-progress { height: 6px; border-radius: 3px; background: rgba(var(--coe-accent-rgb), 0.15); overflow: hidden; }
+.cr-progress i { display: block; height: 100%; width: 100%; transform-origin: left center; transform: scaleX(0); background: var(--coe-accent); }
+.cr-progress.is-running i { transition: transform var(--cr-ms, 0ms) linear; transform: scaleX(1); }
+.cr-status { min-height: 16px; font-size: var(--coe-text-sm); color: var(--coe-muted); }
+.cr-status.is-error { color: var(--coe-danger); }

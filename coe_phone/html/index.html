@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>COE OS</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/apps.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<main id="phone" class="phone" aria-hidden="true">
+		<div class="phone-side phone-side--left">
+			<button id="phone-key-silent" class="phone-key phone-key--switch" type="button" title="Modo silencioso" data-i18n-title="phone.silent_title"></button>
+			<button id="phone-key-up" class="phone-key phone-key--volume" type="button" title="Aumentar volume" data-i18n-title="phone.vol_up_title"></button>
+			<button id="phone-key-down" class="phone-key phone-key--volume" type="button" title="Diminuir volume" data-i18n-title="phone.vol_down_title"></button>
+		</div>
+
+		<div class="phone-body">
+			<div id="phone-screen" class="phone-screen coe-panel">
+				<header class="phone-bar">
+					<span id="phone-signal" class="phone-signal" title="Sinal" data-i18n-title="phone.signal_title"></span>
+					<span id="phone-carrier" class="phone-carrier"></span>
+					<button id="phone-pill" class="phone-pill" type="button" hidden></button>
+					<span id="phone-indicators" class="phone-indicators"></span>
+				</header>
+				<section id="phone-home" class="phone-home" aria-label="Aplicativos" data-i18n-aria-label="phone.apps_aria">
+					<div class="phone-hero">
+						<strong id="phone-hero-clock"></strong>
+						<span id="phone-hero-date"></span>
+						<small id="phone-number"></small>
+					</div>
+					<div id="phone-pages" class="phone-pages">
+						<div id="phone-edge-left" class="phone-edge phone-edge--left"></div>
+						<div id="phone-track" class="phone-track"></div>
+						<div id="phone-edge-right" class="phone-edge phone-edge--right"></div>
+					</div>
+					<nav id="phone-dots" class="phone-dots" aria-label="Telas" data-i18n-aria-label="phone.screens_aria"></nav>
+					<div id="phone-edit" class="phone-edit" hidden></div>
+				</section>
+				<section id="phone-view" class="phone-view" hidden>
+					<header class="phone-view-head">
+						<button id="phone-back" class="phone-back" type="button" aria-label="Voltar" data-i18n-aria-label="phone.back_aria">‹</button>
+						<i id="phone-app-icon" class="phone-app-icon"></i>
+						<strong id="phone-app-title"></strong>
+					</header>
+					<div id="phone-app" class="phone-app"></div>
+				</section>
+				<footer id="phone-status" class="phone-status" role="status"></footer>
+				<nav id="phone-dock" class="phone-dock" aria-label="Favoritos" data-i18n-aria-label="phone.favorites_aria"></nav>
+				<div class="phone-home-bar"><button id="phone-home-button" type="button" aria-label="Início" data-i18n-aria-label="phone.home_aria"></button></div>
+
+				<section id="phone-lock" class="phone-lock" hidden>
+					<div class="phone-lock-time">
+						<strong id="phone-lock-clock"></strong>
+						<span id="phone-lock-date"></span>
+					</div>
+					<div id="phone-lock-body" class="phone-lock-body"></div>
+				</section>
+
+				<section id="phone-call" class="phone-call" hidden>
+					<div class="phone-call-who">
+						<i id="phone-call-avatar"></i>
+						<strong id="phone-call-name"></strong>
+						<span id="phone-call-number"></span>
+						<small id="phone-call-state"></small>
+					</div>
+					<div id="phone-call-actions" class="phone-call-actions"></div>
+				</section>
+
+				<div id="phone-hud" class="phone-hud" hidden></div>
+				<div id="phone-dim" class="phone-dim"></div>
+			</div>
+		</div>
+
+		<div class="phone-side phone-side--right">
+			<button id="phone-key-power" class="phone-key phone-key--power" type="button" title="Bloquear e guardar" data-i18n-title="phone.power_title"></button>
+		</div>
+	</main>
+
+	<aside id="phone-peek" class="phone-peek coe-panel" hidden>
+		<i></i>
+		<div><strong id="phone-peek-name"></strong><small id="phone-peek-state"></small></div>
+	</aside>
+	<script src="app.js"></script>
+	<script src="native.js"></script>
+	<script src="settings.js"></script>
+	<script src="gallery.js"></script>
+	<script src="wallet.js"></script>
+</body>
+</html>

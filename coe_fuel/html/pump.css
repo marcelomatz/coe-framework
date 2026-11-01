@@ -1,0 +1,139 @@
+/* Bomba de combustível (coe_fuel): frente de bomba com a cor da bandeira (--brand, --brand-accent, --brand-text),
+   visor de cristal líquido e botões de produto. Mostrador de abastecimento no canto da tela. */
+html, body { margin: 0; background: transparent; font-family: var(--coe-font, system-ui, sans-serif); color: #e9edf2; overflow: hidden; }
+* { box-sizing: border-box; }
+:root { --brand: #4a5360; --brand-accent: #c9ced6; --brand-text: #ffffff; --lcd-bg: #0b120c; --lcd: #ffc53d; --lcd-dim: rgba(255, 197, 61, 0.28); --body: #1c2129; --body-2: #262c35; --line: rgba(255, 255, 255, 0.10); }
+
+.fp-overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(4, 6, 9, 0.55); transition: opacity 0.2s ease; }
+.fp-overlay.is-hidden, .fp-overlay.is-suspended { opacity: 0; pointer-events: none; }
+
+.fp-dispenser { width: min(720px, 95vw); max-height: 92vh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: linear-gradient(180deg, var(--body-2), var(--body)); border-radius: 14px; overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--line); }
+
+/* Faixa da bandeira */
+.fp-band { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px 20px 18px; background: var(--brand); color: var(--brand-text); }
+.fp-band::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: var(--brand-accent); }
+.fp-brand { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.fp-brand strong { font-size: 30px; font-weight: 900; font-style: italic; letter-spacing: 0.02em; text-transform: uppercase; line-height: 1; }
+.fp-brand span { font-size: 13px; opacity: 0.85; }
+.fp-mode { padding: 4px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.22); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.fp-close { width: 34px; height: 34px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.25); color: var(--brand-text); font-size: 16px; cursor: pointer; }
+
+.fp-body { display: grid; gap: 14px; padding: 18px 20px; overflow-y: auto; }
+
+/* Visor */
+.fp-lcd { display: grid; gap: 4px; padding: 12px 16px; background: var(--lcd-bg); border-radius: 8px; box-shadow: inset 0 0 0 2px #000, inset 0 0 22px rgba(0, 0, 0, 0.8); font-family: ui-monospace, 'Consolas', 'Courier New', monospace; color: var(--lcd); }
+.fp-lcd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.fp-lcd-row span { font-size: 12px; letter-spacing: 0.18em; color: var(--lcd-dim); }
+.fp-lcd-row b { font-size: 30px; font-weight: 700; letter-spacing: 0.06em; text-shadow: 0 0 10px rgba(255, 197, 61, 0.45); font-variant-numeric: tabular-nums; }
+.fp-lcd-row--main b { font-size: 40px; }
+.fp-lcd-row--small b { font-size: 20px; }
+
+/* Destino */
+.fp-targets { display: flex; gap: 6px; padding: 4px; background: rgba(0, 0, 0, 0.25); border-radius: 10px; }
+.fp-target { flex: 1; display: grid; gap: 5px; padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: #aab2bd; font: inherit; text-align: left; cursor: pointer; }
+.fp-target strong { font-size: 13px; color: inherit; }
+.fp-target small { font-size: 11px; opacity: 0.8; }
+.fp-target.is-active { background: var(--body-2); color: #fff; box-shadow: inset 0 -3px 0 var(--brand); }
+.fp-target:disabled { opacity: 0.4; cursor: not-allowed; }
+.fp-gauge { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.fp-gauge i { display: block; height: 100%; background: var(--brand-accent); }
+
+/* Produtos */
+.fp-grades { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.fp-grade { display: grid; grid-template-rows: auto auto auto; gap: 8px; padding: 0 0 10px; border: 0; border-radius: 9px; background: #12161c; color: #fff; font: inherit; text-align: center; cursor: pointer; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.fp-grade-name { padding: 9px 6px; background: var(--fuel, #555); color: #111; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.fp-grade .fp-lcd { margin: 0 8px; padding: 6px 8px; }
+.fp-grade .fp-lcd b { font-size: 20px; }
+.fp-grade small { font-size: 11px; color: #8f98a4; min-height: 1.2em; }
+.fp-grade.is-active { box-shadow: inset 0 0 0 2px var(--fuel, #fff), 0 0 0 2px rgba(255, 255, 255, 0.06); transform: translateY(-2px); }
+.fp-grade:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+/* Litros e pagamento */
+.fp-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.fp-box { display: grid; align-content: start; gap: 8px; }
+.fp-label { margin: 0; color: #8f98a4; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+.fp-stepper { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 6px; }
+.fp-stepper button, .fp-presets button { height: 40px; border: 0; border-radius: 7px; background: #2f3640; color: #fff; font: inherit; font-size: 15px; cursor: pointer; }
+.fp-stepper output { display: grid; place-items: center; border-radius: 7px; background: #12161c; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fp-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.fp-presets button { height: 34px; font-size: 12px; }
+.fp-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.fp-method { display: grid; gap: 2px; padding: 8px 6px; border: 0; border-radius: 7px; background: #2f3640; color: #fff; font: inherit; text-align: center; cursor: pointer; }
+.fp-method strong { font-size: 12px; }
+.fp-method small { font-size: 10px; color: #aab2bd; }
+.fp-method.is-active { background: var(--brand); color: var(--brand-text); }
+.fp-method.is-active small { color: inherit; opacity: 0.85; }
+.fp-method:disabled { opacity: 0.4; cursor: not-allowed; }
+.fp-cards { display: flex; flex-wrap: wrap; gap: 6px; }
+.fp-card { padding: 5px 9px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: #cfd5dd; font: inherit; font-size: 12px; cursor: pointer; }
+.fp-card.is-active { border-color: var(--brand-accent); color: #fff; }
+.fp-start { width: 100%; height: 52px; border: 0; border-radius: 9px; background: var(--brand); color: var(--brand-text); font: inherit; font-size: 17px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.25); }
+.fp-start:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.fp-status { min-height: 32px; margin: 0; padding: 8px 20px; border-top: 1px solid var(--line); font-size: 13px; color: #aab2bd; }
+.fp-status.is-error { color: #ff7a7a; }
+.fp-status.is-success { color: #6fdc8c; }
+
+/* Senha */
+.fp-pin { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(6, 9, 8, 0.6); }
+.fp-pin-box { display: grid; gap: 12px; width: 280px; padding: 20px; border-radius: 12px; background: var(--body); box-shadow: inset 0 0 0 1px var(--line), 0 18px 40px rgba(0, 0, 0, 0.5); }
+.fp-pin-box h3 { margin: 0; font-size: 16px; }
+.fp-pin-box small { color: #aab2bd; }
+.fp-pin-dots { display: flex; justify-content: center; gap: 12px; height: 20px; }
+.fp-pin-dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #4b5563; }
+.fp-pin-dots i.is-on { background: var(--brand); border-color: var(--brand); }
+.fp-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.fp-keys button { height: 46px; border: 0; border-radius: 7px; background: #2f3640; color: #fff; font: inherit; font-size: 18px; cursor: pointer; }
+.fp-pin-msg { margin: 0; min-height: 18px; color: #ff7a7a; font-size: 12px; text-align: center; }
+.fp-pin-cancel { height: 38px; border: 0; border-radius: 7px; background: transparent; color: #aab2bd; font: inherit; cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); }
+
+/* Mostrador durante o abastecimento */
+.fp-meter { position: fixed; right: 3vw; bottom: 12vh; width: 280px; border-radius: 12px; overflow: hidden; background: var(--body); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5), inset 0 0 0 1px var(--line); transition: opacity 0.25s ease, transform 0.25s ease; }
+.fp-meter.is-hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
+.fp-meter-band { position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 10px 14px 13px; background: var(--brand); color: var(--brand-text); }
+.fp-meter-band::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--brand-accent); }
+.fp-meter-band strong { font-size: 17px; font-weight: 900; font-style: italic; text-transform: uppercase; }
+.fp-meter-band span { font-size: 12px; opacity: 0.85; }
+.fp-lcd--meter { margin: 10px 12px 0; }
+.fp-lcd--meter .fp-lcd-row--main b { font-size: 34px; }
+.fp-lcd--meter .fp-lcd-row b { font-size: 22px; }
+.fp-lcd--meter .fp-lcd-row--small b { font-size: 16px; }
+.fp-meter-foot { display: grid; gap: 6px; padding: 10px 12px 12px; font-size: 12px; color: #cfd5dd; }
+.fp-meter-bar { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.fp-meter-bar i { display: block; width: 0; height: 100%; background: var(--fuel, var(--brand-accent)); }
+.is-hidden-row { display: none !important; }
+
+/* Refinaria: carga da frota do posto */
+.rf-panel { width: min(760px, 95vw); max-height: 92vh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: linear-gradient(180deg, var(--body-2), var(--body)); border-radius: 14px; overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--line); }
+.rf-head { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px 20px 18px; background: repeating-linear-gradient(135deg, #2a2f36 0 14px, #252a30 14px 28px); }
+.rf-head::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: repeating-linear-gradient(90deg, #f2b705 0 18px, #1b1b1b 18px 36px); }
+.rf-title { flex: 1; display: grid; gap: 2px; }
+.rf-eyebrow { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #f2b705; }
+.rf-title strong { font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.02em; }
+.rf-title span:last-child { font-size: 13px; color: #aab2bd; }
+.rf-body { display: grid; gap: 14px; padding: 18px 20px; overflow-y: auto; }
+.rf-truck { display: grid; gap: 8px; padding: 12px 14px; border-radius: 10px; background: #12161c; box-shadow: inset 0 0 0 1px var(--line); }
+.rf-truck-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.rf-truck-head strong { font-size: 16px; }
+.rf-truck-head span { font-size: 13px; color: #aab2bd; font-variant-numeric: tabular-nums; }
+.rf-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: rgba(255, 255, 255, 0.08); }
+.rf-bar i { display: block; height: 100%; }
+.rf-bar i.is-new { opacity: 0.55; background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.25) 0 6px, transparent 6px 12px); }
+.rf-rows { display: grid; gap: 8px; }
+.rf-row { display: grid; grid-template-columns: 6px minmax(0, 1fr) 96px 150px; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 9px; background: #1a1f26; box-shadow: inset 0 0 0 1px var(--line); }
+.rf-swatch { align-self: stretch; border-radius: 3px; background: var(--fuel, #888); }
+.rf-name { display: grid; gap: 2px; min-width: 0; }
+.rf-name strong { font-size: 14px; }
+.rf-name small { font-size: 11px; color: #8f98a4; }
+.rf-price { font-family: ui-monospace, 'Consolas', monospace; color: var(--lcd); font-size: 15px; text-align: right; }
+.rf-qty { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px; gap: 4px; }
+.rf-qty button { height: 32px; border: 0; border-radius: 6px; background: #2f3640; color: #fff; font: inherit; cursor: pointer; }
+.rf-qty input { width: 100%; min-width: 0; height: 32px; border: 0; border-radius: 6px; background: #0d1117; color: #fff; font: inherit; font-size: 14px; text-align: center; font-variant-numeric: tabular-nums; }
+.rf-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.rf-kpi { display: grid; gap: 2px; padding: 10px 12px; border-radius: 9px; background: #12161c; box-shadow: inset 0 0 0 1px var(--line); }
+.rf-kpi small { font-size: 11px; color: #8f98a4; letter-spacing: 0.08em; text-transform: uppercase; }
+.rf-kpi strong { font-size: 19px; font-variant-numeric: tabular-nums; }
+.rf-kpi.is-warn strong { color: #ff7a7a; }
+.rf-start { width: 100%; height: 50px; border: 0; border-radius: 9px; background: #f2b705; color: #1b1b1b; font: inherit; font-size: 16px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.2); }
+.rf-start:disabled { opacity: 0.45; cursor: not-allowed; }
+.rf-fill { height: 38px; border: 1px dashed rgba(242, 183, 5, 0.6); border-radius: 8px; background: transparent; color: #f2b705; font: inherit; font-size: 13px; cursor: pointer; }

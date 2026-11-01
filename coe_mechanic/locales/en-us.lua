@@ -1,0 +1,30 @@
+Locales = (type(Locales) == 'table' and Locales) or {}
+
+Locales['en-US'] = {
+	quote_received = 'Your quote has arrived. Open the showroom to approve it.',
+	quote_requested = 'New quote requested: %{plate}.',
+	quote_approved = 'Quote for %{plate} approved. You may perform the service.',
+	bench_label = 'Workbench · %{shop}',
+	stash_label = '%{station} · %{shop}',
+	err_not_staff = 'Only shop staff can use this.',
+	err_too_far = 'Move closer.',
+	err_missing_items = 'Missing materials.',
+	err_craft_busy = 'You are already crafting something.',
+	err_inventory_full = 'No space in inventory.',
+	err_craft_interrupted = 'Crafting interrupted.',
+	err_container_limit = 'Close a stash before opening another.',
+	err_inventory_unavailable = 'Inventory unavailable.',
+	err_not_ready = 'Service still initializing.',
+	err_no_station = 'Station not found.',
+	generic_error = 'Could not complete the action.',
+	plate_required = 'Plate is required.',
+	vehicle_not_found = 'Vehicle not found.',
+	inspection_failed = 'Inspection failed.',
+	inspection_printed = 'Inspection for %{plate} printed to server console.',
+	service_completed = 'Service completed.',
+	mileage_adjusted = 'Mileage for %{plate} adjusted.',
+	invalid_args = 'Invalid arguments.',
+	appearance_updated = 'Appearance updated.',
+	quote_total = 'Quote: %{total}',
+	action_failed = 'Failed: %{error}'
+}

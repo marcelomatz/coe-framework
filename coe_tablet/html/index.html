@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>COE OS</title>
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/panel.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/apps.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<!-- Mesmo aparelho de vidro do smartphone (coe_phone), em paisagem; a tela segue o notebook (coe_deepweb). -->
+	<main id="tablet" class="tablet" aria-hidden="true">
+		<div class="tablet-keys tablet-keys--top">
+			<button id="tablet-key-power" class="tablet-key tablet-key--power" type="button" title="Guardar o tablet" data-i18n-title="tablet.power_title"></button>
+			<button id="tablet-key-up" class="tablet-key tablet-key--volume" type="button" title="Mais brilho" data-i18n-title="tablet.brighter_title"></button>
+			<button id="tablet-key-down" class="tablet-key tablet-key--volume" type="button" title="Menos brilho" data-i18n-title="tablet.dimmer_title"></button>
+		</div>
+		<div class="tablet-body">
+			<div id="tablet-screen" class="tablet-screen coe-panel" data-wallpaper="padrao">
+				<header class="tablet-bar">
+					<span class="tablet-brand"><i></i><strong data-server-name>COE</strong><span>OS</span></span>
+					<span id="tablet-profile" class="tablet-profile"></span>
+					<span id="tablet-clock" class="tablet-clock"></span>
+					<span class="tablet-indicators" aria-hidden="true">
+						<i title="Wi-Fi"><svg viewBox="0 0 24 24"><path d="M2.5 9a14 14 0 0 1 19 0"/><path d="M5.5 12.5a9.5 9.5 0 0 1 13 0"/><path d="M8.7 16a5 5 0 0 1 6.6 0"/><circle cx="12" cy="19.2" r=".9"/></svg></i>
+						<i title="Bateria"><svg viewBox="0 0 24 24"><rect x="2.5" y="7" width="17" height="10" rx="1.5"/><path d="M21.5 10.5v3"/><rect class="tablet-battery" x="4.5" y="9" width="11" height="6"/></svg></i>
+					</span>
+					<button id="tablet-close" class="tablet-bar-button" type="button" title="Guardar o tablet (Esc)" aria-label="Guardar o tablet" data-i18n-title="tablet.close_title" data-i18n-aria-label="tablet.close_aria">
+						<svg viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>
+					</button>
+					<button id="tablet-control-toggle" class="tablet-bar-button" type="button" title="Central de controle" aria-label="Central de controle" data-i18n-title="tablet.control_title" data-i18n-aria-label="tablet.control_aria">
+						<svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+					</button>
+				</header>
+
+				<section id="tablet-home" class="tablet-home" aria-label="Início" data-i18n-aria-label="tablet.home_aria">
+					<aside class="tablet-widgets">
+						<div class="tablet-widget tablet-widget--clock">
+							<strong id="tablet-hero-clock"></strong>
+							<span id="tablet-hero-date"></span>
+						</div>
+						<div class="tablet-widget tablet-widget--stats">
+							<div><small data-i18n="tablet.apps">Aplicativos</small><strong id="tablet-count">0</strong></div>
+							<div><small data-i18n="tablet.opened">Abertos</small><strong id="tablet-open-count">0</strong></div>
+						</div>
+						<div class="tablet-widget tablet-widget--recent">
+							<small data-i18n="tablet.recent">Recentes</small>
+							<div id="tablet-recent" class="tablet-recent-list"></div>
+						</div>
+					</aside>
+					<div class="tablet-launcher">
+						<label class="tablet-search">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>
+							<input id="tablet-search" class="coe-field" type="search" placeholder="Buscar aplicativo" autocomplete="off" data-i18n-placeholder="tablet.search_placeholder">
+						</label>
+						<div id="tablet-grid" class="tablet-sections"></div>
+					</div>
+				</section>
+
+				<section id="tablet-view" class="tablet-view" hidden>
+					<header class="tablet-view-head">
+						<button id="tablet-back" class="tablet-back" type="button" aria-label="Início" data-i18n-aria-label="tablet.back_aria">‹</button>
+						<i id="tablet-app-icon" class="tablet-app-icon"></i>
+						<div class="tablet-app-heading"><strong id="tablet-app-title"></strong><small id="tablet-app-kind"></small></div>
+						<button id="tablet-app-close" class="tablet-view-close" type="button" title="Fechar o aplicativo" aria-label="Fechar o aplicativo" data-i18n-title="tablet.app_close_title" data-i18n-aria-label="tablet.app_close_aria">✕</button>
+					</header>
+					<div id="tablet-apps" class="tablet-apps"></div>
+				</section>
+
+				<section id="tablet-switcher" class="tablet-switcher" hidden aria-label="Aplicativos abertos" data-i18n-aria-label="tablet.switcher_aria">
+					<header><strong data-i18n="tablet.opened_apps">Aplicativos abertos</strong><button id="tablet-switcher-clear" class="coe-button" type="button" data-i18n="tablet.close_all">Fechar todos</button></header>
+					<div id="tablet-cards" class="tablet-cards"></div>
+				</section>
+
+				<section id="tablet-control" class="tablet-control coe-panel" hidden aria-label="Central de controle" data-i18n-aria-label="tablet.control_aria">
+					<div class="tablet-control-row">
+						<label for="tablet-brightness" data-i18n="tablet.brightness">Brilho</label>
+						<input id="tablet-brightness" type="range" min="30" max="100" step="5">
+					</div>
+					<div class="tablet-control-row">
+						<span data-i18n="tablet.scale">Tamanho</span>
+						<div id="tablet-scales" class="tablet-segment" role="group"></div>
+					</div>
+					<div class="tablet-control-row tablet-control-row--wide">
+						<span data-i18n="tablet.wallpaper">Papel de parede</span>
+						<div id="tablet-walls" class="tablet-walls"></div>
+					</div>
+					<div class="tablet-control-row tablet-control-row--wide">
+						<span data-i18n="tablet.dock">Dock</span>
+						<small class="tb-muted" data-i18n="tablet.dock_hint">Clique com o botão direito num ícone para fixar ou tirar da dock.</small>
+					</div>
+				</section>
+
+				<footer id="tablet-status" class="tablet-status" role="status"></footer>
+				<nav id="tablet-dock" class="tablet-dock" aria-label="Dock" data-i18n-aria-label="tablet.dock_aria">
+					<div id="tablet-dock-apps" class="tablet-dock-apps"></div>
+					<span class="tablet-dock-sep"></span>
+					<button id="tablet-switcher-button" class="tablet-dock-tool" type="button" title="Aplicativos abertos" aria-label="Aplicativos abertos" data-i18n-title="tablet.opened_apps" data-i18n-aria-label="tablet.switcher_aria">
+						<svg viewBox="0 0 24 24"><rect x="3" y="5" width="12" height="14"/><path d="M18 7v10M21 9v6"/></svg>
+						<b id="tablet-switcher-badge" hidden></b>
+					</button>
+				</nav>
+				<div class="tablet-home-bar"><button id="tablet-home-button" type="button" aria-label="Início"></button></div>
+				<div id="tablet-dim" class="tablet-dim"></div>
+			</div>
+		</div>
+	</main>
+	<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+/* Carteira cripto (coe_crypto). Usa os tokens do coe_ui e as classes tb-* dos apps do COE OS. */
+.cr-app { display: grid; gap: var(--coe-space-4); align-content: start; }
+.cr-app .coe-field { box-sizing: border-box; }
+.cr-app.cr-busy { cursor: progress; }
+.cr-app.cr-busy .coe-button { pointer-events: none; opacity: 0.6; }
+.cr-body { display: grid; gap: var(--coe-space-4); }
+.cr-field { display: grid; gap: 4px; }
+.cr-form { max-width: 560px; }
+.cr-mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+.cr-secret { display: grid; gap: var(--coe-space-2); padding: var(--coe-space-3); background: rgba(230, 182, 92, 0.08); box-shadow: inset 2px 0 var(--coe-warning); }
+.cr-secret code { font-size: var(--coe-text-md); color: var(--coe-warning); user-select: all; }
+.cr-chart { width: 100%; height: 80px; display: block; }
+.cr-chart polyline { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.cr-chart polyline.is-up { stroke: var(--coe-success); }
+.cr-chart polyline.is-down { stroke: var(--coe-danger); }
+.cr-tx { align-items: center; }

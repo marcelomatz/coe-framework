@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="nui://coe_ui/html/tokens.css">
+	<link rel="stylesheet" href="nui://coe_ui/html/components.css">
+	<script src="nui://coe_ui/html/components.js"></script>
+	<link rel="stylesheet" href="pump.css">
+	<title>Bomba</title>
+</head>
+<body>
+	<div id="pump" class="fp-overlay is-hidden" aria-hidden="true">
+		<section class="fp-dispenser" role="dialog" aria-modal="true" aria-labelledby="fp-brand">
+			<header class="fp-band">
+				<div class="fp-brand">
+					<strong id="fp-brand"></strong>
+					<span id="fp-station"></span>
+				</div>
+				<span id="fp-mode" class="fp-mode"></span>
+				<button id="fp-close" class="fp-close" type="button" aria-label="Fechar">✕</button>
+			</header>
+			<div id="fp-body" class="fp-body"></div>
+			<p id="fp-status" class="fp-status" role="status"></p>
+		</section>
+	</div>
+	<div id="meter" class="fp-meter is-hidden" aria-live="polite">
+		<div class="fp-meter-band"><strong id="mt-brand"></strong><span id="mt-title"></span></div>
+		<div class="fp-lcd fp-lcd--meter">
+			<div class="fp-lcd-row fp-lcd-row--main"><span>LITROS</span><b id="mt-liters">0,00</b></div>
+			<div id="mt-total-row" class="fp-lcd-row"><span>TOTAL $</span><b id="mt-total">0,00</b></div>
+			<div id="mt-price-row" class="fp-lcd-row fp-lcd-row--small"><span>PREÇO/L</span><b id="mt-price">0,00</b></div>
+		</div>
+		<div class="fp-meter-foot"><span id="mt-fuel"></span><div class="fp-meter-bar"><i id="mt-bar"></i></div></div>
+	</div>
+	<div id="refinery" class="fp-overlay is-hidden" aria-hidden="true">
+		<section class="rf-panel" role="dialog" aria-modal="true" aria-labelledby="rf-title">
+			<header class="rf-head">
+				<div class="rf-title">
+					<span class="rf-eyebrow">Refinaria</span>
+					<strong id="rf-title"></strong>
+					<span id="rf-sub"></span>
+				</div>
+				<button id="rf-close" class="fp-close" type="button" aria-label="Fechar">✕</button>
+			</header>
+			<div id="rf-body" class="rf-body"></div>
+			<p id="rf-status" class="fp-status" role="status"></p>
+		</section>
+	</div>
+	<script src="pump.js"></script>
+	<script src="refinery.js"></script>
+</body>
+</html>
