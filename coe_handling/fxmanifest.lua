@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_handling'
-version '0.1.0-beta.15'
+version '0.1.0-beta.16'
 description 'Handling estilo simulador por classe/categoria, com impacto do tipo e desgaste dos pneus'
 
 -- Reinício pelo coe_supervisor (categoria no painel).

@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_fuel'
-version '0.1.0-beta.15'
+version '0.1.0-beta.16'
 description 'Combustível do Coe: consumo nos veículos (comum, aditivada, etanol e diesel), postos com bandeira, bombas e galão'
 
 -- Reinício pelo coe_supervisor (categoria no painel).

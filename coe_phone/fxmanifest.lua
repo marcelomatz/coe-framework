@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_phone'
-version '0.1.0-beta.15'
+version '0.1.0-beta.16'
 description 'Smartphone do COE OS: Telefone, Contatos, Mensagens e os apps da loja (coe_apps)'
 
 -- Assume o telefone básico do framework: o coe_supervisor não inicia o coe_mobile enquanto este resource roda.
