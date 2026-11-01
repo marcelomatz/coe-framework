@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_dispatch'
-version '0.1.0'
+version '0.1.0-beta.15'
 description 'Despacho de chamados e alertas para polícia e EMS, usado por heists e demais resources. Recebe quem está de ponto em negócio da categoria'
 
 dependencies {

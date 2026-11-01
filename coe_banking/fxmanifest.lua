@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_banking'
-version '0.1.0'
+version '0.1.0-beta.15'
 description 'Sistema bancário: agências, caixas eletrônicos, dinheiro em espécie, cartões com senha e contas de negócio'
 
 -- Assume o banco básico do framework: o coe_supervisor não inicia o coe_bank enquanto este resource roda.
