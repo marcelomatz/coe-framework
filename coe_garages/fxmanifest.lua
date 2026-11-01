@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_garages'
-version '0.1.0-beta.15'
+version '0.1.0-beta.16'
 description 'Garagens: veículos do jogador por vaga e frota dos negócios, com acesso definido pelo dono'
 
 -- Reinício pelo coe_supervisor (categoria no painel).

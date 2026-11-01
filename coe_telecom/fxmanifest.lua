@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_telecom'
-version '0.1.0-beta.15'
+version '0.1.0-beta.16'
 description 'Operadora do COE OS: linhas pré-pago e pós-pago, tarifação de voz, vídeo e SMS e o app Minha linha'
 
 dependencies {

@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_crypto'
-version '0.1.0-beta.15'
+version '0.1.0-beta.16'
 description 'Criptomoeda do jogo: carteiras com chave, rede pública, corretora com cotação flutuante e mineração'
 
 -- Reinício pelo coe_supervisor (categoria no painel).

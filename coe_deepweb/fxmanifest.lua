@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_deepweb'
-version '0.1.0-beta.15'
+version '0.1.0-beta.16'
 description 'DeepWeb: navegador onion por nível de equipamento, identidade anônima, DuckDark, Rabbit, Deep Market, computadores e mineração'
 
 -- Reinício pelo coe_supervisor (categoria no painel).
