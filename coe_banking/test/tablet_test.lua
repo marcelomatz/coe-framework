@@ -68,9 +68,11 @@ local deps = {
 	end
 }
 
--- Caller restrito ao coe_tablet e appId
+-- Caller restrito aos aparelhos (coe_tablet e coe_phone) e appId
+callerName = 'coe_inventory'
+eq(BankingTablet.Call(deps, 1, 'bank', 'overview').error, 'forbidden', 'caller fora dos aparelhos')
 callerName = 'coe_phone'
-eq(BankingTablet.Call(deps, 1, 'bank', 'overview').error, 'forbidden', 'caller fora do coe_tablet')
+eq(BankingTablet.Call(deps, 1, 'bank', 'overview').error ~= 'forbidden', true, 'smartphone aceito')
 callerName = 'coe_tablet'
 eq(BankingTablet.Call(deps, 1, 'vehicles', 'overview').error, 'forbidden', 'appId errado')
 

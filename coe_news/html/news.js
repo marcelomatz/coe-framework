@@ -32,7 +32,7 @@
 		insufficient_funds: 'Saldo insuficiente.', payment_failed: 'Pagamento recusado.', refund_failed: 'Não foi possível devolver o valor. Tente de novo.',
 		ad_pending_limit: 'Você já tem anúncios demais aguardando aprovação.', ad_decided: 'Esse anúncio já foi decidido.',
 		ad_slots_full: 'Não há espaço para mais anúncios no ar.', upload_failed: 'Falha ao enviar a foto.',
-		photo_expired: 'A foto expirou. Tire de novo.', invalid_photo: 'Foto inválida.', camera_unavailable: 'Câmera indisponível.'
+		photo_expired: 'A foto expirou. Tire de novo.', invalid_photo: 'Foto inválida.', camera_unavailable: 'Câmera indisponível.', camera_timeout: 'A câmera não respondeu. Tente de novo.', camera_empty: 'A câmera não gerou a foto.'
 	};
 
 	function el(tag, className, text) {

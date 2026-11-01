@@ -299,6 +299,19 @@ Chamado só pelo coe_tablet. Toda ação devolve o extrato atualizado em `bank`.
 
 - `any`
 
+### `TabletVisible(playerId, appId)`
+
+App Banco visível no aparelho: só para o coe_tablet e o coe_phone, com o banco pronto.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `playerId` | `integer` |  |
+| `appId` | `string` | `bank` |
+
+**Retorno**
+
+- `boolean` `visible`
+
 ### `WalletCards(cardIds)`
 
 Situação atual dos cartões de uma carteira (até 10 ids): { ok, cards = { [id] = view } }; cartão inexistente fica de fora.

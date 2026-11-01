@@ -1,5 +1,5 @@
 const shell = document.getElementById('admin-shell');
-const views = ['overview', 'players', 'items', 'staff', 'groups', 'businesses', 'housing', 'garages', 'doors', 'amzg', 'news', 'banking', 'crypto', 'deepweb', 'framework', 'appearance'];
+const views = ['overview', 'players', 'items', 'staff', 'groups', 'businesses', 'housing', 'garages', 'rentals', 'doors', 'amzg', 'news', 'banking', 'crypto', 'deepweb', 'framework', 'appearance'];
 const state = {
 	fac: { draft: null, isNew: false, section: 'general', members: { id: null, list: null, error: null, requestId: null } },
 	biz: { category: null, section: 'general', draft: null, isNew: false, pendingCapture: null, mode: null },
@@ -77,7 +77,7 @@ function setView(viewName) {
 	if (viewName === 'items' && !permissions.giveItems) return;
 	if (viewName === 'staff' && !permissions.manageStaff) return;
 	if (viewName === 'groups' && !permissions.manageGroups) return;
-	if ((viewName === 'businesses' || viewName === 'garages' || viewName === 'housing' || viewName === 'doors' || viewName === 'amzg') && !permissions.manageBusinesses) return;
+	if ((viewName === 'businesses' || viewName === 'garages' || viewName === 'housing' || viewName === 'rentals' || viewName === 'doors' || viewName === 'amzg') && !permissions.manageBusinesses) return;
 	if (viewName === 'banking' && !permissions.manageBanking) return;
 	if (viewName === 'crypto' && !permissions.manageCrypto) return;
 	if (viewName === 'news' && !permissions.manageNews) return;
@@ -99,6 +99,7 @@ function setView(viewName) {
 		groups: 'Grupos',
 		businesses: 'Negócios',
 		garages: 'Garagens',
+		rentals: 'Aluguel',
 		housing: 'Imóveis',
 		doors: 'Portas',
 		amzg: 'Amzg',

@@ -7,7 +7,7 @@ function TabletProfile.IsValidScript(path)
 	return type(path) == 'string' and #path <= 96 and path:match(SCRIPT_PATTERN) ~= nil
 end
 
-local function appVisible(app, jobGroup, dutyCategory, hasItem, canSee)
+local function appVisible(id, app, jobGroup, dutyCategory, hasItem, canSee)
 	if app.item and not (type(hasItem) == 'function' and hasItem(app.item) == true) then
 		return false
 	end
@@ -16,7 +16,7 @@ local function appVisible(app, jobGroup, dutyCategory, hasItem, canSee)
 	end
 	-- `ownerCheck`: o resource do app decide (ex.: Casa só para quem é dono de um local).
 	if app.ownerCheck == true then
-		return type(canSee) == 'function' and canSee(app) == true
+		return type(canSee) == 'function' and canSee(app, id) == true
 	end
 	if app.anyDuty == true and dutyCategory then
 		return true
@@ -32,7 +32,7 @@ end
 
 -- groups: { [tipo] = { name, grade } } (coe_core). dutyCategory: categoria do negócio em que o jogador
 -- está de ponto (ex.: police) ou nil. hasItem(nome) -> bool diz se o jogador tem o item exigido por apps com `item`.
--- canSee(app) -> bool responde pelos apps com `ownerCheck`.
+-- canSee(app, id) -> bool responde pelos apps com `ownerCheck` (id: a chave do app em config.Apps).
 -- instancesOf(app) -> { id, label }[] responde pelos apps com `instances` (ex.: um app por negócio do jogador);
 -- cada instância vira um app `<app>:<instância>`, mesmo para administradores (só as do próprio personagem).
 -- Retorna o perfil do jogador ou nil + código.
@@ -40,7 +40,7 @@ function TabletProfile.Resolve(config, groups, isAdmin, dutyCategory, hasItem, c
 	local jobGroup = type(groups) == 'table' and groups.job or nil
 	local ids = {}
 	for id, app in pairs(config.Apps) do
-		if TabletProfile.IsValidScript(app.script) and (app.instances == true or isAdmin or appVisible(app, jobGroup, dutyCategory, hasItem, canSee)) then
+		if TabletProfile.IsValidScript(app.script) and (app.instances == true or isAdmin or appVisible(id, app, jobGroup, dutyCategory, hasItem, canSee)) then
 			ids[#ids + 1] = id
 		end
 	end

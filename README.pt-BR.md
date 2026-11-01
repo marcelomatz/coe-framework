@@ -375,7 +375,7 @@ Cinco resources básicos têm substituto avançado e **ficam fora do build ofici
 
 Dependências de terceiros sem build pronto (`screenshot-basic`, usado pela câmera do `coe_apps`) vêm pré-compiladas em [`[vendor]`]([vendor]/README.md), sob a licença MIT da Cfx.re.
 
-Os scripts avançados recebem as capacidades do framework pelo [`permissions.cfg`](permissions.cfg) (`exec permissions.cfg` no `server.cfg`, antes dos `ensure`). A recipe e o build do COE Build Manager já fazem isso.
+Os scripts avançados são do próprio framework: recebem as capacidades por padrão (`CoeAccess.FirstParty` em `coe_core/lib/access.lua`), sem nada no `server.cfg`. Só scripts de terceiros precisam de ACE (ver [`permissions.cfg`](permissions.cfg)).
 
 ---
 

@@ -75,7 +75,7 @@ pista e o risco de a polícia aparecer (`coe_dispatch`).
 - `coe_tablet`: app `races` (grupo `illegal`, `item = 'race_tablet'`), chamando `TabletCall`.
 - `coe_phone`: a chave das carteiras do celular vem de `ActiveDevice` (`phone:<serial>`).
 - Item `race_tablet` no `coe_inventory` do framework.
-- ACEs em `permissions.cfg`: `coe.database`, `coe.audit`, `coe.logging`, `coe.notify`. Staff:
+- Capacidades concedidas pelo framework (`CoeAccess.FirstParty`): `coe.database`, `coe.audit`, `coe.logging`, `coe.notify`. Staff:
   `add_ace group.admin coe_races.admin allow`.
 
 ## Testes

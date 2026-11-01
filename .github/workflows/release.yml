@@ -144,7 +144,6 @@ jobs:
           Copy-Item -Path "version.json" -Destination (Join-Path $stageRoot "version.json") -Force
           if (Test-Path "version.json.sig") { Copy-Item -Path "version.json.sig" -Destination (Join-Path $stageRoot "version.json.sig") -Force }
           Copy-Item -Path "recipe.yaml" -Destination (Join-Path $stageRoot "recipe.yaml") -Force
-          Copy-Item -Path "permissions.cfg" -Destination (Join-Path $stageRoot "permissions.cfg") -Force
 
           $zipPath = Join-Path $PWD "coe-framework-dist.zip"
           if (Test-Path $zipPath) { Remove-Item -Force $zipPath }
@@ -165,7 +164,7 @@ jobs:
             "### Como instalar ou atualizar",
             "- **Em um servidor já instalado:** abra o painel **F10** (`coe_admin`) e clique em **Atualizar scripts agora**, ou execute `coe_update apply` no console do FXServer.",
             "- **Nova instalação via txAdmin Recipe:** utilize a URL do `recipe.yaml` deste repositório.",
-            "- **Instalação manual:** baixe o `coe-framework-dist.zip` abaixo, extraia em `resources/` e inclua o `permissions.cfg` no `server.cfg` (antes dos `ensure`)."
+            "- **Instalação manual:** baixe o `coe-framework-dist.zip` abaixo e extraia em `resources/`."
           ) | Set-Content -Path $notesFile -Encoding UTF8
 
       - name: Publish GitHub Release

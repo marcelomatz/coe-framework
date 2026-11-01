@@ -2,7 +2,7 @@
 
 Sistema bancário sobre o `coe_economy`: agências, caixas eletrônicos, dinheiro em espécie, cartões com senha e contas empresariais.
 
-Substitui o banco básico do framework (`coe_bank`): ao iniciar, e sempre que o `coe_bank` reinicia, chama o export `Yield` (ACE `coe.bank.yield` no `permissions.cfg`). O básico esconde as próprias agências, caixas e blips até o `coe_banking` parar. As agências e os motivos de extrato (`bank_withdraw`, `bank_deposit`, `bank_transfer`, `bank_refund`) são os mesmos, então o histórico do jogador continua coerente.
+Substitui o banco básico do framework (`coe_bank`): ao iniciar, e sempre que o `coe_bank` reinicia, chama o export `Yield` (ACE `coe.bank.yield`, concedida pelo framework em `CoeAccess.FirstParty`). O básico esconde as próprias agências, caixas e blips até o `coe_banking` parar. As agências e os motivos de extrato (`bank_withdraw`, `bank_deposit`, `bank_transfer`, `bank_refund`) são os mesmos, então o histórico do jogador continua coerente.
 
 - **Conta**: o saldo é o do `coe_economy` (um por personagem). **Espécie** é o item `money` do inventário.
 - **Agência** (balcão com prompt "E", blip "Banco"): saldo, saque e depósito em espécie, transferência por identidade (state ID, também para quem está offline), extrato e cartões. Quem é dono, equipe ou sócio de um negócio escolhe ao abrir: conta pessoal ou a conta de uma das empresas.

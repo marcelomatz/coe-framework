@@ -269,7 +269,7 @@ Five basic resources have an advanced replacement and are **left out of the offi
 
 Third-party dependencies without a ready-made build (`screenshot-basic`, used by the camera in `coe_apps`) ship precompiled in [`[vendor]`]([vendor]/README.md), MIT-licensed by Cfx.re.
 
-The advanced scripts receive their framework capabilities through [`permissions.cfg`](permissions.cfg) (`exec permissions.cfg` in `server.cfg`, before the `ensure` lines). The recipe and the COE Build Manager build already do this.
+The advanced scripts are first-party: they get their framework capabilities by default (`CoeAccess.FirstParty` in `coe_core/lib/access.lua`), with nothing to add to `server.cfg`. Only third-party scripts need ACEs (see [`permissions.cfg`](permissions.cfg)).
 
 ---
 
