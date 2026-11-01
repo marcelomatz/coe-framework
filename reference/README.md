@@ -4,6 +4,7 @@
 
 | Resource | Exports |
 |---|---|
+| [coe_admin](coe_admin.md) |  |
 | [coe_amzg](coe_amzg.md) | `AdminCatalog`, `AdminDeleteProduct`, `AdminSaveProduct`, `TabletCall`, `TabletVisible` |
 | [coe_appearance](coe_appearance.md) | `OpenCreator`, `CloseCreator`, `CreatorError`, `IsCreatorOpen`, `Apply`, `ApplyToPlayer`, `CreatePed`, `Normalize`, `Default`, `Version` |
 | [coe_apps](coe_apps.md) | `ClaimPhoto`, `DeletePhoto`, `HasApp`, `PhotoData`, `StorePhoto`, `TabletCall`, `TabletVisible`, `TakePhoto` |
