@@ -146,6 +146,12 @@ function exports_coe_banking:ShopRefund(_, ref, amount, description) end
 ---@return any
 function exports_coe_banking:TabletCall(playerId, appId, action, payload) end
 
+---App Banco visível no aparelho: só para o coe_tablet e o coe_phone, com o banco pronto.
+---@param playerId integer
+---@param appId string `bank`
+---@return boolean visible
+function exports_coe_banking:TabletVisible(playerId, appId) end
+
 ---Situação atual dos cartões de uma carteira (até 10 ids): { ok, cards = { [id] = view } }; cartão inexistente fica de fora.
 ---@param cardIds any
 ---@return any

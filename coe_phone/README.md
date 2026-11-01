@@ -14,7 +14,7 @@ Smartphone do COE OS. Abre no **F1** (ou `/celular`), ou usando o item **Celular
 
 O tablet (`coe_tablet`, F3) e o smartphone compartilham a loja e os componentes visuais (`nui://coe_ui/html/apps.css`).
 
-Substitui o telefone básico do framework (`coe_mobile`): ao iniciar, e sempre que o `coe_mobile` reinicia, chama o export `Yield` (ACE `coe.mobile.yield` no `permissions.cfg`). O básico encerra as ligações dele, fecha a tela e deixa de abrir (tecla, comando e item `phone`) até o `coe_phone` parar. Os dois usam o item `phone` e o F1; com o `coe_phone` no ar, só ele responde. Números, contatos e mensagens do básico ficam nas tabelas `coe_mobile_*` e não são importados: aqui o número é o do chip.
+Substitui o telefone básico do framework (`coe_mobile`): ao iniciar, e sempre que o `coe_mobile` reinicia, chama o export `Yield` (ACE `coe.mobile.yield`, concedida pelo framework em `CoeAccess.FirstParty`). O básico encerra as ligações dele, fecha a tela e deixa de abrir (tecla, comando e item `phone`) até o `coe_phone` parar. Os dois usam o item `phone` e o F1; com o `coe_phone` no ar, só ele responde. Números, contatos e mensagens do básico ficam nas tabelas `coe_mobile_*` e não são importados: aqui o número é o do chip.
 
 ## Tecla
 

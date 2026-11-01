@@ -9,3 +9,4 @@ própria (`[vendor]`) para não se misturarem aos resources do framework: o FXSe
 | `screenshot-basic` | [citizenfx/screenshot-basic](https://github.com/citizenfx/screenshot-basic), build pré-compilado (`dist/`) | MIT (Cfx.re) | `coe_apps` (câmera e galeria) |
 
 Atualizar: compile o repositório oficial (`yarn && yarn build`) e substitua `dist/`, anotando o commit no `fxmanifest.lua`.
+Reaplique o patch do `screenshot-basic`: em `dist/client.js`, o `screenshot_created` usa `https://${GetCurrentResourceName()}/...` (o original usa `http://`).

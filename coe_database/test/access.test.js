@@ -13,8 +13,9 @@ test('defaults only list framework resources', () => {
 	for (const name of DEFAULT_CALLERS) {
 		assert.match(name, /^coe_/)
 	}
-	assert.equal(DEFAULT_CALLERS.includes('coe_admin'), false)
-	assert.equal(DEFAULT_CALLERS.includes('coe_banking'), false)
+	// os scripts avançados agora são do framework
+	assert.equal(DEFAULT_CALLERS.includes('coe_admin'), true)
+	assert.equal(DEFAULT_CALLERS.includes('coe_banking'), true)
 })
 
 test('other resources need the coe.database ACE on their resource principal', () => {
@@ -22,12 +23,12 @@ test('other resources need the coe.database ACE on their resource principal', ()
 	const allowed = createCallerCheck({
 		isAceAllowed: (principal, ace) => {
 			asked.push([principal, ace])
-			return principal === 'resource.coe_fuel'
+			return principal === 'resource.meu_script'
 		}
 	})
-	assert.equal(allowed('coe_fuel'), true)
+	assert.equal(allowed('meu_script'), true)
 	assert.equal(allowed('random_script'), false)
-	assert.deepEqual(asked, [['resource.coe_fuel', 'coe.database'], ['resource.random_script', 'coe.database']])
+	assert.deepEqual(asked, [['resource.meu_script', 'coe.database'], ['resource.random_script', 'coe.database']])
 })
 
 test('invalid callers are refused', () => {

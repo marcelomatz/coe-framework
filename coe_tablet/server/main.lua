@@ -82,12 +82,13 @@ end
 
 -- Apps com `ownerCheck`: o resource do app responde se o jogador vê o app (TabletVisible).
 local function canSeeFn(playerId)
-	return function(app)
+	return function(app, id)
 		if GetResourceState(app.resource) ~= 'started' then
 			return false
 		end
 		local ok, visible = pcall(function()
-			return exports[app.resource]:TabletVisible(playerId, app.base or app.id)
+			-- config.Apps não guarda o id dentro do app: sem ele o resource recebia nil e escondia o app.
+			return exports[app.resource]:TabletVisible(playerId, app.base or app.id or id)
 		end)
 		return ok and visible == true
 	end

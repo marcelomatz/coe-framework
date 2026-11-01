@@ -121,6 +121,12 @@ eq(TabletProfile.Resolve(config, nil, false, nil, nil, nil), nil, 'sem função 
 eq(hasApp(TabletProfile.Resolve(config, { job = { name = 'mechanic', grade = 0 } }, false, nil, nil, owner), 'workshop'), true, 'Casa junto com app de trabalho')
 eq(nil ~= TabletProfile.CanUse(config, nil, false, 'home', nil, nil, owner), true, 'CanUse Casa')
 eq(nil ~= TabletProfile.CanUse(config, nil, false, 'home', nil, nil, notOwner), false, 'CanUse Casa negado')
+-- ownerCheck recebe o id do app (a chave em config.Apps): o resource responde pelo app certo (ex.: Elos, E-mail).
+local asked = {}
+local byId = function(app, id) asked[id] = true; return id == 'elos' end
+local elosProfile = TabletProfile.Resolve(config, nil, false, nil, nil, byId)
+eq(hasApp(elosProfile, 'elos'), true, 'Elos aparece quando o resource confirma pelo id')
+eq(asked.elos and asked.mail, true, 'cada app com ownerCheck é perguntado pelo próprio id')
 -- Atalho /casa: o mesmo tablet (todos os apps do jogador), aberto direto no primeiro app do atalho que ele vê.
 local hideoutOwner = function(app) return app.resource == 'coe_housing' end
 local both = function() return true end

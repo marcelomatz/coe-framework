@@ -4,7 +4,7 @@
 
 **COE OS**: o tablet do personagem e a central de controle de tudo o que ele tem. Um único tablet reúne todos os apps que o jogador pode ver; cada sistema é um app, e cada negócio ou facção de que ele faz parte ativa o seu próprio app.
 
-Substitui o tablet de trabalho básico do framework (`coe_workpad`): ao iniciar, e sempre que o `coe_workpad` reinicia, chama o export `Yield` (ACE `coe.workpad.yield` no `permissions.cfg`). O básico fecha a tela e deixa de abrir (tecla F3, `/trabalho` e item `business_tablet`) até o `coe_tablet` parar. Os apps Carreira e Negócio são os mesmos nos dois; Ponto e Empregos livres são só do básico.
+Substitui o tablet de trabalho básico do framework (`coe_workpad`): ao iniciar, e sempre que o `coe_workpad` reinicia, chama o export `Yield` (ACE `coe.workpad.yield`, concedida pelo framework em `CoeAccess.FirstParty`). O básico fecha a tela e deixa de abrir (tecla F3, `/trabalho` e item `business_tablet`) até o `coe_tablet` parar. Os apps Carreira e Negócio são os mesmos nos dois; Ponto e Empregos livres são só do básico.
 
 - Seções (`Groups`): **Pessoal** (Banco, Veículos, Casa), **Aplicativos** (Loja e apps instalados), **Trabalho** (apps do emprego), **Negócios** (um app por negócio) e **Ilegal** (Esconderijo, um app por facção). Cada app indica a sua em `group`.
 - `everyone = true`: app de todo personagem (Banco, Veículos), sem emprego nem item.

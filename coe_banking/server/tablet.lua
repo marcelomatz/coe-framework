@@ -1,5 +1,8 @@
--- Internet banking no COE OS (app `bank` do coe_tablet): consulta e operações sem dinheiro em espécie.
+-- Internet banking no COE OS (app `bank` do tablet e do smartphone): consulta e operações sem dinheiro em espécie.
 BankingTablet = {}
+
+-- Aparelhos que hospedam o app (resource que chama o export).
+BankingTablet.Hosts = { coe_tablet = true, coe_phone = true }
 
 BankingTablet.Actions = {
 	overview = true,
@@ -12,7 +15,7 @@ BankingTablet.Actions = {
 
 function BankingTablet.Call(deps, playerId, appId, action, payload)
 	local caller = deps.caller and deps.caller() or ''
-	if caller ~= 'coe_tablet' or appId ~= 'bank' then
+	if not BankingTablet.Hosts[caller] or appId ~= 'bank' then
 		return { ok = false, error = 'forbidden' }
 	end
 	local messages = deps.messages or {}

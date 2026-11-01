@@ -71,7 +71,7 @@ CoePhoneConfig = {
 	},
 
 	-- Apps. `native`: tela do próprio coe_phone. `resource = 'coe_apps'`: app da loja, que só aparece se instalado
-	-- (coe_apps:TabletVisible). `dock`: fica na barra inferior. Ícones: phone, contacts, messages, settings, store, jobs, news, camera, shutter, gallery, editor, sim, wallet, cart, mail, tv, radio, crypto, onion.
+	-- (coe_apps:TabletVisible). `dock`: fica na barra inferior. Ícones: phone, contacts, messages, settings, store, jobs, news, camera, shutter, gallery, editor, sim, wallet, bank, cart, mail, tv, radio, crypto, onion.
 	-- A ordem e a tela de cada app são do jogador (Ajustes > Tela inicial); order e dock valem para o layout padrão.
 	Apps = {
 		phone = { label = 'Telefone', order = 1, native = true, dock = true, icon = 'phone', color = '#3f9a5c' },
@@ -85,6 +85,10 @@ CoePhoneConfig = {
 		insta = { label = 'Insta', order = 10, resource = 'coe_apps', script = 'nui://coe_apps/html/apps.js', icon = 'camera', color = '#b5487a' },
 		classifieds = { label = 'Classificados', order = 11, resource = 'coe_apps', script = 'nui://coe_apps/html/apps.js', icon = 'news', color = '#c17a3a' },
 		jobs = { label = 'Empregos', order = 12, resource = 'coe_apps', script = 'nui://coe_apps/html/apps.js', icon = 'jobs', color = '#4f7cac' },
+		-- Internet banking (coe_banking): o mesmo app Banco do tablet, para todo personagem.
+		bank = { label = 'Banco', order = 6, resource = 'coe_banking', script = 'nui://coe_banking/html/tablet_app.js', icon = 'bank', color = '#2e8b57' },
+		-- Rede profissional (coe_elos): vem instalada em todo aparelho (builtin na loja do coe_apps).
+		elos = { label = 'Elos', order = 20, resource = 'coe_elos', script = 'nui://coe_elos/html/elos.js', icon = 'jobs', color = '#2f86a6' },
 		mail = { label = 'E-mail', order = 15, resource = 'coe_mail', script = 'nui://coe_mail/html/mail.js', icon = 'mail', color = '#3a7bd5' },
 		weazel = { label = 'Weazel News', order = 16, resource = 'coe_news', script = 'nui://coe_news/html/news.js', icon = 'tv', color = '#c8102e' },
 		rebel = { label = 'Rebel News', order = 17, resource = 'coe_news', script = 'nui://coe_news/html/news.js', icon = 'radio', color = '#4a7c2c' },

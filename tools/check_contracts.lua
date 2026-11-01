@@ -345,6 +345,19 @@ local accessContracts = {
 		methods = setOf({ 'List', 'Restart', 'GetUpdateStatus', 'CheckForUpdates', 'ApplyUpdate' }) }
 }
 
+-- Concessões fixas dos scripts avançados do framework (CoeAccess.FirstParty em coe_core/lib/access.lua).
+do
+	local env = setmetatable({}, { __index = _G })
+	local fn = load(readFile('coe_core/lib/access.lua') or '', '@coe_core/lib/access.lua', 't', env)
+	if fn and pcall(fn) and env.CoeAccess and env.CoeAccess.FirstParty then
+		for res, aces in pairs(env.CoeAccess.FirstParty) do
+			for _, contract in ipairs(accessContracts) do
+				if aces[contract.ace] then contract.allow[res] = true end
+			end
+		end
+	end
+end
+
 -- ACEs concedidas no permissions.cfg da raiz (add_ace resource.<nome> <ace> allow) valem como allowlist: é assim que
 -- os scripts avançados recebem acesso no servidor (o server.cfg gerado e a recipe incluem esse arquivo).
 local permissionsCfg = readFile('permissions.cfg') or ''

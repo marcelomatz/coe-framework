@@ -9,6 +9,8 @@
 		timeout: 'Sem resposta do servidor.',
 		closed: 'Celular fechado.',
 		camera_unavailable: 'Câmera indisponível.',
+		camera_timeout: 'A câmera não respondeu. Tente de novo (detalhes no F8).',
+		camera_empty: 'A câmera não gerou a foto (detalhes no F8).',
 		cancelled: 'Foto cancelada.',
 		not_ready: 'Serviço ainda iniciando.',
 		no_character: 'Personagem não carregado.',
@@ -100,6 +102,7 @@
 		sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
 		sim: '<path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1"/><rect x="9" y="11" width="6" height="6" rx="1"/><path d="M12 11v6M9 14h6"/>',
 		video: '<rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/>',
+		bank: '<path d="M3 10h18L12 4z"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/>',
 		wallet: '<path d="M4 7a2 2 0 0 1 2-2h11v4"/><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 12h5v4h-5a2 2 0 0 1 0-4"/>',
 		crypto: '<circle cx="12" cy="12" r="9"/><path d="M9 7.5h4.5a2.25 2.25 0 0 1 0 4.5H9h5a2.25 2.25 0 0 1 0 4.5H9z"/><path d="M10.5 6v1.5M10.5 16.5V18M13 6v1.5M13 16.5V18"/>',
 		onion: '<circle cx="12" cy="13" r="7"/><path d="M12 6c-2.5 2-3.5 4.5-3.5 7s1 5 3.5 7"/><path d="M12 6c2.5 2 3.5 4.5 3.5 7s-1 5-3.5 7"/><path d="M12 6V3"/><path d="M12 3c1.5 0 2.5-.7 3-1.5"/>'

@@ -40,24 +40,46 @@ local function help(selfie)
 	end)
 end
 
+-- Diagnóstico no F8: a tela só mostra o código do erro.
+local function diag(message)
+	print(('^3[coe_apps] câmera: %s^7'):format(message))
+end
+
+-- Devolve a foto (data URL) ou nil e o código do erro: camera_unavailable (screenshot-basic não respondeu à chamada),
+-- camera_timeout (a página de captura não devolveu a foto) ou camera_empty (devolveu algo que não é JPEG).
 local function screenshot(quality)
 	local result = promise.new()
-	local ok = pcall(function()
+	local ok, err = pcall(function()
 		exports['screenshot-basic']:requestScreenshot({ encoding = 'jpg', quality = quality }, function(data)
-			result:resolve(data)
+			result:resolve(data or false)
 		end)
 	end)
 	if not ok then
-		return nil
+		diag('requestScreenshot falhou: ' .. tostring(err))
+		return nil, 'camera_unavailable'
 	end
 	SetTimeout(10000, function()
 		result:resolve(nil)
 	end)
-	return Citizen.Await(result)
+	local data = Citizen.Await(result)
+	if data == nil then
+		diag('o screenshot-basic não devolveu a foto em 10 s (a página de captura não chamou screenshot_created)')
+		return nil, 'camera_timeout'
+	end
+	if type(data) ~= 'string' or data:sub(1, 23) ~= 'data:image/jpeg;base64,' then
+		diag(('o screenshot-basic devolveu um formato inesperado (%s, %d bytes: %s)'):format(
+			type(data), type(data) == 'string' and #data or 0, type(data) == 'string' and data:sub(1, 30) or '-'))
+		return nil, 'camera_empty'
+	end
+	return data
 end
 
 exports('TakePhoto', function()
-	if busy or GetResourceState('screenshot-basic') ~= 'started' then
+	if busy then
+		return { ok = false, error = 'camera_unavailable' }
+	end
+	if GetResourceState('screenshot-basic') ~= 'started' then
+		diag('o resource screenshot-basic não está iniciado (' .. GetResourceState('screenshot-basic') .. ')')
 		return { ok = false, error = 'camera_unavailable' }
 	end
 	busy = true
@@ -115,7 +137,7 @@ exports('TakePhoto', function()
 		end
 	end
 
-	local image
+	local image, imageError
 	help(nil)
 	if action == 'shoot' then
 		-- Alguns quadros sem HUD nem texto de ajuda antes da captura.
@@ -128,7 +150,7 @@ exports('TakePhoto', function()
 			end
 		end)
 		Wait(80)
-		image = screenshot(0.9)
+		image, imageError = screenshot(0.9)
 		hide = false
 		PlaySoundFrontend(-1, 'Camera_Shoot', 'Phone_Soundset_Franklin', true)
 	end
@@ -139,8 +161,8 @@ exports('TakePhoto', function()
 	if action ~= 'shoot' then
 		return { ok = false, error = 'cancelled' }
 	end
-	if type(image) ~= 'string' or image:sub(1, 23) ~= 'data:image/jpeg;base64,' then
-		return { ok = false, error = 'camera_unavailable' }
+	if not image then
+		return { ok = false, error = imageError or 'camera_unavailable' }
 	end
 	return { ok = true, image = image }
 end)

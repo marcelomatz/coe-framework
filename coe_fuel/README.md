@@ -129,7 +129,7 @@ Evento local `coe_fuel:effectsChanged(vehicleId)` quando a mistura muda a força
 
 `coe_core`, `coe_database`, `coe_logging`, `coe_inventory`, `coe_businesses`, `coetarget`; em tempo de uso
 `coe_vehicles`, `coe_mechanic`, `coe_economy`, `coe_banking`, `coe_phone`, `coe_audit`, `coe_notify`. No framework, as
-capacidades vêm por ACE (`coe-resources/permissions.cfg`: banco, dinheiro, caixa do negócio, logs, auditoria,
+capacidades vêm do framework (`CoeAccess.FirstParty`: banco, dinheiro, caixa do negócio, logs, auditoria,
 notificações, gravação de negócios, permissões de cargo e abas) e o `coe_supervisor` lê `coe_supervisor 'business'` do
 `fxmanifest`. A aba **Posto** é registrada com `coe_businesses:RegisterTab` (visível onde `IsStation` responde `true`).
 Nos pacotes: `coe_banking` (`Credit.PurchaseCallers`), `coe_phone` (`Wallet.PaymentCallers`), `coe_mechanic`

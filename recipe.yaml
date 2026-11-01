@@ -43,11 +43,6 @@ tasks:
   - action: remove_path
     path: ./resources/[coe-framework]/coe_workpad
 
-  # 4c. ACEs dos scripts avançados ao lado do server.cfg
-  - action: move_path
-    src: ./resources/[coe-framework]/permissions.cfg
-    dest: ./permissions.cfg
-
   # 5. Connect to Database (auto creates the database if not existing)
   - action: connect_database
 
@@ -109,8 +104,8 @@ tasks:
       add_ace group.admin coe_admin.tools.all allow
       add_ace group.admin coe_admin.root allow
 
-      ## Capacidades (ACE) dos scripts avançados. Precisa vir antes dos ensure.
-      exec permissions.cfg
+      ## Scripts de terceiros que usem capacidades do framework: add_ace resource.<script> <capacidade> allow
+      ## (aqui, antes dos ensure). Os resources do COE já têm o acesso de que precisam.
 
       ## --------------------------------------------------------------------
       ## Recursos Base do CitizenFX

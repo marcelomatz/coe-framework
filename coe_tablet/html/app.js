@@ -10,6 +10,8 @@
 		closed: 'Tablet fechado.',
 		no_vehicle: 'Nenhum veículo por perto.',
 		camera_unavailable: 'Câmera indisponível.',
+		camera_timeout: 'A câmera não respondeu. Tente de novo (detalhes no F8).',
+		camera_empty: 'A câmera não gerou a foto (detalhes no F8).',
 		cancelled: 'Foto cancelada.',
 		vehicle_not_found: 'Veículo não registrado.',
 		vehicle_too_far: 'Chegue mais perto do veículo.',

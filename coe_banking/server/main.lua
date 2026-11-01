@@ -2280,7 +2280,12 @@ local tabletDeps = {
 	log = log
 }
 
--- Chamado só pelo coe_tablet. Toda ação devolve o extrato atualizado em `bank`.
+-- App Banco no aparelho: o tablet mostra para todos (everyone); o smartphone pergunta aqui.
+exports('TabletVisible', function(playerId, appId)
+	return BankingTablet.Hosts[GetInvokingResource() or ''] == true and appId == 'bank' and ready == true
+end)
+
+-- Chamado só pelo coe_tablet e pelo coe_phone. Toda ação devolve o extrato atualizado em `bank`.
 exports('TabletCall', function(playerId, appId, action, payload)
 	return BankingTablet.Call(tabletDeps, playerId, appId, action, payload)
 end)

@@ -63,7 +63,7 @@ No console do servidor, `coe_upgrades` mostra o mapa ao vivo: cada básico, quem
 | Negócios | um app por negócio (`coe_businesses`) | app Negócio (um por negócio) |
 | Dados | nenhum próprio | — |
 
-ACEs: `coe.businesses.tablet`, `coe.businesses.clock` e `coe.jobs.tablet` para o `coe_tablet` (já no `permissions.cfg`).
+ACEs: `coe.businesses.tablet`, `coe.businesses.clock` e `coe.jobs.tablet` para o `coe_tablet` (concedidas por padrão: `CoeAccess.FirstParty`).
 
 ## `coe_bank` → `coe_banking`
 
@@ -99,7 +99,7 @@ Quem era staff no básico continua com as mesmas ferramentas sem mudar o `server
 
 ## Checklist de quem faz o upgrade
 
-1. Copie o script avançado e inclua o `permissions.cfg` no `server.cfg` (antes dos `ensure`).
+1. Copie o script avançado (as capacidades dele já vêm concedidas pelo framework).
 2. `ensure` do pacote. Não precisa tirar o básico do `server.cfg` nem apagar tabelas.
 3. Reinicie o servidor e rode `coe_upgrades` no console: o básico aparece `stopped` e o pacote `ATIVO`, com o relatório do que foi importado.
 4. Para voltar ao básico, pare o pacote: o básico sobe sozinho com os dados dele.
