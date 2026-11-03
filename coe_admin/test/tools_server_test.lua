@@ -69,6 +69,7 @@ local businesses = {}
 local saved = {}
 local vehicles = {}
 local stored = {}
+local catalogReady, catalogFailure = true, nil
 
 exports = setmetatable({}, {
 	__call = function(_, name, fn) exported[name] = fn end,
@@ -114,8 +115,28 @@ exports = setmetatable({}, {
 		end
 		if resource == 'coe_vehicle_catalog' then
 			return {
-				ListVehicles = function(_, filter) return { { model = 'adder', name = 'Adder', brand = 'Truffade', type = 'automobile', search = filter.search } } end,
-				GetVehicleInfo = function(_, model) return { model = model, type = 'automobile' } end
+				IsReady = function() return catalogReady end,
+				ListVehiclesPage = function(_, filter)
+					if catalogFailure == 'page' then return nil end
+					if catalogFailure == 'filtersPage' and filter.includeHidden then return nil end
+					if catalogFailure == 'exception' then error('catalog export unavailable') end
+					local entries = {
+						{ model = 'adder', name = 'Adder', brand = 'Truffade', class = 'super', classId = 7,
+							category = 'super', dlc = 'TitleUpdate', type = 'automobile' },
+						{ model = 'blista', name = 'Blista', brand = 'Dinka', class = 'compacts', classId = 0,
+							category = 'compact', dlc = 'mp2025_02', type = 'automobile' }
+					}
+					local offset = filter.offset or 0
+					if offset > 0 then return { vehicles = { entries[2] }, total = #entries, offset = offset, limit = filter.limit } end
+					return { vehicles = { entries[1] }, total = #entries, offset = 0, limit = filter.limit }
+				end,
+				ListClasses = function()
+					if catalogFailure == 'classes' then return nil end
+					return { { id = 0, name = 'compacts' }, { id = 7, name = 'super' } }
+				end,
+				GetVehicleInfo = function(_, model)
+					return model == 'adder' and { model = model, type = 'automobile' } or nil
+				end
 			}
 		end
 		if resource == 'coe_vehicles' then
@@ -289,7 +310,34 @@ eq(act(1, 'setGroup', { target = 3, name = 'Bad Name' }).error, 'invalid_group',
 eq(act(1, 'removeGroup', { target = 3, name = 'police' }).error, 'not_member', 'erro do callback')
 
 -- Veículos
-eq(act(1, 'catalog', { search = 'add' }).data.vehicles[1].model, 'adder', 'catalogo')
+local initialCatalog = act(1, 'catalog', { includeFilters = true })
+eq(initialCatalog.ok, true, 'carga inicial retorna pagina e filtros numa unica acao autorizada')
+eq(initialCatalog.data.vehicles[1].model, 'adder', 'carga inicial inclui veiculo')
+eq(initialCatalog.data.filters.classes[2].id, 7, 'carga inicial inclui classes')
+eq(initialCatalog.data.filters.dlcs[1], 'TitleUpdate', 'carga inicial inclui DLCs')
+source = 1
+netHandlers['coe_admin:tools:request'](9999, 'catalog', {})
+eq(responses[#responses].result.error, 'busy', 'limite continua protegendo acoes subsequentes imediatas')
+catalogReady = false
+eq(act(1, 'catalog', { includeFilters = true }).error, 'catalog_not_ready', 'inicializacao pendente e erro explicito')
+eq(act(1, 'catalogFilters').error, 'catalog_not_ready', 'filtros aguardam inicializacao')
+catalogReady = nil
+eq(act(1, 'catalog').error, 'catalog_unavailable', 'falha ao consultar prontidao nao vira inicializacao pendente')
+catalogReady = true
+states.coe_vehicle_catalog = 'stopped'
+eq(act(1, 'catalog').error, 'catalog_unavailable', 'resource parado e erro explicito')
+states.coe_vehicle_catalog = nil
+for _, failure in ipairs({ 'page', 'filtersPage', 'classes', 'exception' }) do
+	catalogFailure = failure
+	eq(act(1, 'catalog', { includeFilters = true }).error, 'catalog_unavailable', 'falha de export nao vira sucesso vazio: ' .. failure)
+end
+catalogFailure = nil
+eq(act(2, 'catalog', { includeFilters = true }).error, 'forbidden', 'pagina com filtros exige ACE veiculos')
+eq(act(1, 'catalog', { search = 'add' }).data.vehicles[1].model, 'adder', 'catalogo paginado')
+eq(act(1, 'catalog', { classId = 7, category = 'super', dlc = 'TitleUpdate' }).data.vehicles[1].classId, 7, 'catalogo filtra metadados nativos')
+eq(act(1, 'catalog', { offset = 1 }).data.offset, 1, 'catalogo respeita offset')
+eq(act(1, 'catalogFilters').data.classes[2].name, 'super', 'filtros usam classes nativas')
+eq(act(1, 'spawnVehicle', { model = 'unlisted' }).error, 'invalid_model', 'spawn temporario exige modelo catalogado')
 eq(act(1, 'spawnVehicle', { model = 'Adder' }).data.model, 'adder', 'temporario: client cria')
 local owned = act(1, 'spawnVehicle', { model = 'adder', mode = 'owned' })
 eq(owned.data.netId, 777, 'registrado: netId')

@@ -94,6 +94,9 @@ assertEqual(adder.price, CoeVehicleCatalogConfig.PriceByClass.super, 'preço da 
 local blista = catalog.GetVehicleInfo('blista')
 assertEqual(blista.isAddon, false, 'nativo puro')
 assertEqual(blista.hasHandling, false, 'nativo sem handling carregado')
+assertEqual(blista.classId, 0, 'classe nativa é preservada')
+assertEqual(blista.dlc ~= nil, true, 'DLC da fonte gerada')
+assertEqual(#catalog.ListClasses(), 23, 'classes nativas completas')
 
 local mycar = catalog.GetVehicleInfo('mycar')
 assertEqual(mycar.isAddon, true, 'addon')
@@ -158,13 +161,35 @@ for _, item in ipairs(catalog.List({ addon = true })) do
 	assertEqual(item.model ~= 'mycar', true, 'oculto fora da listagem')
 end
 assertEqual(#catalog.List({ includeHidden = true, addon = true }), 4, 'com ocultos')
-assertEqual(#catalog.List({ class = 'super', addon = false }), 4, 'supers nativos sem adder')
+assertEqual(#catalog.List({ class = 'super', addon = false }), 62, 'supers nativos sem adder substituído')
 assertEqual(catalog.List({ search = 'zentor' })[1].model, 'zentorno', 'busca por nome')
-assertEqual(catalog.List({ brand = 'PEGASSI', class = 'super' })[1].model, 'infernus', 'marca sem caixa')
-assertEqual(#catalog.List({ type = 'boat', addon = false }), 3, 'tipo barco')
+assertEqual(catalog.List({ brand = 'PEGASSI', class = 'super' })[1].model, 'ignus', 'marca sem caixa e ordem estável')
+assertEqual(#catalog.List({ type = 'boat', addon = false }), 22, 'tipo barco')
 assertEqual(#catalog.List({ limit = 2 }), 2, 'limite')
-assertEqual(#catalog.List({ maxPrice = 600, addon = false }), 6, 'preço máximo (gratuitos e bicicleta)')
+assertEqual(#catalog.List({ maxPrice = 600, addon = false }), 68, 'preço máximo (veículos gratuitos e ciclos)')
 assertEqual(catalog.List({ limit = 1 })[1].model, 'adder', 'ordem alfabética')
+local firstPage = catalog.ListPage({ limit = 3, offset = 0, includeHidden = true })
+local secondPage = catalog.ListPage({ limit = 3, offset = 3, includeHidden = true })
+assertEqual(firstPage.total, catalog.Count(), 'total da paginação')
+assertEqual(firstPage.vehicles[1].model, 'adder', 'primeira página mantém ordenação')
+assertEqual(secondPage.vehicles[1].model, 'akula', 'offset segue sem duplicar veículos')
+assertEqual(#catalog.ListPage({ limit = 3, offset = 10000 }).vehicles, 0, 'offset além do fim')
+assertEqual(#catalog.ListPage({ classId = 7, addon = false, limit = 100 }).vehicles, 62, 'filtra classe nativa')
+local allModels, nextOffset, nativeTotal = {}, 0, nil
+repeat
+	local page = catalog.ListPage({ limit = 200, offset = nextOffset, addon = false })
+	nativeTotal = page.total
+	for _, item in ipairs(page.vehicles) do
+		assertEqual(allModels[item.model], nil, 'sem modelo duplicado entre páginas')
+		allModels[item.model] = true
+	end
+	nextOffset = nextOffset + #page.vehicles
+until nextOffset >= nativeTotal
+assertEqual(nextOffset, 920, 'paginação percorre o catálogo nativo sem truncar')
+local allCount = 0
+for _ in pairs(allModels) do allCount = allCount + 1 end
+assertEqual(allCount, 920, 'cada modelo aparece uma vez')
+assertEqual(#catalog.List({ addon = false, limit = 500 }), 500, 'List respeita o limite configurado')
 
 -- restauração e remoção
 catalog.RestoreOverride('mycar', nil)

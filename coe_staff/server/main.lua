@@ -443,12 +443,17 @@ end
 
 function A.catalog(_, data)
 	local search = type(data.search) == 'string' and data.search:sub(1, 32) or nil
-	local list = remote('coe_vehicle_catalog', 'ListVehicles', { search = search ~= '' and search or nil, limit = config.Limits.VehicleSearch })
+	local offset = type(data.offset) == 'number' and data.offset % 1 == 0 and math.max(0, math.min(data.offset, 1000000)) or 0
+	local page = remote('coe_vehicle_catalog', 'ListVehiclesPage', {
+		search = search ~= '' and search or nil,
+		offset = offset,
+		limit = config.Limits.VehicleSearch
+	})
 	local out = {}
-	for _, vehicle in ipairs(type(list) == 'table' and list or {}) do
+	for _, vehicle in ipairs(type(page) == 'table' and page.vehicles or {}) do
 		out[#out + 1] = { model = vehicle.model, name = vehicle.name, brand = vehicle.brand, class = vehicle.class, type = vehicle.type }
 	end
-	return { ok = true, data = { vehicles = out, catalog = started('coe_vehicle_catalog') } }
+	return { ok = true, data = { vehicles = out, total = page and page.total or #out, offset = offset, limit = config.Limits.VehicleSearch, catalog = started('coe_vehicle_catalog') } }
 end
 
 -- temp: o client do admin cria o veículo (não fica registrado). owned: registrado no coe_vehicles, do admin, com chave.
