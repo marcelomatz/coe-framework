@@ -391,13 +391,89 @@ end
 -- Veículos ----------------------------------------------------------------------------------------------------
 
 function A.catalog(_, data)
-	local search = type(data.search) == 'string' and data.search:sub(1, 32) or nil
-	local list = remote('coe_vehicle_catalog', 'ListVehicles', { search = search ~= '' and search or nil, limit = config.Limits.VehicleSearch })
-	local out = {}
-	for _, vehicle in ipairs(type(list) == 'table' and list or {}) do
-		out[#out + 1] = { model = vehicle.model, name = vehicle.name, brand = vehicle.brand, class = vehicle.class, type = vehicle.type }
+	if not started('coe_vehicle_catalog') then
+		return { ok = false, error = 'catalog_unavailable' }
 	end
-	return { ok = true, data = { vehicles = out, catalog = started('coe_vehicle_catalog') } }
+	local ready = remote('coe_vehicle_catalog', 'IsReady')
+	if ready ~= true then
+		return { ok = false, error = ready == false and 'catalog_not_ready' or 'catalog_unavailable' }
+	end
+	local search = type(data.search) == 'string' and data.search:sub(1, 32) or nil
+	local offset = type(data.offset) == 'number' and data.offset % 1 == 0 and math.max(0, math.min(data.offset, 1000000)) or 0
+	local classId = type(data.classId) == 'number' and data.classId % 1 == 0 and data.classId >= 0 and data.classId <= 22 and data.classId or nil
+	local category = type(data.category) == 'string' and data.category:match('^[%l%d_]+$') and data.category:sub(1, 32) or nil
+	local dlc = type(data.dlc) == 'string' and data.dlc:match('^[%w_]+$') and data.dlc:sub(1, 32) or nil
+	local page = remote('coe_vehicle_catalog', 'ListVehiclesPage', {
+		search = search ~= '' and search or nil,
+		classId = classId,
+		category = category,
+		dlc = dlc,
+		offset = offset,
+		limit = config.Limits.VehicleSearch
+	})
+	if type(page) ~= 'table' or type(page.vehicles) ~= 'table' or type(page.total) ~= 'number' then
+		return { ok = false, error = 'catalog_unavailable' }
+	end
+	local filters
+	if data.includeFilters == true then
+		local result = A.catalogFilters()
+		if not result.ok then return result end
+		filters = result.data
+	end
+	local out = {}
+	for _, vehicle in ipairs(page.vehicles) do
+		out[#out + 1] = {
+			model = vehicle.model, name = vehicle.name, brand = vehicle.brand, class = vehicle.class,
+			classId = vehicle.classId, category = vehicle.category, dlc = vehicle.dlc, type = vehicle.type
+		}
+	end
+	return { ok = true, data = {
+		vehicles = out, total = page.total, offset = offset, limit = config.Limits.VehicleSearch, catalog = true, filters = filters
+	} }
+end
+
+function A.catalogFilters()
+	if not started('coe_vehicle_catalog') then
+		return { ok = false, error = 'catalog_unavailable' }
+	end
+	local ready = remote('coe_vehicle_catalog', 'IsReady')
+	if ready ~= true then
+		return { ok = false, error = ready == false and 'catalog_not_ready' or 'catalog_unavailable' }
+	end
+	local classes, categories, dlcs = {}, {}, {}
+	local nativeClasses = remote('coe_vehicle_catalog', 'ListClasses')
+	if type(nativeClasses) ~= 'table' then
+		return { ok = false, error = 'catalog_unavailable' }
+	end
+	for _, class in ipairs(nativeClasses) do
+		classes[class.id] = class.name
+	end
+	local offset, total = 0, nil
+	repeat
+		local page = remote('coe_vehicle_catalog', 'ListVehiclesPage', { includeHidden = true, offset = offset, limit = 500 })
+		if type(page) ~= 'table' or type(page.vehicles) ~= 'table' then
+			return { ok = false, error = 'catalog_unavailable' }
+		end
+		total = page.total or #page.vehicles
+		for _, vehicle in ipairs(page.vehicles) do
+			if type(vehicle.category) == 'string' then categories[vehicle.category] = true end
+			if type(vehicle.dlc) == 'string' then dlcs[vehicle.dlc] = true end
+		end
+		offset = offset + #page.vehicles
+	until offset >= total or #page.vehicles == 0
+	local function sortedKeys(values)
+		local result = {}
+		for value in pairs(values) do result[#result + 1] = value end
+		table.sort(result, function(a, b) return tostring(a) < tostring(b) end)
+		return result
+	end
+	local classOptions = {}
+	for _, id in ipairs(sortedKeys(classes)) do
+		classOptions[#classOptions + 1] = { id = id, name = classes[id] }
+	end
+	return { ok = true, data = {
+		classes = classOptions, categories = sortedKeys(categories), dlcs = sortedKeys(dlcs), total = total
+	} }
 end
 
 -- Erro vindo do coe_vehicles. 'forbidden' ali quer dizer que o RESOURCE coe_admin não tem a ACE coe.vehicles.write
@@ -416,6 +492,10 @@ function A.spawnVehicle(admin, data)
 	if not model then
 		return { ok = false, error = 'invalid_model' }
 	end
+	local info = remote('coe_vehicle_catalog', 'GetVehicleInfo', model)
+	if type(info) ~= 'table' then
+		return { ok = false, error = 'invalid_model' }
+	end
 	if data.mode ~= 'owned' then
 		audit('staff_vehicle_temp', { source = admin, model = model })
 		return { ok = true, data = { model = model } }
@@ -424,7 +504,6 @@ function A.spawnVehicle(admin, data)
 	if not who then
 		return { ok = false, error = 'no_character' }
 	end
-	local info = remote('coe_vehicle_catalog', 'GetVehicleInfo', model)
 	local record = remote('coe_vehicles', 'Create', { characterId = who.characterId, model = model })
 	if type(record) ~= 'table' or not record.id then
 		return { ok = false, error = vehiclesError(record, 'vehicle_failed') }

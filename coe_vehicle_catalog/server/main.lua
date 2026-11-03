@@ -112,6 +112,14 @@ exports('ListVehicles', function(filter)
 	return catalog.List(filter)
 end)
 
+exports('ListVehiclesPage', function(filter)
+	return catalog.ListPage(filter)
+end)
+
+exports('ListClasses', function()
+	return catalog.ListClasses()
+end)
+
 exports('GetBaseHandling', function(model)
 	return catalog.GetBaseHandling(model)
 end)

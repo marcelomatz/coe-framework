@@ -287,9 +287,15 @@ local function buildNewsData()
 	overview.vehicleCatalog = {}
 	if hasFleet and GetResourceState('coe_vehicle_catalog') == 'started' then
 		pcall(function()
-			for _, info in ipairs(exports.coe_vehicle_catalog:ListVehicles({ limit = 500 })) do
-				overview.vehicleCatalog[#overview.vehicleCatalog + 1] = { model = info.model, name = info.name, brand = info.brand, type = info.type }
-			end
+			local offset, page = 0, nil
+			repeat
+				page = exports.coe_vehicle_catalog:ListVehiclesPage({ limit = 500, offset = offset })
+				for _, info in ipairs(page.vehicles) do
+					overview.vehicleCatalog[#overview.vehicleCatalog + 1] = { model = info.model, name = info.name, brand = info.brand, type = info.type }
+				end
+				offset = offset + page.limit
+			until offset >= page.total or #page.vehicles == 0
+			overview.vehicleCatalogTotal = page.total
 		end)
 	end
 	return overview
@@ -434,9 +440,14 @@ local function getPanelData(playerId)
 		end)
 		if ok and next(garages.fleets) and GetResourceState('coe_vehicle_catalog') == 'started' then
 			pcall(function()
-				for _, info in ipairs(exports.coe_vehicle_catalog:ListVehicles({ limit = 500 })) do
-					garages.vehicleCatalog[#garages.vehicleCatalog + 1] = { model = info.model, name = info.name, brand = info.brand, type = info.type }
-				end
+				local offset, page = 0, nil
+				repeat
+					page = exports.coe_vehicle_catalog:ListVehiclesPage({ limit = 500, offset = offset })
+					for _, info in ipairs(page.vehicles) do
+						garages.vehicleCatalog[#garages.vehicleCatalog + 1] = { model = info.model, name = info.name, brand = info.brand, type = info.type }
+					end
+					offset = offset + page.limit
+				until offset >= page.total or #page.vehicles == 0
 			end)
 		end
 	end

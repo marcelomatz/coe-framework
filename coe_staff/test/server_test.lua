@@ -113,7 +113,19 @@ exports = setmetatable({}, {
 		end
 		if resource == 'coe_vehicle_catalog' then
 			return {
-				ListVehicles = function(_, filter) return { { model = 'adder', name = 'Adder', brand = 'Truffade', type = 'automobile', search = filter.search } } end,
+				ListVehiclesPage = function(_, filter)
+					local entries = {
+						{ model = 'adder', name = 'Adder', brand = 'Truffade', type = 'automobile' },
+						{ model = 'blista', name = 'Blista', brand = 'Dinka', type = 'automobile' }
+					}
+					eq(filter.limit, StaffConfig.Limits.VehicleSearch, 'limite enviado ao catalogo')
+					eq(filter.search, 'add', 'busca enviada ao catalogo')
+					local page = {}
+					for index = filter.offset + 1, math.min(#entries, filter.offset + filter.limit) do
+						page[#page + 1] = entries[index]
+					end
+					return { vehicles = page, total = #entries, offset = filter.offset, limit = filter.limit }
+				end,
 				GetVehicleInfo = function(_, model) return { model = model, type = 'automobile' } end
 			}
 		end
@@ -299,7 +311,17 @@ eq(act(1, 'setGroup', { target = 3, name = 'Bad Name' }).error, 'invalid_group',
 eq(act(1, 'removeGroup', { target = 3, name = 'police' }).error, 'not_member', 'erro do callback')
 
 -- Veículos
-eq(act(1, 'catalog', { search = 'add' }).data.vehicles[1].model, 'adder', 'catalogo')
+local catalog = act(1, 'catalog', { search = 'add' }).data
+eq(catalog.vehicles[1].model, 'adder', 'catalogo')
+eq(catalog.total, 2, 'total filtrado do catalogo')
+eq(catalog.offset, 0, 'offset inicial')
+eq(catalog.limit, StaffConfig.Limits.VehicleSearch, 'limite da pagina')
+local nextPage = act(1, 'catalog', { search = 'add', offset = 1 }).data
+eq(nextPage.vehicles[1].model, 'blista', 'offset encaminhado ao catalogo')
+eq(#nextPage.vehicles, 1, 'pagina nao repete entradas anteriores')
+eq(nextPage.offset, 1, 'offset retornado')
+eq(nextPage.total, 2, 'total preservado entre paginas')
+eq(#act(1, 'catalog', { search = 'add', offset = 2 }).data.vehicles, 0, 'pagina alem do fim vazia')
 eq(act(1, 'spawnVehicle', { model = 'Adder' }).data.model, 'adder', 'temporario: client cria')
 local owned = act(1, 'spawnVehicle', { model = 'adder', mode = 'owned' })
 eq(owned.data.netId, 777, 'registrado: netId')

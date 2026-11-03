@@ -74,6 +74,8 @@ function VehicleCatalog.New(deps)
 			isAddon = entry.isAddon,
 			resource = entry.resource,
 			handlingId = entry.handlingId,
+			dlc = entry.dlc,
+			classId = entry.classId or config.ClassIds[entry.class],
 			hasHandling = entry.handlingId ~= nil and handlings[entry.handlingId] ~= nil,
 			price = priceOf(entry, override),
 			stock = override and override.stock or nil,
@@ -89,7 +91,7 @@ function VehicleCatalog.New(deps)
 		for _, row in ipairs(seed) do
 			entries[row[1]] = {
 				model = row[1], name = row[2], brand = row[3], class = row[4],
-				type = row[5], seats = row[6], isAddon = false
+				type = row[5], seats = row[6], classId = row[7], dlc = row[8], isAddon = false
 			}
 		end
 
@@ -129,6 +131,8 @@ function VehicleCatalog.New(deps)
 						name = vehicle.gameName or (previous and previous.name) or model,
 						brand = vehicle.brand or (previous and previous.brand),
 						class = previous and previous.class or 'unknown',
+						classId = previous and previous.classId,
+						dlc = previous and previous.dlc,
 						type = vehicle.type or (previous and previous.type) or 'automobile',
 						seats = previous and previous.seats,
 						isAddon = true,
@@ -204,10 +208,11 @@ function VehicleCatalog.New(deps)
 		return copy
 	end
 
-	function catalog.List(filter)
+	function catalog.ListPage(filter)
 		filter = type(filter) == 'table' and filter or {}
 		local limit = math.type(filter.limit) == 'integer' and filter.limit or config.ListDefaultLimit
 		limit = math.max(1, math.min(limit, config.ListMaxLimit))
+		local offset = math.type(filter.offset) == 'integer' and math.max(0, math.min(filter.offset, 1000000)) or 0
 		local search = type(filter.search) == 'string' and filter.search:lower() or nil
 		local brand = type(filter.brand) == 'string' and filter.brand:lower() or nil
 
@@ -217,13 +222,15 @@ function VehicleCatalog.New(deps)
 		end
 		table.sort(models)
 
-		local result = {}
+		local matches = {}
 		for _, model in ipairs(models) do
 			local info = view(entries[model])
 			local match = (filter.includeHidden == true or not info.hidden)
 				and (filter.type == nil or info.type == filter.type)
 				and (filter.class == nil or info.class == filter.class)
+				and (filter.classId == nil or info.classId == filter.classId)
 				and (filter.category == nil or info.category == filter.category)
+				and (filter.dlc == nil or info.dlc == filter.dlc)
 				and (filter.addon == nil or info.isAddon == filter.addon)
 				and (brand == nil or (info.brand or ''):lower() == brand)
 				and (type(filter.minPrice) ~= 'number' or info.price >= filter.minPrice)
@@ -233,13 +240,27 @@ function VehicleCatalog.New(deps)
 					or (info.name or ''):lower():find(search, 1, true)
 					or (info.brand or ''):lower():find(search, 1, true))
 			if match then
-				result[#result + 1] = info
-				if #result >= limit then
-					break
-				end
+				matches[#matches + 1] = info
 			end
 		end
-		return result
+		local result = {}
+		for index = offset + 1, math.min(offset + limit, #matches) do
+			result[#result + 1] = matches[index]
+		end
+		return { vehicles = result, total = #matches, offset = offset, limit = limit }
+	end
+
+	function catalog.ListClasses()
+		local classes = {}
+		for name, id in pairs(config.ClassIds) do
+			classes[#classes + 1] = { id = id, name = name }
+		end
+		table.sort(classes, function(a, b) return a.id < b.id end)
+		return classes
+	end
+
+	function catalog.List(filter)
+		return catalog.ListPage(filter).vehicles
 	end
 
 	function catalog.Issues()

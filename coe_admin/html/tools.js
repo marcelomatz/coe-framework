@@ -13,7 +13,9 @@
 	];
 	const ERRORS = {
 		forbidden: 'Sem permissão.', busy: 'Aguarde um instante.', timeout: 'Sem resposta do servidor.', closed: 'Painel fechado.',
-		no_waypoint: 'Marque um ponto no mapa primeiro.', no_vehicle: 'Nenhum veículo por perto.', invalid_model: 'Modelo inválido.'
+		no_waypoint: 'Marque um ponto no mapa primeiro.', no_vehicle: 'Nenhum veículo por perto.', invalid_model: 'Modelo inválido.',
+		catalog_not_ready: 'O catálogo ainda está inicializando. Tente novamente.',
+		catalog_unavailable: 'Não foi possível consultar o catálogo de veículos.'
 	};
 	const WEATHERS = {
 		EXTRASUNNY: 'Sol forte', CLEAR: 'Limpo', CLOUDS: 'Nuvens', OVERCAST: 'Encoberto', SMOG: 'Poluição', FOGGY: 'Neblina',
@@ -32,7 +34,8 @@
 	const state = {
 		modules: {}, toggles: {}, noclip: false, tab: null,
 		players: null, selected: null, groups: null, itemSearch: '', items: null,
-		vehicles: null, vehicleSearch: '', world: null,
+		vehicles: null, vehicleSearch: '', vehicleFilters: { classId: '', category: '', dlc: '' },
+		catalogFilters: null, catalogOffset: 0, catalogError: null, world: null,
 		businesses: null, business: null
 	};
 	let statusTimer = null;
@@ -151,7 +154,7 @@
 		paintTabs();
 		render();
 		if (tab === 'players' && !state.players) { loadPlayers(); }
-		if (tab === 'vehicles' && !state.vehicles) { searchVehicles(''); }
+		if (tab === 'vehicles' && !state.vehicles) { searchVehicles(state.vehicleSearch, 0); }
 		if (tab === 'world' && !state.world) { act('world', {}, null, function (data) { state.world = data; render(); }); }
 		if (tab === 'businesses' && !state.businesses) { loadBusinesses(); }
 	}
@@ -423,8 +426,25 @@
 
 	// Veículos -------------------------------------------------------------------------------------------------
 
-	function searchVehicles(text) {
-		return act('catalog', { search: text }, null, function (data) { state.vehicles = data; render(); });
+	function searchVehicles(text, offset) {
+		state.catalogOffset = offset === undefined ? 0 : offset;
+		state.catalogError = null;
+		return act('catalog', {
+			search: text, offset: state.catalogOffset, includeFilters: !state.catalogFilters,
+			classId: state.vehicleFilters.classId === '' ? undefined : Number(state.vehicleFilters.classId),
+			category: state.vehicleFilters.category || undefined, dlc: state.vehicleFilters.dlc || undefined
+		}).then(function (data) {
+			if (data && Array.isArray(data.vehicles) && data.catalog === true
+				&& (state.catalogFilters || data.filters)) {
+				state.vehicles = data;
+				if (data.filters) { state.catalogFilters = data.filters; }
+			} else {
+				state.catalogError = data ? ERRORS.catalog_unavailable : (els.status.textContent || ERRORS.busy);
+				status(state.catalogError, 'error');
+			}
+			render();
+			return data;
+		});
 	}
 
 	function renderVehicles() {
@@ -452,11 +472,34 @@
 		search.addEventListener('input', function () {
 			state.vehicleSearch = search.value;
 			clearTimeout(timer);
-			timer = setTimeout(function () { searchVehicles(search.value.trim()); }, 300);
+			timer = setTimeout(function () { searchVehicles(search.value.trim(), 0); }, 300);
 		});
+		const filters = row();
+		const meta = state.catalogFilters;
+		const classOptions = [['', 'Todas as classes']].concat((meta && meta.classes || []).map(function (item) {
+			return [item.id, item.name + ' (' + item.id + ')'];
+		}));
+		const categoryOptions = [['', 'Todas as categorias']].concat((meta && meta.categories || []).map(function (item) { return [item, item]; }));
+		const dlcOptions = [['', 'Todas as DLCs']].concat((meta && meta.dlcs || []).map(function (item) { return [item, item]; }));
+		const classFilter = select(classOptions, state.vehicleFilters.classId);
+		const categoryFilter = select(categoryOptions, state.vehicleFilters.category);
+		const dlcFilter = select(dlcOptions, state.vehicleFilters.dlc);
+		[classFilter, categoryFilter, dlcFilter].forEach(function (control) {
+			control.addEventListener('change', function () {
+				state.vehicleFilters.classId = classFilter.value;
+				state.vehicleFilters.category = categoryFilter.value;
+				state.vehicleFilters.dlc = dlcFilter.value;
+				searchVehicles(state.vehicleSearch, 0);
+			});
+		});
+		filters.append(classFilter, categoryFilter, dlcFilter);
 		const list = el('ul', 'sf-list sf-vehicles');
 		const data = state.vehicles;
-		if (!data) {
+		if (state.catalogError) {
+			list.append(empty(state.catalogError), button('Tentar novamente', '', function () {
+				searchVehicles(state.vehicleSearch, state.catalogOffset);
+			}));
+		} else if (!data) {
 			list.append(empty('Carregando...'));
 		} else if (!data.catalog) {
 			list.append(empty('Catálogo indisponível (coe_vehicle_catalog parado). Use o campo do modelo.'));
@@ -466,7 +509,8 @@
 			data.vehicles.forEach(function (v) {
 				const item = el('li', 'sf-line');
 				const text = el('span', 'sf-item-text');
-				text.append(el('strong', null, v.name || v.model), el('small', null, v.model + (v.brand ? ' · ' + v.brand : '') + (v.class ? ' · ' + v.class : '')));
+				const metadata = [v.model, v.brand, v.class, v.classId === undefined ? null : 'classe ' + v.classId, v.category, v.dlc].filter(Boolean).join(' · ');
+				text.append(el('strong', null, v.name || v.model), el('small', null, metadata));
 				const actions = el('span', 'sf-inline');
 				actions.append(
 					button('Temporário', 'sf-small coe-button--primary', function () { spawn(v.model, 'temp'); }),
@@ -475,7 +519,15 @@
 				list.append(item);
 			});
 		}
-		box.append(search, list, direct);
+		const pager = row();
+		const page = Math.floor((data && data.offset || 0) / (data && data.limit || 40)) + 1;
+		const pages = Math.max(1, Math.ceil((data && data.total || 0) / (data && data.limit || 40)));
+		pager.append(
+			button('Anterior', 'sf-small', function () { if (data && data.offset > 0) { searchVehicles(state.vehicleSearch, Math.max(0, data.offset - data.limit)); } }),
+			el('span', 'sf-empty', state.catalogError ? 'Falha ao carregar catálogo.' : (data ? page + ' / ' + pages + ' · ' + data.total + ' veículos' : 'Carregando catálogo...')),
+			button('Próxima', 'sf-small', function () { if (data && data.offset + data.limit < data.total) { searchVehicles(state.vehicleSearch, data.offset + data.limit); } })
+		);
+		box.append(search, filters, list, pager, direct);
 		els.body.append(tools, box);
 	}
 
@@ -830,6 +882,8 @@
 		state.business = null;
 		state.world = null;
 		state.vehicles = null;
+		state.catalogError = null;
+		state.catalogFilters = null;
 		state.items = null;
 		els.panel.hidden = false;
 		const first = TABS.find(function (tab) { return state.modules[tab.id]; });

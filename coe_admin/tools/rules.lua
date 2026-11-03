@@ -13,7 +13,7 @@ AdminToolsRules.Actions = {
 	kickPlayer = 'players', healPlayer = 'players', revivePlayer = 'players', giveItem = 'players', money = 'players',
 	groups = 'players', setGroup = 'players', removeGroup = 'players',
 	-- Veículos
-	catalog = 'vehicles', spawnVehicle = 'vehicles', deleteVehicle = 'vehicles', vehicleFix = 'vehicles',
+	catalog = 'vehicles', catalogFilters = 'vehicles', spawnVehicle = 'vehicles', deleteVehicle = 'vehicles', vehicleFix = 'vehicles',
 	-- Mundo
 	world = 'world', setTime = 'world', setWeather = 'world', resetWorld = 'world', announce = 'world',
 	-- Negócios

@@ -24,7 +24,19 @@ CoeVehicleCatalogConfig = {
 		boats = 45000,
 		helicopters = 400000,
 		planes = 600000,
-		cycles = 500
+		cycles = 500,
+		industrial = 60000,
+		military = 100000,
+		open_wheel = 250000,
+		trains = 0
+	},
+	ClassIds = {
+		compacts = 0, sedans = 1, suvs = 2, coupes = 3, muscle = 4,
+		sports_classics = 5, sports = 6, super = 7, motorcycles = 8,
+		offroad = 9, industrial = 10, utility = 11, vans = 12, cycles = 13,
+		boats = 14, helicopters = 15, planes = 16, service = 17,
+		emergency = 18, military = 19, commercial = 20, trains = 21,
+		open_wheel = 22
 	},
 	-- Resources de veículo são detectados por estes tipos de data_file.
 	VehicleMetaTypes = { VEHICLE_METADATA_FILE = true },
