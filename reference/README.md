@@ -55,7 +55,7 @@
 | [coe_talk](coe_talk.md) | `SetPlayerRadio`, `GetPlayerRadio`, `SetPlayerCall`, `GetPlayerCall`, `GetRadioMembers`, `GetCallMembers`, `GetVoiceRange`, `SetVoiceRange`, `GetRadioChannel`, `SetRadioChannel`, `GetCallChannel`, `SetCallChannel`, `IsTalking`, `IsRadioTransmitting`, `SetVoiceVolume` |
 | [coe_telecom](coe_telecom.md) | `Authorize`, `Charge`, `LineOf`, `TabletCall`, `TabletVisible` |
 | [coe_ui](coe_ui.md) | `GetTheme`, `GetThemes`, `SetTheme`, `GetAccent`, `SetAccent` |
-| [coe_vehicle_catalog](coe_vehicle_catalog.md) | `GetVehicleInfo`, `ListVehicles`, `GetBaseHandling`, `GetIssues`, `SetOverride`, `ClearOverride`, `Rescan`, `IsReady` |
+| [coe_vehicle_catalog](coe_vehicle_catalog.md) | `GetVehicleInfo`, `ListVehicles`, `ListVehiclesPage`, `ListClasses`, `GetBaseHandling`, `GetIssues`, `SetOverride`, `ClearOverride`, `Rescan`, `IsReady` |
 | [coe_vehicles](coe_vehicles.md) | `Create`, `Get`, `GetByPlate`, `ListByOwner`, `GetEntity`, `GetMileage`, `SetMileage`, `Spawn`, `Store`, `IsReady`, `HasKey`, `GiveKey`, `RevokeKey`, `ListKeyHolders` |
 | [coe_workpad](coe_workpad.md) | `Yield`, `Status` |
 | [coetarget](coetarget.md) | `AddTargetEntity`, `RemoveTargetEntity`, `AddTargetModel`, `RemoveTargetModel`, `AddTargetGlobal`, `RemoveTargetGlobal`, `AddTargetSurface`, `RemoveTargetSurface` |

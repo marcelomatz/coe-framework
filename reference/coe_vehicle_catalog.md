@@ -24,6 +24,22 @@
 
 - `CoeVehicleInfo[]`
 
+### `ListVehiclesPage(filter)`
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `filter` | `CoeVehicleFilter\|nil` |  |
+
+**Retorno**
+
+- `CoeVehiclePage`
+
+### `ListClasses()`
+
+**Retorno**
+
+- `{` `id:` — integer, name: string }[] Classes nativas 0–22
+
 ### `GetBaseHandling(model)`
 
 Valores escalares do handling.meta carregado (ex.: `fMass`), ou nil.
@@ -89,6 +105,8 @@ Relê os resources de veículo. Somente `WriterResources`.
 ---@field name string|nil
 ---@field brand string|nil
 ---@field class string `compacts`, `sedans`, `super`, ... ou `unknown` (addon sem classe)
+---@field classId integer|nil Classe nativa GetVehicleClass (0–22), quando conhecida
+---@field dlc string|nil DLC de origem da fonte versionada
 ---@field type string `automobile`, `bike`, `boat`, `heli`, `plane`, `submarine`, `trailer`, `train`
 ---@field seats number|nil
 ---@field isAddon boolean
@@ -103,7 +121,9 @@ Relê os resources de veículo. Somente `WriterResources`.
 ---@class CoeVehicleFilter
 ---@field type string|nil
 ---@field class string|nil
+---@field classId integer|nil Classe nativa 0–22
 ---@field category string|nil
+---@field dlc string|nil
 ---@field brand string|nil
 ---@field addon boolean|nil
 ---@field search string|nil Trecho do modelo, nome ou marca
@@ -111,6 +131,13 @@ Relê os resources de veículo. Somente `WriterResources`.
 ---@field maxPrice number|nil
 ---@field includeHidden boolean|nil
 ---@field limit integer|nil Padrão 200, máximo 500
+---@field offset integer|nil Deslocamento não negativo na ordenação estável por modelo
+
+---@class CoeVehiclePage
+---@field vehicles CoeVehicleInfo[]
+---@field total integer Total após aplicar os filtros
+---@field offset integer Deslocamento aplicado
+---@field limit integer Limite aplicado
 
 ---@class CoeVehicleOverride
 ---@field price integer|nil
