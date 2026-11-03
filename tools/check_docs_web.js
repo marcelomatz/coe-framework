@@ -25,6 +25,7 @@ const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const { collect, FRAMEWORK_ROOT } = require('./framework_facts.js');
+const { countMissingEnglishExportDescriptions } = require('./export_description_audit.js');
 
 // ---------------------------------------------------------------------------------------------------
 // Argumentos e utilitários
@@ -448,10 +449,13 @@ function checkWebsite() {
 
 	// 8. Descrições em inglês dos exports
 	if (catalogs.en) {
-		const enDesc = new Map(catalogs.en.map(s => [s.id, new Set((s.exports || []).map(e => String(e.name).split('(')[0].trim()))]));
-		let missing = 0;
-		for (const r of facts.resources) for (const e of r.exports) if (!(enDesc.get(r.id) || new Set()).has(e.name)) missing++;
-		if (missing) warn('website', `${missing} export(s) sem descrição em inglês em tools/catalog_en.js (a página em inglês usa a descrição da referência, em português)`);
+		const websiteCatalog = requireFresh(path.join(WEBSITE, 'tools', 'catalog_en.js'));
+		const missing = countMissingEnglishExportDescriptions(
+			facts.resources,
+			catalogs.en,
+			websiteCatalog.REFERENCE_EXPORT_DESCRIPTIONS_EN || {},
+		);
+		if (missing) warn('website', `${missing} export(s) sem descrição em inglês em tools/catalog_en.js ou REFERENCE_EXPORT_DESCRIPTIONS_EN (a página em inglês recorre à descrição da referência, em português)`);
 	}
 }
 
