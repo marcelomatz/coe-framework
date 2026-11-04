@@ -135,7 +135,7 @@ RegisterNetEvent('coe_housing:left', function(door)
 end)
 
 local function nearestDoor()
-	local at = GetEntityCoords(PlayerPedId())
+	local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 	local best, bestDistance
 	for _, door in ipairs(doors) do
 		local distance = #(at - vector3(door.x, door.y, door.z))
@@ -149,7 +149,7 @@ end
 -- Longe do interior com o estado de dentro (teleporte de volta falhou): a porta continua disponível.
 local function nearInterior()
 	local exit = insideInfo and insideInfo.interior
-	return exit and #(GetEntityCoords(PlayerPedId()) - vector3(exit.x, exit.y, exit.z)) <= 30.0
+	return exit and #(Core.Platform.Entities.GetCoords(PlayerPedId()) - vector3(exit.x, exit.y, exit.z)) <= 30.0
 end
 
 if Core and Core.Zones then
@@ -183,7 +183,7 @@ CreateThread(function()
 			setPrompt(nil)
 		elseif insideInfo and nearInterior() then
 			wait = 200
-			local at = GetEntityCoords(PlayerPedId())
+			local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 			local exit = insideInfo.interior
 			local stash = insideInfo.stash
 			local exitDistance = #(at - vector3(exit.x, exit.y, exit.z))
@@ -198,7 +198,7 @@ CreateThread(function()
 				setPrompt(nil)
 			end
 		elseif #doors > 0 and GetVehiclePedIsIn(PlayerPedId(), false) == 0 then
-			local at = GetEntityCoords(PlayerPedId())
+			local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 			local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(at.x, at.y, at.z)
 			current = zone and zone.data or nearestDoor()
 			if nearAny or current then

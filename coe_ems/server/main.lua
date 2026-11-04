@@ -81,7 +81,7 @@ local function setState(source, state)
 		-- Alerta opcional ao despacho; sem o resource, o EMS segue funcionando.
 		local ped = GetPlayerPed(source)
 		if ped ~= 0 and GetResourceState('coe_dispatch') == 'started' then
-			local position = GetEntityCoords(ped)
+			local position = Core.Platform.Entities.GetCoords(ped)
 			pcall(function()
 				return exports.coe_dispatch:Alert('person_down', position.x, position.y, position.z)
 			end)
@@ -122,7 +122,7 @@ local function distanceBetween(a, b)
 	if pa == 0 or pb == 0 then
 		return nil
 	end
-	return #(GetEntityCoords(pa) - GetEntityCoords(pb))
+	return #(Core.Platform.Entities.GetCoords(pa) - Core.Platform.Entities.GetCoords(pb))
 end
 
 local function hospital()

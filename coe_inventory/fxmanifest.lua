@@ -6,6 +6,8 @@ name 'coe_inventory'
 version '0.1.0-beta.17'
 description 'Inventário e catálogo como módulo independente do coe_core'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_database',

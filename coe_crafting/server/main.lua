@@ -158,7 +158,7 @@ local function nearby(playerId, position)
 	if not ped or ped == 0 then
 		return false
 	end
-	return #(GetEntityCoords(ped) - vector3(position.x, position.y, position.z)) <= (position.radius or 2.0) + 1.0
+	return #(Core.Platform.Entities.GetCoords(ped) - vector3(position.x, position.y, position.z)) <= (position.radius or 2.0) + 1.0
 end
 
 -- Receitas com o nome de cada insumo e saída, para a interface.

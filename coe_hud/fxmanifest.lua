@@ -6,7 +6,10 @@ name 'coe_hud'
 version '0.1.0-beta.17'
 description 'HUD do jogador (vida, veiculos) com preferencias e layout pessoais via /hud'
 
+coe_platform 'hal'
+
 dependencies {
+	'coe_core',
 	'coe_ui',
 	'coe_notify',
 	'coe_needs'
@@ -24,6 +27,9 @@ files {
 	'html/app.js'
 }
 
-shared_script 'config.lua'
+shared_scripts {
+	'@coe_core/lib/platform.lua',
+	'config.lua'
+}
 client_scripts { 'prefs.lua', 'route.lua', 'minimap.lua', 'location.lua',
 	'vehicle.lua', 'logo.lua', 'client.lua', '@coe_ui/theme_bridge.lua' }

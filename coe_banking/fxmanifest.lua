@@ -8,6 +8,7 @@ description 'Sistema bancário: agências, caixas eletrônicos, dinheiro em esp�
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'business'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

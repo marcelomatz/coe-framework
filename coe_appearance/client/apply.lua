@@ -50,7 +50,7 @@ end
 -- Aplica tudo menos o modelo (o ped já precisa ser do modelo da aparência).
 function AppearanceClient.Apply(ped, raw)
 	local appearance = S.Normalize(raw)
-	if not appearance or not DoesEntityExist(ped) then
+	if not appearance or not Core.Platform.Entities.Exists(ped) then
 		return false
 	end
 	local heritage = appearance.heritage
@@ -174,7 +174,7 @@ function AppearanceClient.ApplyToPlayer(raw)
 	if not hash then
 		return false
 	end
-	if GetEntityModel(PlayerPedId()) ~= hash then
+	if Core.Platform.Entities.GetModel(PlayerPedId()) ~= hash then
 		SetPlayerModel(PlayerId(), hash)
 		SetPedDefaultComponentVariation(PlayerPedId())
 	end

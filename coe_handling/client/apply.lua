@@ -16,10 +16,10 @@ local function readBase(vehicle, model)
 end
 
 local function apply(vehicle, mods)
-	if not DoesEntityExist(vehicle) or type(mods) ~= 'table' then
+	if not Core.Platform.Entities.Exists(vehicle) or type(mods) ~= 'table' then
 		return
 	end
-	local model = GetEntityModel(vehicle)
+	local model = Core.Platform.Entities.GetModel(vehicle)
 	local base = readBase(vehicle, model)
 	for field, multiplier in pairs(mods) do
 		if HandlingEngine.FIELDS[field] and type(multiplier) == 'number' and base[field] and base[field] ~= 0 then
@@ -67,8 +67,8 @@ AddEventHandler('onResourceStop', function(resourceName)
 		return
 	end
 	for vehicle in pairs(appliedByEntity) do
-		if DoesEntityExist(vehicle) then
-			local base = baseByModel[GetEntityModel(vehicle)]
+		if Core.Platform.Entities.Exists(vehicle) then
+			local base = baseByModel[Core.Platform.Entities.GetModel(vehicle)]
 			for field, value in pairs(base or {}) do
 				SetVehicleHandlingFloat(vehicle, 'CHandlingData', field, value)
 			end

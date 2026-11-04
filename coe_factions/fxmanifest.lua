@@ -6,6 +6,8 @@ name 'coe_factions'
 version '0.1.0-beta.17'
 description 'Facções ilegais (gangues, máfias, desmanches): graus, membros e crafts liberados'
 
+coe_platform 'hal'
+
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
 

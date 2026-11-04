@@ -6,6 +6,8 @@ name 'coe_mdt'
 version '0.1.0-beta.17'
 description 'MDT da polícia: chamados, consulta de cidadãos e placas, mandados, boletins e relatórios, com registro de acessos'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_database',

@@ -8,6 +8,7 @@ description 'Handling estilo simulador por classe/categoria, com impacto do tipo
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

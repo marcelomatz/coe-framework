@@ -27,7 +27,7 @@ function GetPlayerPed(id) return id end
 function GetEntityCoords(id) local p = positions[id] or { x = 0, y = 0, z = 0 }; return p end
 
 local characters = { [1] = 11, [2] = 22, [3] = 33 }
-Core = { Players = { GetActiveCharacter = function(id) return characters[id] and { characterId = characters[id] } end } }
+Core = { Platform = dofile('../coe_core/lib/platform.lua'), Players = { GetActiveCharacter = function(id) return characters[id] and { characterId = characters[id] } end } }
 
 -- Negócios: as lojas começam sem dono; o teste dá dono a uma delas.
 local businesses, seeds, permissions, tabs = {}, {}, nil, {}

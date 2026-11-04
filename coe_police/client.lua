@@ -13,8 +13,8 @@ end
 
 local function teleport(x, y, z, heading)
 	local ped = PlayerPedId()
-	SetEntityCoords(ped, x + 0.0, y + 0.0, z + 0.0, false, false, false, false)
-	SetEntityHeading(ped, heading + 0.0)
+	Core.Platform.Entities.SetCoords(ped, x + 0.0, y + 0.0, z + 0.0)
+	Core.Platform.Entities.SetHeading(ped, heading + 0.0)
 end
 
 RegisterNetEvent('coe_police:cuffed', function(value)
@@ -81,7 +81,7 @@ CreateThread(function()
 			Wait(500)
 		end
 		if jail then
-			local coords = GetEntityCoords(PlayerPedId())
+			local coords = Core.Platform.Entities.GetCoords(PlayerPedId())
 			if #(coords - vector3(jail.x, jail.y, jail.z)) > jail.radius then
 				teleport(jail.x, jail.y, jail.z, config.Jail.heading)
 			end

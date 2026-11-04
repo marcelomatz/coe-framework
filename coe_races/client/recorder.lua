@@ -87,10 +87,10 @@ local function mark()
 		Client.Notify('error', T('record_need_vehicle'))
 		return
 	end
-	local at = GetEntityCoords(vehicle)
+	local at = Core.Platform.Entities.GetCoords(vehicle)
 	local point = { x = at.x, y = at.y, z = at.z }
 	if not recording.start then
-		point.h = GetEntityHeading(vehicle)
+		point.h = Core.Platform.Entities.GetHeading(vehicle)
 		recording.start = point
 		PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
 	else
@@ -172,7 +172,7 @@ RegisterKeyMapping('+coe_races_cancel', T('key_cancel'), 'keyboard', keys.Cancel
 CreateThread(function()
 	while true do
 		if recording and (recording.start or #recording.points > 0) then
-			local at = GetEntityCoords(PlayerPedId())
+			local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 			local here = { x = at.x, y = at.y }
 			local radius = recording.info.radius or config.Tracks.CheckpointRadius
 			if recording.start and dist2d(recording.start, here) < 250 then

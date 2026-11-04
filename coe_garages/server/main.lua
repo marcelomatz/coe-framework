@@ -94,7 +94,7 @@ local function actor(playerId)
 	if not characterId or not ped or ped == 0 then
 		return nil
 	end
-	return { characterId = tostring(characterId), at = GetEntityCoords(ped) }
+	return { characterId = tostring(characterId), at = Core.Platform.Entities.GetCoords(ped) }
 end
 
 local function stationAt(playerId, garageId, spotId)
@@ -281,8 +281,8 @@ local function validateStore(playerId, garageId, spotId, netId)
 	if not station then
 		return nil, who
 	end
-	local entity = NetworkGetEntityFromNetworkId(netId)
-	if not entity or entity == 0 or not DoesEntityExist(entity) then
+	local entity = Core.Platform.Entities.FromNetworkId(netId)
+	if not entity or entity == 0 or not Core.Platform.Entities.Exists(entity) then
 		return nil, 'vehicle_not_found'
 	end
 	local vehicleId = Entity(entity).state['coe:vehicleId']
@@ -290,7 +290,7 @@ local function validateStore(playerId, garageId, spotId, netId)
 		return nil, 'not_registered'
 	end
 	vehicleId = tostring(vehicleId)
-	if #(GetEntityCoords(entity) - vector3(station.x, station.y, station.z)) > station.radius + config.Limits.StationReach then
+	if #(Core.Platform.Entities.GetCoords(entity) - vector3(station.x, station.y, station.z)) > station.radius + config.Limits.StationReach then
 		return nil, 'too_far'
 	end
 	local record = exports.coe_vehicles:Get(vehicleId)
@@ -762,7 +762,7 @@ local tabletDeps = {
 	garage = function(garageId) return garages[garageId] end,
 	entityCoords = function(vehicleId)
 		local entity = exports.coe_vehicles:GetEntity(vehicleId)
-		return entity and GetEntityCoords(entity) or nil
+		return entity and Core.Platform.Entities.GetCoords(entity) or nil
 	end
 }
 

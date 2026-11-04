@@ -23,7 +23,7 @@ local function attachAnimationProp(playerPed, propProfile, modelHash)
 		return nil
 	end
 
-	local object = C.createLocalObject(modelHash, GetEntityCoords(playerPed))
+	local object = C.createLocalObject(modelHash, Core.Platform.Entities.GetCoords(playerPed))
 	if not object then
 		return nil
 	end
@@ -45,13 +45,13 @@ end
 local function startAnimation(playerPed, animation, durationMs)
 	local duration = durationMs or animation.duration
 	if animation.advanced then
-		local coords = GetEntityCoords(playerPed, true)
+		local coords = Core.Platform.Entities.GetCoords(playerPed, true)
 		TaskPlayAnimAdvanced(
 			playerPed,
 			animation.dict,
 			animation.clip,
 			coords.x, coords.y, coords.z,
-			0.0, 0.0, GetEntityHeading(playerPed),
+			0.0, 0.0, Core.Platform.Entities.GetHeading(playerPed),
 			8.0, 3.0,
 			duration,
 			animation.flag,
@@ -190,7 +190,7 @@ function C.playItemAnimation(animationName, onComplete, item, onEquip, options)
 			propModelHash = nil
 		end
 
-		if not C.loadAnimDict(animation.dict) or not DoesEntityExist(playerPed) then
+		if not C.loadAnimDict(animation.dict) or not Core.Platform.Entities.Exists(playerPed) then
 			if propModelHash then SetModelAsNoLongerNeeded(propModelHash) end
 			finishWithoutAnimation(onComplete, onEquip, options)
 			return
@@ -201,12 +201,12 @@ function C.playItemAnimation(animationName, onComplete, item, onEquip, options)
 			playerPed, duration, animation, propProfile, propModelHash, onEquip, shouldCancel
 		)
 
-		if DoesEntityExist(playerPed) then
+		if Core.Platform.Entities.Exists(playerPed) then
 			StopAnimTask(playerPed, animation.dict, animation.clip, 1.0)
 		end
-		if propObject and DoesEntityExist(propObject) then
+		if propObject and Core.Platform.Entities.Exists(propObject) then
 			DetachEntity(propObject, true, true)
-			DeleteEntity(propObject)
+			Core.Platform.Entities.Delete(propObject)
 		end
 		RemoveAnimDict(animation.dict)
 		if propModelHash and HasModelLoaded(propModelHash) then

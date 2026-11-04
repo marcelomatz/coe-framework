@@ -70,14 +70,14 @@ function S.createWorldContainer(itemName, metadata, coords, heading)
 	if not created then
 		return nil, 'container_prop_unavailable'
 	end
-	if not entity or entity == 0 or not DoesEntityExist(entity) then
+	if not entity or entity == 0 or not Core.Platform.Entities.Exists(entity) then
 		return nil, 'container_prop_unavailable'
 	end
-	SetEntityHeading(entity, heading or 0.0)
+	Core.Platform.Entities.SetHeading(entity, heading or 0.0)
 	FreezeEntityPosition(entity, true)
-	local netId = NetworkGetNetworkIdFromEntity(entity)
+	local netId = Core.Platform.Entities.GetNetworkId(entity)
 	if not netId or netId < 1 then
-		DeleteEntity(entity)
+		Core.Platform.Entities.Delete(entity)
 		return nil, 'container_prop_unavailable'
 	end
 	S.tagWorldContainer(entity, metadata.containerId)
@@ -88,7 +88,7 @@ function S.createWorldContainer(itemName, metadata, coords, heading)
 		itemName = itemName,
 		metadata = Core.Functions.DeepCopy(metadata),
 		containerId = metadata.containerId,
-		coords = GetEntityCoords(entity),
+		coords = Core.Platform.Entities.GetCoords(entity),
 		heading = heading or 0.0
 	}
 	S.worldContainers[container.containerId] = container
@@ -103,27 +103,27 @@ function S.adoptWorldContainer(playerId, itemName, metadata, netId, expectedCoor
 		return nil, 'invalid_container'
 	end
 
-	local entity = NetworkGetEntityFromNetworkId(netId)
+	local entity = Core.Platform.Entities.FromNetworkId(netId)
 	local startedAt = GetGameTimer()
-	while (entity == 0 or not DoesEntityExist(entity)) and GetGameTimer() - startedAt < Config.Server.adoptTimeoutMs do
+	while (entity == 0 or not Core.Platform.Entities.Exists(entity)) and GetGameTimer() - startedAt < Config.Server.adoptTimeoutMs do
 		Wait(50)
-		entity = NetworkGetEntityFromNetworkId(netId)
+		entity = Core.Platform.Entities.FromNetworkId(netId)
 	end
-	if entity == 0 or not DoesEntityExist(entity) then
+	if entity == 0 or not Core.Platform.Entities.Exists(entity) then
 		return nil, 'container_prop_unavailable'
 	end
-	if GetEntityModel(entity) ~= GetHashKey(model) then
+	if Core.Platform.Entities.GetModel(entity) ~= GetHashKey(model) then
 		return nil, 'invalid_container_model'
 	end
 	local owner = NetworkGetEntityOwner(entity)
 	if owner ~= playerId then
 		return nil, 'invalid_target'
 	end
-	local coords = GetEntityCoords(entity)
+	local coords = Core.Platform.Entities.GetCoords(entity)
 	if #(coords - expectedCoords) > 1.5 then
 		return nil, 'invalid_target'
 	end
-	SetEntityHeading(entity, heading or 0.0)
+	Core.Platform.Entities.SetHeading(entity, heading or 0.0)
 	FreezeEntityPosition(entity, true)
 	S.tagWorldContainer(entity, metadata.containerId)
 
@@ -243,8 +243,8 @@ function S.cleanupOrphanContainerProps()
 	end
 	local removed = 0
 	for _, entity in ipairs(GetAllObjects()) do
-		if not tracked[entity] and models[GetEntityModel(entity)] and DoesEntityExist(entity) then
-			DeleteEntity(entity)
+		if not tracked[entity] and models[Core.Platform.Entities.GetModel(entity)] and Core.Platform.Entities.Exists(entity) then
+			Core.Platform.Entities.Delete(entity)
 			removed = removed + 1
 		end
 	end
@@ -254,7 +254,7 @@ end
 -- filtra por modelo, então não há mais lista de netIds para enviar a cada jogador).
 function S.syncWorldContainers()
 	for _, container in pairs(S.worldContainers) do
-		if not container.entity or not DoesEntityExist(container.entity) then
+		if not container.entity or not Core.Platform.Entities.Exists(container.entity) then
 			local spawned = S.createWorldContainer(
 				container.itemName,
 				container.metadata,
@@ -282,10 +282,10 @@ function S.resolveWorldContainer(playerId, netId)
 end
 function S.isNearWorldContainer(playerId, container, tolerance)
 	local ped = GetPlayerPed(playerId)
-	if not ped or ped <= 0 or not container.entity or not DoesEntityExist(container.entity) then
+	if not ped or ped <= 0 or not container.entity or not Core.Platform.Entities.Exists(container.entity) then
 		return false
 	end
-	return #(GetEntityCoords(ped) - GetEntityCoords(container.entity)) <= Config.Server.worldInteractDistance + (tolerance or 0)
+	return #(Core.Platform.Entities.GetCoords(ped) - Core.Platform.Entities.GetCoords(container.entity)) <= Config.Server.worldInteractDistance + (tolerance or 0)
 end
 
 function S.removeWorldContainer(container)
@@ -304,8 +304,8 @@ function S.removeWorldContainer(container)
 			end
 		end
 	end
-	if container.entity and DoesEntityExist(container.entity) then
-		DeleteEntity(container.entity)
+	if container.entity and Core.Platform.Entities.Exists(container.entity) then
+		Core.Platform.Entities.Delete(container.entity)
 	end
 	Core.Events.ToAll('inventory.containerWorldRemoved', container.netId)
 	return true

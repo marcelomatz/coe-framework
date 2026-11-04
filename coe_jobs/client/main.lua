@@ -94,9 +94,9 @@ local function untarget(entity)
 end
 
 local function deleteEntity(entity)
-	if entity and DoesEntityExist(entity) then
+	if entity and Core.Platform.Entities.Exists(entity) then
 		untarget(entity)
-		DeleteEntity(entity)
+		Core.Platform.Entities.Delete(entity)
 	end
 end
 
@@ -152,7 +152,7 @@ local function spawnProp(model, spot, ground)
 	if not object or object == 0 then
 		return nil
 	end
-	SetEntityHeading(object, spot.h or 0.0)
+	Core.Platform.Entities.SetHeading(object, spot.h or 0.0)
 	PlaceObjectOnGroundProperly(object)
 	FreezeEntityPosition(object, true)
 	SetEntityInvincible(object, true)
@@ -169,7 +169,7 @@ local function attachProp(spec)
 		return nil
 	end
 	local ped = PlayerPedId()
-	local coords = GetEntityCoords(ped)
+	local coords = Core.Platform.Entities.GetCoords(ped)
 	local object = CreateObject(hash, coords.x, coords.y, coords.z + 0.2, true, true, false)
 	SetModelAsNoLongerNeeded(hash)
 	AttachEntityToEntity(object, ped, GetPedBoneIndex(ped, spec.bone), spec.offset[1], spec.offset[2], spec.offset[3],
@@ -230,7 +230,7 @@ local function timedAction(seconds, animation, tool, face)
 		TaskTurnPedToFaceCoord(ped, face.x, face.y, face.z, 600)
 		Wait(600)
 	end
-	local origin = GetEntityCoords(ped)
+	local origin = Core.Platform.Entities.GetCoords(ped)
 	local held = attachProp(tool)
 	playAnimation(animation)
 	local deadline = GetGameTimer() + math.floor(seconds * 1000)
@@ -238,7 +238,7 @@ local function timedAction(seconds, animation, tool, face)
 	while GetGameTimer() < deadline do
 		Wait(100)
 		ped = PlayerPedId()
-		if #(GetEntityCoords(ped) - origin) > 1.5 or IsPedInAnyVehicle(ped, true) or IsPedDeadOrDying(ped, true) then
+		if #(Core.Platform.Entities.GetCoords(ped) - origin) > 1.5 or IsPedInAnyVehicle(ped, true) or IsPedDeadOrDying(ped, true) then
 			ok = false
 			break
 		end
@@ -256,7 +256,7 @@ local function outfitFor(job)
 	if not uniform then
 		return nil
 	end
-	local model = GetEntityModel(PlayerPedId())
+	local model = Core.Platform.Entities.GetModel(PlayerPedId())
 	if model == joaat('mp_m_freemode_01') then
 		return uniform.male
 	elseif model == joaat('mp_f_freemode_01') then
@@ -555,7 +555,7 @@ local function haulState()
 end
 
 local function insideArea(zone)
-	local here = GetEntityCoords(PlayerPedId())
+	local here = Core.Platform.Entities.GetCoords(PlayerPedId())
 	return #(vector2(here.x, here.y) - vector2(zone.x, zone.y)) <= zone.radius
 end
 
@@ -587,7 +587,7 @@ local function fallTree(entry)
 	end
 	SetEntityRotation(object, 88.0, 0.0, heading, 2, true)
 	Wait(3500)
-	DeleteEntity(object)
+	Core.Platform.Entities.Delete(object)
 end
 
 local function hideTree(entry, animate)
@@ -598,7 +598,7 @@ local function hideTree(entry, animate)
 	entry.until_ = GetGameTimer() + (entry.seconds or 600) * 1000
 	felled[key] = entry
 	CreateModelHide(entry.x, entry.y, entry.z, 2.0, entry.model, true)
-	if animate and #(GetEntityCoords(PlayerPedId()) - vector3(entry.x, entry.y, entry.z)) < 150.0 then
+	if animate and #(Core.Platform.Entities.GetCoords(PlayerPedId()) - vector3(entry.x, entry.y, entry.z)) < 150.0 then
 		CreateThread(function() fallTree(entry) end)
 	end
 end
@@ -651,7 +651,7 @@ local function paintWorld(job)
 					if haul and (haul.ground > 0 or haul.carrying or haul.loaded >= haul.capacity) then
 						return false
 					end
-					if felled[JobRules.BinKey(GetEntityCoords(entity))] then
+					if felled[JobRules.BinKey(Core.Platform.Entities.GetCoords(entity))] then
 						return false
 					end
 					return insideArea(source.area)
@@ -661,8 +661,8 @@ local function paintWorld(job)
 						return
 					end
 					work.busy = true
-					local spot = GetEntityCoords(entity)
-					local modelHash = GetEntityModel(entity)
+					local spot = Core.Platform.Entities.GetCoords(entity)
+					local modelHash = Core.Platform.Entities.GetModel(entity)
 					CreateThread(function()
 						local ok = timedAction(actionSeconds(job, item), (item and item.animation) or job.gather.animation, job.tool, spot)
 						work.busy = false
@@ -760,11 +760,11 @@ AddStateBagChangeHandler('coe:jobLoad', nil, function(bagName, _, value)
 	CreateThread(function()
 		local deadline = GetGameTimer() + 3000
 		local vehicle = GetEntityFromStateBagName(bagName)
-		while (vehicle == 0 or not DoesEntityExist(vehicle)) and GetGameTimer() < deadline do
+		while (vehicle == 0 or not Core.Platform.Entities.Exists(vehicle)) and GetGameTimer() < deadline do
 			Wait(100)
 			vehicle = GetEntityFromStateBagName(bagName)
 		end
-		if vehicle ~= 0 and DoesEntityExist(vehicle) then
+		if vehicle ~= 0 and Core.Platform.Entities.Exists(vehicle) then
 			drawRack(vehicle, tonumber(value) or 0)
 		end
 	end)
@@ -775,10 +775,10 @@ CreateThread(function()
 	while true do
 		Wait(3000)
 		for vehicle in pairs(racks) do
-			if not DoesEntityExist(vehicle) then
+			if not Core.Platform.Entities.Exists(vehicle) then
 				for _, object in ipairs(racks[vehicle]) do
-					if DoesEntityExist(object) then
-						DeleteEntity(object)
+					if Core.Platform.Entities.Exists(object) then
+						Core.Platform.Entities.Delete(object)
 					end
 				end
 				racks[vehicle] = nil
@@ -840,22 +840,22 @@ local function jobVehicle()
 		return nil
 	end
 	local vehicle = NetToVeh(session.vehicle)
-	return vehicle ~= 0 and DoesEntityExist(vehicle) and vehicle or nil
+	return vehicle ~= 0 and Core.Platform.Entities.Exists(vehicle) and vehicle or nil
 end
 
 -- Jogador na traseira do veículo (onde fica a caçamba do caminhão de lixo). O coetarget mede a distância até o
 -- centro do veículo, e o caminhão tem ~10 m: por isso a opção usa um alcance largo e esta checagem fina na traseira.
 local function behind(vehicle)
-	local minimum, maximum = GetModelDimensions(GetEntityModel(vehicle))
+	local minimum, maximum = GetModelDimensions(Core.Platform.Entities.GetModel(vehicle))
 	local rear = GetOffsetFromEntityInWorldCoords(vehicle, 0.0, minimum.y - 0.4, 0.0)
-	local offset = GetOffsetFromEntityGivenWorldCoords(vehicle, GetEntityCoords(PlayerPedId()))
-	return #(GetEntityCoords(PlayerPedId()) - rear) <= 2.6 and offset.y < minimum.y + 1.2
+	local offset = GetOffsetFromEntityGivenWorldCoords(vehicle, Core.Platform.Entities.GetCoords(PlayerPedId()))
+	return #(Core.Platform.Entities.GetCoords(PlayerPedId()) - rear) <= 2.6 and offset.y < minimum.y + 1.2
 		and math.abs(offset.x) <= (maximum.x - minimum.x) / 2 + 0.6
 end
 
 -- Alcance da opção no veículo: metade do comprimento + o braço do jogador.
 local function vehicleReach(vehicle)
-	local minimum, maximum = GetModelDimensions(GetEntityModel(vehicle))
+	local minimum, maximum = GetModelDimensions(Core.Platform.Entities.GetModel(vehicle))
 	return math.max(maximum.y, -minimum.y) + 2.5
 end
 
@@ -905,7 +905,7 @@ local function paintHaulTarget(job)
 					return false
 				end
 				-- Perto da caçamba (metade de trás do veículo).
-				local offset = GetOffsetFromEntityGivenWorldCoords(entity, GetEntityCoords(PlayerPedId()))
+				local offset = GetOffsetFromEntityGivenWorldCoords(entity, Core.Platform.Entities.GetCoords(PlayerPedId()))
 				return offset.y < 0.5 and #(vector2(offset.x, offset.y)) < 4.5
 			end,
 			onSelect = function()
@@ -929,7 +929,7 @@ local function paintVehicleTarget(job)
 		return
 	end
 	local vehicle = NetToVeh(session.vehicle)
-	if vehicle == 0 or not DoesEntityExist(vehicle) then
+	if vehicle == 0 or not Core.Platform.Entities.Exists(vehicle) then
 		return
 	end
 	if job.route.mode == 'zone' then
@@ -957,7 +957,7 @@ local function paintVehicleTarget(job)
 					work.busy = true
 					CreateThread(function()
 						local ped = PlayerPedId()
-						local minimum = GetModelDimensions(GetEntityModel(entity))
+						local minimum = GetModelDimensions(Core.Platform.Entities.GetModel(entity))
 						local rear = GetOffsetFromEntityInWorldCoords(entity, 0.0, minimum.y, 0.5)
 						TaskTurnPedToFaceCoord(ped, rear.x, rear.y, rear.z, 500)
 						Wait(500)
@@ -1015,14 +1015,14 @@ local function paintBins(job)
 				if not zone or session.route.picked or work.carrying or IsPedInAnyVehicle(PlayerPedId(), false) then
 					return false
 				end
-				local here = GetEntityCoords(PlayerPedId())
+				local here = Core.Platform.Entities.GetCoords(PlayerPedId())
 				return #(vector2(here.x, here.y) - vector2(zone.x, zone.y)) <= zone.radius
 			end,
 			onSelect = function(entity)
 				if work.busy then
 					return
 				end
-				local spot = GetEntityCoords(entity)
+				local spot = Core.Platform.Entities.GetCoords(entity)
 				work.busy = true
 				CreateThread(function()
 					-- Abaixa e pega o saco antes de ele aparecer na mão.
@@ -1065,13 +1065,13 @@ end
 local function dropPassenger()
 	local ped = work.passenger
 	work.passenger = nil
-	if not ped or not DoesEntityExist(ped) then
+	if not ped or not Core.Platform.Entities.Exists(ped) then
 		return
 	end
 	TaskLeaveVehicle(ped, GetVehiclePedIsIn(ped, false), 0)
 	CreateThread(function()
 		Wait(2500)
-		if DoesEntityExist(ped) then
+		if Core.Platform.Entities.Exists(ped) then
 			TaskWanderStandard(ped, 10.0, 10)
 			Wait(12000)
 			deleteEntity(ped)
@@ -1086,7 +1086,7 @@ local function stoppedAt(stop, radius)
 	if not vehicle or GetVehiclePedIsIn(ped, false) ~= vehicle or GetPedInVehicleSeat(vehicle, -1) ~= ped then
 		return false
 	end
-	return GetEntitySpeed(vehicle) < 1.5 and #(GetEntityCoords(vehicle) - vector3(stop.x, stop.y, stop.z)) <= radius
+	return GetEntitySpeed(vehicle) < 1.5 and #(Core.Platform.Entities.GetCoords(vehicle) - vector3(stop.x, stop.y, stop.z)) <= radius
 end
 
 local function applySession(view)
@@ -1282,7 +1282,7 @@ end
 -- Onde a linha cai com a força do arremesso (4 a 18 m à frente).
 local function landingOf(power)
 	local ped = PlayerPedId()
-	local here = GetEntityCoords(ped)
+	local here = Core.Platform.Entities.GetCoords(ped)
 	local forward = GetEntityForwardVector(ped)
 	local distance = 4.0 + power * 14.0
 	return here.x + forward.x * distance, here.y + forward.y * distance, here.z
@@ -1340,11 +1340,10 @@ end
 -- Varas soltas no chão por perto (as que o cenário antigo largava): some com elas ao pegar a vara.
 local function clearLooseRods(spec)
 	local hash = joaat(spec.model)
-	local here = GetEntityCoords(PlayerPedId())
+	local here = Core.Platform.Entities.GetCoords(PlayerPedId())
 	for _, object in ipairs(GetGamePool('CObject')) do
-		if GetEntityModel(object) == hash and not IsEntityAttached(object) and #(GetEntityCoords(object) - here) < 8.0 then
-			SetEntityAsMissionEntity(object, true, true)
-			DeleteEntity(object)
+		if Core.Platform.Entities.GetModel(object) == hash and not IsEntityAttached(object) and #(Core.Platform.Entities.GetCoords(object) - here) < 8.0 then
+			Core.Platform.Entities.Delete(object)
 		end
 	end
 end
@@ -1355,7 +1354,7 @@ local function throwLine(power)
 	if not fishing then
 		return putAwayRod()
 	end
-	local here = GetEntityCoords(PlayerPedId())
+	local here = Core.Platform.Entities.GetCoords(PlayerPedId())
 	if not JobRules.FishingArea(fishing, { x = here.x, y = here.y, z = here.z }) then
 		setPhase('idle')
 		hint(_t('fish_hint_idle'))
@@ -1472,7 +1471,7 @@ local function rodLoop()
 				throwLine(power)
 			end
 		elseif phase == 'waiting' then
-			if IsDisabledControlJustPressed(0, 73) or #(GetEntityCoords(ped) - rod.origin) > 2.0 then
+			if IsDisabledControlJustPressed(0, 73) or #(Core.Platform.Entities.GetCoords(ped) - rod.origin) > 2.0 then
 				show('info', _t('fish_cancelled'))
 				cancelFishing(true)
 			elseif fishingState and now >= rod.biteAt then
@@ -1489,7 +1488,7 @@ local function rodLoop()
 				reel(false)
 			end
 		elseif phase == 'fight' then
-			if #(GetEntityCoords(ped) - rod.origin) > 2.5 then
+			if #(Core.Platform.Entities.GetCoords(ped) - rod.origin) > 2.5 then
 				SendNUIMessage({ action = 'fish:end', hit = false })
 				reel(false)
 			else
@@ -1544,7 +1543,7 @@ RegisterNetEvent('coe_jobs:fishCast', function(data)
 	end
 	fishingState = data
 	work.busy = true
-	rod.origin = GetEntityCoords(PlayerPedId())
+	rod.origin = Core.Platform.Entities.GetCoords(PlayerPedId())
 	rod.biteAt = GetGameTimer() + data.bite
 	setPhase('waiting')
 	holdAnimation(true)
@@ -1624,7 +1623,7 @@ CreateThread(function()
 	end
 	TriggerServerEvent('coe_jobs:catalog')
 	while true do
-		local coords = GetEntityCoords(PlayerPedId())
+		local coords = Core.Platform.Entities.GetCoords(PlayerPedId())
 		local range = config.SpawnDistance
 		for id, job in pairs(catalog) do
 			local center = vector3(job.center.x, job.center.y, job.center.z)

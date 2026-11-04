@@ -163,7 +163,7 @@ end
 function C.createLocalObject(modelHash, coords)
 	local entity = CreateObject(modelHash, coords.x, coords.y, coords.z, false, false, false)
 	SetModelAsNoLongerNeeded(modelHash)
-	if entity == 0 or not DoesEntityExist(entity) then
+	if entity == 0 or not Core.Platform.Entities.Exists(entity) then
 		return nil
 	end
 	SetEntityAsMissionEntity(entity, true, true)

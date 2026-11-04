@@ -66,7 +66,7 @@ local function coordsOf(playerId)
 	if not ped or ped == 0 then
 		return nil
 	end
-	local c = GetEntityCoords(ped)
+	local c = Core.Platform.Entities.GetCoords(ped)
 	return { x = c.x, y = c.y, z = c.z }
 end
 
@@ -279,9 +279,9 @@ end
 
 local function deleteVehicle(session)
 	if session.vehicleNet then
-		local entity = NetworkGetEntityFromNetworkId(session.vehicleNet)
-		if entity and entity ~= 0 and DoesEntityExist(entity) then
-			DeleteEntity(entity)
+		local entity = Core.Platform.Entities.FromNetworkId(session.vehicleNet)
+		if entity and entity ~= 0 and Core.Platform.Entities.Exists(entity) then
+			Core.Platform.Entities.Delete(entity)
 		end
 	end
 	session.vehicleNet = nil
@@ -291,11 +291,11 @@ local function vehicleCoords(session)
 	if not session.vehicleNet then
 		return nil
 	end
-	local entity = NetworkGetEntityFromNetworkId(session.vehicleNet)
-	if not entity or entity == 0 or not DoesEntityExist(entity) then
+	local entity = Core.Platform.Entities.FromNetworkId(session.vehicleNet)
+	if not entity or entity == 0 or not Core.Platform.Entities.Exists(entity) then
 		return nil
 	end
-	local c = GetEntityCoords(entity)
+	local c = Core.Platform.Entities.GetCoords(entity)
 	return { x = c.x, y = c.y, z = c.z }
 end
 
@@ -304,8 +304,8 @@ local function setVehicleLoad(session, count)
 	if not session.vehicleNet then
 		return
 	end
-	local entity = NetworkGetEntityFromNetworkId(session.vehicleNet)
-	if entity and entity ~= 0 and DoesEntityExist(entity) then
+	local entity = Core.Platform.Entities.FromNetworkId(session.vehicleNet)
+	if entity and entity ~= 0 and Core.Platform.Entities.Exists(entity) then
 		Entity(entity).state:set('coe:jobLoad', count, true)
 	end
 end
@@ -314,15 +314,15 @@ local function spawnVehicle(playerId, job)
 	local spec = job.vehicle
 	local entity = CreateVehicleServerSetter(joaat(spec.model), 'automobile', spec.spawn.x, spec.spawn.y, spec.spawn.z, spec.spawn.h)
 	local deadline = GetGameTimer() + 3000
-	while (not entity or entity == 0 or not DoesEntityExist(entity)) and GetGameTimer() < deadline do
+	while (not entity or entity == 0 or not Core.Platform.Entities.Exists(entity)) and GetGameTimer() < deadline do
 		Wait(50)
 	end
-	if not entity or entity == 0 or not DoesEntityExist(entity) then
+	if not entity or entity == 0 or not Core.Platform.Entities.Exists(entity) then
 		return nil
 	end
-	SetVehicleNumberPlateText(entity, ('%s%04d'):format(spec.plate, math.random(0, 9999)))
+	Core.Platform.Vehicles.SetPlate(entity, ('%s%04d'):format(spec.plate, math.random(0, 9999)))
 	Entity(entity).state:set('coe:jobVehicle', job.id .. ':' .. playerId, true)
-	return NetworkGetNetworkIdFromEntity(entity)
+	return Core.Platform.Entities.GetNetworkId(entity)
 end
 
 -- Sessões ---------------------------------------------------------------------------------------------

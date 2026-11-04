@@ -275,7 +275,7 @@ RegisterCommand('chamado', function(source, args)
 	if ped == 0 then
 		return respond(source, failure('invalid_coords'))
 	end
-	local position = GetEntityCoords(ped)
+	local position = Core.Platform.Entities.GetCoords(ped)
 	local result = open(args[1], position.x, position.y, position.z, 'citizen')
 	if type(result) == 'number' then
 		lastCitizenCall[source] = now

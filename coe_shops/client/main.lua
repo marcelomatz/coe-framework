@@ -60,9 +60,9 @@ end
 
 local function clearClerk(id)
 	local ped = clerks[id]
-	if ped and DoesEntityExist(ped) then
+	if ped and Core.Platform.Entities.Exists(ped) then
 		pcall(function() exports.coetarget:RemoveTargetEntity(ped) end)
-		DeleteEntity(ped)
+		Core.Platform.Entities.Delete(ped)
 	end
 	clerks[id] = nil
 	clerkInteriors[id] = nil
@@ -156,7 +156,7 @@ local function spawnClerk(store)
 	end
 	SetEntityAsMissionEntity(ped, true, true)
 	SetPedDefaultComponentVariation(ped)
-	SetEntityHeading(ped, c.h)
+	Core.Platform.Entities.SetHeading(ped, c.h)
 	SetEntityInvincible(ped, true)
 	SetBlockingOfNonTemporaryEvents(ped, true)
 	SetPedCanRagdoll(ped, false)
@@ -178,7 +178,7 @@ end
 -- Jogador dentro do mesmo interior e o balconista em outra sala (ou fora): põe o balconista na sala do jogador.
 local function fixRoom(store, playerPed)
 	local ped, interior = clerks[store.id], clerkInteriors[store.id]
-	if not ped or not interior or interior == 0 or not DoesEntityExist(ped) then
+	if not ped or not interior or interior == 0 or not Core.Platform.Entities.Exists(ped) then
 		return
 	end
 	if GetInteriorFromEntity(playerPed) ~= interior then
@@ -240,7 +240,7 @@ end)
 CreateThread(function()
 	while true do
 		local playerPed = PlayerPedId()
-		local coords = GetEntityCoords(playerPed)
+		local coords = Core.Platform.Entities.GetCoords(playerPed)
 		for _, store in ipairs(stores) do
 			local distance = #(coords - vector3(store.clerk.x, store.clerk.y, store.clerk.z))
 			if distance < config.SpawnDistance and not clerks[store.id] then
@@ -249,8 +249,8 @@ CreateThread(function()
 					report('error', { store = store.id, message = tostring(spawnError) })
 				elseif clerks[store.id] then
 					local ped = clerks[store.id]
-					local c = GetEntityCoords(ped)
-					report('clerk', { store = store.id, interior = clerkInteriors[store.id], z = c.z, exists = DoesEntityExist(ped) })
+					local c = Core.Platform.Entities.GetCoords(ped)
+					report('clerk', { store = store.id, interior = clerkInteriors[store.id], z = c.z, exists = Core.Platform.Entities.Exists(ped) })
 				else
 					report('error', { store = store.id, message = 'clerk_not_created' })
 				end
@@ -274,7 +274,7 @@ end)
 -- Diagnóstico no F8: loja mais perto, distância, balconista e interior.
 RegisterCommand('lojadebug', function()
 	local playerPed = PlayerPedId()
-	local coords = GetEntityCoords(playerPed)
+	local coords = Core.Platform.Entities.GetCoords(playerPed)
 	local nearest, best = nil, math.huge
 	for _, store in ipairs(stores) do
 		local distance = #(coords - vector3(store.clerk.x, store.clerk.y, store.clerk.z))
@@ -287,9 +287,9 @@ RegisterCommand('lojadebug', function()
 		return
 	end
 	local ped = clerks[nearest.id]
-	local pedCoords = ped and DoesEntityExist(ped) and GetEntityCoords(ped)
+	local pedCoords = ped and Core.Platform.Entities.Exists(ped) and Core.Platform.Entities.GetCoords(ped)
 	print(('[coe_shops] %s a %.1f m | balconista=%s existe=%s pos=%s | interior loja=%s ped=%s jogador=%s | sala ped=%s jogador=%s'):format(
-		nearest.id, best, tostring(ped), tostring(ped and DoesEntityExist(ped)),
+		nearest.id, best, tostring(ped), tostring(ped and Core.Platform.Entities.Exists(ped)),
 		pedCoords and ('%.2f %.2f %.2f'):format(pedCoords.x, pedCoords.y, pedCoords.z) or '-',
 		tostring(clerkInteriors[nearest.id]), tostring(ped and GetInteriorFromEntity(ped)), tostring(GetInteriorFromEntity(playerPed)),
 		tostring(ped and GetRoomKeyFromEntity(ped)), tostring(GetRoomKeyFromEntity(playerPed))))

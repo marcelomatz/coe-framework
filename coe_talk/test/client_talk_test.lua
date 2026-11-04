@@ -46,6 +46,7 @@ exports = setmetatable({}, {
 	end
 })
 
+dofile('../coe_core/lib/platform.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 dofile('client/submix.lua')

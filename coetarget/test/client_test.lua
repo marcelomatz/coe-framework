@@ -119,6 +119,7 @@ GetCurrentResourceName = function()
 	return 'coetarget'
 end
 
+dofile('../coe_core/lib/platform.lua')
 dofile('client.lua')
 
 local function assertEqual(actual, expected, label)

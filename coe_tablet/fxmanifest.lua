@@ -8,6 +8,7 @@ description 'COE OS no tablet: tela inicial, dock, multitarefa e central de cont
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

@@ -46,7 +46,7 @@ end
 local function cameraFor(preset)
 	local ped = creator.ped
 	local spec = settings.Cameras[preset] or settings.Cameras.body
-	local origin = GetEntityCoords(ped)
+	local origin = Core.Platform.Entities.GetCoords(ped)
 	local forward = GetEntityForwardVector(ped)
 	local position = origin + forward * spec.distance + vector3(0.0, 0.0, spec.height)
 	local target = origin + vector3(0.0, 0.0, spec.target)
@@ -88,8 +88,8 @@ local function setCamera(preset, instant)
 end
 
 local function deletePed()
-	if creator and creator.ped and DoesEntityExist(creator.ped) then
-		DeleteEntity(creator.ped)
+	if creator and creator.ped and Core.Platform.Entities.Exists(creator.ped) then
+		Core.Platform.Entities.Delete(creator.ped)
 	end
 	if creator then
 		creator.ped = nil
@@ -151,8 +151,8 @@ local function sceneThread()
 			if settings.DepthOfField then
 				SetUseHiDof()
 			end
-			if creator.ped and DoesEntityExist(creator.ped) then
-				SetEntityHeading(creator.ped, creator.heading)
+			if creator.ped and Core.Platform.Entities.Exists(creator.ped) then
+				Core.Platform.Entities.SetHeading(creator.ped, creator.heading)
 			end
 			Wait(0)
 		end

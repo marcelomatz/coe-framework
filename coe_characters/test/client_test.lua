@@ -6,6 +6,7 @@ local messages = {}
 local requests = {}
 
 Core = {
+	Platform = dofile('../coe_core/lib/platform.lua'),
 	Events = {
 		OnNet = function(name, callback)
 			eventHandlers[name] = callback

@@ -106,7 +106,7 @@ local function nearestVehicle()
 	if current ~= 0 then
 		return current
 	end
-	local at = GetEntityCoords(ped)
+	local at = Core.Platform.Entities.GetCoords(ped)
 	local vehicle = GetClosestVehicle(at.x, at.y, at.z, 8.0, 0, 71)
 	return vehicle ~= 0 and vehicle or nil
 end
@@ -120,9 +120,9 @@ end
 
 local function revive()
 	local ped = PlayerPedId()
-	local at = GetEntityCoords(ped)
+	local at = Core.Platform.Entities.GetCoords(ped)
 	if IsEntityDead(ped) or IsPedDeadOrDying(ped, true) then
-		NetworkResurrectLocalPlayer(at.x, at.y, at.z, GetEntityHeading(ped), true, false)
+		NetworkResurrectLocalPlayer(at.x, at.y, at.z, Core.Platform.Entities.GetHeading(ped), true, false)
 	end
 	ped = PlayerPedId()
 	ClearPedTasksImmediately(ped)
@@ -209,7 +209,7 @@ local PREPARE = {
 	deleteVehicle = function(data)
 		local vehicle = nearestVehicle()
 		if not vehicle then return nil, 'no_vehicle' end
-		data.netId = NetworkGetNetworkIdFromEntity(vehicle)
+		data.netId = Core.Platform.Entities.GetNetworkId(vehicle)
 		return data
 	end,
 	tpWaypoint = function(data)
@@ -252,11 +252,11 @@ local APPLY = {
 			SetEntityAsMissionEntity(current, true, true)
 			DeleteVehicle(current)
 		end
-		local at = GetEntityCoords(ped)
-		local vehicle = CreateVehicle(hash, at.x, at.y, at.z + 0.5, GetEntityHeading(ped), true, false)
+		local at = Core.Platform.Entities.GetCoords(ped)
+		local vehicle = CreateVehicle(hash, at.x, at.y, at.z + 0.5, Core.Platform.Entities.GetHeading(ped), true, false)
 		SetModelAsNoLongerNeeded(hash)
 		SetVehicleOnGroundProperly(vehicle)
-		SetVehicleNumberPlateText(vehicle, 'STAFF')
+		Core.Platform.Vehicles.SetPlate(vehicle, 'STAFF')
 		SetVehicleFuelLevel(vehicle, 100.0)
 		TaskWarpPedIntoVehicle(ped, vehicle, -1)
 	end,
@@ -268,7 +268,7 @@ local APPLY = {
 		if data.op == 'repair' then
 			SetVehicleFixed(vehicle)
 			SetVehicleDeformationFixed(vehicle)
-			SetVehicleEngineHealth(vehicle, 1000.0)
+			Core.Platform.Vehicles.SetEngineHealth(vehicle, 1000.0)
 			SetVehicleBodyHealth(vehicle, 1000.0)
 			SetVehicleUndriveable(vehicle, false)
 		elseif data.op == 'refuel' then
@@ -313,8 +313,8 @@ end)
 -- Coordenadas atuais (x, y, z, direção), para mostrar e copiar.
 RegisterNUICallback('toolsCoords', function(_, cb)
 	local ped = PlayerPedId()
-	local at = GetEntityCoords(ped)
-	cb({ ok = modules.self == true, x = at.x, y = at.y, z = at.z, h = GetEntityHeading(ped) })
+	local at = Core.Platform.Entities.GetCoords(ped)
+	cb({ ok = modules.self == true, x = at.x, y = at.y, z = at.z, h = Core.Platform.Entities.GetHeading(ped) })
 end)
 
 RegisterNUICallback('toolsShowCoords', function(body, cb)
@@ -326,13 +326,13 @@ CreateThread(function()
 	while true do
 		if toggles.coords then
 			local ped = PlayerPedId()
-			local at = GetEntityCoords(ped)
+			local at = Core.Platform.Entities.GetCoords(ped)
 			SetTextFont(4)
 			SetTextScale(0.0, 0.38)
 			SetTextOutline()
 			SetTextColour(255, 255, 255, 230)
 			BeginTextCommandDisplayText('STRING')
-			AddTextComponentSubstringPlayerName(('x %.2f  y %.2f  z %.2f  h %.1f'):format(at.x, at.y, at.z, GetEntityHeading(ped)))
+			AddTextComponentSubstringPlayerName(('x %.2f  y %.2f  z %.2f  h %.1f'):format(at.x, at.y, at.z, Core.Platform.Entities.GetHeading(ped)))
 			EndTextCommandDisplayText(0.40, 0.012)
 			Wait(0)
 		else

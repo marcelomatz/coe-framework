@@ -6,6 +6,8 @@ name 'coe_dispatch'
 version '0.1.0-beta.17'
 description 'Despacho de chamados e alertas para polícia e EMS, usado por heists e demais resources. Recebe quem está de ponto em negócio da categoria'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_logging',

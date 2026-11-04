@@ -56,6 +56,7 @@ math.random = function(n) return n and 1 or 0.05 end
 
 local characters = { [1] = 11, [2] = 22, [3] = 33 }
 Core = {
+	Platform = dofile('../coe_core/lib/platform.lua'),
 	Players = { GetActiveCharacterId = function(playerId) return characters[playerId] end },
 	Events = { On = function() end }
 }

@@ -15,9 +15,9 @@ end
 -- O ped foi ocultado e congelado durante a seleção; o spawnmanager não reverte isso.
 local function dumpState()
 	local ped = PlayerPedId()
-	local x, y, z = table.unpack(GetEntityCoords(ped))
+	local x, y, z = table.unpack(Core.Platform.Entities.GetCoords(ped))
 	debugPrint(('estado: ped=%s modelo=%s coords=%.1f,%.1f,%.1f visivel=%s congelado=%s vida=%s'):format(
-		tostring(ped), tostring(GetEntityModel(ped)), x, y, z, tostring(IsEntityVisible(ped)),
+		tostring(ped), tostring(Core.Platform.Entities.GetModel(ped)), x, y, z, tostring(IsEntityVisible(ped)),
 		tostring(IsEntityPositionFrozen(ped)), tostring(GetEntityHealth(ped))))
 	debugPrint(('estado: fadeOut=%s fadeIn=%s gameplayCam=%s colisao=%s'):format(
 		tostring(IsScreenFadedOut()), tostring(IsScreenFadedIn()), tostring(IsGameplayCamRendering()),
@@ -27,7 +27,7 @@ end
 
 local function restorePlayer()
 	local ped = PlayerPedId()
-	if ped > 0 and DoesEntityExist(ped) then
+	if ped > 0 and Core.Platform.Entities.Exists(ped) then
 		SetEntityVisible(ped, true, false)
 		FreezeEntityPosition(ped, false)
 	end
@@ -92,7 +92,7 @@ local function freezeForSelection()
 	DoScreenFadeIn(0)
 
 	local ped = PlayerPedId()
-	if ped > 0 and DoesEntityExist(ped) then
+	if ped > 0 and Core.Platform.Entities.Exists(ped) then
 		SetPlayerControl(PlayerId(), false, 0)
 		FreezeEntityPosition(ped, true)
 		SetEntityVisible(ped, false, false)
@@ -167,8 +167,8 @@ local function ensureHotelLoop()
 			local prompting = false
 			if characterLoaded and currentHotel and currentHotel.enabled then
 				local ped = PlayerPedId()
-				if ped > 0 and DoesEntityExist(ped) and not IsEntityDead(ped) then
-					local coords = GetEntityCoords(ped)
+				if ped > 0 and Core.Platform.Entities.Exists(ped) and not IsEntityDead(ped) then
+					local coords = Core.Platform.Entities.GetCoords(ped)
 					local h = currentHotel
 
 					-- 1. Entrada na rua
@@ -186,8 +186,8 @@ local function ensureHotelLoop()
 							if IsControlJustReleased(0, 38) then
 								DoScreenFadeOut(400)
 								Wait(450)
-								SetEntityCoords(ped, h.room.x, h.room.y, h.room.z, false, false, false, false)
-								SetEntityHeading(ped, h.room.h or 0.0)
+								Core.Platform.Entities.SetCoords(ped, h.room.x, h.room.y, h.room.z)
+								Core.Platform.Entities.SetHeading(ped, h.room.h or 0.0)
 								Wait(150)
 								DoScreenFadeIn(400)
 							end
@@ -197,8 +197,8 @@ local function ensureHotelLoop()
 							if IsControlJustReleased(0, 38) then
 								DoScreenFadeOut(400)
 								Wait(450)
-								SetEntityCoords(ped, h.entrance.x, h.entrance.y, h.entrance.z, false, false, false, false)
-								SetEntityHeading(ped, h.entrance.h or 0.0)
+								Core.Platform.Entities.SetCoords(ped, h.entrance.x, h.entrance.y, h.entrance.z)
+								Core.Platform.Entities.SetHeading(ped, h.entrance.h or 0.0)
 								Wait(150)
 								DoScreenFadeIn(400)
 							end

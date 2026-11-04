@@ -35,7 +35,7 @@ local function applyLivery(vehicle, livery)
 end
 
 local function apply(vehicle, data)
-	if not DoesEntityExist(vehicle) or type(data) ~= 'table' then
+	if not Core.Platform.Entities.Exists(vehicle) or type(data) ~= 'table' then
 		return
 	end
 	SetVehicleModKit(vehicle, 0)
@@ -132,7 +132,7 @@ local function optionsOf(vehicle)
 end
 
 exports('GetVehicleOptions', function(vehicle)
-	if not vehicle or not DoesEntityExist(vehicle) then
+	if not vehicle or not Core.Platform.Entities.Exists(vehicle) then
 		return nil
 	end
 	return optionsOf(vehicle)

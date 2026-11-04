@@ -201,7 +201,7 @@ Core.Events.OnNet('inventory.give', function(requestId, targetId, slot, count)
 		S.sendActionResult(playerId, requestId, false, 'invalid_target')
 		return
 	end
-	local distance = #(GetEntityCoords(sourcePed) - GetEntityCoords(targetPed))
+	local distance = #(Core.Platform.Entities.GetCoords(sourcePed) - Core.Platform.Entities.GetCoords(targetPed))
 	if distance > Config.Server.giveDistance then
 		S.log('warn', 'security', 'inventory_give_denied', {
 			action = 'give',

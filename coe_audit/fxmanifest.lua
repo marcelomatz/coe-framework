@@ -6,6 +6,8 @@ name 'coe_audit'
 version '0.1.0-beta.17'
 description 'Trilha de auditoria durável (MariaDB) dos resources Coe'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_database',
 	'coe_logging'

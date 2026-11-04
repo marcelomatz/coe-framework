@@ -8,6 +8,7 @@ description 'Combustível do Coe: consumo nos veículos (comum, aditivada, etano
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'business'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

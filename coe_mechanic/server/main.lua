@@ -88,7 +88,7 @@ local function vehicleEntity(vehicleId)
 end
 
 local function publishAppearance(vehicleId, entity, appearance)
-	if entity and DoesEntityExist(entity) and appearance and next(appearance) ~= nil then
+	if entity and Core.Platform.Entities.Exists(entity) and appearance and next(appearance) ~= nil then
 		Entity(entity).state:set('coe:appearance', appearance, true)
 	end
 end
@@ -268,10 +268,10 @@ end)
 local function tabletDistance(playerId, vehicleId)
 	local entity = vehicleEntity(vehicleId)
 	local ped = GetPlayerPed(playerId)
-	if not entity or not DoesEntityExist(entity) or not ped or ped == 0 then
+	if not entity or not Core.Platform.Entities.Exists(entity) or not ped or ped == 0 then
 		return nil
 	end
-	return #(GetEntityCoords(ped) - GetEntityCoords(entity))
+	return #(Core.Platform.Entities.GetCoords(ped) - Core.Platform.Entities.GetCoords(entity))
 end
 
 -- Equipe e ponto são do coe_businesses: dono ou funcionário cadastrado naquela oficina (nunca por emprego).
@@ -289,7 +289,7 @@ local function shopOfMechanic(playerId)
 	if not ped or ped == 0 then
 		return nil
 	end
-	local at = GetEntityCoords(ped)
+	local at = Core.Platform.Entities.GetCoords(ped)
 	local characterId = Core.Players.GetActiveCharacterId(playerId)
 	for shopId, shop in pairs(config.Shops) do
 		local inside
@@ -540,10 +540,10 @@ local function inShowroom(playerId, shop, vehicleId)
 	local center = vector3(room.x, room.y, room.z)
 	local ped = GetPlayerPed(playerId)
 	local entity = vehicleEntity(vehicleId)
-	if not ped or ped == 0 or not entity or not DoesEntityExist(entity) then
+	if not ped or ped == 0 or not entity or not Core.Platform.Entities.Exists(entity) then
 		return false
 	end
-	return #(GetEntityCoords(ped) - center) <= room.radius and #(GetEntityCoords(entity) - center) <= room.radius
+	return #(Core.Platform.Entities.GetCoords(ped) - center) <= room.radius and #(Core.Platform.Entities.GetCoords(entity) - center) <= room.radius
 end
 
 local function validateRequest(playerId, shopId, plate, patch)
@@ -654,7 +654,7 @@ local function nearPoint(playerId, point, tolerance)
 	if not ped or ped == 0 then
 		return false
 	end
-	return #(GetEntityCoords(ped) - vector3(point.x, point.y, point.z)) <= point.radius + (tolerance or 0.0)
+	return #(Core.Platform.Entities.GetCoords(ped) - vector3(point.x, point.y, point.z)) <= point.radius + (tolerance or 0.0)
 end
 
 -- Valida jogador pronto, oficina existente, estação configurada, equipe e distância.

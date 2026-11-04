@@ -49,6 +49,7 @@ exports = { coetarget = {
 	RemoveTargetEntity = function(_, ped) targets[ped] = nil end
 } }
 
+dofile('../coe_core/lib/platform.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 dofile('client/main.lua')

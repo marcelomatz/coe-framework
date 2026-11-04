@@ -9,7 +9,7 @@ local TOO_FAR_DISTANCE = 8.0
 --- NetId da entidade, ou nil se ela não for networked (props do mapa não são containers do servidor).
 local function containerNetId(entity)
 	if not NetworkGetEntityIsNetworked(entity) then return nil end
-	local netId = NetworkGetNetworkIdFromEntity(entity)
+	local netId = Core.Platform.Entities.GetNetworkId(entity)
 	if netId and netId > 0 then
 		return netId
 	end

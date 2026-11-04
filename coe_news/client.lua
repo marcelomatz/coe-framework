@@ -38,9 +38,9 @@ local function stop()
 		return
 	end
 	local ped = PlayerPedId()
-	if current.object and DoesEntityExist(current.object) then
+	if current.object and Core.Platform.Entities.Exists(current.object) then
 		DetachEntity(current.object, true, false)
-		DeleteEntity(current.object)
+		Core.Platform.Entities.Delete(current.object)
 	end
 	StopAnimTask(ped, current.item.dict, current.item.anim, 1.0)
 	ClearPedSecondaryTask(ped)
@@ -63,7 +63,7 @@ local function start(item)
 		end)
 		return
 	end
-	local coords = GetEntityCoords(ped)
+	local coords = Core.Platform.Entities.GetCoords(ped)
 	local object = CreateObject(model, coords.x, coords.y, coords.z + 0.2, true, true, false)
 	SetModelAsNoLongerNeeded(model)
 	local offset, rotation = item.offset, item.rotation

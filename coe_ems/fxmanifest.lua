@@ -6,6 +6,8 @@ name 'coe_ems'
 version '0.1.0-beta.17'
 description 'Saúde e EMS: estados do paciente, reanimação, tratamento e prontuário. Equipe, cargos e salários vêm do negócio da categoria ems'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_database',

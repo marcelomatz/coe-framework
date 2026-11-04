@@ -89,7 +89,7 @@ local function distanceBetween(a, b)
 	if pa == 0 or pb == 0 then
 		return nil
 	end
-	return #(GetEntityCoords(pa) - GetEntityCoords(pb))
+	return #(Core.Platform.Entities.GetCoords(pa) - Core.Platform.Entities.GetCoords(pb))
 end
 
 local PERMISSION = {

@@ -70,18 +70,18 @@ local function createNetworkedProp(record, position, heading)
 
 	local entity = CreateObject(modelHash, position.x, position.y, position.z, true, true, false)
 	SetModelAsNoLongerNeeded(modelHash)
-	if entity == 0 or not DoesEntityExist(entity) then return nil end
+	if entity == 0 or not Core.Platform.Entities.Exists(entity) then return nil end
 
 	SetEntityAsMissionEntity(entity, true, true)
 	SetEntityCoordsNoOffset(entity, position.x, position.y, position.z, false, false, false)
-	SetEntityHeading(entity, heading)
+	Core.Platform.Entities.SetHeading(entity, heading)
 	SetEntityCollision(entity, true, true)
 	SetEntityVisible(entity, true, false)
 	FreezeEntityPosition(entity, true)
 
-	local netId = NetworkGetNetworkIdFromEntity(entity)
+	local netId = Core.Platform.Entities.GetNetworkId(entity)
 	if not netId or netId < 1 then
-		DeleteEntity(entity)
+		Core.Platform.Entities.Delete(entity)
 		return nil
 	end
 	SetNetworkIdExistsOnAllMachines(netId, true)
@@ -92,7 +92,7 @@ end
 --- Confirma a posição: cria a entidade networked e pede ao servidor para registrar o drop.
 --- O prop de preview some; a resposta chega em `C.handleDropResult`.
 local function confirmPlacement(record, position)
-	local heading = GetEntityHeading(record.entity)
+	local heading = Core.Platform.Entities.GetHeading(record.entity)
 	local worldEntity, netId = createNetworkedProp(record, position, heading)
 	if not worldEntity then
 		C.attachContainerProp(record)
@@ -132,7 +132,7 @@ local function resolvePlacementRecord(containerId)
 		C.releaseCarry(record)
 		state.equippedWeapon = nil
 	end
-	if not record or not DoesEntityExist(record.entity) then
+	if not record or not Core.Platform.Entities.Exists(record.entity) then
 		C.deleteContainerProp(containerId)
 		return nil, 'container_prop_unavailable'
 	end
@@ -148,7 +148,7 @@ function C.placeContainerAt(containerId, surfacePoint)
 	local playerPed = PlayerPedId()
 	DetachEntity(record.entity, true, true)
 	SetEntityCollision(record.entity, false, false)
-	SetEntityHeading(record.entity, GetEntityHeading(playerPed))
+	Core.Platform.Entities.SetHeading(record.entity, Core.Platform.Entities.GetHeading(playerPed))
 	confirmPlacement(record, adjustToModelBase(surfacePoint, record))
 	return true
 end
@@ -180,7 +180,7 @@ function C.placeContainerProp(containerId)
 			local playerPed = PlayerPedId()
 			local position = getPlacementPoint(playerPed, record)
 			SetEntityCoordsNoOffset(record.entity, position.x, position.y, position.z, false, false, false)
-			SetEntityHeading(record.entity, GetEntityHeading(playerPed))
+			Core.Platform.Entities.SetHeading(record.entity, Core.Platform.Entities.GetHeading(playerPed))
 
 			if IsControlJustPressed(0, CONTROL_CONFIRM) then
 				state.placement = nil
@@ -212,14 +212,14 @@ function C.handleDropResult(requestId, success, result)
 			state.equippedWeapon = nil
 		end
 		if state.carriedContainerId == record.containerId then state.carriedContainerId = nil end
-		if DoesEntityExist(record.entity) then DeleteEntity(record.entity) end
+		if Core.Platform.Entities.Exists(record.entity) then Core.Platform.Entities.Delete(record.entity) end
 		C.syncCarriedState()
 		C.feedback('Maleta colocada no mundo.')
 		return
 	end
 
-	if DoesEntityExist(pending.entity) then DeleteEntity(pending.entity) end
-	if DoesEntityExist(record.entity) then
+	if Core.Platform.Entities.Exists(pending.entity) then Core.Platform.Entities.Delete(pending.entity) end
+	if Core.Platform.Entities.Exists(record.entity) then
 		SetEntityVisible(record.entity, true, false)
 		C.attachContainerProp(record)
 	end

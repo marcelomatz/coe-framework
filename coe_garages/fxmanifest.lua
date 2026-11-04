@@ -8,6 +8,7 @@ description 'Garagens: veículos do jogador por vaga e frota dos negócios, com 
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'business'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

@@ -72,7 +72,7 @@ local function coordsOf(playerId)
 	if not ped or ped == 0 then
 		return nil
 	end
-	local c = GetEntityCoords(ped)
+	local c = Core.Platform.Entities.GetCoords(ped)
 	return { x = c.x, y = c.y, z = c.z }
 end
 
@@ -353,7 +353,7 @@ local function checkGrid(race)
 			reason = 'not_in_vehicle'
 		elseif Rules.Distance(at, race.track.start) > config.Races.GridRadius then
 			reason = 'not_on_grid'
-		elseif NetworkGetNetworkIdFromEntity(vehicle) ~= ready_.netId or GetPedInVehicleSeat(vehicle, -1) ~= ped then
+		elseif Core.Platform.Entities.GetNetworkId(vehicle) ~= ready_.netId or GetPedInVehicleSeat(vehicle, -1) ~= ped then
 			reason = 'not_driver'
 		elseif not Rules.ClassAllowed(config, race.class, ready_.classId) then
 			reason = 'wrong_class'
@@ -953,7 +953,7 @@ local function inRaceVehicle(entry)
 		return false
 	end
 	local vehicle = GetVehiclePedIsIn(ped, false)
-	return vehicle ~= 0 and NetworkGetNetworkIdFromEntity(vehicle) == entry.vehicleNet
+	return vehicle ~= 0 and Core.Platform.Entities.GetNetworkId(vehicle) == entry.vehicleNet
 end
 
 local function maybeFinish(race)

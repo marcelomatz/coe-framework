@@ -65,7 +65,7 @@ CreateThread(function()
 		local wait = 750
 		local nextAction = nil
 		if #stations > 0 and not IsNuiFocused() then
-			local at = GetEntityCoords(PlayerPedId())
+			local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 			local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(at.x, at.y, at.z)
 			if nearAny then
 				wait = 250

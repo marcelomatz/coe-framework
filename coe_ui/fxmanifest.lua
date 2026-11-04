@@ -6,6 +6,8 @@ name 'coe_ui'
 version '0.1.0-beta.17'
 description 'Biblioteca de UI do framework Coe: tokens, componentes e guia de estilos'
 
+coe_platform 'hal'
+
 -- Sem dependências: as NUIs dos outros resources carregam estes arquivos via nui://coe_ui/...
 ui_page 'html/styleguide.html'
 

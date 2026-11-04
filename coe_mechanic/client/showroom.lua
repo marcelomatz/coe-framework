@@ -5,7 +5,7 @@ local TOGGLES = { turbo = 18, tyreSmoke = 20, xenon = 22 }
 local MAX_EXTRA = 14
 
 local function plateOf(entity)
-	return (GetVehicleNumberPlateText(entity) or ''):gsub('^%s+', ''):gsub('%s+$', '')
+	return (Core.Platform.Vehicles.GetPlate(entity) or ''):gsub('^%s+', ''):gsub('%s+$', '')
 end
 
 -- Estado visual antes das prévias, para restaurar ao sair sem alterar o veículo.
@@ -49,7 +49,7 @@ local function capture(entity)
 end
 
 local function restore()
-	if vehicle and snapshot and DoesEntityExist(vehicle) then
+	if vehicle and snapshot and Core.Platform.Entities.Exists(vehicle) then
 		-- Cor personalizada só some com a chamada de limpeza; depois o snapshot reaplica a original.
 		ClearVehicleCustomPrimaryColour(vehicle)
 		ClearVehicleCustomSecondaryColour(vehicle)
@@ -66,7 +66,7 @@ local function close()
 	ShowroomCamera.Stop(false)
 	SetNuiFocus(false, false)
 	SendNUIMessage({ action = 'close' })
-	if vehicle and DoesEntityExist(vehicle) then
+	if vehicle and Core.Platform.Entities.Exists(vehicle) then
 		FreezeEntityPosition(vehicle, false)
 	end
 	vehicle, snapshot, shopId = nil, nil, nil
@@ -85,7 +85,7 @@ local function openShowroom(id, shop)
 	FreezeEntityPosition(entity, true)
 	ShowroomCamera.Start(entity, shop.showroom)
 	SetNuiFocus(true, true)
-	local model = GetDisplayNameFromVehicleModel(GetEntityModel(entity))
+	local model = GetDisplayNameFromVehicleModel(Core.Platform.Entities.GetModel(entity))
 	SendNUIMessage({
 		action = 'open',
 		data = {
@@ -230,7 +230,7 @@ RegisterNetEvent('coe_mechanic:orderUpdated', function(order)
 		-- O serviço foi aplicado: a nova aparência passa a ser a base das próximas prévias.
 		local entity = vehicle
 		SetTimeout(800, function()
-			if open and entity == vehicle and DoesEntityExist(entity) then
+			if open and entity == vehicle and Core.Platform.Entities.Exists(entity) then
 				snapshot = capture(entity)
 			end
 		end)
@@ -240,7 +240,7 @@ end)
 CreateThread(function()
 	while true do
 		if open then
-			if not DoesEntityExist(vehicle) or GetVehiclePedIsIn(PlayerPedId(), false) ~= vehicle then
+			if not Core.Platform.Entities.Exists(vehicle) or GetVehiclePedIsIn(PlayerPedId(), false) ~= vehicle then
 				close()
 			end
 			Wait(500)
@@ -254,7 +254,7 @@ AddEventHandler('onResourceStop', function(resource)
 	if resource == GetCurrentResourceName() and open then
 		restore()
 		ShowroomCamera.Stop(true)
-		if vehicle and DoesEntityExist(vehicle) then
+		if vehicle and Core.Platform.Entities.Exists(vehicle) then
 			FreezeEntityPosition(vehicle, false)
 		end
 		SetNuiFocus(false, false)

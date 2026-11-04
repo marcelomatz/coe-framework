@@ -160,7 +160,7 @@ local function nearAgency(playerId, agency)
 	if not agency or not ped or ped == 0 then
 		return false
 	end
-	return #(GetEntityCoords(ped) - vector3(agency.x, agency.y, agency.z)) <= agency.radius + 2.0
+	return #(Core.Platform.Entities.GetCoords(ped) - vector3(agency.x, agency.y, agency.z)) <= agency.radius + 2.0
 end
 
 -- Dinheiro: conta (coe_economy) e espécie (item `money` no coe_inventory).

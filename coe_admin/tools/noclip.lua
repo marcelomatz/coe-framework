@@ -75,10 +75,10 @@ function AdminNoclip.Set(on, speeds)
 			if IsControlPressed(0, CONTROLS.left) then move = move - right end
 			if IsControlPressed(0, CONTROLS.up) then move = move + vector3(0.0, 0.0, 1.0) end
 			if IsControlPressed(0, CONTROLS.down) then move = move - vector3(0.0, 0.0, 1.0) end
-			local at = GetEntityCoords(current)
+			local at = Core.Platform.Entities.GetCoords(current)
 			local target = at + move * step
 			SetEntityCoordsNoOffset(current, target.x, target.y, target.z, true, true, true)
-			SetEntityHeading(current, GetGameplayCamRot(2).z)
+			Core.Platform.Entities.SetHeading(current, GetGameplayCamRot(2).z)
 			if shownSpeed ~= AdminNoclip.speed then
 				shownSpeed = AdminNoclip.speed
 				notifyPrompt({

@@ -8,6 +8,7 @@ description 'Smartphone do COE OS: Telefone, Contatos, Mensagens e os apps da lo
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',
