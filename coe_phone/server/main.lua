@@ -511,243 +511,50 @@ end
 
 -- Chamadas ---------------------------------------------------------------------------------------------
 
-local function sendState(call, side, state, reason)
-	local self = call[side]
-	local other = call[side == 'caller' and 'callee' or 'caller']
-	TriggerClientEvent('coe_phone:callState', self.playerId, {
-		id = call.id,
-		state = state,
-		number = format(other.number),
-		name = nameFor(self.serial, other.number),
-		startedAt = call.startedAt,
-		kind = call.kind,
-		reason = reason,
-		sound = state ~= 'ended' and soundOf(self.serial) or nil
-	})
-end
 
-local function finish(call, reason)
-	if not calls[call.id] then
-		return
-	end
-	calls[call.id] = nil
-	PhoneVoice.Close(call.voice)
-	playerCall[call.caller.playerId] = nil
-	playerCall[call.callee.playerId] = nil
-	local now = os.time()
-	local wasActive = call.state == 'active'
-	local status = PhoneRules.CallStatus(reason, wasActive)
-	local duration = wasActive and math.max(0, now - (call.startedAt or now)) or 0
-	PhonePersistence.AddCall(call.caller.number, call.callee.number, status, duration, now, call.kind)
-	if duration > 0 then
-		CreateThread(function()
-			telecomCharge(call.caller.number, call.kind, duration, call.callee.number, call.caller.holder)
-		end)
-	end
-	-- Crédito esgotado aparece como motivo próprio na tela; no histórico fica como atendida.
-	local shown = reason == 'no_credit' and reason or status
-	sendState(call, 'caller', 'ended', shown)
-	sendState(call, 'callee', 'ended', shown)
-	local calleePrefs = prefsOf(call.callee.serial)
-	if status == 'missed' and not (calleePrefs and calleePrefs.settings.dnd) then
-		notify(call.callee.playerId, 'info', _t('missed_call', { caller = nameFor(call.callee.serial, call.caller.number) }))
-	end
-	log('info', 'system', 'phone_call_ended', { result = status, count = duration, operation = call.kind })
-end
-
-local CALL_KINDS = { voice = true, video = true }
-
-local function dial(me, payload)
-	local kind = payload.kind == nil and 'voice' or payload.kind
-	if not CALL_KINDS[kind] then
-		return { ok = false, error = 'invalid_request' }
-	end
-	if not me.number then
-		return { ok = false, error = 'no_sim' }
-	end
-	local target = PhoneRules.Normalize(config, payload.number)
-	if not target or target == me.number then
-		return { ok = false, error = 'invalid_number' }
-	end
-	if playerCall[me.playerId] then
-		return { ok = false, error = 'already_in_call' }
-	end
-	local myNetwork = offline(me.playerId, me.prefs)
-	if myNetwork then
-		return { ok = false, error = myNetwork }
-	end
-	local callee, routeError = routeNumber(target)
-	if not callee then
-		return { ok = false, error = routeError }
-	end
-	local targetPlayer = callee.playerId
-	local now = os.time()
-	if not targetPlayer or targetPlayer == me.playerId or offline(targetPlayer, prefsOf(callee.serial)) then
-		PhonePersistence.AddCall(me.number, target, 'unavailable', 0, now, kind)
-		return { ok = false, error = 'unavailable' }
-	end
-	if playerCall[targetPlayer] then
-		PhonePersistence.AddCall(me.number, target, 'busy', 0, now, kind)
-		return { ok = false, error = 'busy' }
-	end
-	-- Quem liga paga: a operadora diz se pode e por quanto tempo o crédito dura.
-	local line = telecomAuthorize(me.number, kind, me.holder)
-	if not line.ok then
-		return { ok = false, error = line.error or 'telecom_unavailable' }
-	end
-	if playerCall[me.playerId] or playerCall[targetPlayer] then
-		return { ok = false, error = playerCall[me.playerId] and 'already_in_call' or 'busy' }
-	end
-
-	nextCallId = nextCallId + 1
-	local call = {
-		id = nextCallId,
-		state = 'ringing',
-		kind = kind,
-		maxSeconds = tonumber(line.maxSeconds),
-		caller = me,
-		callee = callee
-	}
-	calls[call.id] = call
-	playerCall[me.playerId] = call.id
-	playerCall[targetPlayer] = call.id
-	sendState(call, 'caller', 'outgoing')
-	sendState(call, 'callee', 'incoming')
-	SetTimeout(config.Calls.RingSeconds * 1000, function()
-		if calls[call.id] == call and call.state == 'ringing' then
-			finish(call, 'missed')
-		end
-	end)
-	log('info', 'system', 'phone_call_started', { player_id = me.playerId, target = targetPlayer })
-	return { ok = true }
-end
-
-local function answer(playerId)
-	local call = calls[playerCall[playerId]]
-	if not call or call.state ~= 'ringing' or call.callee.playerId ~= playerId then
-		return { ok = false, error = 'no_call' }
-	end
-	call.state = 'active'
-	call.startedAt = os.time()
-	call.voice = PhoneVoice.Open(call.caller.playerId, call.callee.playerId)
-	sendState(call, 'caller', 'active')
-	sendState(call, 'callee', 'active')
-	if call.maxSeconds and call.maxSeconds > 0 then
-		SetTimeout(math.floor(call.maxSeconds * 1000), function()
-			if calls[call.id] == call and call.state == 'active' then
-				finish(call, 'no_credit')
-			end
-		end)
-	end
-	return { ok = true }
-end
-
-local function hangup(playerId)
-	local call = calls[playerCall[playerId]]
-	if not call then
-		return { ok = false, error = 'no_call' }
-	end
-	if call.state == 'ringing' then
-		finish(call, call.callee.playerId == playerId and 'declined' or 'missed')
-	else
-		finish(call, 'hangup')
-	end
-	return { ok = true }
-end
-
--- Apps nativos -----------------------------------------------------------------------------------------
-
-local Native = {}
-
-Native.phone = {
-	recents = function(me)
-		if not me.number then
-			return { ok = true, data = { recents = {} } }
-		end
-		local rows = PhonePersistence.Recents(me.number, config.Calls.RecentsLimit)
-		if not rows then
-			return { ok = false, error = 'database_error' }
-		end
-		local list = {}
-		for _, row in ipairs(rows) do
-			local outgoing = tostring(row.caller) == me.number
-			local peer = tostring(outgoing and row.callee or row.caller)
-			list[#list + 1] = {
-				id = tonumber(row.id), outgoing = outgoing, number = format(peer), name = nameFor(me.serial, peer),
-				status = tostring(row.status), duration = tonumber(row.duration) or 0, at = tonumber(row.created_at),
-				kind = row.kind == 'video' and 'video' or 'voice'
-			}
-		end
-		return { ok = true, data = { number = format(me.number), recents = list } }
-	end,
-	dial = function(me, payload)
-		return dial(me, payload)
-	end,
-	answer = function(me)
-		return answer(me.playerId)
-	end,
-	hangup = function(me)
-		return hangup(me.playerId)
-	end
+Phone = {
+	config = config,
+	log = log,
+	notify = notify,
+	characterIdOf = characterIdOf,
+	telecomAuthorize = telecomAuthorize,
+	telecomCharge = telecomCharge,
+	format = format,
+	playerOfCharacter = playerOfCharacter,
+	playerOfSerial = playerOfSerial,
+	routeNumber = routeNumber,
+	contactsOf = contactsOf,
+	nameFor = nameFor,
+	prefsOf = prefsOf,
+	signalOf = signalOf,
+	offline = offline,
+	soundOf = soundOf,
+	banking = banking,
+	CALL_DISPATCH = {},
+	WALLET_DISPATCH = {}
 }
 
-Native.contacts = {
-	list = function(me)
-		local contacts = contactsOf(me.serial)
-		if not contacts then
-			return { ok = false, error = 'database_error' }
-		end
-		return { ok = true, data = contacts.list }
-	end,
-	save = function(me, payload)
-		local name = PhoneRules.ContactName(config, payload.name)
-		local number = PhoneRules.Normalize(config, payload.number)
-		if not name then
-			return { ok = false, error = 'invalid_name' }
-		end
-		if not number then
-			return { ok = false, error = 'invalid_number' }
-		end
-		local id = payload.id ~= nil and math.tointeger(tonumber(payload.id)) or nil
-		if payload.id ~= nil and not id then
-			return { ok = false, error = 'invalid_request' }
-		end
-		local existing = PhonePersistence.ContactByNumber(me.serial, number)
-		if existing == nil then
-			return { ok = false, error = 'database_error' }
-		end
-		if existing and existing ~= id then
-			return { ok = false, error = 'contact_exists' }
-		end
-		local result
-		if id then
-			result = PhonePersistence.UpdateContact(me.serial, id, name, number)
-		else
-			local total = PhonePersistence.CountContacts(me.serial)
-			if not total then
-				return { ok = false, error = 'database_error' }
-			end
-			if total >= config.Contacts.Max then
-				return { ok = false, error = 'contacts_full' }
-			end
-			result = PhonePersistence.AddContact(me.serial, name, number)
-		end
-		contactCache[me.serial] = nil
-		if not result then
-			return { ok = false, error = 'database_error' }
-		end
-		return { ok = true }
-	end,
-	delete = function(me, payload)
-		local id = math.tointeger(tonumber(payload.id))
-		if not id then
-			return { ok = false, error = 'invalid_request' }
-		end
-		local result = PhonePersistence.DeleteContact(me.serial, id)
-		contactCache[me.serial] = nil
-		return result and { ok = true } or { ok = false, error = 'database_error' }
-	end
-}
+local function _loadSub(relPath)
+	local f = io.open(relPath, "r")
+	if f then f:close() return dofile(relPath) end
+	local f2 = io.open("coe_phone/" .. relPath, "r")
+	if f2 then f2:close() return dofile("coe_phone/" .. relPath) end
+end
+
+if not IsDuplicityVersion or not IsDuplicityVersion() then
+	_loadSub("server/calls.lua")
+	_loadSub("server/wallet.lua")
+	_loadSub("server/payments.lua")
+end
+
+-- Calls logic extracted to server/calls.lua
+local function sendState(...) return Phone.sendState(...) end
+local function finish(...) return Phone.finish(...) end
+local function dial(...) return Phone.dial(...) end
+local function answer(...) return Phone.answer(...) end
+local function hangup(...) return Phone.hangup(...) end
+local CALL_DISPATCH = setmetatable({}, { __index = function(_, k) return Phone.CALL_DISPATCH[k] end })
+
 
 Native.messages = {
 	threads = function(me)
@@ -968,307 +775,14 @@ end
 local payments = {}
 local walletBusy = {}
 
-local function banking(exportName, ...)
-	if GetResourceState('coe_banking') ~= 'started' then
-		return nil, 'bank_unavailable'
-	end
-	local arguments = { ... }
-	local ok, result = pcall(function()
-		return exports.coe_banking[exportName](exports.coe_banking, table.unpack(arguments))
-	end)
-	if not ok or type(result) ~= 'table' then
-		return nil, 'bank_unavailable'
-	end
-	return result
-end
+-- Wallet logic extracted to server/wallet.lua
+local function walletView(...) return Phone.walletView(...) end
+local function inWallet(...) return Phone.inWallet(...) end
+local function confirmOwner(...) return Phone.confirmOwner(...) end
+local function newToken(...) return Phone.newToken(...) end
+local function walletLocked(...) return Phone.walletLocked(...) end
+local WALLET_DISPATCH = setmetatable({}, { __index = function(_, k) return Phone.WALLET_DISPATCH[k] end })
 
--- { [cardId] = isDefault } guardados no aparelho.
-local function walletIds(serial)
-	local rows = PhonePersistence.WalletCards(serial)
-	if not rows then
-		return nil
-	end
-	local list, ids = {}, {}
-	for _, row in ipairs(rows) do
-		local id = math.tointeger(tonumber(row.card_id))
-		if id then
-			list[#list + 1] = { id = id, default = tonumber(row.is_default) == 1 }
-			ids[#ids + 1] = id
-		end
-	end
-	return list, ids
-end
-
-local function walletView(me)
-	local list, ids = walletIds(me.serial)
-	if not list then
-		return nil, 'database_error'
-	end
-	local views = {}
-	if #ids > 0 then
-		local result, errorCode = banking('WalletCards', ids)
-		if not result then
-			return nil, errorCode
-		end
-		views = result.ok and result.cards or {}
-	end
-	local cards = {}
-	for _, entry in ipairs(list) do
-		local view = views[tostring(entry.id)]
-		cards[#cards + 1] = {
-			id = entry.id, default = entry.default,
-			last4 = view and view.last4 or '----', holder = view and view.holder or '',
-			kind = view and view.kind or 'physical', tier = view and view.tier, tierLabel = view and view.tierLabel,
-			status = view and view.status or 'missing', expiresAt = view and view.expiresAt
-		}
-	end
-	return { cards = cards, max = config.Wallet.MaxCards, hasPasscode = me.prefs.passcode ~= false }
-end
-
-local function inWallet(serial, cardId)
-	local list = walletIds(serial)
-	if not list then
-		return nil
-	end
-	for _, entry in ipairs(list) do
-		if entry.id == cardId then
-			return entry
-		end
-	end
-	return false
-end
-
--- Rosto cadastrado (se ligado) ou senha do aparelho.
-local function confirmOwner(me, payload)
-	if payload.face == true then
-		if not me.prefs.settings.faceId or me.device.face ~= me.characterId then
-			return { ok = false, error = 'face_mismatch' }
-		end
-		return nil
-	end
-	return verifyCurrent(me, payload.code)
-end
-
-local function newToken()
-	local parts = {}
-	for index = 1, 4 do
-		parts[index] = ('%08x'):format(math.random(0, 0x7fffffff))
-	end
-	return table.concat(parts)
-end
-
-local function walletLocked(me, run)
-	if walletBusy[me.playerId] then
-		return { ok = false, error = 'busy' }
-	end
-	walletBusy[me.playerId] = true
-	local ok, result = pcall(run)
-	walletBusy[me.playerId] = nil
-	if not ok then
-		error(result, 0)
-	end
-	return result
-end
-
-Native.wallet = {
-	list = function(me)
-		local view, errorCode = walletView(me)
-		if not view then
-			return { ok = false, error = errorCode }
-		end
-		return { ok = true, data = view }
-	end,
-	-- Cartões que podem entrar: físicos no inventário e virtuais do personagem.
-	eligible = function(me)
-		local result, errorCode = banking('WalletEligible', me.playerId)
-		if not result then
-			return { ok = false, error = errorCode }
-		end
-		if not result.ok then
-			return { ok = false, error = result.error }
-		end
-		local list = walletIds(me.serial)
-		if not list then
-			return { ok = false, error = 'database_error' }
-		end
-		local present = {}
-		for _, entry in ipairs(list) do
-			present[entry.id] = true
-		end
-		local cards = {}
-		for _, card in ipairs(result.cards or {}) do
-			card.added = present[card.id] == true
-			cards[#cards + 1] = card
-		end
-		return { ok = true, data = { cards = cards, hasVirtual = result.hasVirtual, virtualFee = result.virtualFee } }
-	end,
-	-- payload.cardId; payload.pin (cartão físico).
-	add = function(me, payload)
-		if not me.prefs.passcode then
-			return { ok = false, error = 'wallet_passcode' }
-		end
-		local cardId = math.tointeger(tonumber(payload.cardId))
-		if not cardId or cardId < 1 or (payload.pin ~= nil and type(payload.pin) ~= 'string') then
-			return { ok = false, error = 'invalid_request' }
-		end
-		return walletLocked(me, function()
-			local list = walletIds(me.serial)
-			if not list then
-				return { ok = false, error = 'database_error' }
-			end
-			for _, entry in ipairs(list) do
-				if entry.id == cardId then
-					return { ok = false, error = 'already_in_wallet' }
-				end
-			end
-			if #list >= config.Wallet.MaxCards then
-				return { ok = false, error = 'wallet_full' }
-			end
-			local result, errorCode = banking('WalletLink', me.playerId, cardId, payload.pin)
-			if not result then
-				return { ok = false, error = errorCode }
-			end
-			if not result.ok then
-				return { ok = false, error = result.error, data = result.left and { left = result.left } or nil }
-			end
-			if not PhonePersistence.WalletAdd(me.serial, cardId, #list == 0, os.time()) then
-				return { ok = false, error = 'database_error' }
-			end
-			log('info', 'system', 'phone_wallet_added', { character_id = me.characterId, count = cardId })
-			local view = walletView(me)
-			return { ok = true, data = view }
-		end)
-	end,
-	remove = function(me, payload)
-		local cardId = math.tointeger(tonumber(payload.cardId))
-		if not cardId then
-			return { ok = false, error = 'invalid_request' }
-		end
-		return walletLocked(me, function()
-			local entry = inWallet(me.serial, cardId)
-			if entry == nil then
-				return { ok = false, error = 'database_error' }
-			end
-			if not entry then
-				return { ok = false, error = 'not_in_wallet' }
-			end
-			if not PhonePersistence.WalletRemove(me.serial, cardId) then
-				return { ok = false, error = 'database_error' }
-			end
-			if entry.default then
-				local list = walletIds(me.serial)
-				if list and list[1] then
-					PhonePersistence.WalletDefault(me.serial, list[1].id)
-				end
-			end
-			for token, payment in pairs(payments) do
-				if payment.serial == me.serial and payment.cardId == cardId then
-					payments[token] = nil
-				end
-			end
-			return { ok = true, data = walletView(me) }
-		end)
-	end,
-	setDefault = function(me, payload)
-		local cardId = math.tointeger(tonumber(payload.cardId))
-		if not cardId then
-			return { ok = false, error = 'invalid_request' }
-		end
-		local entry = inWallet(me.serial, cardId)
-		if entry == nil then
-			return { ok = false, error = 'database_error' }
-		end
-		if not entry then
-			return { ok = false, error = 'not_in_wallet' }
-		end
-		if not PhonePersistence.WalletDefault(me.serial, cardId) then
-			return { ok = false, error = 'database_error' }
-		end
-		return { ok = true, data = walletView(me) }
-	end,
-	-- Pede o cartão virtual ao banco (cobra a tarifa da conta) e já guarda na carteira.
-	issueVirtual = function(me)
-		if not me.prefs.passcode then
-			return { ok = false, error = 'wallet_passcode' }
-		end
-		return walletLocked(me, function()
-			local result, errorCode = banking('WalletIssueVirtual', me.playerId)
-			if not result then
-				return { ok = false, error = errorCode }
-			end
-			if not result.ok then
-				return { ok = false, error = result.error }
-			end
-			local list = walletIds(me.serial)
-			local view = list and walletView(me)
-			if view and result.card and result.card.id then
-				-- O virtual anterior foi substituído (bloqueado): sai da carteira e dá lugar ao novo.
-				for _, card in ipairs(view.cards) do
-					if card.kind == 'virtual' and card.status == 'blocked' and card.id ~= result.card.id then
-						PhonePersistence.WalletRemove(me.serial, card.id)
-					end
-				end
-				list = walletIds(me.serial)
-			end
-			if list and #list < config.Wallet.MaxCards and result.card and result.card.id then
-				local hadDefault = false
-				for _, entry in ipairs(list) do
-					hadDefault = hadDefault or entry.default
-				end
-				PhonePersistence.WalletAdd(me.serial, result.card.id, not hadDefault, os.time())
-			end
-			return { ok = true, data = walletView(me) }
-		end)
-	end,
-	-- Autoriza um pagamento: { cardId, amount, face | code } -> { token, expires }.
-	authorize = function(me, payload)
-		if not me.prefs.passcode then
-			return { ok = false, error = 'wallet_passcode' }
-		end
-		local cardId = math.tointeger(tonumber(payload.cardId))
-		local amount = math.tointeger(tonumber(payload.amount))
-		if not cardId or not amount or amount < 1 or amount > config.Wallet.MaxAmount then
-			return { ok = false, error = 'invalid_request' }
-		end
-		local entry = inWallet(me.serial, cardId)
-		if entry == nil then
-			return { ok = false, error = 'database_error' }
-		end
-		if not entry then
-			return { ok = false, error = 'not_in_wallet' }
-		end
-		local denied = confirmOwner(me, payload)
-		if denied then
-			return denied
-		end
-		local result, errorCode = banking('WalletCards', { cardId })
-		if not result then
-			return { ok = false, error = errorCode }
-		end
-		local card = result.ok and result.cards and result.cards[tostring(cardId)]
-		if not card then
-			return { ok = false, error = 'no_card' }
-		end
-		if card.status ~= 'active' then
-			return { ok = false, error = card.status == 'expired' and 'card_expired' or 'card_blocked' }
-		end
-		for token, payment in pairs(payments) do
-			if payment.playerId == me.playerId then
-				payments[token] = nil
-			end
-		end
-		local token = newToken()
-		payments[token] = { playerId = me.playerId, serial = me.serial, cardId = cardId, amount = amount, expires = os.time() + config.Wallet.PaymentSeconds }
-		log('info', 'system', 'phone_wallet_authorized', { character_id = me.characterId, count = amount })
-		return { ok = true, data = { token = token, expires = config.Wallet.PaymentSeconds } }
-	end
-}
-local simErrors = {
-	invalid_sim = 'Este chip não funciona.',
-	in_call = 'Encerre a ligação antes de trocar o chip.',
-	no_free_sim_slot = 'Não há espaço para outro chip neste celular. Retire o atual em Ajustes.',
-	inventory_unavailable = 'O inventário não respondeu. Tente de novo.',
-	slot_changed = 'O chip não está mais nesse lugar do inventário.'
 }
 
 -- Chips (itens) no inventário do personagem: { { item, display } }.
@@ -1758,85 +1272,6 @@ end)
 
 -- Consome (uma vez) a autorização de pagamento da Carteira. Só para resources de config.Wallet.PaymentCallers.
 -- Retorna o cardId autorizado, ou nil + erro (payment_expired, payment_mismatch, forbidden).
-local function consumePayment(playerId, token, amount)
-	local payment = type(token) == 'string' and payments[token] or nil
-	if not payment then
-		return nil, 'payment_expired'
-	end
-	payments[token] = nil
-	if payment.playerId ~= tonumber(playerId) or payment.amount ~= math.tointeger(tonumber(amount)) then
-		return nil, 'payment_mismatch'
-	end
-	if os.time() > payment.expires or active[payment.playerId] ~= payment.serial then
-		return nil, 'payment_expired'
-	end
-	return payment.cardId
-end
-
-exports('ConsumePayment', function(playerId, token, amount)
-	if not config.Wallet.PaymentCallers[GetInvokingResource() or ''] then
-		return nil, 'forbidden'
-	end
-	return consumePayment(playerId, token, amount)
-end)
-
--- Carteira do celular nas lojas (coe_shops:RegisterPaymentMethod, meio `wallet`): o client da loja chama o export
--- RequestPayment deste resource e manda o token; a cobrança consome o token e lança no crédito do cartão escolhido.
-exports('ShopCharge', function(playerId, payment, amount, description)
-	if not config.Wallet.PaymentCallers[GetInvokingResource() or ''] then
-		return { ok = false, error = 'forbidden' }
-	end
-	local cardId, errorCode = consumePayment(playerId, type(payment) == 'table' and payment.token or nil, amount)
-	if not cardId then
-		return { ok = false, error = errorCode or 'payment_expired' }
-	end
-	local ok, result = pcall(function()
-		return exports.coe_banking:CardPurchase(cardId, amount, description)
-	end)
-	if not ok or type(result) ~= 'table' or not result.ok then
-		return { ok = false, error = ok and type(result) == 'table' and result.error or 'payment_failed' }
-	end
-	return { ok = true, ref = cardId }
-end)
-
-exports('ShopOptions', function()
-	return { detail = 'Paga pelo celular com um cartão da Carteira' }
-end)
-
-exports('ShopRefund', function(_, ref, amount, description)
-	if not config.Wallet.PaymentCallers[GetInvokingResource() or ''] then
-		return { ok = false, error = 'forbidden' }
-	end
-	local ok, result = pcall(function()
-		return exports.coe_banking:CardRefund(ref, amount, description)
-	end)
-	return ok and result or { ok = false, error = 'payment_failed' }
-end)
-
-local function registerShopPayment()
-	if GetResourceState('coe_shops') ~= 'started' then
-		return
-	end
-	local ok, result = pcall(function()
-		return exports.coe_shops:RegisterPaymentMethod({
-			id = 'wallet', label = 'Carteira do celular', kind = 'device', order = 20,
-			client = 'RequestPayment', options = 'ShopOptions', charge = 'ShopCharge', refund = 'ShopRefund'
-		})
-	end)
-	if not ok or result ~= true then
-		log('warn', 'system', 'phone_shop_payment_failed', { error_code = ok and type(result) == 'table' and tostring(result.error) or 'unavailable' })
-	end
-end
-
-local upgradeReport = nil
-
-AddEventHandler('onResourceStart', function(resource)
-	if resource == 'coe_shops' then
-		registerShopPayment()
-	end
-end)
-CreateThread(registerShopPayment)
--- Número (formatado) do primeiro chip de que o personagem é titular; nil se nenhum.
 exports('NumberOf', function(characterId)
 	if not ready or characterId == nil then
 		return nil

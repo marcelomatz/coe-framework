@@ -74,5 +74,10 @@ server_scripts {
 	'server/profile.lua',
 	'server/staff.lua',
 	'tools/server.lua',
-	'server.lua'
+	'server.lua',
+	'server/businesses.lua',
+	'server/economy_crypto.lua',
+	'server/news.lua',
+	'server/world.lua',
+	'server/factions.lua'
 }

@@ -36,7 +36,9 @@ server_scripts {
 	'server/persistence.lua',
 	'server/rules.lua',
 	'server/registry.lua',
-	'server/main.lua'
+	'server/main.lua',
+	'server/contracts_admin.lua',
+	'server/spaces.lua'
 }
 
 client_scripts {

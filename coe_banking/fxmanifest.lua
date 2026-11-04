@@ -40,6 +40,9 @@ server_scripts {
 	'server/tablet.lua',
 	'server/business_rules.lua',
 	'server/main.lua',
+	'server/atm.lua',
+	'server/admin_api.lua',
+	'server/payment_api.lua',
 	'server/business.lua'
 }
 

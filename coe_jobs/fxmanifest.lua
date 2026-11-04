@@ -35,11 +35,13 @@ server_scripts {
 	'shared/guide.lua',
 	'server/migrations.lua',
 	'server/persistence.lua',
-	'server/main.lua'
+	'server/main.lua',
+	'server/fishing_shop.lua'
 }
 
 client_scripts {
 	'client/main.lua',
+	'client/fishing.lua',
 	'@coe_ui/theme_bridge.lua'
 }
 

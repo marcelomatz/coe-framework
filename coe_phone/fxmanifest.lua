@@ -33,7 +33,10 @@ server_scripts {
 	'server/persistence.lua',
 	'server/upgrade.lua',
 	'server/voice.lua',
-	'server/main.lua'
+	'server/main.lua',
+	'server/calls.lua',
+	'server/wallet.lua',
+	'server/payments.lua'
 }
 
 client_scripts {
