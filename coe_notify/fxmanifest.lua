@@ -6,6 +6,8 @@ name 'coe_notify'
 version '0.1.0-beta.17'
 description 'Client notification library for Coe resources'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_ui'
 }

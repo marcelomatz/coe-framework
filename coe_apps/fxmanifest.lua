@@ -8,6 +8,7 @@ description 'Loja de aplicativos do COE OS (tablet e smartphone): Empregos, Clas
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

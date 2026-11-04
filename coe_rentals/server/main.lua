@@ -43,7 +43,7 @@ local function playerCoords(playerId)
 	if not ped or ped == 0 then
 		return nil
 	end
-	return GetEntityCoords(ped)
+	return Core.Platform.Entities.GetCoords(ped)
 end
 
 -- Fail-closed: sem coe_economy no ar, ninguém aluga de graça. Cada chamada à economia fica escrita por extenso
@@ -193,7 +193,7 @@ end
 local function spawnOccupied(point)
 	local clearance = RentalsConfig.SpawnClearance or 2.5
 	for _, vehicle in ipairs(GetAllVehicles and GetAllVehicles() or {}) do
-		if DoesEntityExist(vehicle) and near(GetEntityCoords(vehicle), point, clearance) then
+		if Core.Platform.Entities.Exists(vehicle) and near(Core.Platform.Entities.GetCoords(vehicle), point, clearance) then
 			return true
 		end
 	end
@@ -205,13 +205,13 @@ local VEHICLE_OK, VEHICLE_FAR, VEHICLE_LOST = 'near', 'far', 'lost'
 
 local function vehicleStatus(rental, station)
 	local entity = rental.entity
-	if not entity or not DoesEntityExist(entity) then
+	if not entity or not Core.Platform.Entities.Exists(entity) then
 		return VEHICLE_LOST
 	end
 	if GetEntityHealth and GetEntityHealth(entity) <= 0 then
 		return VEHICLE_LOST
 	end
-	local at = GetEntityCoords(entity)
+	local at = Core.Platform.Entities.GetCoords(entity)
 	local reach = RentalsConfig.CounterReturnDistance or 40.0
 	if near(at, station.ped, reach) or near(at, station.returnZone, reach) then
 		return VEHICLE_OK
@@ -241,8 +241,8 @@ local function finishRental(characterId, playerId, refund, reason)
 		return 0
 	end
 	activeRentals[characterId] = nil
-	if rental.entity and DoesEntityExist(rental.entity) then
-		DeleteEntity(rental.entity)
+	if rental.entity and Core.Platform.Entities.Exists(rental.entity) then
+		Core.Platform.Entities.Delete(rental.entity)
 	end
 	local refunded = 0
 	local depositAmount = rental.deposit or 0
@@ -293,7 +293,7 @@ local function spawnRentalVehicle(vehicleDef, spawnPoint)
 		return nil
 	end
 	for _ = 1, 60 do
-		if DoesEntityExist(entity) then
+		if Core.Platform.Entities.Exists(entity) then
 			return entity
 		end
 		Wait(50)
@@ -362,15 +362,15 @@ Core.Events.OnNet('rentals.rent', function(stationId, model)
 		return
 	end
 
-	SetVehicleNumberPlateText(entity, plate)
-	SetVehicleDoorsLocked(entity, 1)
+	Core.Platform.Vehicles.SetPlate(entity, plate)
+	Core.Platform.Vehicles.SetLocked(entity, false)
 	-- A chave (item) libera este veículo no coe_vehicles: sem ela não liga nem tranca.
 	if Entity then
 		pcall(function()
 			Entity(entity).state:set('coe:keyPlate', plate, true)
 		end)
 	end
-	local netId = NetworkGetNetworkIdFromEntity(entity)
+	local netId = Core.Platform.Entities.GetNetworkId(entity)
 
 	local character = getCharacter(playerId) or {}
 	local renter = ((character.firstName or '') .. ' ' .. (character.lastName or '')):gsub('^%s+', ''):gsub('%s+$', '')

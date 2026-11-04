@@ -6,6 +6,8 @@ name 'coe_shops'
 version '0.1.0-beta.17'
 description 'Lojas do Coe: 24/7, LTD e Rob\'s Liquor como negócios (da staff com estoque automático ou de jogadores com estoque e preço próprios)'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_database',

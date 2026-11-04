@@ -70,6 +70,7 @@ local threads = {}
 CreateThread = function(fn) threads[#threads + 1] = coroutine.create(fn) end
 Wait = function() coroutine.yield() end
 
+dofile('../coe_core/lib/platform.lua')
 dofile('config.lua')
 dofile('prefs.lua')
 dofile('route.lua')

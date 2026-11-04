@@ -116,7 +116,7 @@ local function unregister(registry, key)
 end
 
 local function AddTargetEntity(entity, options)
-	if not DoesEntityExist(entity) or not validOptions(options) then
+	if not Core.Platform.Entities.Exists(entity) or not validOptions(options) then
 		return false
 	end
 	register(entityTargets, entity, options)
@@ -229,7 +229,7 @@ end
 
 -- Props presos ao próprio jogador (maleta na mão, arma) não são alvo: o raio os atravessa.
 local function attachedToPlayer(entity, ped)
-	return entity ~= 0 and DoesEntityExist(entity) and IsEntityAttachedToEntity(entity, ped)
+	return entity ~= 0 and Core.Platform.Entities.Exists(entity) and IsEntityAttachedToEntity(entity, ped)
 end
 
 local function raycastTarget()
@@ -246,7 +246,7 @@ local function raycastTarget()
 	if hit ~= 1 then
 		return 0, nil
 	end
-	if entity ~= 0 and DoesEntityExist(entity) and not attachedToPlayer(entity, ped) then
+	if entity ~= 0 and Core.Platform.Entities.Exists(entity) and not attachedToPlayer(entity, ped) then
 		return entity, endCoords
 	end
 
@@ -290,12 +290,12 @@ end
 -- Só devolve opções que algum resource registrou; entidades sem interação não listam nada.
 local function getOptions(entity, hit)
 	local options = {}
-	local playerCoords = GetEntityCoords(PlayerPedId())
+	local playerCoords = Core.Platform.Entities.GetCoords(PlayerPedId())
 
 	if entity ~= 0 then
-		local distance = #(playerCoords - GetEntityCoords(entity))
+		local distance = #(playerCoords - Core.Platform.Entities.GetCoords(entity))
 		collectFrom(options, entityTargets[entity], entity, distance, hit)
-		collectFrom(options, modelTargets[GetEntityModel(entity)], entity, distance, hit)
+		collectFrom(options, modelTargets[Core.Platform.Entities.GetModel(entity)], entity, distance, hit)
 		local category = globalCategory(entity)
 		if category then
 			collectFrom(options, globalTargets[category].all, entity, distance, hit)
@@ -325,7 +325,7 @@ end, false)
 CreateThread(function()
 	while true do
 		for entity in pairs(entityTargets) do
-			if not DoesEntityExist(entity) then
+			if not Core.Platform.Entities.Exists(entity) then
 				entityTargets[entity] = nil
 			end
 		end
@@ -348,10 +348,10 @@ RegisterNUICallback('menuSelect', function(data, callback)
 	end
 
 	local entity, options, hit = menu.entity, menu.options, menu.hit
-	if entity ~= 0 and hit and not DoesEntityExist(entity) then entity = 0 end
+	if entity ~= 0 and hit and not Core.Platform.Entities.Exists(entity) then entity = 0 end
 	local index = type(data) == 'table' and tonumber(data.index) or nil
 	closeMenu()
-	if not index or index % 1 ~= 0 or (entity ~= 0 and not DoesEntityExist(entity) and not hit) then
+	if not index or index % 1 ~= 0 or (entity ~= 0 and not Core.Platform.Entities.Exists(entity) and not hit) then
 		return
 	end
 	local option = options[index]
@@ -382,11 +382,11 @@ CreateThread(function()
 			frame = 0
 			-- O ponto clicado vale mais que a origem da entidade (props grandes têm a origem longe de onde se mira).
 			local anchor = menu.hit
-			if not anchor and menu.entity ~= 0 and DoesEntityExist(menu.entity) then
-				anchor = GetEntityCoords(menu.entity)
+			if not anchor and menu.entity ~= 0 and Core.Platform.Entities.Exists(menu.entity) then
+				anchor = Core.Platform.Entities.GetCoords(menu.entity)
 			end
 			if not anchor
-				or #(GetEntityCoords(PlayerPedId()) - anchor) > Config.MaxDistance then
+				or #(Core.Platform.Entities.GetCoords(PlayerPedId()) - anchor) > Config.MaxDistance then
 				closeMenu()
 			end
 			Wait(100)
@@ -446,11 +446,11 @@ RegisterCommand('targetdebug', function()
 		print('[coetarget] nenhuma entidade sob a mira (olhe para o objeto e rode /targetdebug)')
 		return
 	end
-	local netId = NetworkGetEntityIsNetworked(entity) and NetworkGetNetworkIdFromEntity(entity) or 0
-	local distance = #(GetEntityCoords(PlayerPedId()) - GetEntityCoords(entity))
+	local netId = NetworkGetEntityIsNetworked(entity) and (Core.Platform.Entities.GetNetworkId(entity) or 0) or 0
+	local distance = #(Core.Platform.Entities.GetCoords(PlayerPedId()) - Core.Platform.Entities.GetCoords(entity))
 	print(('[coetarget] entidade=%s modelo=%s tipo=%s netId=%s distância=%.2f opções=%s'):format(
-		entity, GetEntityModel(entity), GetEntityType(entity), netId, distance, #getOptions(entity)))
-	for key, owners in pairs({ [GetEntityModel(entity)] = modelTargets[GetEntityModel(entity)] or {} }) do
+		entity, Core.Platform.Entities.GetModel(entity), GetEntityType(entity), netId, distance, #getOptions(entity)))
+	for key, owners in pairs({ [Core.Platform.Entities.GetModel(entity)] = modelTargets[Core.Platform.Entities.GetModel(entity)] or {} }) do
 		for owner, list in pairs(owners) do
 			for _, option in ipairs(list) do
 				local ok, result = true, nil

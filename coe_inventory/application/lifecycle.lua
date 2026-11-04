@@ -58,8 +58,8 @@ AddEventHandler('onResourceStop', function(resourceName)
 	if resourceName ~= GetCurrentResourceName() then return end
 	S.flushInventories()
 	for _, container in pairs(S.worldContainers) do
-		if container.entity and DoesEntityExist(container.entity) then
-			DeleteEntity(container.entity)
+		if container.entity and Core.Platform.Entities.Exists(container.entity) then
+			Core.Platform.Entities.Delete(container.entity)
 		end
 	end
 	-- Varredura final: remove também props de container que não estavam rastreados.

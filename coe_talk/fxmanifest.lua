@@ -6,6 +6,8 @@ name 'coe_talk'
 version '0.1.0-beta.17'
 description 'Sistema de comunicação e voz nativo do FiveM Enhanced (proximidade, rádio tático e telefonia)'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_ui',

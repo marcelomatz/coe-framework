@@ -8,6 +8,7 @@ description 'DeepWeb: navegador onion por nível de equipamento, identidade anô
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

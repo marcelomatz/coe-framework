@@ -29,7 +29,7 @@ local function drivingVehicle()
 end
 
 local function reset(ped, previous)
-	if previous ~= 0 and DoesEntityExist(previous) then
+	if previous ~= 0 and Core.Platform.Entities.Exists(previous) then
 		SetVehicleIndicatorLights(previous, 0, false)
 		SetVehicleIndicatorLights(previous, 1, false)
 	end

@@ -16,7 +16,7 @@ local generation = 0
 
 local function clear()
 	for id, entity in pairs(entities) do
-		if DoesEntityExist(entity) then
+		if Core.Platform.Entities.Exists(entity) then
 			DeleteObject(entity)
 		end
 		entities[id] = nil
@@ -97,7 +97,7 @@ local function requestWhenInside(interior)
 		local deadline = GetGameTimer() + 15000
 		local target = vector3(interior.x, interior.y, interior.z)
 		while current == generation and GetGameTimer() < deadline do
-			if #(GetEntityCoords(PlayerPedId()) - target) < 30.0 then
+			if #(Core.Platform.Entities.GetCoords(PlayerPedId()) - target) < 30.0 then
 				Wait(500)
 				TriggerServerEvent('coe_amzg:requestBoxes')
 				return

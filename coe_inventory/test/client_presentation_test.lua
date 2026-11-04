@@ -57,7 +57,9 @@ exports = setmetatable({
 	__call = function(_, name, fn) exportsRegistered[name] = fn end
 })
 Inventory.Items = { Animations = {} }
+Core = {} -- tabela real antes de carregar o platform.lua (o _G deste teste devolve função para globais ausentes)
 Core = {
+	Platform = dofile('../coe_core/lib/platform.lua'),
 	Functions = { IsInteger = function(v) return math.type(v) == 'integer' end },
 	Events = {
 		OnNet = function(name, fn) netHandlers[name] = fn end,

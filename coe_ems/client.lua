@@ -24,8 +24,8 @@ end)
 
 RegisterNetEvent('coe_ems:revive', function()
 	local ped = PlayerPedId()
-	local coords = GetEntityCoords(ped)
-	resurrect(coords.x, coords.y, coords.z, GetEntityHeading(ped), 140)
+	local coords = Core.Platform.Entities.GetCoords(ped)
+	resurrect(coords.x, coords.y, coords.z, Core.Platform.Entities.GetHeading(ped), 140)
 end)
 
 RegisterNetEvent('coe_ems:heal', function()

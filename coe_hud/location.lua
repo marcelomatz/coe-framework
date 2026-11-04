@@ -26,15 +26,15 @@ end
 
 function Location.Read(ped)
 	local now = GetGameTimer()
-	local coords = GetEntityCoords(ped)
+	local coords = Core.Platform.Entities.GetCoords(ped)
 	if cache and now - cachedAt < READ_INTERVAL_MS then
-		cache.dir = Location.Direction(GetEntityHeading(ped))
+		cache.dir = Location.Direction(Core.Platform.Entities.GetHeading(ped))
 		return cache
 	end
 	cachedAt = now
 	local streetHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
 	cache = {
-		dir = Location.Direction(GetEntityHeading(ped)),
+		dir = Location.Direction(Core.Platform.Entities.GetHeading(ped)),
 		street = label(GetStreetNameFromHashKey(streetHash)),
 		zone = label(GetLabelText(GetNameOfZone(coords.x, coords.y, coords.z))),
 		clock = ('%02d:%02d'):format(GetClockHours(), GetClockMinutes())
@@ -59,7 +59,7 @@ function Location.Route(ped)
 	routeAt = now
 	local vehicle = GetVehiclePedIsIn(ped, false)
 	local speed = GetEntitySpeed(vehicle ~= 0 and vehicle or ped)
-	local found = Route.Next(GetEntityCoords(ped), GetEntityHeading(ped), speed, streetAt)
+	local found = Route.Next(Core.Platform.Entities.GetCoords(ped), Core.Platform.Entities.GetHeading(ped), speed, streetAt)
 	local parts = {}
 	for i, step in ipairs(found) do
 		parts[i] = step.name .. step.side .. step.dist

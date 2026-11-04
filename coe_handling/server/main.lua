@@ -63,7 +63,7 @@ local function extraEffects(vehicleId, mileage)
 end
 
 local function publish(vehicleId, entity, model, mileage)
-	if not ready or not entity or not DoesEntityExist(entity) then
+	if not ready or not entity or not Core.Platform.Entities.Exists(entity) then
 		return
 	end
 	local computed = service.Compute(vehicleId, model, mileage, extraEffects(vehicleId, mileage))

@@ -8,6 +8,7 @@ description 'Central de craft: receitas, bancadas e execução atômica para mec
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'business'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

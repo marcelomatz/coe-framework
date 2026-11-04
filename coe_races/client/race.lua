@@ -48,7 +48,7 @@ local function clearMarkers()
 end
 
 local function unfreeze()
-	if frozen and DoesEntityExist(frozen) then
+	if frozen and Core.Platform.Entities.Exists(frozen) then
 		FreezeEntityPosition(frozen, false)
 	end
 	frozen = nil
@@ -56,7 +56,7 @@ end
 
 local function resetGhost()
 	for _, vehicle in ipairs(ghostVehicles) do
-		if DoesEntityExist(vehicle) then
+		if Core.Platform.Entities.Exists(vehicle) then
 			ResetEntityAlpha(vehicle)
 		end
 	end
@@ -177,23 +177,23 @@ RegisterNetEvent('coe_races:prepare', function(data)
 		Client.Notify('error', T('need_vehicle_on_grid'))
 		return
 	end
-	local here = GetEntityCoords(vehicle)
+	local here = Core.Platform.Entities.GetCoords(vehicle)
 	local sirens = false
 	for _, other in ipairs(GetGamePool('CVehicle')) do
 		if other ~= vehicle and GetVehicleClass(other) == 18 and IsVehicleSirenOn(other) then
-			local at = GetEntityCoords(other)
+			local at = Core.Platform.Entities.GetCoords(other)
 			if dist2d(here.x, here.y, at.x, at.y) <= config.Police.SirenRadius then
 				sirens = true
 				break
 			end
 		end
 	end
-	local label = GetLabelText(GetDisplayNameFromVehicleModel(GetEntityModel(vehicle)))
+	local label = GetLabelText(GetDisplayNameFromVehicleModel(Core.Platform.Entities.GetModel(vehicle)))
 	if label == 'NULL' then
-		label = GetDisplayNameFromVehicleModel(GetEntityModel(vehicle))
+		label = GetDisplayNameFromVehicleModel(Core.Platform.Entities.GetModel(vehicle))
 	end
 	TriggerServerEvent('coe_races:ready', race.id, {
-		netId = NetworkGetNetworkIdFromEntity(vehicle), classId = GetVehicleClass(vehicle), label = label, sirens = sirens
+		netId = Core.Platform.Entities.GetNetworkId(vehicle), classId = GetVehicleClass(vehicle), label = label, sirens = sirens
 	})
 end)
 
@@ -318,7 +318,7 @@ CreateThread(function()
 			local vehicle = myVehicle()
 			if now < ghostUntil and vehicle then
 				for _, other in ipairs(ghostVehicles) do
-					if DoesEntityExist(other) then
+					if Core.Platform.Entities.Exists(other) then
 						SetEntityNoCollisionEntity(vehicle, other, true)
 						SetEntityNoCollisionEntity(other, vehicle, true)
 						SetEntityAlpha(other, 150, false)
@@ -334,7 +334,7 @@ CreateThread(function()
 				local index = race.progress + 1
 				if index <= race.total then
 					local cp = checkpointAt(index)
-					local at = GetEntityCoords(vehicle)
+					local at = Core.Platform.Entities.GetCoords(vehicle)
 					local radius = cp.r or config.Tracks.CheckpointRadius
 					if dist2d(at.x, at.y, cp.x, cp.y) <= radius and math.abs(at.z - cp.z) <= 15.0
 						and (pendingIndex ~= index or now - pendingAt > 1000) then

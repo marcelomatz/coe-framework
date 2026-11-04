@@ -159,7 +159,7 @@ local function stepFree(dt)
 		flat = flat * (settings.FreeRadius / distance)
 		freePos = vector3(center.x + flat.x, center.y + flat.y, freePos.z)
 	end
-	local ground = GetEntityCoords(vehicle).z
+	local ground = Core.Platform.Entities.GetCoords(vehicle).z
 	freePos = vector3(freePos.x, freePos.y, clamp(freePos.z, ground - 0.4, ground + settings.FreeMaxHeight))
 
 	SetCamCoord(cam, freePos.x, freePos.y, freePos.z)
@@ -170,7 +170,7 @@ local function loop()
 	while active do
 		HideHudAndRadarThisFrame()
 		local dt = GetFrameTime()
-		if not DoesEntityExist(vehicle) then
+		if not Core.Platform.Entities.Exists(vehicle) then
 			break
 		end
 		if free then
@@ -191,7 +191,7 @@ function ShowroomCamera.Start(entity, room)
 	end
 	vehicle = entity
 	center = vector3(room.x, room.y, room.z)
-	local minimum, maximum = GetModelDimensions(GetEntityModel(entity))
+	local minimum, maximum = GetModelDimensions(Core.Platform.Entities.GetModel(entity))
 	dims = { l = math.max(2.5, maximum.y - minimum.y), w = math.max(1.2, maximum.x - minimum.x), h = math.max(1.0, maximum.z - minimum.z) }
 	goal = presets().front
 	cur = copy(goal)
@@ -226,7 +226,7 @@ function ShowroomCamera.Stop(immediate)
 			DestroyCam(handle, false)
 		end)
 	end
-	if vehicle and DoesEntityExist(vehicle) then
+	if vehicle and Core.Platform.Entities.Exists(vehicle) then
 		SetVehicleDoorShut(vehicle, 4, false)
 	end
 end
@@ -263,7 +263,7 @@ function ShowroomCamera.Preset(name)
 	if preset then
 		goal = preset
 	end
-	if vehicle and DoesEntityExist(vehicle) then
+	if vehicle and Core.Platform.Entities.Exists(vehicle) then
 		if name == 'engine' then
 			SetVehicleDoorOpen(vehicle, 4, false, false)
 		else

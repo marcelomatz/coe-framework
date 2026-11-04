@@ -1,6 +1,7 @@
 -- Harness de testes do coe_inventory: stubs de FiveM/Core + carga dos arquivos
 -- server `application/*` na ordem do fxmanifest.lua. Cada teste roda em um processo
 -- Lua próprio, a partir da pasta do resource (`lua test/<arquivo>.lua`).
+dofile([=[../coe_core/lib/platform.lua]=])
 dofile([=[../coe_core/core/shared/bootstrap.lua]=])
 dofile([=[../coe_core/core/shared/functions.lua]=])
 dofile([=[../coe_core/core/shared/classes.lua]=])
@@ -289,7 +290,7 @@ end
 -- Carrega os arquivos `application/*` do server_scripts do fxmanifest, na ordem declarada.
 local manifestFiles = {}
 local manifestNames = {
-	'fx_version', 'game', 'lua54', 'name', 'version', 'description', 'dependencies', 'ui_page',
+	'fx_version', 'game', 'lua54', 'name', 'version', 'description', 'coe_platform', 'dependencies', 'ui_page',
 	'files', 'client_scripts'
 }
 local savedGlobals = {}

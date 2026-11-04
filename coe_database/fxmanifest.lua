@@ -6,6 +6,8 @@ name 'coe_database'
 version '0.1.0-beta.17'
 description 'Provider MariaDB do framework Coe'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_logging'
 }

@@ -36,7 +36,7 @@ end
 local function pointCamera(shot)
 	local spec = cfg.Cameras[shot] or cfg.Cameras.torso
 	local ped = job.ped
-	local origin = GetEntityCoords(ped)
+	local origin = Core.Platform.Entities.GetCoords(ped)
 	local forward = GetEntityForwardVector(ped)
 	if spec.back then
 		forward = -forward
@@ -128,8 +128,8 @@ local function countDrawables(part)
 end
 
 local function spawnFor(gender)
-	if job.ped and DoesEntityExist(job.ped) then
-		DeleteEntity(job.ped)
+	if job.ped and Core.Platform.Entities.Exists(job.ped) then
+		Core.Platform.Entities.Delete(job.ped)
 	end
 	job.ped = A.CreatePed(nil, spot.x, spot.y, spot.z, spot.heading, gender)
 	if not job.ped then
@@ -138,7 +138,7 @@ local function spawnFor(gender)
 	SetEntityCoordsNoOffset(job.ped, spot.x, spot.y, spot.z, false, false, false)
 	FreezeEntityPosition(job.ped, true)
 	ClearPedTasksImmediately(job.ped)
-	SetEntityHeading(job.ped, spot.heading)
+	Core.Platform.Entities.SetHeading(job.ped, spot.heading)
 	return true
 end
 
@@ -178,8 +178,8 @@ local function shootGender(gender, redo)
 end
 
 local function cleanup()
-	if job.ped and DoesEntityExist(job.ped) then
-		DeleteEntity(job.ped)
+	if job.ped and Core.Platform.Entities.Exists(job.ped) then
+		Core.Platform.Entities.Delete(job.ped)
 	end
 	if job.cam then
 		DestroyCam(job.cam, false)

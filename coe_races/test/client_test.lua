@@ -64,6 +64,7 @@ exports = setmetatable({}, { __index = function(_, resource)
 	return setmetatable({}, { __index = function() return function() end end })
 end })
 
+dofile('../coe_core/lib/platform.lua')
 dofile('config.lua')
 dofile('locales/pt-br.lua')
 dofile('client/main.lua')

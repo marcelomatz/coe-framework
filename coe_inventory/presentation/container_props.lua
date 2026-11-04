@@ -12,12 +12,12 @@ local state = C.state
 local function releaseCarry(record)
 	local playerPed = PlayerPedId()
 	if record.weaponHash then
-		if DoesEntityExist(playerPed) and HasPedGotWeapon(playerPed, record.weaponHash, false) then
+		if Core.Platform.Entities.Exists(playerPed) and HasPedGotWeapon(playerPed, record.weaponHash, false) then
 			RemoveWeaponFromPed(playerPed, record.weaponHash)
 		end
 		record.weaponHash = nil
 	elseif record.animationDict then
-		if DoesEntityExist(playerPed) then
+		if Core.Platform.Entities.Exists(playerPed) then
 			StopAnimTask(playerPed, record.animationDict, record.animationClip, 1.0)
 		end
 		RemoveAnimDict(record.animationDict)
@@ -33,9 +33,8 @@ local function clearEquippedWeapon(deleteEntity)
 	releaseCarry(equipped)
 	state.equippedWeapon = nil
 	state.containerProps[equipped.containerId] = nil
-	if deleteEntity and equipped.entity and DoesEntityExist(equipped.entity) then
-		SetEntityAsMissionEntity(equipped.entity, true, true)
-		DeleteEntity(equipped.entity)
+	if deleteEntity and equipped.entity and Core.Platform.Entities.Exists(equipped.entity) then
+		Core.Platform.Entities.Delete(equipped.entity)
 	end
 	if state.carriedContainerId == equipped.containerId then
 		state.carriedContainerId = nil
@@ -51,12 +50,11 @@ local function deleteContainerProp(containerId)
 		releaseCarry(state.equippedWeapon)
 		state.equippedWeapon = nil
 	end
-	if record and record.entity and DoesEntityExist(record.entity) then
+	if record and record.entity and Core.Platform.Entities.Exists(record.entity) then
 		if NetworkGetEntityIsNetworked(record.entity) then
 			NetworkRequestControlOfEntity(record.entity)
 		end
-		SetEntityAsMissionEntity(record.entity, true, true)
-		DeleteEntity(record.entity)
+		Core.Platform.Entities.Delete(record.entity)
 	end
 	state.containerProps[containerId] = nil
 	if state.carriedContainerId == containerId then
@@ -73,7 +71,7 @@ C.deleteContainerProp = deleteContainerProp
 --- para o saco de papel anexa o prop ao osso do perfil. Retorna false se não for possível.
 local function attachContainerProp(record)
 	local playerPed = PlayerPedId()
-	if not DoesEntityExist(record.entity) or not DoesEntityExist(playerPed) then
+	if not Core.Platform.Entities.Exists(record.entity) or not Core.Platform.Entities.Exists(playerPed) then
 		return false
 	end
 
@@ -116,11 +114,11 @@ C.attachContainerProp = attachContainerProp
 --- Retorna a entidade ou nil.
 local function createContainerEntity(profile)
 	local playerPed = PlayerPedId()
-	if not DoesEntityExist(playerPed) then return nil end
+	if not Core.Platform.Entities.Exists(playerPed) then return nil end
 
 	local modelHash = C.resolveModelHash(profile.model)
 	if not modelHash or not C.loadModel(modelHash) then return nil end
-	return C.createLocalObject(modelHash, GetEntityCoords(playerPed))
+	return C.createLocalObject(modelHash, Core.Platform.Entities.GetCoords(playerPed))
 end
 
 --- Registra um novo container carregado e o põe na mão. Em falha apaga o que criou.
@@ -240,7 +238,7 @@ function C.pickupContainerProp(itemName, containerId)
 	end
 
 	local existing = state.containerProps[containerId]
-	if existing and existing.entity and DoesEntityExist(existing.entity) then
+	if existing and existing.entity and Core.Platform.Entities.Exists(existing.entity) then
 		if not ensureNetworkControl(existing.entity) then
 			return false, 'container_prop_unavailable'
 		end

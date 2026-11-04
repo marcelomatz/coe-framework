@@ -8,6 +8,7 @@ description 'Painel administrativo para o framework Coe'
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'administration'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

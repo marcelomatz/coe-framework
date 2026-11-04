@@ -8,6 +8,7 @@ description 'Corridas ilegais de rua do Coe: pistas com checkpoints, tablet de c
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

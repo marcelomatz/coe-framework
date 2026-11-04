@@ -519,7 +519,7 @@ RegisterNetEvent('coe_amzg:openBox', function(orderId)
 		return
 	end
 	local ped = GetPlayerPed(playerId)
-	local at = ped and ped > 0 and GetEntityCoords(ped)
+	local at = ped and ped > 0 and Core.Platform.Entities.GetCoords(ped)
 	if not at or #(vector2(at.x, at.y) - vector2(box.x, box.y)) > config.Box.Reach or math.abs(at.z - box.z) > 3.0 then
 		notify(playerId, 'error', _t('box_too_far'))
 		return

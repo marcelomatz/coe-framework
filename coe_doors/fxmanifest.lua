@@ -8,6 +8,7 @@ description 'Portas e fechaduras do mapa e de MLOs: trancamento, senha, trava au
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

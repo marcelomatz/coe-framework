@@ -133,7 +133,7 @@ local function actor(playerId)
 	if not characterId or not ped or ped == 0 then
 		return nil
 	end
-	return { characterId = tostring(characterId), at = GetEntityCoords(ped) }
+	return { characterId = tostring(characterId), at = Core.Platform.Entities.GetCoords(ped) }
 end
 
 local function playerOf(characterId)
@@ -352,7 +352,7 @@ local function clearStalePresence(playerId, who, property)
 	end
 	inside[playerId] = nil
 	HousingPersistence.ClearPresence(state.characterId)
-	SetPlayerRoutingBucket(playerId, 0)
+	Core.Platform.Routing.SetPlayerBucket(playerId, 0)
 	TriggerClientEvent('coe_housing:left', playerId, nil)
 	audit('housing_presence_recovered', { operation = state.propertyId, character_id = state.characterId })
 end
@@ -393,8 +393,8 @@ end
 local function placeInHideout(playerId, characterId, property)
 	inside[playerId] = { hideout = true, propertyId = property.id, characterId = characterId }
 	local bucket = hideoutBucket(property)
-	SetPlayerRoutingBucket(playerId, bucket)
-	SetRoutingBucketPopulationEnabled(bucket, false)
+	Core.Platform.Routing.SetPlayerBucket(playerId, bucket)
+	Core.Platform.Routing.SetPopulationEnabled(bucket, false)
 	TriggerClientEvent('coe_housing:entered', playerId, enteredInfo(property))
 end
 
@@ -452,8 +452,8 @@ RegisterNetEvent('coe_housing:enter', function(propertyId)
 		propertyId = property.id, characterId = who.characterId
 	}
 	HousingPersistence.SetPresence(who.characterId, entry.id, property.id, isLease)
-	SetPlayerRoutingBucket(playerId, bucketOf(entry, isLease))
-	SetRoutingBucketPopulationEnabled(bucketOf(entry, isLease), false)
+	Core.Platform.Routing.SetPlayerBucket(playerId, bucketOf(entry, isLease))
+	Core.Platform.Routing.SetPopulationEnabled(bucketOf(entry, isLease), false)
 	TriggerClientEvent('coe_housing:entered', playerId, enteredInfo(property))
 	audit('housing_entered', { operation = property.id, character_id = who.characterId })
 end)
@@ -474,7 +474,7 @@ local function exitPlayer(playerId)
 		preview.door = door
 		return
 	end
-	SetPlayerRoutingBucket(playerId, 0)
+	Core.Platform.Routing.SetPlayerBucket(playerId, 0)
 	TriggerClientEvent('coe_housing:left', playerId, door)
 end
 
@@ -962,8 +962,8 @@ local function resumePresence(playerId, characterId)
 		tenancyId = not isLease and entry.id or nil, leaseId = isLease and entry.id or nil,
 		propertyId = property.id, characterId = characterId
 	}
-	SetPlayerRoutingBucket(playerId, bucketOf(entry, isLease))
-	SetRoutingBucketPopulationEnabled(bucketOf(entry, isLease), false)
+	Core.Platform.Routing.SetPlayerBucket(playerId, bucketOf(entry, isLease))
+	Core.Platform.Routing.SetPopulationEnabled(bucketOf(entry, isLease), false)
 	TriggerClientEvent('coe_housing:entered', playerId, enteredInfo(property))
 	audit('housing_resumed', { operation = property.id, character_id = characterId })
 end
@@ -1431,12 +1431,12 @@ exports('BeginPreview', function(playerId)
 	end
 	-- Quem está dentro de um imóvel também visita: ao voltar, retorna ao mundo do próprio imóvel.
 	local bucket = config.PreviewBucketBase + playerId
-	local current = GetPlayerRoutingBucket(playerId)
+	local current = Core.Platform.Routing.GetPlayerBucket(playerId)
 	if not previewing[playerId] then
 		previewing[playerId] = { bucket = current ~= bucket and current or 0 }
 	end
-	SetPlayerRoutingBucket(playerId, bucket)
-	SetRoutingBucketPopulationEnabled(bucket, false)
+	Core.Platform.Routing.SetPlayerBucket(playerId, bucket)
+	Core.Platform.Routing.SetPopulationEnabled(bucket, false)
 	return true
 end)
 
@@ -1445,10 +1445,10 @@ exports('EndPreview', function(playerId)
 		return { error = 'forbidden' }
 	end
 	playerId = tonumber(playerId)
-	if playerId and (previewing[playerId] or GetPlayerRoutingBucket(playerId) == config.PreviewBucketBase + playerId) then
+	if playerId and (previewing[playerId] or Core.Platform.Routing.GetPlayerBucket(playerId) == config.PreviewBucketBase + playerId) then
 		local preview = previewing[playerId] or {}
 		previewing[playerId] = nil
-		SetPlayerRoutingBucket(playerId, inside[playerId] and preview.bucket or 0)
+		Core.Platform.Routing.SetPlayerBucket(playerId, inside[playerId] and preview.bucket or 0)
 		if preview.door then
 			TriggerClientEvent('coe_housing:left', playerId, preview.door)
 		end
@@ -1464,7 +1464,7 @@ AddEventHandler('onResourceStop', function(resourceName)
 	for playerId, preview in pairs(previewing) do
 		previewing[playerId] = nil
 		if GetPlayerName(playerId) then
-			SetPlayerRoutingBucket(playerId, inside[playerId] and preview.bucket or 0)
+			Core.Platform.Routing.SetPlayerBucket(playerId, inside[playerId] and preview.bucket or 0)
 		end
 	end
 end)

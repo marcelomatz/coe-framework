@@ -34,7 +34,7 @@ local function readWaypoint()
 		return nil
 	end
 	local target = GetBlipInfoIdCoord(blip)
-	local distance = MapAnchor.Distance(GetEntityCoords(PlayerPedId()), target)
+	local distance = MapAnchor.Distance(Core.Platform.Entities.GetCoords(PlayerPedId()), target)
 	return math.floor(distance + 0.5)
 end
 

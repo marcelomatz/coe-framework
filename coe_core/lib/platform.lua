@@ -94,10 +94,30 @@ function Entities.Exists(entity)
 	return DoesEntityExist(entity) == 1 or DoesEntityExist(entity) == true
 end
 
+-- Runtime real do FiveM: só lá `Citizen.InvokeNative` existe (os testes offline não o simulam).
+local function isFivemRuntime()
+	return type(Citizen) == 'table' and type(Citizen.InvokeNative) == 'function'
+end
+
+local function entityValid(entity)
+	if type(entity) ~= 'number' or entity <= 0 then
+		return false
+	end
+	if not activeMock and (not isFivemRuntime() or type(DoesEntityExist) ~= 'function') then
+		return true
+	end
+	return Entities.Exists(entity)
+end
+
 ---Obtém as coordenadas tridimensionais da entidade
 ---@param entity integer
 ---@return vector3|nil
 function Entities.GetCoords(entity)
+	if not activeMock and type(GetEntityCoords) == 'function' then
+		if not entityValid(entity) then return nil end
+		local ok, coords = pcall(GetEntityCoords, entity, false)
+		return ok and coords or nil
+	end
 	if not Entities.Exists(entity) then
 		return nil
 	end
@@ -121,6 +141,14 @@ end
 ---@param clearArea boolean|nil
 ---@return boolean
 function Entities.SetCoords(entity, x, y, z, clearArea)
+	if not activeMock and type(SetEntityCoords) == 'function' then
+		if not entityValid(entity) then return false end
+		local v = safeVector3(x, y, z)
+		local ok = pcall(function()
+			SetEntityCoords(entity, v.x, v.y, v.z, false, false, false, clearArea == true)
+		end)
+		return ok
+	end
 	if not Entities.Exists(entity) then
 		return false
 	end
@@ -141,6 +169,11 @@ end
 ---@param entity integer
 ---@return number
 function Entities.GetHeading(entity)
+	if not activeMock and type(GetEntityHeading) == 'function' then
+		if not entityValid(entity) then return 0.0 end
+		local ok, heading = pcall(GetEntityHeading, entity)
+		return (ok and type(heading) == 'number') and heading or 0.0
+	end
 	if not Entities.Exists(entity) then
 		return 0.0
 	end
@@ -158,6 +191,12 @@ end
 ---@param heading number
 ---@return boolean
 function Entities.SetHeading(entity, heading)
+	if not activeMock and type(SetEntityHeading) == 'function' then
+		if not entityValid(entity) then return false end
+		local h = tonumber(heading) or 0.0
+		local ok = pcall(SetEntityHeading, entity, h)
+		return ok
+	end
 	if not Entities.Exists(entity) then
 		return false
 	end
@@ -176,6 +215,11 @@ end
 ---@param entity integer
 ---@return integer
 function Entities.GetModel(entity)
+	if not activeMock and type(GetEntityModel) == 'function' then
+		if not entityValid(entity) then return 0 end
+		local ok, model = pcall(GetEntityModel, entity)
+		return (ok and type(model) == 'number') and model or 0
+	end
 	if not Entities.Exists(entity) then
 		return 0
 	end
@@ -192,6 +236,16 @@ end
 ---@param entity integer
 ---@return boolean
 function Entities.Delete(entity)
+	if not activeMock and type(DeleteEntity) == 'function' then
+		if not entityValid(entity) then return false end
+		local ok = pcall(function()
+			if not isServer and type(SetEntityAsMissionEntity) == 'function' then
+				SetEntityAsMissionEntity(entity, true, true)
+			end
+			DeleteEntity(entity)
+		end)
+		return ok
+	end
 	if not Entities.Exists(entity) then
 		return false
 	end
@@ -217,6 +271,11 @@ end
 ---@param entity integer
 ---@return integer|nil
 function Entities.GetNetworkId(entity)
+	if not activeMock and type(NetworkGetNetworkIdFromEntity) == 'function' then
+		if not entityValid(entity) then return nil end
+		local ok, netId = pcall(NetworkGetNetworkIdFromEntity, entity)
+		return (ok and type(netId) == 'number' and netId > 0) and netId or nil
+	end
 	if not Entities.Exists(entity) then
 		return nil
 	end
@@ -237,6 +296,13 @@ end
 ---@return integer|nil
 function Entities.FromNetworkId(netId)
 	if type(netId) ~= 'number' or netId <= 0 then
+		return nil
+	end
+	if not activeMock and type(NetworkGetEntityFromNetworkId) == 'function' then
+		local ok, entity = pcall(NetworkGetEntityFromNetworkId, netId)
+		if ok and type(entity) == 'number' and entity > 0 and entityValid(entity) then
+			return entity
+		end
 		return nil
 	end
 	local mock = useMock()
@@ -400,6 +466,11 @@ end
 ---@param vehicle integer
 ---@return string
 function Vehicles.GetPlate(vehicle)
+	if not activeMock and type(GetVehicleNumberPlateText) == 'function' then
+		if not entityValid(vehicle) then return '' end
+		local ok, rawPlate = pcall(GetVehicleNumberPlateText, vehicle)
+		return (ok and type(rawPlate) == 'string') and trimString(rawPlate):upper() or ''
+	end
 	if not Entities.Exists(vehicle) then
 		return ''
 	end
@@ -423,10 +494,19 @@ end
 ---@param plate string
 ---@return boolean
 function Vehicles.SetPlate(vehicle, plate)
+	local cleanPlate = trimString(plate):upper():sub(1, 8)
+	if not activeMock and type(SetVehicleNumberPlateText) == 'function' then
+		if not entityValid(vehicle) then return false end
+		local ok = pcall(SetVehicleNumberPlateText, vehicle, cleanPlate)
+		if ok then
+			Entities.SetState(vehicle, 'plate', cleanPlate, true)
+			return true
+		end
+		return false
+	end
 	if not Entities.Exists(vehicle) then
 		return false
 	end
-	local cleanPlate = trimString(plate):upper():sub(1, 8)
 	local mock = useMock()
 	if mock then
 		local data = mock.entities[vehicle]
@@ -451,6 +531,11 @@ end
 ---@param vehicle integer
 ---@return boolean
 function Vehicles.IsLocked(vehicle)
+	if not activeMock and type(GetVehicleDoorLockStatus) == 'function' then
+		if not entityValid(vehicle) then return false end
+		local ok, status = pcall(GetVehicleDoorLockStatus, vehicle)
+		return ok and type(status) == 'number' and status >= 2
+	end
 	if not Entities.Exists(vehicle) then
 		return false
 	end
@@ -471,11 +556,20 @@ end
 ---@param locked boolean
 ---@return boolean
 function Vehicles.SetLocked(vehicle, locked)
+	local isLock = locked == true
+	local lockStatus = isLock and 2 or 1
+	if not activeMock and type(SetVehicleDoorsLocked) == 'function' then
+		if not entityValid(vehicle) then return false end
+		local ok = pcall(SetVehicleDoorsLocked, vehicle, lockStatus)
+		if ok then
+			Entities.SetState(vehicle, 'locked', isLock, true)
+			return true
+		end
+		return false
+	end
 	if not Entities.Exists(vehicle) then
 		return false
 	end
-	local isLock = locked == true
-	local lockStatus = isLock and 2 or 1
 
 	local mock = useMock()
 	if mock then
@@ -501,6 +595,14 @@ end
 ---@param vehicle integer
 ---@return number
 function Vehicles.GetEngineHealth(vehicle)
+	if not activeMock and type(GetVehicleEngineHealth) == 'function' then
+		if not entityValid(vehicle) then return 0.0 end
+		local ok, health = pcall(GetVehicleEngineHealth, vehicle)
+		if ok and type(health) == 'number' then
+			return math.max(0.0, math.min(1000.0, health))
+		end
+		return 1000.0
+	end
 	if not Entities.Exists(vehicle) then
 		return 0.0
 	end
@@ -524,10 +626,15 @@ end
 ---@param health number
 ---@return boolean
 function Vehicles.SetEngineHealth(vehicle, health)
+	local val = math.max(0.0, math.min(1000.0, tonumber(health) or 1000.0))
+	if not activeMock and type(SetVehicleEngineHealth) == 'function' then
+		if not entityValid(vehicle) then return false end
+		local ok = pcall(SetVehicleEngineHealth, vehicle, val)
+		return ok
+	end
 	if not Entities.Exists(vehicle) then
 		return false
 	end
-	local val = math.max(0.0, math.min(1000.0, tonumber(health) or 1000.0))
 	local mock = useMock()
 	if mock then
 		local data = mock.entities[vehicle]
@@ -545,6 +652,11 @@ end
 ---@param vehicle integer
 ---@return boolean
 function Vehicles.IsEngineRunning(vehicle)
+	if not activeMock and type(GetIsVehicleEngineRunning) == 'function' then
+		if not entityValid(vehicle) then return false end
+		local ok, running = pcall(GetIsVehicleEngineRunning, vehicle)
+		return ok and (running == 1 or running == true)
+	end
 	if not Entities.Exists(vehicle) then
 		return false
 	end
@@ -865,12 +977,16 @@ function Routing.GetPlayerBucket(playerId)
 	if not pId or pId <= 0 then
 		return 0
 	end
+	if not activeMock and type(GetPlayerRoutingBucket) == 'function' then
+		local ok, bucket = pcall(GetPlayerRoutingBucket, pId)
+		return (ok and type(bucket) == 'number') and bucket or 0
+	end
 	local mock = useMock()
 	if mock then
 		local data = mock.players[pId]
 		return data and data.bucket or 0
 	end
-	if not isServer or type(GetPlayerRoutingBucket) ~= 'function' then
+	if type(GetPlayerRoutingBucket) ~= 'function' then
 		return 0
 	end
 	local ok, bucket = pcall(GetPlayerRoutingBucket, pId)
@@ -887,13 +1003,17 @@ function Routing.SetPlayerBucket(playerId, bucket)
 	if not pId or pId <= 0 or b < 0 then
 		return false
 	end
+	if not activeMock and type(SetPlayerRoutingBucket) == 'function' then
+		local ok = pcall(SetPlayerRoutingBucket, pId, b)
+		return ok
+	end
 	local mock = useMock()
 	if mock then
 		local data = mock.players[pId]
 		if data then data.bucket = b end
 		return true
 	end
-	if not isServer or type(SetPlayerRoutingBucket) ~= 'function' then
+	if type(SetPlayerRoutingBucket) ~= 'function' then
 		return false
 	end
 	local ok = pcall(SetPlayerRoutingBucket, pId, b)
@@ -904,6 +1024,11 @@ end
 ---@param entity integer
 ---@return integer
 function Routing.GetEntityBucket(entity)
+	if not activeMock and type(GetEntityRoutingBucket) == 'function' then
+		if not entityValid(entity) then return 0 end
+		local ok, bucket = pcall(GetEntityRoutingBucket, entity)
+		return (ok and type(bucket) == 'number') and bucket or 0
+	end
 	if not Entities.Exists(entity) then
 		return 0
 	end
@@ -912,7 +1037,7 @@ function Routing.GetEntityBucket(entity)
 		local data = mock.entities[entity]
 		return data and data.bucket or 0
 	end
-	if not isServer or type(GetEntityRoutingBucket) ~= 'function' then
+	if type(GetEntityRoutingBucket) ~= 'function' then
 		return 0
 	end
 	local ok, bucket = pcall(GetEntityRoutingBucket, entity)
@@ -924,18 +1049,23 @@ end
 ---@param bucket integer
 ---@return boolean
 function Routing.SetEntityBucket(entity, bucket)
+	local b = math.floor(tonumber(bucket) or 0)
+	if b < 0 then return false end
+	if not activeMock and type(SetEntityRoutingBucket) == 'function' then
+		if not entityValid(entity) then return false end
+		local ok = pcall(SetEntityRoutingBucket, entity, b)
+		return ok
+	end
 	if not Entities.Exists(entity) then
 		return false
 	end
-	local b = math.floor(tonumber(bucket) or 0)
-	if b < 0 then return false end
 	local mock = useMock()
 	if mock then
 		local data = mock.entities[entity]
 		if data then data.bucket = b end
 		return true
 	end
-	if not isServer or type(SetEntityRoutingBucket) ~= 'function' then
+	if type(SetEntityRoutingBucket) ~= 'function' then
 		return false
 	end
 	local ok = pcall(SetEntityRoutingBucket, entity, b)
@@ -950,13 +1080,17 @@ function Routing.SetPopulationEnabled(bucket, enabled)
 	local b = math.floor(tonumber(bucket) or 0)
 	if b < 0 then return false end
 	local isEn = enabled == true
+	if not activeMock and type(SetRoutingBucketPopulationEnabled) == 'function' then
+		local ok = pcall(SetRoutingBucketPopulationEnabled, b, isEn)
+		return ok
+	end
 	local mock = useMock()
 	if mock then
 		mock.buckets[b] = mock.buckets[b] or {}
 		mock.buckets[b].population = isEn
 		return true
 	end
-	if not isServer or type(SetRoutingBucketPopulationEnabled) ~= 'function' then
+	if type(SetRoutingBucketPopulationEnabled) ~= 'function' then
 		return false
 	end
 	local ok = pcall(SetRoutingBucketPopulationEnabled, b, isEn)
@@ -971,13 +1105,17 @@ function Routing.SetLockdownMode(bucket, mode)
 	local b = math.floor(tonumber(bucket) or 0)
 	local m = mode or 'strict'
 	if b < 0 then return false end
+	if not activeMock and type(SetRoutingBucketEntityLockdownMode) == 'function' then
+		local ok = pcall(SetRoutingBucketEntityLockdownMode, b, m)
+		return ok
+	end
 	local mock = useMock()
 	if mock then
 		mock.buckets[b] = mock.buckets[b] or {}
 		mock.buckets[b].lockdown = m
 		return true
 	end
-	if not isServer or type(SetRoutingBucketEntityLockdownMode) ~= 'function' then
+	if type(SetRoutingBucketEntityLockdownMode) ~= 'function' then
 		return false
 	end
 	local ok = pcall(SetRoutingBucketEntityLockdownMode, b, m)
@@ -1434,5 +1572,8 @@ function Players.Wrap(playerId)
 	end
 	return setmetatable({ playerId = pId }, PlayerWrapper)
 end
+
+Core = Core or {}
+Core.Platform = Core.Platform or Platform
 
 return Platform

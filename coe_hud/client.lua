@@ -99,8 +99,8 @@ local function buildSnapshot(ped)
 			snapshot.rpm = percent(GetVehicleCurrentRpm(vehicle), 1)
 			snapshot.gear = GetVehicleCurrentGear(vehicle)
 			snapshot.fuel = percent(GetVehicleFuelLevel(vehicle), 100)
-			snapshot.engine = percent(GetVehicleEngineHealth(vehicle), 1000)
-			snapshot.engineOn = GetIsVehicleEngineRunning(vehicle) and true or false
+			snapshot.engine = percent(Core.Platform.Vehicles.GetEngineHealth(vehicle), 1000)
+			snapshot.engineOn = Core.Platform.Vehicles.IsEngineRunning(vehicle) and true or false
 		end
 		snapshot.belt = snapshot.hasBelt and VehicleControls.belt or false
 		snapshot.lights = VehicleControls.lights

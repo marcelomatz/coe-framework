@@ -8,6 +8,7 @@ description 'Mecânica de veículos: peças com desgaste por quilometragem, insp
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'business'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

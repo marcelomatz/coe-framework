@@ -95,8 +95,8 @@ end
 local function removePed(stationId)
 	local ped = peds[stationId]
 	peds[stationId] = nil
-	if ped and DoesEntityExist(ped) then
-		DeleteEntity(ped)
+	if ped and Core.Platform.Entities.Exists(ped) then
+		Core.Platform.Entities.Delete(ped)
 	end
 end
 
@@ -121,14 +121,14 @@ end)
 CreateThread(function()
 	local range = (RentalsConfig.Ped and tonumber(RentalsConfig.Ped.SpawnDistance)) or 60.0
 	while true do
-		local at = GetEntityCoords(PlayerPedId())
+		local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 		local wanted = {}
 		for _, station in ipairs(stations) do
 			if station.ped then
 				local isNear = #(at - vector3(station.ped.x, station.ped.y, station.ped.z)) <= range
 				local ped = peds[station.id]
 				wanted[station.id] = true
-				if isNear and not (ped and DoesEntityExist(ped)) then
+				if isNear and not (ped and Core.Platform.Entities.Exists(ped)) then
 					peds[station.id] = spawnPed(station)
 				elseif not isNear and ped then
 					removePed(station.id)
@@ -170,8 +170,8 @@ CreateThread(function()
 		local sleep = 1000
 		local prompting = false
 		local ped = PlayerPedId()
-		if ped > 0 and DoesEntityExist(ped) and not IsEntityDead(ped) and not menuOpen then
-			local coords = GetEntityCoords(ped)
+		if ped > 0 and Core.Platform.Entities.Exists(ped) and not IsEntityDead(ped) and not menuOpen then
+			local coords = Core.Platform.Entities.GetCoords(ped)
 			local inVehicle = IsPedInAnyVehicle(ped, false)
 			-- Veículo alugado: o servidor marca com o state bag 'coe:keyPlate' (a devolução confere o dono).
 			local vehicle = inVehicle and GetVehiclePedIsIn(ped, false) or 0
@@ -339,8 +339,10 @@ Core.Events.OnNet('rentals.spawned', function(netId, plate)
 			timeout = timeout - 1
 		end
 		if NetworkDoesEntityExistWithNetworkId(netId) then
-			local veh = NetworkGetEntityFromNetworkId(netId)
-			TaskWarpPedIntoVehicle(PlayerPedId(), veh, -1)
+			local veh = Core.Platform.Entities.FromNetworkId(netId)
+			if veh then
+				TaskWarpPedIntoVehicle(PlayerPedId(), veh, -1)
+			end
 		end
 	end)
 end)

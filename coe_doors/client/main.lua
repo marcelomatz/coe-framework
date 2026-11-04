@@ -235,7 +235,7 @@ end
 -- Busca a porta mais próxima via grade espacial (Core.Zones) e atualiza o prompt sem loop Wait(0).
 CreateThread(function()
 	while true do
-		local coords = GetEntityCoords(PlayerPedId())
+		local coords = Core.Platform.Entities.GetCoords(PlayerPedId())
 		local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(coords.x, coords.y, coords.z)
 		local best = zone and zone.data or nil
 		if not (Core and Core.Zones) then

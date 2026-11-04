@@ -172,13 +172,13 @@ end)
 -- Placa do veículo mais próximo, para os apps que trabalham sobre um veículo.
 RegisterNUICallback('nearestVehicle', function(_, cb)
 	local ped = PlayerPedId()
-	local coords = GetEntityCoords(ped)
+	local coords = Core.Platform.Entities.GetCoords(ped)
 	local vehicle = GetClosestVehicle(coords.x, coords.y, coords.z, config.NearestVehicleRadius, 0, 71)
-	if vehicle == 0 or not DoesEntityExist(vehicle) then
+	if vehicle == 0 or not Core.Platform.Entities.Exists(vehicle) then
 		cb({ ok = false, error = 'no_vehicle' })
 		return
 	end
-	cb({ ok = true, plate = (GetVehicleNumberPlateText(vehicle) or ''):gsub('^%s+', ''):gsub('%s+$', '') })
+	cb({ ok = true, plate = (Core.Platform.Vehicles.GetPlate(vehicle) or ''):gsub('^%s+', ''):gsub('%s+$', '') })
 end)
 
 -- Marca um ponto no GPS (apps que listam locais: estrutura, garagens).

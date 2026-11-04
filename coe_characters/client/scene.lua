@@ -132,8 +132,8 @@ local function deletePeds(target)
 		return
 	end
 	for _, ped in pairs(current.peds) do
-		if DoesEntityExist(ped) then
-			DeleteEntity(ped)
+		if Core.Platform.Entities.Exists(ped) then
+			Core.Platform.Entities.Delete(ped)
 		end
 	end
 	current.peds, current.order, current.slots = {}, {}, {}
@@ -164,13 +164,13 @@ local function spawnPeds(characters, token)
 			return exports.coe_appearance:CreatePed(character.appearance, position.x, position.y, position.z, settings.Facing, character.gender)
 		end)
 		if not isCurrent(token) then
-			if ok and ped and DoesEntityExist(ped) then
-				DeleteEntity(ped)
+			if ok and ped and Core.Platform.Entities.Exists(ped) then
+				Core.Platform.Entities.Delete(ped)
 			end
 			return
 		end
 		if ok and ped then
-			SetEntityHeading(ped, settings.Facing)
+			Core.Platform.Entities.SetHeading(ped, settings.Facing)
 			-- Sempre opaco: o aviso de aparência pendente fica só na interface.
 			ResetEntityAlpha(ped)
 			playIdle(ped, index)
@@ -300,7 +300,7 @@ function CharacterScene.Focus(characterId, interpolate)
 		return
 	end
 	local ped = scene.peds[characterId]
-	if not ped or not DoesEntityExist(ped) then
+	if not ped or not Core.Platform.Entities.Exists(ped) then
 		overviewCam(interpolate ~= false, sceneToken)
 		return
 	end
@@ -313,7 +313,7 @@ function CharacterScene.Focus(characterId, interpolate)
 		end
 	end
 	local forward = headingVectors(settings.Facing)
-	local origin = GetEntityCoords(ped)
+	local origin = Core.Platform.Entities.GetCoords(ped)
 	switchCam(makeCam(settings.Camera.focus, origin, forward), interpolate ~= false)
 	ClearPedTasks(ped)
 	TaskLookAtCoord(ped, origin.x + forward.x * 3.0, origin.y + forward.y * 3.0, origin.z + 0.6, -1, 0, 2)

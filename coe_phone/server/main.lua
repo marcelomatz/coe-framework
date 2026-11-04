@@ -420,7 +420,7 @@ end
 -- Barras de sinal pela posição do jogador (o cliente ainda desconta ambientes fechados e água, só na exibição).
 local function signalOf(playerId)
 	local ok, coords = pcall(function()
-		return GetEntityCoords(GetPlayerPed(playerId))
+		return Core.Platform.Entities.GetCoords(GetPlayerPed(playerId))
 	end)
 	if not ok or not coords then
 		return 0

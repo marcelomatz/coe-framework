@@ -48,6 +48,7 @@ local function lastMessage(action)
 	end
 end
 
+dofile('../coe_core/lib/platform.lua')
 dofile('config.lua')
 dofile('anchor.lua')
 dofile('client.lua')

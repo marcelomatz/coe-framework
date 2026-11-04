@@ -281,7 +281,7 @@ RegisterNetEvent('coe_crafting:openFactionStash', function(factionId, stationId)
 		return failed(reason == 'not_member' and 'not_member' or 'no_stash')
 	end
 	local ped = GetPlayerPed(playerId)
-	if not ped or ped == 0 or #(GetEntityCoords(ped) - vector3(station.x, station.y, station.z)) > (station.radius or 1.5) + 1.0 then
+	if not ped or ped == 0 or #(Core.Platform.Entities.GetCoords(ped) - vector3(station.x, station.y, station.z)) > (station.radius or 1.5) + 1.0 then
 		return failed('too_far')
 	end
 	local ok, opened, openError = pcall(function()

@@ -21,9 +21,9 @@ local function load(request, loaded, asset)
 end
 
 local function removeProp()
-	if prop and DoesEntityExist(prop) then
+	if prop and Core.Platform.Entities.Exists(prop) then
 		DetachEntity(prop, true, true)
-		DeleteEntity(prop)
+		Core.Platform.Entities.Delete(prop)
 	end
 	prop = nil
 end
@@ -36,13 +36,13 @@ local function stopAnim(ped)
 end
 
 local function ensureProp(ped)
-	if prop and DoesEntityExist(prop) then
+	if prop and Core.Platform.Entities.Exists(prop) then
 		return
 	end
 	if not load(RequestModel, HasModelLoaded, MODEL) then
 		return
 	end
-	local coords = GetEntityCoords(ped)
+	local coords = Core.Platform.Entities.GetCoords(ped)
 	prop = CreateObject(MODEL, coords.x, coords.y, coords.z, false, false, false)
 	SetModelAsNoLongerNeeded(MODEL)
 	AttachEntityToEntity(prop, ped, GetPedBoneIndex(ped, HAND_BONE), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, true, false, false, false, 2, true)

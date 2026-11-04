@@ -61,7 +61,7 @@ local function coordsOf(playerId)
 	if not ped or ped == 0 then
 		return nil
 	end
-	local c = GetEntityCoords(ped)
+	local c = Core.Platform.Entities.GetCoords(ped)
 	return { x = c.x, y = c.y, z = c.z }
 end
 

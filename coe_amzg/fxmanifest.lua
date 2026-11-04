@@ -8,6 +8,7 @@ description 'Amzg: loja virtual do COE OS com entrega em caixas dentro dos imóv
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'business'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

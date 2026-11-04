@@ -64,13 +64,13 @@ function Tablet.Stop()
 	active = false
 
 	local ped = PlayerPedId()
-	if DoesEntityExist(ped) then
+	if Core.Platform.Entities.Exists(ped) then
 		StopAnimTask(ped, DICT, ANIM, 1.5)
 		ClearPedSecondaryTask(ped)
 	end
-	if prop and DoesEntityExist(prop) then
+	if prop and Core.Platform.Entities.Exists(prop) then
 		DetachEntity(prop, true, true)
-		DeleteEntity(prop)
+		Core.Platform.Entities.Delete(prop)
 	end
 	prop = nil
 end
@@ -92,7 +92,7 @@ function Tablet.Start()
 		end
 
 		local current = PlayerPedId()
-		local coords = GetEntityCoords(current)
+		local coords = Core.Platform.Entities.GetCoords(current)
 		prop = CreateObject(MODEL, coords.x, coords.y, coords.z, false, false, false)
 		SetModelAsNoLongerNeeded(MODEL)
 		AttachEntityToEntity(prop, current, GetPedBoneIndex(current, HAND_BONE),

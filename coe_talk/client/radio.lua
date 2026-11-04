@@ -38,7 +38,7 @@ end
 function Radio.StartAnimation()
 	if not Config.Radio.animation then return end
 	local ped = PlayerPedId()
-	if not DoesEntityExist(ped) or IsEntityDead(ped) then return end
+	if not Core.Platform.Entities.Exists(ped) or IsEntityDead(ped) then return end
 
 	local dict = Config.Radio.animDict
 	local name = Config.Radio.animName
@@ -56,7 +56,7 @@ end
 function Radio.StopAnimation()
 	if not Config.Radio.animation then return end
 	local ped = PlayerPedId()
-	if DoesEntityExist(ped) then
+	if Core.Platform.Entities.Exists(ped) then
 		StopAnimTask(ped, Config.Radio.animDict, Config.Radio.animName, 2.5)
 	end
 end

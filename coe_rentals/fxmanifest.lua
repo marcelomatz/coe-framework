@@ -6,6 +6,8 @@ name 'coe_rentals'
 version '0.1.0-beta.17'
 description 'Sistema de aluguel de veículos para cidadãos iniciantes com caução e devolução'
 
+coe_platform 'hal'
+
 shared_scripts {
 	'@coe_core/lib/init.lua',
 	'config.lua',

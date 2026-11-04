@@ -80,7 +80,7 @@ RegisterNetEvent('coe_banking:open', function(view)
 	end
 	menuOpen = true
 	mode = view.mode
-	openedAt = GetEntityCoords(PlayerPedId())
+	openedAt = Core.Platform.Entities.GetCoords(PlayerPedId())
 	SetNuiFocus(true, true)
 	send({ type = 'open', view = view })
 end)
@@ -111,7 +111,7 @@ RegisterNetEvent('coe_banking:close', function()
 end)
 
 local function nearestAgency()
-	local at = GetEntityCoords(PlayerPedId())
+	local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 	for _, agency in ipairs(config.Agencies) do
 		if #(at - vector3(agency.x, agency.y, agency.z)) <= agency.radius then
 			return agency
@@ -165,11 +165,11 @@ CreateThread(function()
 			activeAgency = nil
 			setPrompt(nil)
 			-- Afastou-se do balcão ou do caixa: encerra.
-			if openedAt and #(GetEntityCoords(PlayerPedId()) - openedAt) > 3.0 then
+			if openedAt and #(Core.Platform.Entities.GetCoords(PlayerPedId()) - openedAt) > 3.0 then
 				closeMenu()
 			end
 		elseif not busy and GetVehiclePedIsIn(PlayerPedId(), false) == 0 then
-			local at = GetEntityCoords(PlayerPedId())
+			local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 			local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(at.x, at.y, at.z)
 			local agency = zone and zone.data or nearestAgency()
 			if nearAny or agency then
@@ -200,10 +200,10 @@ local function atmNear(hit)
 	if not hit then
 		return false
 	end
-	local player = GetEntityCoords(PlayerPedId())
+	local player = Core.Platform.Entities.GetCoords(PlayerPedId())
 	for _, hash in ipairs(atmHashes) do
 		local object = GetClosestObjectOfType(hit.x, hit.y, hit.z, config.AtmSearchRadius + 0.0, hash, false, false, false)
-		if object ~= 0 and #(player - GetEntityCoords(object)) <= config.AtmDistance then
+		if object ~= 0 and #(player - Core.Platform.Entities.GetCoords(object)) <= config.AtmDistance then
 			return true
 		end
 	end

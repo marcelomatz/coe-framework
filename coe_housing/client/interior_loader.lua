@@ -74,8 +74,8 @@ function HousingInteriorLoader.Teleport(point, interiorId, fade)
 	local ped = PlayerPedId()
 	HousingInteriorLoader.Prepare(entry)
 	RequestCollisionAtCoord(x, y, z)
-	SetEntityCoords(ped, x, y, z, false, false, false, false)
-	SetEntityHeading(ped, (point.heading or 0.0) + 0.0)
+	Core.Platform.Entities.SetCoords(ped, x, y, z)
+	Core.Platform.Entities.SetHeading(ped, (point.heading or 0.0) + 0.0)
 	if entry then
 		HousingInteriorLoader.Finish(entry, point)
 	end

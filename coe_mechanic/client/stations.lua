@@ -176,7 +176,7 @@ CreateThread(function()
 		local current
 		if not MechanicShowroom.IsOpen() and not IsNuiFocused() then
 			local ped = PlayerPedId()
-			local at = GetEntityCoords(ped)
+			local at = Core.Platform.Entities.GetCoords(ped)
 			if nearAnyShop(at) then
 				wait = 250
 				current = interactionAt(at, IsPedInAnyVehicle(ped, false))

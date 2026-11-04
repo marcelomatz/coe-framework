@@ -22,15 +22,15 @@ local function log(level, event, context)
 end
 
 local function sample(playerId, entry)
-	if not entry.active or GetPlayerRoutingBucket(playerId) ~= 0 then
+	if not entry.active or Core.Platform.Routing.GetPlayerBucket(playerId) ~= 0 then
 		return
 	end
 	local ped = GetPlayerPed(playerId)
-	if not ped or ped == 0 or not DoesEntityExist(ped) then
+	if not ped or ped == 0 or not Core.Platform.Entities.Exists(ped) then
 		return
 	end
-	local coords = GetEntityCoords(ped)
-	local position = SpawnPositions.Normalize({ x = coords.x, y = coords.y, z = coords.z, heading = GetEntityHeading(ped) }, settings.Bounds)
+	local coords = Core.Platform.Entities.GetCoords(ped)
+	local position = SpawnPositions.Normalize({ x = coords.x, y = coords.y, z = coords.z, heading = Core.Platform.Entities.GetHeading(ped) }, settings.Bounds)
 	if position and SpawnPositions.Moved(entry.position, position, settings.MinMove) then
 		entry.position = position
 		entry.dirty = true
@@ -115,7 +115,7 @@ RegisterNetEvent('coe_spawn:openHotelStash', function()
 	if not charId then return end
 	local ped = GetPlayerPed(playerId)
 	if not ped or ped == 0 then return end
-	local coords = GetEntityCoords(ped)
+	local coords = Core.Platform.Entities.GetCoords(ped)
 	local dx = coords.x - starterHotel.stash.x
 	local dy = coords.y - starterHotel.stash.y
 	local dz = coords.z - starterHotel.stash.z

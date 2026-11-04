@@ -111,7 +111,7 @@ RegisterNetEvent('coe_garages:storeApproved', function(netId)
 	end
 	request.leaving = true
 	local ped = PlayerPedId()
-	local vehicle = NetworkDoesNetworkIdExist(netId) and NetworkGetEntityFromNetworkId(netId) or 0
+	local vehicle = NetworkDoesNetworkIdExist(netId) and (Core.Platform.Entities.FromNetworkId(netId) or 0) or 0
 	if vehicle ~= 0 and IsPedInVehicle(ped, vehicle, false) then
 		TaskLeaveVehicle(ped, vehicle, 0)
 		local deadline = GetGameTimer() + 4000
@@ -132,14 +132,14 @@ RegisterNetEvent('coe_garages:spawned', function(netId)
 	while not NetworkDoesNetworkIdExist(netId) and GetGameTimer() < deadline do
 		Wait(50)
 	end
-	local vehicle = NetworkDoesNetworkIdExist(netId) and NetworkGetEntityFromNetworkId(netId) or 0
-	if vehicle ~= 0 and DoesEntityExist(vehicle) then
+	local vehicle = NetworkDoesNetworkIdExist(netId) and (Core.Platform.Entities.FromNetworkId(netId) or 0) or 0
+	if vehicle ~= 0 and Core.Platform.Entities.Exists(vehicle) then
 		TaskWarpPedIntoVehicle(PlayerPedId(), vehicle, -1)
 	end
 end)
 
 local function nearest()
-	local at = GetEntityCoords(PlayerPedId())
+	local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 	local best, bestDistance
 	for _, station in ipairs(stations) do
 		local distance = #(at - vector3(station.x, station.y, station.z))
@@ -162,7 +162,7 @@ local function activate(station)
 		end
 		busy = true
 		-- Primeiro o servidor confere se pode guardar; só então o ped desembarca (coe_garages:storeApproved).
-		pendingStore = { garageId = station.garageId, spotId = station.spotId, netId = NetworkGetNetworkIdFromEntity(vehicle) }
+		pendingStore = { garageId = station.garageId, spotId = station.spotId, netId = Core.Platform.Entities.GetNetworkId(vehicle) }
 		TriggerServerEvent('coe_garages:storeCheck', pendingStore.garageId, pendingStore.spotId, pendingStore.netId)
 		SetTimeout(3000, function()
 			if pendingStore and not pendingStore.leaving then
@@ -191,7 +191,7 @@ CreateThread(function()
 	while true do
 		local wait = 600
 		if #stations > 0 and not menuOpen then
-			local at = GetEntityCoords(PlayerPedId())
+			local at = Core.Platform.Entities.GetCoords(PlayerPedId())
 			local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(at.x, at.y, at.z)
 			current = zone and zone.data or nearest()
 			if nearAny or current then

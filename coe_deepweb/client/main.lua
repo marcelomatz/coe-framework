@@ -132,9 +132,9 @@ local dealerSpot = nil
 local dealerPed = nil
 
 local function removeDealer()
-	if dealerPed and DoesEntityExist(dealerPed) then
+	if dealerPed and Core.Platform.Entities.Exists(dealerPed) then
 		pcall(function() exports.coetarget:RemoveTargetEntity(dealerPed) end)
-		DeleteEntity(dealerPed)
+		Core.Platform.Entities.Delete(dealerPed)
 	end
 	dealerPed = nil
 end
@@ -190,7 +190,7 @@ CreateThread(function()
 	while true do
 		local wait = 2000
 		if dealerSpot then
-			local coords = GetEntityCoords(PlayerPedId())
+			local coords = Core.Platform.Entities.GetCoords(PlayerPedId())
 			local distance = #(coords - vector3(dealerSpot.x, dealerSpot.y, dealerSpot.z))
 			if distance < config.Dealer.SpawnDistance and not dealerPed then
 				spawnDealer(dealerSpot)
@@ -215,9 +215,9 @@ end)
 local drops = {} -- orderId -> { spot, prop }
 
 local function removeDropProp(drop)
-	if drop.prop and DoesEntityExist(drop.prop) then
+	if drop.prop and Core.Platform.Entities.Exists(drop.prop) then
 		pcall(function() exports.coetarget:RemoveTargetEntity(drop.prop) end)
-		DeleteEntity(drop.prop)
+		Core.Platform.Entities.Delete(drop.prop)
 	end
 	drop.prop = nil
 end
@@ -283,7 +283,7 @@ CreateThread(function()
 	while true do
 		local wait = 2000
 		if next(drops) then
-			local coords = GetEntityCoords(PlayerPedId())
+			local coords = Core.Platform.Entities.GetCoords(PlayerPedId())
 			local range = config.Market.DropSpawnDistance or 60.0
 			for orderId, drop in pairs(drops) do
 				local spot = drop.spot

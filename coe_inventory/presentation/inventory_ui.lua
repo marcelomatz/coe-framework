@@ -72,12 +72,12 @@ function C.getNearbyPlayers()
 	end
 
 	local playerId = PlayerId()
-	local playerCoords = GetEntityCoords(playerPed)
+	local playerCoords = Core.Platform.Entities.GetCoords(playerPed)
 	local maxDistance = Config.Server.giveDistance
 	local nearbyPlayers = {}
 	for _, activePlayer in ipairs(GetActivePlayers()) do
 		local targetPed = activePlayer ~= playerId and GetPlayerPed(activePlayer) or 0
-		if targetPed ~= 0 and #(GetEntityCoords(targetPed) - playerCoords) <= maxDistance then
+		if targetPed ~= 0 and #(Core.Platform.Entities.GetCoords(targetPed) - playerCoords) <= maxDistance then
 			local serverId = GetPlayerServerId(activePlayer)
 			if serverId > 0 then
 				nearbyPlayers[#nearbyPlayers + 1] = {

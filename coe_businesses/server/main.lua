@@ -271,7 +271,7 @@ local function clockToggle(source, businessId, stationId)
 	if not accessOf(businessId, characterId).canClock then
 		return clockFailed(source, 'not_staff')
 	end
-	local at = GetEntityCoords(ped)
+	local at = Core.Platform.Entities.GetCoords(ped)
 	local atStation = false
 	local clocks = business.stations.clocks or {}
 	if stationId ~= nil then
@@ -335,7 +335,7 @@ RegisterCommand('ponto', function(source)
 	if not ped or ped == 0 then
 		return
 	end
-	local at = GetEntityCoords(ped)
+	local at = Core.Platform.Entities.GetCoords(ped)
 	for _, business in ipairs(registry.List()) do
 		if BusinessArea.Contains(business.area, at.x, at.y, at.z) then
 			return clockToggle(source, business.id, nil)
@@ -418,7 +418,7 @@ RegisterNetEvent('coe_businesses:openStash', function(businessId, stationId)
 		return failed('not_staff')
 	end
 	local ped = GetPlayerPed(playerId)
-	if not ped or ped == 0 or #(GetEntityCoords(ped) - vector3(station.x, station.y, station.z)) > station.radius + 1.0 then
+	if not ped or ped == 0 or #(Core.Platform.Entities.GetCoords(ped) - vector3(station.x, station.y, station.z)) > station.radius + 1.0 then
 		return failed('too_far')
 	end
 	local ok, opened, openError = pcall(function()
@@ -707,7 +707,7 @@ CreateThread(function()
 				if not ped or ped == 0 then
 					return nil
 				end
-				local at = GetEntityCoords(ped)
+				local at = Core.Platform.Entities.GetCoords(ped)
 				return { x = at.x, y = at.y, z = at.z }
 			end)
 		end

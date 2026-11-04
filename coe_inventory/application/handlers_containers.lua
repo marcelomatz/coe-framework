@@ -135,7 +135,7 @@ Core.Events.OnNet('inventory.containerDrop', function(requestId, containerId, ne
 		return
 	end
 	local coords = vector3(position.x, position.y, position.z)
-	if #(GetEntityCoords(playerPed) - coords) > 5.0 then
+	if #(Core.Platform.Entities.GetCoords(playerPed) - coords) > 5.0 then
 		Core.Events.ToClient(playerId, 'inventory.containerDropResult', requestId, false, 'invalid_target')
 		return
 	end
@@ -176,13 +176,13 @@ Core.Events.OnNet('inventory.containerDrop', function(requestId, containerId, ne
 	local removed, removeError = S.RemoveItem(inventoryId, containerSlot, 1)
 	if not removed then
 		S.worldContainers[containerId] = nil
-		DeleteEntity(worldContainer.entity)
+		Core.Platform.Entities.Delete(worldContainer.entity)
 		Core.Events.ToClient(playerId, 'inventory.containerDropResult', requestId, false, removeError)
 		return
 	end
 	if not S.markWorldContainer(containerId) then
 		S.worldContainers[containerId] = nil
-		DeleteEntity(worldContainer.entity)
+		Core.Platform.Entities.Delete(worldContainer.entity)
 		S.AddItem(inventoryId, containerItem.name, 1, containerItem.metadata)
 		Core.Events.ToClient(playerId, 'inventory.containerDropResult', requestId, false, 'persistence_failed')
 		return

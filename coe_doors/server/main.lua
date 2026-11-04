@@ -199,7 +199,7 @@ local function nearDoor(playerId, entry)
 	if not ped or ped == 0 then
 		return false
 	end
-	local coords = GetEntityCoords(ped)
+	local coords = Core.Platform.Entities.GetCoords(ped)
 	local center = DoorsRules.Center(entry)
 	local dx, dy, dz = coords.x - center.x, coords.y - center.y, coords.z - center.z
 	return math.sqrt(dx * dx + dy * dy + dz * dz) <= entry.distance + config.ServerSlack

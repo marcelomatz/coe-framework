@@ -128,7 +128,7 @@ local function coordsOf(playerId)
 	if not ped or ped == 0 then
 		return nil
 	end
-	local c = GetEntityCoords(ped)
+	local c = Core.Platform.Entities.GetCoords(ped)
 	return { x = c.x, y = c.y, z = c.z }
 end
 
@@ -510,7 +510,7 @@ function A.spawnVehicle(admin, data)
 	end
 	local ped = GetPlayerPed(admin)
 	local at = coordsOf(admin)
-	local netId = remote('coe_vehicles', 'Spawn', record.id, at.x, at.y, at.z, GetEntityHeading(ped), type(info) == 'table' and info.type or nil)
+	local netId = remote('coe_vehicles', 'Spawn', record.id, at.x, at.y, at.z, Core.Platform.Entities.GetHeading(ped), type(info) == 'table' and info.type or nil)
 	if type(netId) ~= 'number' then
 		return { ok = false, error = vehiclesError(netId, 'spawn_failed') }
 	end
@@ -521,8 +521,8 @@ end
 -- Apaga o veículo (registrado: guardado pelo coe_vehicles; solto: removido).
 function A.deleteVehicle(admin, data)
 	local netId = AdminToolsRules.Integer(data.netId, 1, 2 ^ 31)
-	local entity = netId and NetworkGetEntityFromNetworkId(netId)
-	if not entity or entity == 0 or not DoesEntityExist(entity) or GetEntityType(entity) ~= 2 then
+	local entity = netId and Core.Platform.Entities.FromNetworkId(netId)
+	if not entity or entity == 0 or not Core.Platform.Entities.Exists(entity) or GetEntityType(entity) ~= 2 then
 		return { ok = false, error = 'no_vehicle' }
 	end
 	local vehicleId = Entity(entity).state['coe:vehicleId']
@@ -532,7 +532,7 @@ function A.deleteVehicle(admin, data)
 			return { ok = false, error = vehiclesError(stored, 'vehicle_failed') }
 		end
 	else
-		DeleteEntity(entity)
+		Core.Platform.Entities.Delete(entity)
 	end
 	audit('staff_vehicle_delete', { source = admin, vehicle_id = vehicleId })
 	return { ok = true }

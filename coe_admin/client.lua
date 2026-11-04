@@ -622,8 +622,8 @@ RegisterNUICallback('capture', function(data, callback)
 			end
 
 			if IsControlJustReleased(0, CAPTURE_PICKUP) then
-				local at = GetEntityCoords(PlayerPedId())
-				local entry = { x = round2(at.x), y = round2(at.y), z = round2(at.z), heading = round2(GetEntityHeading(PlayerPedId())) }
+				local at = Core.Platform.Entities.GetCoords(PlayerPedId())
+				local entry = { x = round2(at.x), y = round2(at.y), z = round2(at.z), heading = round2(Core.Platform.Entities.GetHeading(PlayerPedId())) }
 				if not multi then
 					finishCapture({ point = entry })
 					return
@@ -656,7 +656,7 @@ local function aimedObject(ped)
 	local target = origin + direction * 12.0
 	local probe = StartExpensiveSynchronousShapeTestLosProbe(origin.x, origin.y, origin.z, target.x, target.y, target.z, 16, ped, 4)
 	local _, hit, _, _, entity = GetShapeTestResult(probe)
-	if hit == 1 and entity and entity ~= 0 and DoesEntityExist(entity) and GetEntityType(entity) == 3 then
+	if hit == 1 and entity and entity ~= 0 and Core.Platform.Entities.Exists(entity) and GetEntityType(entity) == 3 then
 		return entity
 	end
 	return nil
@@ -678,7 +678,7 @@ RegisterNUICallback('doorAim', function(data, callback)
 		local leaves, picked = {}, {}
 		local outlined = nil
 		local function clearOutline()
-			if outlined and DoesEntityExist(outlined) then
+			if outlined and Core.Platform.Entities.Exists(outlined) then
 				SetEntityDrawOutline(outlined, false)
 			end
 			outlined = nil
@@ -704,9 +704,9 @@ RegisterNUICallback('doorAim', function(data, callback)
 			end
 
 			if IsControlJustReleased(0, CAPTURE_PICKUP) and entity and not picked[entity] and #leaves < 2 then
-				local at = GetEntityCoords(entity)
+				local at = Core.Platform.Entities.GetCoords(entity)
 				picked[entity] = true
-				leaves[#leaves + 1] = { model = GetEntityModel(entity), x = round3(at.x), y = round3(at.y), z = round3(at.z) }
+				leaves[#leaves + 1] = { model = Core.Platform.Entities.GetModel(entity), x = round3(at.x), y = round3(at.y), z = round3(at.z) }
 			elseif IsControlJustReleased(0, CAPTURE_DONE) and #leaves > 0 then
 				clearOutline()
 				finishCapture({ doors = leaves })
@@ -793,8 +793,8 @@ end
 local tripOrigin = nil
 
 local function originOf(ped)
-	local at = GetEntityCoords(ped)
-	tripOrigin = { x = at.x, y = at.y, z = at.z, heading = GetEntityHeading(ped) }
+	local at = Core.Platform.Entities.GetCoords(ped)
+	tripOrigin = { x = at.x, y = at.y, z = at.z, heading = Core.Platform.Entities.GetHeading(ped) }
 	return tripOrigin
 end
 
@@ -850,8 +850,8 @@ RegisterNUICallback('housingVisit', function(data, callback)
 				if mark == 'none' then
 					break
 				end
-				local at = GetEntityCoords(ped)
-				result = { interiorId = entry and entry.id or nil, mark = mark, point = { x = round2(at.x), y = round2(at.y), z = round2(at.z), heading = round2(GetEntityHeading(ped)) } }
+				local at = Core.Platform.Entities.GetCoords(ped)
+				result = { interiorId = entry and entry.id or nil, mark = mark, point = { x = round2(at.x), y = round2(at.y), z = round2(at.z), heading = round2(Core.Platform.Entities.GetHeading(ped)) } }
 				break
 			elseif IsControlJustReleased(0, CAPTURE_CANCEL) then
 				break
@@ -1023,8 +1023,8 @@ AddEventHandler('onResourceStop', function(resourceName)
 			RenderScriptCams(false, false, 0, true, true)
 			SetEntityVisible(ped, true, false)
 			FreezeEntityPosition(ped, false)
-			SetEntityCoords(ped, tripOrigin.x + 0.0, tripOrigin.y + 0.0, tripOrigin.z + 0.0, false, false, false, false)
-			SetEntityHeading(ped, tripOrigin.heading + 0.0)
+			Core.Platform.Entities.SetCoords(ped, tripOrigin.x + 0.0, tripOrigin.y + 0.0, tripOrigin.z + 0.0)
+			Core.Platform.Entities.SetHeading(ped, tripOrigin.heading + 0.0)
 			DoScreenFadeIn(0)
 			tripOrigin = nil
 		end

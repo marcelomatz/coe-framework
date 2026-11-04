@@ -1,3 +1,4 @@
+dofile([=[../coe_core/lib/platform.lua]=])
 dofile([=[../coe_core/core/shared/bootstrap.lua]=])
 dofile([=[../coe_core/core/shared/functions.lua]=])
 dofile([=[../coe_core/core/shared/classes.lua]=])

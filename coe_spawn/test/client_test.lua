@@ -24,6 +24,7 @@ spawnManager.forceRespawn = function()
 	end
 exports = { spawnmanager = spawnManager }
 Core = {
+	Platform = dofile('../coe_core/lib/platform.lua'),
 	Events = {
 		OnNet = function(name, callback)
 			eventHandlers[name] = callback

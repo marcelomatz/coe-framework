@@ -6,6 +6,8 @@ name 'coe_elos'
 version '0.1.0-beta.17'
 description 'Elos: rede profissional do COE OS (perfil, currículo com empregos livres e negócios, conexões)'
 
+coe_platform 'hal'
+
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
 

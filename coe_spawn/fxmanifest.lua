@@ -6,6 +6,8 @@ name 'coe_spawn'
 version '0.1.0-beta.17'
 description 'Adaptador de spawn condicionado ao carregamento do personagem, com retorno à última posição'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_database',

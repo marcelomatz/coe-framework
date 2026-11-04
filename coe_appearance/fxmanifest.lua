@@ -6,6 +6,8 @@ name 'coe_appearance'
 version '0.1.0-beta.17'
 description 'Aparência de personagem: formato, aplicação no ped e criador de personagem'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_ui'

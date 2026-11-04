@@ -117,8 +117,8 @@ local function playerCoords(playerId)
 	if not ped or ped == 0 then
 		return nil
 	end
-	local coords = GetEntityCoords(ped)
-	return { x = coords.x, y = coords.y, z = coords.z, heading = GetEntityHeading(ped) }
+	local coords = Core.Platform.Entities.GetCoords(ped)
+	return { x = coords.x, y = coords.y, z = coords.z, heading = Core.Platform.Entities.GetHeading(ped) }
 end
 
 -- Navegador onion no celular e no tablet ---------------------------------------------------------------

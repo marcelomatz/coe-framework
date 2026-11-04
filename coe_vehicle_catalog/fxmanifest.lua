@@ -6,6 +6,8 @@ name 'coe_vehicle_catalog'
 version '0.1.0-beta.17'
 description 'Catálogo de veículos nativos e addons, leitura de vehicles.meta/handling.meta e overrides'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_database',

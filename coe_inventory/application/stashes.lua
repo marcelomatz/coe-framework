@@ -24,7 +24,7 @@ function S.isNearStash(playerId, stash, tolerance)
 		return false
 	end
 	local position = stash.position
-	return #(GetEntityCoords(ped) - vector3(position.x, position.y, position.z)) <= stash.radius + (tolerance or 0)
+	return #(Core.Platform.Entities.GetCoords(ped) - vector3(position.x, position.y, position.z)) <= stash.radius + (tolerance or 0)
 end
 
 function S.stashSnapshot(opened)

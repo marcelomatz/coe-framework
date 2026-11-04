@@ -6,7 +6,10 @@ name 'coetarget'
 version '0.1.0-beta.17'
 description 'Configurable entity targeting system'
 
+coe_platform 'hal'
+
 dependencies {
+	'coe_core',
 	'coe_ui'
 }
 
@@ -18,6 +21,7 @@ files {
 	'html/app.js'
 }
 
+shared_script '@coe_core/lib/platform.lua'
 client_scripts {
 	'config.lua',
 	'client.lua',

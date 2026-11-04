@@ -85,7 +85,7 @@ exports('TakePhoto', function()
 	busy = true
 	local ped = PlayerPedId()
 	local cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
-	local heading, pitch, yaw, fov = GetEntityHeading(ped), 0.0, 0.0, 55.0
+	local heading, pitch, yaw, fov = Core.Platform.Entities.GetHeading(ped), 0.0, 0.0, 55.0
 	local selfie = false
 	RenderScriptCams(true, false, 0, true, true)
 
@@ -121,7 +121,7 @@ exports('TakePhoto', function()
 			-- Câmera traseira: o personagem gira junto com a mira.
 			heading = (heading - dx * 8.0) % 360.0
 			pitch = clamp(pitch - dy * 6.0, -70.0, 70.0)
-			SetEntityHeading(ped, heading)
+			Core.Platform.Entities.SetHeading(ped, heading)
 			local position = head + forward(heading) * 0.3
 			SetCamCoord(cam, position.x, position.y, position.z)
 			SetCamRot(cam, pitch, 0.0, heading, 2)

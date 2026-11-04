@@ -6,6 +6,8 @@ name 'coe_telecom'
 version '0.1.0-beta.17'
 description 'Operadora do COE OS: linhas pré-pago e pós-pago, tarifação de voz, vídeo e SMS e o app Minha linha'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_database',

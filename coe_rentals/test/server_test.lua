@@ -23,6 +23,7 @@ local inventoryItems = {} -- inventoryId -> lista de { name, metadata }
 local dbRows = {}
 
 Core = {
+	Platform = dofile('../coe_core/lib/platform.lua'),
 	Events = {
 		OnNet = function(name, fn) handlers[name] = fn end,
 		On = function(name, fn) coreHandlers[name] = fn end,

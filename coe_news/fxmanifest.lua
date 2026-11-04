@@ -8,6 +8,7 @@ description 'Portais de notícias do COE OS: Weazel News e Rebel News, com reda�
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'business'
+coe_platform 'hal'
 
 dependencies {
 	'coe_core',

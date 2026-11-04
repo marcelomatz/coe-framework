@@ -511,8 +511,8 @@ RegisterKeyMapping(
 -- e rode o comando. Imprime no F8 a posição e a direção no formato de CoeCharactersConfig.Scene.
 RegisterCommand('coe_scene_anchor', function()
 	local ped = PlayerPedId()
-	local coords = GetEntityCoords(ped)
-	print(('Anchor = { x = %.2f, y = %.2f, z = %.2f },\nFacing = %.1f,'):format(coords.x, coords.y, coords.z, (GetEntityHeading(ped) + 180.0) % 360.0))
+	local coords = Core.Platform.Entities.GetCoords(ped)
+	print(('Anchor = { x = %.2f, y = %.2f, z = %.2f },\nFacing = %.1f,'):format(coords.x, coords.y, coords.z, (Core.Platform.Entities.GetHeading(ped) + 180.0) % 360.0))
 end, false)
 
 -- Informa ao servidor que os handlers estão registrados; ele reenvia a seleção caso o envio inicial tenha se perdido.

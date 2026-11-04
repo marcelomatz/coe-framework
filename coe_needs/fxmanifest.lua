@@ -6,6 +6,8 @@ name 'coe_needs'
 version '0.1.0-beta.17'
 description 'Necessidades do personagem (fome, sede, estresse, alcool, drogas) com estado autoritativo no servidor'
 
+coe_platform 'hal'
+
 dependencies {
 	'coe_core',
 	'coe_database',

@@ -60,9 +60,9 @@ local function stopAnim()
 	animToken = animToken + 1
 	local ped = PlayerPedId()
 	StopAnimTask(ped, config.Animation.Dict, config.Animation.Name, 1.5)
-	if prop and DoesEntityExist(prop) then
+	if prop and Core.Platform.Entities.Exists(prop) then
 		DetachEntity(prop, true, true)
-		DeleteEntity(prop)
+		Core.Platform.Entities.Delete(prop)
 	end
 	prop = nil
 end
@@ -87,7 +87,7 @@ local function startAnim()
 			SetModelAsNoLongerNeeded(model)
 			return
 		end
-		local coords = GetEntityCoords(ped)
+		local coords = Core.Platform.Entities.GetCoords(ped)
 		prop = CreateObject(model, coords.x, coords.y, coords.z, false, false, false)
 		SetModelAsNoLongerNeeded(model)
 		AttachEntityToEntity(prop, ped, GetPedBoneIndex(ped, anim.Bone), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, true, false, false, false, 2, true)

@@ -23,7 +23,7 @@ local lastSignal = nil
 
 local function signalNow()
 	local ped = PlayerPedId()
-	local coords = GetEntityCoords(ped)
+	local coords = Core.Platform.Entities.GetCoords(ped)
 	local bars = PhoneRules.Signal(config, coords.x, coords.y)
 	local indoor = GetInteriorFromEntity(ped) ~= 0
 	if IsPedSwimmingUnderWater(ped) then

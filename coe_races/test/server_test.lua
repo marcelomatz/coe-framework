@@ -78,6 +78,7 @@ json = {
 }
 
 Core = {
+	Platform = dofile('../coe_core/lib/platform.lua'),
 	Players = { GetActiveCharacterId = function(id) return characters[id] end },
 	Events = { On = function(name, fn) coreHandlers[name] = fn end }
 }
