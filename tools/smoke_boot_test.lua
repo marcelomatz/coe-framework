@@ -1,4 +1,4 @@
---[[
+﻿--[[
 	tools/smoke_boot_test.lua
 	Suíte de Testes de Boot, Inicialização e Fronteira de Runtime (Smoke Boot)
 	Previne regressões de 'attempt to call a table value (local _t)' e falhas em chunks globais.
@@ -251,100 +251,6 @@ test("coe_vehicles: inicialização do chunk global com _t defensivo", function(
 	assertTrue(okClient, "coe_vehicles/client/keys.lua deve carregar sem erro: " .. tostring(errClient))
 end)
 
-test("coe_bank: inicialização do servidor e do client com _t defensivo", function()
-	setupFiveMEnvironment()
-	dofile('coe_core/lib/init.lua')
-	_G.GlobalState = {}
-	_G.Locales = {}
-	dofile('coe_bank/config.lua')
-	dofile('coe_bank/locales/pt-br.lua')
-	dofile('coe_bank/locales/en-us.lua')
-	dofile('coe_bank/shared/rules.lua')
-	dofile('coe_core/lib/access.lua')
-
-	local okServer, errServer = pcall(dofile, 'coe_bank/server/main.lua')
-	assertTrue(okServer, "coe_bank/server/main.lua deve carregar sem erro: " .. tostring(errServer))
-	assertEqual(_G.GlobalState.coeBankYielded, false, "coe_bank começa atendendo")
-
-	_G.AddStateBagChangeHandler = function() end
-	_G.RegisterNUICallback = function() end
-	_G.joaat = function(name) return #name end
-	local okClient, errClient = pcall(dofile, 'coe_bank/client/main.lua')
-	assertTrue(okClient, "coe_bank/client/main.lua deve carregar sem erro: " .. tostring(errClient))
-end)
-
-test("coe_mobile: inicialização do servidor e do client com _t defensivo", function()
-	setupFiveMEnvironment()
-	dofile('coe_core/lib/init.lua')
-	_G.GlobalState = {}
-	_G.Locales = {}
-	dofile('coe_mobile/config.lua')
-	dofile('coe_mobile/locales/pt-br.lua')
-	dofile('coe_mobile/locales/en-us.lua')
-	dofile('coe_mobile/shared/rules.lua')
-	dofile('coe_core/lib/access.lua')
-	dofile('coe_core/lib/migrations.lua')
-	dofile('coe_mobile/server/migrations.lua')
-	dofile('coe_mobile/server/persistence.lua')
-
-	local okServer, errServer = pcall(dofile, 'coe_mobile/server/main.lua')
-	assertTrue(okServer, "coe_mobile/server/main.lua deve carregar sem erro: " .. tostring(errServer))
-	assertEqual(_G.GlobalState.coeMobileYielded, false, "coe_mobile começa atendendo")
-
-	_G.AddStateBagChangeHandler = function() end
-	_G.RegisterNUICallback = function() end
-	_G.RegisterKeyMapping = function() end
-	local okClient, errClient = pcall(dofile, 'coe_mobile/client/main.lua')
-	assertTrue(okClient, "coe_mobile/client/main.lua deve carregar sem erro: " .. tostring(errClient))
-end)
-
-test("coe_workpad: inicialização do servidor e do client com _t defensivo", function()
-	setupFiveMEnvironment()
-	dofile('coe_core/lib/init.lua')
-	_G.GlobalState = {}
-	_G.Locales = {}
-	dofile('coe_workpad/config.lua')
-	dofile('coe_workpad/locales/pt-br.lua')
-	dofile('coe_workpad/locales/en-us.lua')
-	dofile('coe_workpad/shared/rules.lua')
-	dofile('coe_core/lib/access.lua')
-
-	local okServer, errServer = pcall(dofile, 'coe_workpad/server/main.lua')
-	assertTrue(okServer, "coe_workpad/server/main.lua deve carregar sem erro: " .. tostring(errServer))
-	assertEqual(_G.GlobalState.coeWorkpadYielded, false, "coe_workpad começa atendendo")
-
-	_G.AddStateBagChangeHandler = function() end
-	_G.RegisterNUICallback = function() end
-	_G.RegisterKeyMapping = function() end
-	local okClient, errClient = pcall(dofile, 'coe_workpad/client/main.lua')
-	assertTrue(okClient, "coe_workpad/client/main.lua deve carregar sem erro: " .. tostring(errClient))
-end)
-
-test("coe_staff: inicialização do servidor e do client com _t defensivo", function()
-	setupFiveMEnvironment()
-	dofile('coe_core/lib/init.lua')
-	_G.GlobalState = {}
-	_G.Locales = {}
-	dofile('coe_staff/config.lua')
-	dofile('coe_staff/locales/pt-br.lua')
-	dofile('coe_staff/locales/en-us.lua')
-	dofile('coe_staff/shared/rules.lua')
-	dofile('coe_core/lib/access.lua')
-
-	local okServer, errServer = pcall(dofile, 'coe_staff/server/main.lua')
-	assertTrue(okServer, "coe_staff/server/main.lua deve carregar sem erro: " .. tostring(errServer))
-	assertEqual(_G.GlobalState.coeStaffYielded, false, "coe_staff começa atendendo")
-	assertEqual(_G.GlobalState.coeStaffWorld, false, "coe_staff começa sem hora e clima fixos")
-
-	_G.AddStateBagChangeHandler = function() end
-	_G.RegisterNUICallback = function() end
-	_G.RegisterKeyMapping = function() end
-	local okNoclip, errNoclip = pcall(dofile, 'coe_staff/client/noclip.lua')
-	assertTrue(okNoclip, "coe_staff/client/noclip.lua deve carregar sem erro: " .. tostring(errNoclip))
-	local okClient, errClient = pcall(dofile, 'coe_staff/client/main.lua')
-	assertTrue(okClient, "coe_staff/client/main.lua deve carregar sem erro: " .. tostring(errClient))
-end)
-
 test("coe_rentals: inicialização do servidor e do client com _t defensivo", function()
 	setupFiveMEnvironment()
 	dofile('coe_core/lib/init.lua')
@@ -360,6 +266,7 @@ test("coe_rentals: inicialização do servidor e do client com _t defensivo", fu
 	local okServer, errServer = pcall(dofile, 'coe_rentals/server/main.lua')
 	assertTrue(okServer, "coe_rentals/server/main.lua deve carregar sem erro: " .. tostring(errServer))
 
+	_G.RegisterNUICallback = function() end
 	_G.BeginTextCommandDisplayHelp = function() end
 	_G.AddTextComponentSubstringPlayerName = function() end
 	_G.EndTextCommandDisplayHelp = function() end
@@ -376,41 +283,6 @@ test("coe_rentals: inicialização do servidor e do client com _t defensivo", fu
 	assertTrue(okClient, "coe_rentals/client/main.lua deve carregar sem erro: " .. tostring(errClient))
 end)
 
-test("coe_garage: inicialização do servidor e do client com _t defensivo", function()
-	setupFiveMEnvironment()
-	dofile('coe_core/lib/init.lua')
-	_G.Locales = {}
-	dofile('coe_garage/config.lua')
-	dofile('coe_garage/locales/pt-br.lua')
-	dofile('coe_garage/locales/en-us.lua')
-	dofile('coe_garage/domain/garage.lua')
-	dofile('coe_core/lib/access.lua')
-	dofile('coe_core/lib/migrations.lua')
-	dofile('coe_garage/adapters/migrations.lua')
-	dofile('coe_garage/adapters/persistence.lua')
-
-	_G.exports.coe_staff = { RegisterGaragesProvider = function() return true end }
-	_G.exports.coe_vehicles = { ListByOwner = function() return {} end, Get = function() return nil end, Spawn = function() return 1 end, Store = function() return true end, GiveKey = function() return true end }
-
-	local okServer, errServer = pcall(dofile, 'coe_garage/application/service.lua')
-	assertTrue(okServer, "coe_garage/application/service.lua deve carregar sem erro: " .. tostring(errServer))
-
-	_G.RegisterNUICallback = function() end
-	_G.BeginTextCommandDisplayHelp = function() end
-	_G.AddTextComponentSubstringPlayerName = function() end
-	_G.EndTextCommandDisplayHelp = function() end
-	_G.AddBlipForCoord = function() return 1 end
-	_G.SetBlipSprite = function() end
-	_G.SetBlipColour = function() end
-	_G.SetBlipScale = function() end
-	_G.SetBlipAsShortRange = function() end
-	_G.BeginTextCommandSetBlipName = function() end
-	_G.EndTextCommandSetBlipName = function() end
-
-	local okClient, errClient = pcall(dofile, 'coe_garage/client.lua')
-	assertTrue(okClient, "coe_garage/client.lua deve carregar sem erro: " .. tostring(errClient))
-end)
-
 -- ---------------------------------------------------------------------------
 -- 4. TESTE DE CONFORMIDADE DOS RECURSOS DO FRAMEWORK COM I18N
 -- ---------------------------------------------------------------------------
@@ -418,8 +290,7 @@ print("\n[4/4] Validação de Recursos do Framework com i18n...")
 
 local frameworkLocales = {
 	'coe_core', 'coe_businesses', 'coe_economy', 'coe_inventory',
-	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_bank', 'coe_mobile', 'coe_workpad', 'coe_staff',
-	'coe_rentals', 'coe_garage'
+	'coe_jobs', 'coe_talk', 'coe_vehicles', 'coe_rentals'
 }
 for _, res in ipairs(frameworkLocales) do
 	test(res .. ": locales e instanciação de _t sem falhas", function()

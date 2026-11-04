@@ -9,7 +9,6 @@
 | [coe_appearance](coe_appearance.md) | `OpenCreator`, `CloseCreator`, `CreatorError`, `IsCreatorOpen`, `Apply`, `ApplyToPlayer`, `CreatePed`, `Normalize`, `Default`, `Version` |
 | [coe_apps](coe_apps.md) | `ClaimPhoto`, `DeletePhoto`, `HasApp`, `PhotoData`, `StorePhoto`, `TabletCall`, `TabletVisible`, `TakePhoto` |
 | [coe_audit](coe_audit.md) | `Record`, `IsReady` |
-| [coe_bank](coe_bank.md) | `Yield`, `Status` |
 | [coe_banking](coe_banking.md) | `AdminAccount`, `AdminBusinessAccount`, `AdminBusinessAccounts`, `AdminBusinessAdjust`, `AdminBusinessCardLimit`, `AdminCard`, `AdminDecideRequest`, `AdminForgiveLoan`, `AdminGrantLoan`, `AdminLoanRequests`, `AdminPoints`, `AdminSaveTiers`, `AdminSetCredit`, `AdminTiers`, `BusinessTablet`, `CardPurchase`, `CardRefund`, `PosCards`, `PosPurchase`, `ShopCharge`, `ShopOptions`, `ShopRefund`, `TabletCall`, `TabletVisible`, `WalletCards`, `WalletEligible`, `WalletIssueVirtual`, `WalletLink` |
 | [coe_businesses](coe_businesses.md) | `IsReady`, `Categories`, `RuleSchema`, `List`, `Get`, `Save`, `Seed`, `Delete`, `ClockIn`, `ClockOut`, `Clock`, `IsOnDuty`, `DutySummary`, `CurrentDuty`, `Access`, `Partners`, `Debtors`, `Permissions`, `RegisterPermissions`, `Grades`, `GradeOf`, `Can`, `Salary`, `Payroll`, `RegisterTab`, `RegisterProvider`, `TabletInstances`, `TabletCall` |
 | [coe_characters](coe_characters.md) | `IsOpen`, `CloseSelection` |
@@ -25,7 +24,6 @@
 | [coe_ems](coe_ems.md) | `Records`, `Revive`, `SetState`, `State`, `Treat` |
 | [coe_factions](coe_factions.md) | `CanCraft`, `CanCraftInFaction`, `Categories`, `Delete`, `Get`, `IsReady`, `List`, `Members`, `Memberships`, `PauseMenuFaction`, `RecipesFor`, `RecipesForFaction`, `RemoveMember`, `Save`, `SetMember`, `TabletCall`, `TabletInstances` |
 | [coe_fuel](coe_fuel.md) | `IsReady`, `GetFuel`, `GetEffects`, `GetStationTanks`, `IsStation`, `BusinessTablet` |
-| [coe_garage](coe_garage.md) | `IsReady`, `ListGarages`, `GetGarage`, `GetVehicleGarage`, `SaveGarage`, `DeleteGarage` |
 | [coe_garages](coe_garages.md) | `AddBusinessFleet`, `AddFleetVehicle`, `BusinessFleet`, `DeleteGarage`, `ListFleet`, `ListGarages`, `RemoveFleetVehicle`, `SaveGarage`, `SetFleetStaffAccess`, `TabletCall` |
 | [coe_handling](coe_handling.md) | `GetTyre`, `SetTyre`, `ListTyres`, `ListClasses`, `GetModifiers`, `IsReady` |
 | [coe_housing](coe_housing.md) | `AddressActive`, `BeginPreview`, `BusinessProperties`, `CurrentSpace`, `DeleteProperty`, `DeliveryAddresses`, `EndContract`, `EndPreview`, `InteriorThumbs`, `Interiors`, `IsReady`, `ListProperties`, `PlayersInSpace`, `PropertyContracts`, `SaveInteriorThumb`, `SaveProperty`, `TabletCall`, `TabletVisible` |
@@ -39,7 +37,6 @@
 | [coe_map](coe_map.md) | `GetMode`, `OpenFull` |
 | [coe_mdt](coe_mdt.md) | `AccessLog`, `TabletCall` |
 | [coe_mechanic](coe_mechanic.md) | `TabletCall`, `Inspect`, `ReplacePart`, `ServiceVehicle`, `AdjustMileage`, `AddWear`, `GetEffects`, `ListParts`, `IsReady`, `GetShopOwner`, `GetAppearance`, `QuoteAppearance`, `SetAppearance`, `GetShops`, `GetVehicleOptions` |
-| [coe_mobile](coe_mobile.md) | `Yield`, `Status`, `NumberOf` |
 | [coe_needs](coe_needs.md) | `GetNeeds`, `SetNeed`, `AddNeed` |
 | [coe_news](coe_news.md) | `AdminAction`, `AdminOverview`, `AdminQuery`, `TabletCall`, `TabletVisible` |
 | [coe_notify](coe_notify.md) | `Notify`, `Show`, `Prompt` |
@@ -49,7 +46,6 @@
 | [coe_rentals](coe_rentals.md) | `GetActiveRental`, `ListStations`, `SaveStation`, `DeleteStation`, `Catalog` |
 | [coe_shops](coe_shops.md) | `IsReady`, `GetShelves`, `IsStore`, `BusinessTablet`, `RegisterPaymentMethod` |
 | [coe_spawn](coe_spawn.md) | `GetStarterHotel`, `SetStarterHotel` |
-| [coe_staff](coe_staff.md) | `Yield`, `Status`, `RegisterGaragesProvider`, `RegisterRentalsProvider` |
 | [coe_supervisor](coe_supervisor.md) | `List`, `Restart`, `GetUpdateStatus`, `CheckForUpdates`, `WriteFile`, `ReadFile`, `HashFile`, `DownloadFile`, `CommitFile`, `DiscardFile`, `VerifySignature`, `ApplyUpdate` |
 | [coe_tablet](coe_tablet.md) | `TabletVisible`, `TabletCall` |
 | [coe_talk](coe_talk.md) | `SetPlayerRadio`, `GetPlayerRadio`, `SetPlayerCall`, `GetPlayerCall`, `GetRadioMembers`, `GetCallMembers`, `GetVoiceRange`, `SetVoiceRange`, `GetRadioChannel`, `SetRadioChannel`, `GetCallChannel`, `SetCallChannel`, `IsTalking`, `IsRadioTransmitting`, `SetVoiceVolume` |
@@ -57,5 +53,4 @@
 | [coe_ui](coe_ui.md) | `GetTheme`, `GetThemes`, `SetTheme`, `GetAccent`, `SetAccent` |
 | [coe_vehicle_catalog](coe_vehicle_catalog.md) | `GetVehicleInfo`, `ListVehicles`, `ListVehiclesPage`, `ListClasses`, `GetBaseHandling`, `GetIssues`, `SetOverride`, `ClearOverride`, `Rescan`, `IsReady` |
 | [coe_vehicles](coe_vehicles.md) | `Create`, `Get`, `GetByPlate`, `ListByOwner`, `GetEntity`, `GetMileage`, `SetMileage`, `Spawn`, `Store`, `IsReady`, `HasKey`, `GiveKey`, `RevokeKey`, `ListKeyHolders` |
-| [coe_workpad](coe_workpad.md) | `Yield`, `Status` |
 | [coetarget](coetarget.md) | `AddTargetEntity`, `RemoveTargetEntity`, `AddTargetModel`, `RemoveTargetModel`, `AddTargetGlobal`, `RemoveTargetGlobal`, `AddTargetSurface`, `RemoveTargetSurface` |

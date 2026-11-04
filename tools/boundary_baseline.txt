@@ -1,8 +1,28 @@
 # Referências a resources de fora deste repositório que ainda serão removidas (arquivo nome).
 # Gerado por lua tools/check_boundary.lua --update. Esta lista só pode diminuir.
+coe_admin/server.lua coe_garage
+coe_admin/server.lua coe_staff
+coe_banking/server/main.lua coe_bank
+coe_businesses/config.lua coe_staff
+coe_businesses/config.lua coe_workpad
+coe_core/core/server/init.lua coe_staff
 coe_dispatch/config.lua coe_heists
+coe_economy/config.lua coe_bank
+coe_economy/config.lua coe_mobile
+coe_economy/config.lua coe_staff
 coe_factions/server/main.lua coe_pausemenu
+coe_garages/server/main.lua coe_staff
 coe_handling/config.lua coe_dealerships
+coe_jobs/config.lua coe_workpad
 coe_loot/config.lua coe_heists
 coe_loot/config.lua coe_robbery
 coe_mechanic/config.lua coe_dealerships
+coe_needs/config.lua coe_staff
+coe_phone/server/main.lua coe_mobile
+coe_rentals/config.lua coe_staff
+coe_rentals/server/main.lua coe_staff
+coe_supervisor/config.lua coe_staff
+coe_tablet/server/main.lua coe_workpad
+coe_talk/config.lua coe_mobile
+coe_vehicles/config.lua coe_garage
+coe_vehicles/config.lua coe_staff

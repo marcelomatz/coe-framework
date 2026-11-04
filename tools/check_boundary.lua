@@ -53,12 +53,12 @@ local function readFile(path)
 	return content
 end
 
--- Resources deste repositório: pastas da raiz com fxmanifest.lua.
+-- Resources deste repositório: pastas da raiz com fxmanifest.lua existente em disco.
 local own = {}
 for _, file in ipairs(listFiles()) do
 	local path = normalize(file)
 	local resource = path:match('^([^/]+)/fxmanifest%.lua$')
-	if resource then
+	if resource and readFile(path) then
 		own[resource] = true
 	end
 end

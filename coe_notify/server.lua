@@ -14,17 +14,12 @@ local allowedResources = {
 	coe_characters = true,
 	coe_core = true,
 	coe_economy = true,
-	coe_garage = true,
 	coe_inventory = true,
 	coe_vehicles = true,
 	coe_jobs = true,
 	coe_rentals = true,
 	coe_shops = true,
-	coe_talk = true,
-	coe_bank = true,
-	coe_mobile = true,
-	coe_workpad = true,
-	coe_staff = true
+	coe_talk = true
 }
 
 exports('Notify', function(playerId, kind, message, duration)
