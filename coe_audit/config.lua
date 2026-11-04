@@ -1,4 +1,4 @@
-CoeAuditConfig = {
+﻿CoeAuditConfig = {
 	-- Quem registra eventos; o nome vem do runtime, não do payload. Padrões do framework abaixo; pacotes e scripts de
 	-- terceiros recebem a ACE no server.cfg: add_ace resource.<nome> coe.audit allow
 	Ace = 'coe.audit',
