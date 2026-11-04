@@ -1,4 +1,4 @@
-CoeLoggingConfig = {
+﻿CoeLoggingConfig = {
 	DefaultLevel = 'info',
 	-- 'pretty' (legível, com cores) ou 'json' (uma linha JSON por evento, para coletores).
 	-- As convars coe_logging_format e coe_logging_color sobrescrevem estes valores.
@@ -18,10 +18,6 @@ CoeLoggingConfig = {
 		coe_spawn = 'info',
 		coe_jobs = 'info',
 		coe_shops = 'info',
-		coe_bank = 'info',
-		coe_mobile = 'info',
-		coe_workpad = 'info',
-		coe_staff = 'info'
 	},
 	-- Quem grava logs. Padrões do framework; pacotes e scripts de terceiros recebem a ACE no server.cfg:
 	--   add_ace resource.<nome> coe.logging allow
@@ -39,10 +35,6 @@ CoeLoggingConfig = {
 		coe_spawn = true,
 		coe_jobs = true,
 		coe_shops = true,
-		coe_bank = true,
-		coe_mobile = true,
-		coe_workpad = true,
-		coe_staff = true
 	},
 	AllowedContextFields = {
 		action = true,

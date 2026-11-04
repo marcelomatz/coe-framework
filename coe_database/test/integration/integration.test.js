@@ -133,7 +133,7 @@ test('integração MariaDB', { skip: !configured ? 'COE_TEST_DB_* não definido'
 		['coe_core: migrations e repositório de personagens', 'core_scenario.lua'],
 		['coe_inventory: migrations e persistência', 'inventory_scenario.lua'],
 		['coe_audit: migrations, lote e retenção', 'audit_scenario.lua'],
-		['coe_garage + coe_mobile: garagens, vagas fixas e números de telefone', 'garage_mobile_scenario.lua'],
+		['coe_rentals: migrations e estações de aluguel', 'garage_mobile_scenario.lua'],
 		['coe_needs: migrations, estado por personagem e salvamento em lote', 'needs_scenario.lua'],
 		['coe_vehicles + coe_vehicle_catalog: ciclo de vida do veículo, chaves e quilometragem', 'vehicles_scenario.lua'],
 		['coe_economy + coe_shops + coe_inventory: ciclo de comércio, loja e transações', 'commerce_scenario.lua'],

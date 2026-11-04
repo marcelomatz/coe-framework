@@ -11,7 +11,7 @@
 [![Suíte de Testes](https://img.shields.io/badge/tests-83%20lua%20%7C%208%20node%20%7C%209%20mariadb%20%7C%20strict%20contracts-blue.svg)](#garantia-de-qualidade-e-anti-regressao-no-ci)
 [![Internacionalização](https://img.shields.io/badge/i18n-445%20keys%20%7C%20100%25%20parity%20%7C%20pt--BR%20%26%20en--US-green.svg)](https://docs.coeroleplay.app/#doc=I18N_LOCALIZATION.md)
 [![Platform HAL](https://img.shields.io/badge/platform%20hal-decoupled%20natives%20%7C%20zero%20legacy-purple.svg)](https://docs.coeroleplay.app/#doc=PLATFORM_HAL.md)
-[![Resources First-Party](https://img.shields.io/badge/resources-55%20first--party%20MIT-purple.svg)](https://docs.coeroleplay.app/#doc=PACKS.md)
+[![Resources First-Party](https://img.shields.io/badge/resources-50%20first--party%20MIT-purple.svg)](https://docs.coeroleplay.app/#doc=PACKS.md)
 [![Plataforma](https://img.shields.io/badge/platform-FiveM%20for%20GTAV%20Enhanced%20%28Gen9%20DX12%29-lightgrey.svg)](https://docs.fivem.net/docs/server-download/?platform=enhanced&os=windows)
 [![Arquitetura](https://img.shields.io/badge/architecture-clean%20%2F%20server--authoritative-orange.svg)](https://docs.coeroleplay.app/#doc=ARCHITECTURE.md)
 [![AI Ready](https://img.shields.io/badge/AI%20Agents-5%20Rules%20%7C%208%20Skills-teal.svg)](#como-conectar-os-agentes-de-ia-do-coe-no-seu-ambiente)

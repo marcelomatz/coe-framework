@@ -61,9 +61,7 @@ local migrationDefs = {
 	{ resource = 'coe_jobs', file = 'coe_jobs/server/migrations.lua', get = function() return JobsMigrations end },
 	{ resource = 'coe_vehicles', file = 'coe_vehicles/server/migrations.lua', get = function() return VehiclesMigrations end },
 	{ resource = 'coe_vehicle_catalog', file = 'coe_vehicle_catalog/server/migrations.lua', get = function() return VehicleCatalogMigrations end },
-	{ resource = 'coe_garage', file = 'coe_garage/adapters/migrations.lua', get = function() return GarageMigrations end },
 	{ resource = 'coe_shops', file = 'coe_shops/server/migrations.lua', get = function() return ShopsMigrations end },
-	{ resource = 'coe_mobile', file = 'coe_mobile/server/migrations.lua', get = function() return MobileMigrations end },
 	{ resource = 'coe_rentals', file = 'coe_rentals/server/migrations.lua', get = function() return RentalsMigrations end },
 	-- coe_needs usa o formato { resource, versions } do CoeMigrations; roda pelo próprio Initialize.
 	{ resource = 'coe_needs', file = 'coe_needs/adapters/migrations.lua', extra = 'coe_needs/adapters/persistence.lua',
