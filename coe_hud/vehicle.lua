@@ -1,6 +1,7 @@
 -- Controles do veiculo (cinto, farol, setas). As teclas sao registradas com RegisterKeyMapping:
 -- o jogador troca em Configuracoes > Teclado > FiveM. Padroes: B cinto, H farol, setas esquerda/direita.
 VehicleControls = { belt = false, lights = 0, left = false, right = false, vehicle = 0 }
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 
 local CONTROL_VEH_HEADLIGHT = 74
 local CONTROL_VEH_EXIT = 75
@@ -56,12 +57,12 @@ local function toggleBelt()
 	if NO_BELT_CLASSES[GetVehicleClass(vehicle)] then
 		VehicleControls.belt = false
 		SetPedConfigFlag(ped, FLAG_CAN_FLY_THROUGH_WINDSCREEN, true)
-		notify('info', 'Este veículo não tem cinto de segurança.')
+		notify('info', _t('no_seatbelt'))
 		return
 	end
 	VehicleControls.belt = not VehicleControls.belt
 	SetPedConfigFlag(ped, FLAG_CAN_FLY_THROUGH_WINDSCREEN, not VehicleControls.belt)
-	notify('info', VehicleControls.belt and 'Cinto colocado.' or 'Cinto solto.')
+	notify('info', VehicleControls.belt and _t('seatbelt_buckled') or _t('seatbelt_unbuckled'))
 end
 
 -- Ciclo: apagado -> baixo -> alto -> apagado.

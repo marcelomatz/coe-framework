@@ -50,6 +50,8 @@ exports = { coetarget = {
 } }
 
 dofile('../coe_core/lib/platform.lua')
+dofile('locales/pt-br.lua')
+dofile('locales/en-us.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 dofile('client/main.lua')

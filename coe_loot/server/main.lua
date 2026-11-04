@@ -19,33 +19,7 @@ local function notify(playerId, kind, message)
 	end)
 end
 
-local rawLocales = (type(Locales) == 'table' and Locales) or {}
-local _t_inst = (Core and Core.Locale and Core.Locale.New) and Core.Locale.New({
-	default = (config and config.Locale) or (Core and Core.Locale and Core.Locale.GetDefaultLang()) or 'pt-BR',
-	locales = rawLocales
-})
-local _t = function(k, params)
-	local text
-	if type(_t_inst) == 'table' then
-		if _t_inst.T then
-			return _t_inst:T(k, params)
-		end
-		local lang = _t_inst.lang or 'pt-BR'
-		local dict = (_t_inst.locales and _t_inst.locales[lang]) or rawLocales[lang] or rawLocales['pt-BR']
-		text = (dict and dict[k])
-	elseif type(_t_inst) == 'function' then
-		return _t_inst(k, params)
-	end
-	if not text then
-		text = (rawLocales['pt-BR'] and rawLocales['pt-BR'][k]) or k
-	end
-	if text and params then
-		for pk, pv in pairs(params) do
-			text = text:gsub('%%{' .. pk .. '}', tostring(pv))
-		end
-	end
-	return text
-end
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 
 -- Tabelas válidas do config; as inválidas ficam de fora com aviso no log.
 for id, definition in pairs(config.Tables) do

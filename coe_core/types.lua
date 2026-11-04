@@ -204,6 +204,8 @@ function exports_coe_core:RemovePlayerGroup(source, name, callback) end
 ---@field FormatMoney fun(amount: number, lang?: string): string
 ---@field ExportForNui fun(lang?: string): table
 ---@field New fun(opts?: { default?: string, fallback?: string, locales?: table }): CoeLocaleInstance
+---@field Init fun(resourceName?: string, defaultLang?: string): CoeLocaleInstance
+---@field Bind fun(locales?: table, defaultLang?: string): (fun(key: string, params?: table|any): string), CoeLocaleInstance
 
 ---@class CoeSemVerData
 ---@field major integer

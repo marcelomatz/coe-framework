@@ -113,6 +113,8 @@ ShopsPersistence = {
 }
 
 dofile('../coe_core/lib/access.lua')
+dofile('locales/pt-br.lua')
+dofile('locales/en-us.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 dofile('server/payments.lua')

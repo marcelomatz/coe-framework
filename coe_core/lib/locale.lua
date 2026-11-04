@@ -307,4 +307,26 @@ function Locale.Init(resourceName, defaultLang)
 	})
 end
 
+---Cria o helper `_t` de um resource, substituindo o boilerplate defensivo copiado em cada arquivo.
+---Os dicionários são resolvidos sob demanda: idiomas registrados depois do Bind (ex.: `locales/en-us.lua`
+---carregado após o código) e o `_G.Locales` (quando `locales` é nil) continuam visíveis.
+---O helper é uma closure pura: não depende de metatable que possa se perder ao trafegar por MsgPack.
+---@param locales table|nil Dicionários por idioma (`{ ['pt-BR'] = {...}, ['en-US'] = {...} }`); padrão `_G.Locales`
+---@param defaultLang string|nil Idioma ativo (padrão: convar `coe_locale` ou pt-BR)
+---@return fun(key: string, params?: table|any): string translate Helper `_t(chave, params)`
+---@return CoeLocaleInstance instance Instância subjacente (SetLanguage, ExportForNui, Merge...)
+function Locale.Bind(locales, defaultLang)
+	local instance = Locale.New({ default = defaultLang or Locale.GetDefaultLang() })
+	instance.locales = setmetatable({}, {
+		__index = function(_, lang)
+			local source = type(locales) == 'table' and locales or _G.Locales
+			return type(source) == 'table' and source[lang] or nil
+		end
+	})
+	local function translate(key, params)
+		return instance:T(key, params)
+	end
+	return translate, instance
+end
+
 return Locale

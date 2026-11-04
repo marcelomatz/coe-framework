@@ -1,0 +1,33 @@
+Locales = (type(Locales) == 'table' and Locales) or {}
+
+Locales['pt-BR'] = {
+	not_ready = 'Serviço ainda iniciando.',
+	no_station = 'Garagem indisponível.',
+	too_far = 'Chegue mais perto da vaga.',
+	vehicle_not_found = 'Veículo não encontrado.',
+	not_registered = 'Este veículo não é registrado.',
+	not_stored = 'O veículo não está guardado.',
+	not_yours = 'Este veículo não é seu.',
+	other_garage = 'Este veículo está guardado em outra garagem.',
+	not_in_fleet = 'Este veículo não pertence a este negócio.',
+	no_access = 'Você não tem acesso a este veículo.',
+	garage_full = 'Sua garagem não tem vaga livre para este tipo de veículo.',
+	not_owner = 'Só o dono do negócio faz isso.',
+	invalid_state_id = 'ID inválido.',
+	character_not_found = 'ID não encontrado.',
+	access_limit = 'Limite de pessoas com acesso atingido.',
+	already_spawned = 'O veículo já está na rua.',
+	spawn_failed = 'Não foi possível retirar o veículo.',
+	spawn_blocked = 'A vaga está ocupada.',
+	vehicle_not_spawned = 'O veículo não pode ser guardado aqui.',
+	database_error = 'Erro ao gravar. Tente novamente.',
+	forbidden = 'Garagem sem permissão para guardar veículos (falta a ACE coe.vehicles.write do coe_garages).',
+	store_expired = 'Tente guardar de novo.',
+	action_failed = 'Não foi possível concluir.',
+	vehicle_stored = '%{plate} guardado.',
+	fleet_add_usage = 'Uso: coe_fleet_add <garagem> <modelo> [placa] (%{error})',
+	fleet_added = '%{model} (%{plate}) entrou na frota de %{garage}.',
+	prompt_title = 'Garagem',
+	prompt_store = 'Guardar veículo',
+	prompt_open = 'Abrir garagem'
+}

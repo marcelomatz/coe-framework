@@ -1,6 +1,7 @@
 local doors = {}
 local registered = {}
 local nearest = nil
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 local promptShown = false
 local pinOpen = false
 local pending = false
@@ -250,10 +251,12 @@ CreateThread(function()
 		nearest = best
 		if best and not pinOpen and not IsPauseMenuActive() then
 			local wide = isWide(best)
+			local subtitleText = wide and (best.locked and _t('closed') or _t('opened')) or (best.locked and _t('locked') or _t('unlocked'))
+			local actionText = wide and (best.locked and _t('action_open') or _t('action_close')) or (best.locked and _t('action_unlock') or _t('action_lock'))
 			setPrompt({
 				title = best.label,
-				subtitle = wide and (best.locked and 'Fechado' or 'Aberto') or (best.locked and 'Trancada' or 'Destrancada'),
-				options = { { key = 'E', label = wide and (best.locked and 'Abrir' or 'Fechar') or (best.locked and 'Destrancar' or 'Trancar') } }
+				subtitle = subtitleText,
+				options = { { key = 'E', label = actionText } }
 			})
 		else
 			setPrompt(nil)

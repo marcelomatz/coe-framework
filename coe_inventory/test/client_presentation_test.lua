@@ -43,6 +43,7 @@ function vector3(x, y, z) return { x = x, y = y, z = z } end
 source = 65535
 
 Inventory = {}
+Locales = {}
 dofile('config.lua')
 dofile('domain/config_schema.lua')
 assert(#Inventory.Settings.issues == 0, 'config.lua padrão deve ser válido: ' .. table.concat(Inventory.Settings.issues, '; '))

@@ -1,5 +1,6 @@
 -- Prompt das bancadas dos negócios, facções e bancadas ilegais livres (aviso padrão do coe_ui).
 local stations, access, lastAsk = {}, {}, {}
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 local shown = nil
 
 local function setPrompt(key, data)
@@ -77,9 +78,9 @@ CreateThread(function()
 				if kind == 'illegal' then
 					nextAction = { event = 'coe_crafting:openIllegal', arg1 = station.id }
 					setPrompt('craft:illegal:' .. station.id, {
-						title = station.label or 'Bancada clandestina',
-						subtitle = 'Bancada clandestina',
-						options = { { key = 'E', label = 'Produzir' } }
+						title = station.label or _t('prompt_illegal_title'),
+						subtitle = _t('prompt_illegal_title'),
+						options = { { key = 'E', label = _t('prompt_produce') } }
 					})
 				elseif kind == 'faction' or kind == 'faction_stash' then
 					local key = 'faction:' .. station.factionId .. ':' .. station.id
@@ -92,9 +93,9 @@ CreateThread(function()
 							arg2 = station.id
 						}
 						setPrompt('craft:' .. kind .. ':' .. key, {
-							title = station.label or (isStash and 'Baú' or 'Bancada da facção'),
-							subtitle = station.factionLabel or (isStash and 'Baú do grupo' or 'Bancada'),
-							options = { { key = 'E', label = isStash and 'Abrir baú' or 'Produzir' } }
+							title = station.label or (isStash and _t('prompt_stash_title') or _t('prompt_faction_title')),
+							subtitle = station.factionLabel or (isStash and _t('prompt_stash_subtitle') or _t('prompt_faction_subtitle')),
+							options = { { key = 'E', label = isStash and _t('prompt_open_stash') or _t('prompt_produce') } }
 						})
 					end
 				else
@@ -105,9 +106,9 @@ CreateThread(function()
 					if known and (known.allowed or offDuty) then
 						nextAction = { event = 'coe_crafting:openBusiness', arg1 = station.businessId, arg2 = station.id }
 						setPrompt('craft:' .. key .. (offDuty and ':off' or ''), {
-							title = station.label or 'Bancada',
-							subtitle = offDuty and 'Bata o ponto para produzir' or 'Bancada',
-							options = { { key = 'E', label = 'Produzir' } }
+							title = station.label or _t('prompt_business_title'),
+							subtitle = offDuty and _t('prompt_duty_subtitle') or _t('prompt_business_title'),
+							options = { { key = 'E', label = _t('prompt_produce') } }
 						})
 					end
 				end

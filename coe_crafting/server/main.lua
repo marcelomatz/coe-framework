@@ -1,4 +1,5 @@
 local config = CraftingConfig
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k, p) local s = (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k; if p then for pk, pv in pairs(p) do s = s:gsub('%%{' .. pk .. '}', tostring(pv)) end end; return s end
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -195,8 +196,8 @@ local function fail(playerId, errorCode)
 		log('info', 'gameplay', 'craft_denied', { player_id = playerId, reason = errorCode })
 	end
 	TriggerClientEvent('coe_crafting:failed', playerId, errorCode)
-	if MESSAGES[errorCode] then
-		notify(playerId, 'error', MESSAGES[errorCode])
+	if errorCode then
+		notify(playerId, 'error', _t(errorCode))
 	end
 end
 
@@ -317,7 +318,7 @@ RegisterNetEvent('coe_crafting:craft', function(recipeId)
 			fail(playerId, completeError)
 			return
 		end
-		notify(playerId, 'success', ('%s produzido.'):format(done.label))
+		notify(playerId, 'success', _t('crafted_success', { label = done.label }))
 		TriggerClientEvent('coe_crafting:done', playerId, (panel(playerId)))
 	end)
 end)

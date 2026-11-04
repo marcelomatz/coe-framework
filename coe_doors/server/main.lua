@@ -1,4 +1,5 @@
 local config = DoorsConfig
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 local ready = false
 
 -- places[id] = local (casa, prédio, sede) com várias portas; runtime["local:porta"] = { place, entry }.
@@ -35,7 +36,7 @@ local MESSAGES = {
 }
 
 local function fail(playerId, errorCode)
-	notify(playerId, 'error', MESSAGES[errorCode] or 'Não foi possível concluir.')
+	notify(playerId, 'error', _t(errorCode) ~= errorCode and _t(errorCode) or _t('action_failed'))
 end
 
 -- Exports de outros resources; nil se o resource não está de pé ou falhou.

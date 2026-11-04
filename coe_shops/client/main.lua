@@ -3,6 +3,7 @@
 local config = ShopsConfig
 
 local stores = {}
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 local blips = {}
 local clerks = {}
 local clerkInteriors = {}
@@ -104,7 +105,7 @@ local function openStore(store)
 	end
 	local result = request('open', { storeId = store.id })
 	if not result.ok then
-		show('error', ERRORS[result.error] or 'Não foi possível abrir a loja.')
+		show('error', _t(result.error) ~= result.error and _t(result.error) or _t('open_failed'))
 		return
 	end
 	uiStore = store
@@ -164,7 +165,7 @@ local function spawnClerk(store)
 	pcall(function()
 		exports.coetarget:AddTargetEntity(ped, {
 			{
-				label = 'Comprar',
+				label = _t('action_buy'),
 				distance = 3.0,
 				canInteract = function() return uiStore == nil end,
 				onSelect = function() openStore(store) end

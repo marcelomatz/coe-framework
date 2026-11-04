@@ -2,6 +2,7 @@
 -- (empregos livres do coe_jobs e horas de ponto nos negócios do coe_businesses) e conexões entre personagens.
 -- O app roda no smartphone e no tablet pelo export TabletCall (mesmo contrato do coe_mail).
 local config = ElosConfig
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k, p) local s = (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k; if p then for pk, pv in pairs(p) do s = s:gsub('%%{' .. pk .. '}', tostring(pv)) end end; return s end
 
 local ready = false
 local locks = {}
@@ -419,7 +420,7 @@ function App.request(_, character, payload)
 				return { ok = false, error = 'database_error' }
 			end
 			if target then
-				notify(target, 'success', ('Elos: %s aceitou sua conexão.'):format(me.name))
+				notify(target, 'success', _t('connection_accepted', { name = me.name }))
 			end
 			return { ok = true, relation = 'connected' }
 		end
@@ -427,7 +428,7 @@ function App.request(_, character, payload)
 			return { ok = false, error = 'database_error' }
 		end
 		if target then
-			notify(target, 'info', ('Elos: %s quer se conectar com você.'):format(me.name))
+			notify(target, 'info', _t('connection_request', { name = me.name }))
 		end
 		return { ok = true, relation = 'outgoing' }
 	end)
@@ -452,7 +453,7 @@ function App.respond(_, character, payload)
 		end
 		local target = playerOfState(profile.stateId)
 		if target then
-			notify(target, 'success', ('Elos: %s aceitou sua conexão.'):format(character.name))
+			notify(target, 'success', _t('connection_accepted', { name = character.name }))
 		end
 		return { ok = true, relation = 'connected' }
 	end

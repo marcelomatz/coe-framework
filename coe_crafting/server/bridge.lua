@@ -1,5 +1,6 @@
 -- Ponte entre coe_businesses, coe_factions e o catálogo de bancadas ilegais livres com o coe_crafting.
 local config = CraftingConfig
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 local benches, stations, byBusiness, byFaction = config.BusinessBenches, {}, {}, {}
 local lastCheck = {}
 
@@ -218,7 +219,7 @@ RegisterNetEvent('coe_crafting:openBusiness', function(businessId, stationId)
 		end
 	})
 	if result and result.error then
-		notify(playerId, Crafting.messages[result.error] or 'Bancada indisponível.')
+		notify(playerId, Crafting.messages[result.error] or _t('bench_unavailable'))
 	end
 end)
 
@@ -253,7 +254,7 @@ RegisterNetEvent('coe_crafting:openFaction', function(factionId, stationId)
 		end
 	})
 	if result and result.error then
-		notify(playerId, Crafting.messages[result.error] or 'Bancada indisponível.')
+		notify(playerId, Crafting.messages[result.error] or _t('bench_unavailable'))
 	end
 end)
 
@@ -270,7 +271,7 @@ RegisterNetEvent('coe_crafting:openFactionStash', function(factionId, stationId)
 		return
 	end
 	local function failed(errorCode)
-		notify(playerId, FACTION_STASH_MESSAGES[errorCode] or 'Não foi possível abrir o baú.')
+		notify(playerId, _t('stash_' .. errorCode) ~= ('stash_' .. errorCode) and _t('stash_' .. errorCode) or (_t(errorCode) ~= errorCode and _t(errorCode) or _t('stash_open_failed')))
 	end
 	local faction, station = byFaction[factionId], stationOf('faction_stash', factionId, stationId)
 	if not faction or faction.enabled == false or not station then
@@ -321,7 +322,7 @@ RegisterNetEvent('coe_crafting:openIllegal', function(benchId)
 		end
 	})
 	if result and result.error then
-		notify(playerId, Crafting.messages[result.error] or 'Bancada indisponível.')
+		notify(playerId, Crafting.messages[result.error] or _t('bench_unavailable'))
 	end
 end)
 

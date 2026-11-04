@@ -40,26 +40,7 @@ local function reply(playerId, kind, message)
 	print(('[coe_mechanic] %s'):format(message))
 end
 
-local rawLocales = (type(Locales) == 'table' and Locales) or {}
-local _t_inst = (Core and Core.Locale and Core.Locale.New) and Core.Locale.New({
-	default = (config and config.Locale) or (Core and Core.Locale and Core.Locale.GetDefaultLang()) or 'pt-BR',
-	locales = rawLocales
-})
-local _t = function(k, params)
-	if type(_t_inst) == 'table' then
-		if _t_inst.T then
-			return _t_inst:T(k, params)
-		end
-		local lang = _t_inst.lang or 'pt-BR'
-		local dict = (_t_inst.locales and _t_inst.locales[lang]) or rawLocales[lang] or rawLocales['pt-BR']
-		if dict and dict[k] then
-			return dict[k]
-		end
-	elseif type(_t_inst) == 'function' then
-		return _t_inst(k, params)
-	end
-	return (rawLocales['pt-BR'] and rawLocales['pt-BR'][k]) or k
-end
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 
 local function callerName()
 	return GetInvokingResource() or GetCurrentResourceName()
