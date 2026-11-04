@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_vehicle_catalog'
-version '0.1.0-beta.17'
+version '0.1.0-beta.18'
 description 'Catálogo de veículos nativos e addons, leitura de vehicles.meta/handling.meta e overrides'
 
 coe_platform 'hal'

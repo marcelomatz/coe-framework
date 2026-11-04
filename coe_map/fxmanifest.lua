@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_map'
-version '0.1.0-beta.17'
+version '0.1.0-beta.18'
 description 'Controle do mapa: minimapa, minimapa estendido (tecla Z) e mapa completo, com destino'
 
 coe_platform 'hal'

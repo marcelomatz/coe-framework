@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_elos'
-version '0.1.0-beta.17'
+version '0.1.0-beta.18'
 description 'Elos: rede profissional do COE OS (perfil, currículo com empregos livres e negócios, conexões)'
 
 coe_platform 'hal'

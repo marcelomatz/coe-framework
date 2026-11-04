@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_core'
-version '0.1.0-beta.17'
+version '0.1.0-beta.18'
 description 'Núcleo compartilhado e infraestrutura base do framework'
 
 dependencies {

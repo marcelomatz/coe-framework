@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_housing'
-version '0.1.0-beta.17'
+version '0.1.0-beta.18'
 description 'Moradias e imóveis comerciais: apartamento inicial, hotéis, casas e pontos de negócio com aluguel por ciclo e interior em mundo individual'
 
 -- Reinício pelo coe_supervisor (categoria no painel).
