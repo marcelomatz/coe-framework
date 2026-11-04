@@ -33,12 +33,12 @@ local function profile(overrides, defaultTyre)
 end
 
 CoeHandlingConfig = {
-	-- Quem pode trocar pneus (nome vem do runtime).
+	-- Capacidade ACE (`add_ace resource.<nome> coe.handling.write allow`) e quem pode trocar pneus por padrão.
+	Ace = 'coe.handling.write',
 	WriterResources = {
 		coe_admin = true,
 		coe_handling = true,
-		coe_mechanic = true,
-		coe_dealerships = true
+		coe_mechanic = true
 	},
 	DefaultTyre = 'street',
 

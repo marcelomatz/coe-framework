@@ -9,7 +9,7 @@ end
 
 -- Disco: disk['<resource>/<arquivo>'] = conteúdo. staged = downloads binários ainda não confirmados.
 local disk, staged, http, commands = {}, {}, {}, {}
-local invoker = 'coe_staff'
+local invoker = 'coe_admin'
 
 -- json falso: o "corpo" é uma chave para a tabela já decodificada.
 local documents = {}
@@ -240,7 +240,7 @@ SupervisorConfig.Updater.PublicKey = ''
 invoker = 'meu_script'
 eq(registered.CheckForUpdates(), nil, 'CheckForUpdates recusa resource sem ACE')
 eq(select(2, registered.ApplyUpdate(1)), 'forbidden', 'ApplyUpdate recusa resource sem ACE')
-invoker = 'coe_staff'
+invoker = 'coe_admin'
 
 print = realPrint
 io.write('coe_supervisor apply_test: ok\n')

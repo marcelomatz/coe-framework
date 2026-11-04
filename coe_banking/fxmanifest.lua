@@ -6,9 +6,6 @@ name 'coe_banking'
 version '0.1.0-beta.17'
 description 'Sistema bancário: agências, caixas eletrônicos, dinheiro em espécie, cartões com senha e contas de negócio'
 
--- Assume o banco básico do framework: o coe_supervisor não inicia o coe_bank enquanto este resource roda.
-coe_supervisor_replaces 'coe_bank'
-
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'business'
 

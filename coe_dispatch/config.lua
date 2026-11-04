@@ -19,8 +19,9 @@ DispatchConfig = {
 		street_race = { category = 'police', priority = 2, label = 'Racha / corrida ilegal' }
 	},
 
-	-- Resources que abrem chamados automáticos (heists, EMS, admin).
-	ActionResources = { coe_police = true, coe_ems = true, coe_admin = true, coe_tablet = true, coe_heists = true, coe_mdt = true, coe_deepweb = true, coe_loot = true, coe_races = true },
+	-- Capacidade ACE (`add_ace resource.<nome> coe.dispatch allow`) e resources padrão que abrem chamados automáticos.
+	Ace = 'coe.dispatch',
+	ActionResources = { coe_police = true, coe_ems = true, coe_admin = true, coe_tablet = true, coe_mdt = true, coe_deepweb = true, coe_loot = true, coe_races = true },
 
 	TtlSeconds = 900,
 	MaxActivePerCategory = 50,

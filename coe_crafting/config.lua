@@ -1,5 +1,6 @@
 CraftingConfig = {
-	-- Resources que registram bancadas e executam craft. O nome vem do runtime.
+	-- Capacidade ACE (`add_ace resource.<nome> coe.crafting allow`) e resources padrão que registram bancadas e executam craft.
+	Ace = 'coe.crafting',
 	AllowedResources = {
 		coe_mechanic = true,
 		coe_businesses = true,

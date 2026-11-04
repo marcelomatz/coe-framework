@@ -66,7 +66,11 @@ local function callerName()
 end
 
 local function isWriter()
-	return config.WriterResources[callerName()] == true
+	local resource = callerName()
+	if CoeAccess and CoeAccess.Allowed and config.Ace then
+		return CoeAccess.Allowed(resource, config.Ace.Write, config.WriterResources)
+	end
+	return config.WriterResources[resource] == true
 end
 
 local function notifyChanged(vehicleId)

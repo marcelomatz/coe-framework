@@ -8,7 +8,7 @@ local function eq(actual, expected, message)
 end
 
 local registered, threads, audits = {}, {}, {}
-local invoker = 'coe_bank'
+local invoker = 'coe_banking'
 local aces = {}
 
 exports = setmetatable({}, {
@@ -104,7 +104,7 @@ CoeAccess.Reset()
 eq(registered.GetBalance('1'), cfg.StartingBalance, 'ACE coe.economy.money libera o saldo')
 aces = {}
 CoeAccess.Reset()
-invoker = 'coe_bank'
+invoker = 'coe_banking'
 
 -- 3. Validação dos argumentos.
 for _, bad in ipairs({ 0, -10, 1.5, '10', 0 / 0, cfg.MaxAmount + 1 }) do

@@ -127,7 +127,11 @@ local function callerName()
 end
 
 local function isWriter()
-	return config.WriterResources[callerName()] == true
+	local resource = callerName()
+	if CoeAccess and CoeAccess.Allowed then
+		return CoeAccess.Allowed(resource, config.Ace, config.WriterResources)
+	end
+	return config.WriterResources[resource] == true
 end
 
 exports('GetTyre', function(vehicleId)

@@ -1,54 +1,31 @@
 local staffMembers
 local lastActions = {}
 local GarageKinds = { public = 'Pública', business = 'Negócio', job = 'Corporação' }
-local BasicGarageKinds = { public = 'Pública' }
 
--- Garagens: o pacote completo (coe_garages) quando roda; senão as garagens públicas básicas do framework
--- (coe_garage, só tipo público e sem frota). As respostas do básico são convertidas para o formato do pacote.
 local function garageBackend()
 	if GetResourceState('coe_garages') == 'started' then
 		return 'coe_garages'
-	end
-	if GetResourceState('coe_garage') == 'started' then
-		return 'coe_garage'
 	end
 	return nil
 end
 
 local function garagesList()
-	local backend = garageBackend()
-	if backend == 'coe_garages' then
+	if garageBackend() == 'coe_garages' then
 		return exports.coe_garages:ListGarages() or {}
-	elseif backend == 'coe_garage' then
-		return exports.coe_garage:ListGarages() or {}
 	end
 	return {}
 end
 
 local function garageSaveRaw(raw)
-	local backend = garageBackend()
-	if backend == 'coe_garages' then
+	if garageBackend() == 'coe_garages' then
 		return exports.coe_garages:SaveGarage(raw)
-	elseif backend == 'coe_garage' then
-		if type(raw) == 'table' and raw.kind ~= nil and raw.kind ~= 'public' then
-			return { error = 'invalid_kind' }
-		end
-		local saved, errorCode = exports.coe_garage:SaveGarage(raw)
-		return saved or { error = errorCode or 'invalid_garage' }
 	end
 	return { error = 'not_ready' }
 end
 
 local function garageDeleteRaw(garageId)
-	local backend = garageBackend()
-	if backend == 'coe_garages' then
+	if garageBackend() == 'coe_garages' then
 		return exports.coe_garages:DeleteGarage(garageId)
-	elseif backend == 'coe_garage' then
-		if not exports.coe_garage:GetGarage(garageId) then
-			return { error = 'unknown_garage' }
-		end
-		local deleted, errorCode = exports.coe_garage:DeleteGarage(garageId)
-		return deleted or { error = errorCode or 'database_error' }
 	end
 	return { error = 'not_ready' }
 end
@@ -427,7 +404,7 @@ local function getPanelData(playerId)
 	if permissions.manageBusinesses and garageSource then
 		local ok = pcall(function()
 			garages.list = garagesList()
-			garages.kinds = garageSource == 'coe_garages' and GarageKinds or BasicGarageKinds
+			garages.kinds = GarageKinds
 			garages.source = garageSource
 			if garageSource == 'coe_garages' then
 				for _, garage in ipairs(garages.list) do
@@ -2369,26 +2346,6 @@ end)
 AddEventHandler('playerDropped', function()
 	lastActions[source] = nil
 end)
-
--- O painel básico da staff do framework (coe_staff) sai de cena enquanto este resource roda (ACE coe.staff.yield).
-local function yieldBasicStaff()
-	if GetResourceState('coe_staff') ~= 'started' then
-		return
-	end
-	local ok, result = pcall(function()
-		return exports.coe_staff:Yield()
-	end)
-	if not ok or result ~= true then
-		log('warn', 'system', 'staff_basic_yield_failed', { error_code = ok and type(result) == 'table' and tostring(result.error) or 'unavailable' })
-	end
-end
-
-AddEventHandler('onResourceStart', function(resource)
-	if resource == 'coe_staff' then
-		yieldBasicStaff()
-	end
-end)
-CreateThread(yieldBasicStaff)
 
 CreateThread(function()
 	local waitingLogged = false

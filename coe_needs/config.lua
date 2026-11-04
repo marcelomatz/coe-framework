@@ -96,6 +96,7 @@ Config.Needs = {
 		coe_needs = true,
 		coe_inventory = true,
 		coe_shops = true,
-		coe_staff = true
+		coe_admin = true,
+		coe_ems = true
 	}
 }

@@ -18,10 +18,9 @@ local nextEntity = 100
 local existing = {}
 local vehiclePos = {}
 local occupants = {}
-local invoking = 'coe_staff'
+local invoking = 'coe_admin'
 local inventoryItems = {} -- inventoryId -> lista de { name, metadata }
 local dbRows = {}
-local staffProvider = nil
 
 Core = {
 	Events = {
@@ -154,9 +153,6 @@ exports = setmetatable({}, {
 		if res == 'coe_notify' then
 			return { Notify = function(_, playerId, kind, message) notices[#notices + 1] = message end }
 		end
-		if res == 'coe_staff' then
-			return { RegisterRentalsProvider = function(_, provider) staffProvider = provider return true end }
-		end
 		return { Log = function() end }
 	end
 })
@@ -175,11 +171,10 @@ local function lastNotice()
 	return notices[#notices]
 end
 
--- 0. Boot: estações semeadas do config.lua no banco, provedor no painel.
+-- 0. Boot: estações semeadas do config.lua no banco.
 eq(dbRows.pink_cage ~= nil, true, 'estação semeada no banco')
 eq(dbRows.pink_cage.ped.x, 328.0, 'balcão vira o atendente')
 eq(#dbRows.pink_cage.spawns, 1, 'spawn antigo vira o primeiro ponto de retirada')
-eq(staffProvider ~= nil, true, 'provedor registrado no coe_staff')
 
 -- 1. Economia fora do ar: recusa em vez de entregar o veículo de graça.
 economyState = 'stopped'
@@ -249,12 +244,12 @@ local function stationCopy(vehicles)
 	local base = dbRows.pink_cage
 	return { id = base.id, label = base.label, ped = base.ped, spawns = base.spawns, returnZone = base.returnZone, blip = base.blip, vehicles = vehicles }
 end
-staffProvider.Save(stationCopy({ 'tribike' }))
+handlers['export:SaveStation'](stationCopy({ 'tribike' }))
 now = now + 5000
 position = { x = 328.0, y = -218.0, z = 54.0 }
 rent(3, 'pink_cage', 'blista')
 eq(lastNotice(), 'vehicle_not_available', 'modelo fora da estação é recusado')
-staffProvider.Save(stationCopy({}))
+handlers['export:SaveStation'](stationCopy({}))
 
 -- 8. Devolver no balcão: carro estacionado perto e vazio.
 now = now + 5000
@@ -310,15 +305,15 @@ coreHandlers['player.characterLoaded']({ source = 2, character = { characterId =
 eq(countItems('character:char_2', 'rental_contract'), 0, 'contrato antigo removido')
 
 -- 12. Painel: salvar com vários pontos de retirada, validar e apagar.
-local saved = staffProvider.Save({
+local saved = handlers['export:SaveStation']({
 	id = 'aluguel_teste', label = 'Teste', ped = { x = 1, y = 2, z = 3, h = 90 },
 	spawns = { { x = 5, y = 5, z = 3, h = 0 }, { x = 9, y = 5, z = 3, h = 0 } },
 	returnZone = { x = 5, y = 5, z = 3, radius = 6 }, vehicles = { 'panto' }
 })
 eq(saved.id, 'aluguel_teste', 'estação salva pelo painel')
 eq(#dbRows.aluguel_teste.spawns, 2, 'dois pontos de retirada')
-eq(staffProvider.Save({ id = 'x1', label = 'X', ped = { x = 1, y = 2, z = 3 }, spawns = {}, returnZone = { x = 1, y = 1, z = 1 } }).error, 'invalid_spawns', 'sem ponto de retirada é recusado')
-eq(staffProvider.Save({ id = 'x2', label = 'X', ped = { x = 1, y = 2, z = 3 }, spawns = { { x = 1, y = 1, z = 1 } }, returnZone = { x = 1, y = 1, z = 1 }, vehicles = { 'tanque' } }).error, 'invalid_vehicles', 'modelo fora do catálogo é recusado')
+eq(handlers['export:SaveStation']({ id = 'x1', label = 'X', ped = { x = 1, y = 2, z = 3 }, spawns = {}, returnZone = { x = 1, y = 1, z = 1 } }).error, 'invalid_spawns', 'sem ponto de retirada é recusado')
+eq(handlers['export:SaveStation']({ id = 'x2', label = 'X', ped = { x = 1, y = 2, z = 3 }, spawns = { { x = 1, y = 1, z = 1 } }, returnZone = { x = 1, y = 1, z = 1 }, vehicles = { 'tanque' } }).error, 'invalid_vehicles', 'modelo fora do catálogo é recusado')
 invoking = 'intruso'
 eq(handlers['export:SaveStation']({ id = 'z' }).error, 'forbidden', 'export protegido')
 invoking = 'painel_pacote'

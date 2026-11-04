@@ -97,17 +97,10 @@ RegisterCommand('destino', function(_, args)
 	end
 end, false)
 
--- O Z nativo expande o radar por conta propria; o coe_map assume essa tecla.
+-- Zoom do radar a pe e reconciliacao do estado do bigmap sem loop Wait(0).
 CreateThread(function()
 	while true do
-		DisableControlAction(0, 20, true)
-		Wait(0)
-	end
-end)
-
--- Zoom do radar a pe; em veiculo o proprio GTA ajusta pela velocidade.
-CreateThread(function()
-	while true do
+		SetBigmapActive(mode == 'extended', false)
 		if Config.FootZoom and not IsPedInAnyVehicle(PlayerPedId(), false) then
 			SetRadarZoom(Config.FootZoom)
 		end

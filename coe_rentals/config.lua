@@ -15,7 +15,7 @@ RentalsConfig = {
 	-- Quem edita as estações pelos exports. O painel do framework (coe_staff) usa o provedor; painéis de pacotes
 	-- e scripts de terceiros recebem a ACE no server.cfg: add_ace resource.<nome> coe.rentals.admin allow
 	AdminAce = 'coe.rentals.admin',
-	AdminResources = { coe_staff = true },
+	AdminResources = { coe_admin = true },
 
 	-- Atendente (NPC) no balcão de cada estação (coords). A estação pode trocar com ped = { model, h }.
 	-- Só existe no client e só perto da estação (SpawnDistance).

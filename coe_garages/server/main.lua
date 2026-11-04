@@ -784,50 +784,11 @@ local function registerFleetProvider()
 	end
 end
 
--- Provedor de garagens no painel administrativo (coe_staff).
-local function registerStaffGaragesProvider()
-	if GetResourceState('coe_staff') ~= 'started' then
-		return
-	end
-	pcall(function()
-		exports.coe_staff:RegisterGaragesProvider({
-			resource = GetCurrentResourceName(),
-			kinds = { 'public', 'business', 'job' },
-			List = function()
-				local list = {}
-				for _, garage in pairs(garages) do
-					list[#list + 1] = garage
-				end
-				table.sort(list, function(a, b) return a.id < b.id end)
-				return list
-			end,
-			Save = function(raw)
-				return packResult(saveGarage(raw))
-			end,
-			Delete = function(id)
-				return packResult(deleteGarage(id))
-			end
-		})
-	end)
-end
-
 AddEventHandler('onResourceStart', function(resource)
 	if resource == 'coe_businesses' then
 		registerFleetProvider()
-	elseif resource == 'coe_staff' then
-		-- Espera o coe_staff terminar de subir para registrar.
-		CreateThread(function()
-			for _ = 1, 20 do
-				Wait(500)
-				if GetResourceState('coe_staff') == 'started' then
-					registerStaffGaragesProvider()
-					return
-				end
-			end
-		end)
 	end
 end)
 CreateThread(function()
 	registerFleetProvider()
-	registerStaffGaragesProvider()
 end)

@@ -6,9 +6,6 @@ name 'coe_admin'
 version '0.1.0-beta.17'
 description 'Painel administrativo para o framework Coe'
 
--- Assume o painel básico da staff do framework: o coe_supervisor não inicia o coe_staff enquanto este resource roda.
-coe_supervisor_replaces 'coe_staff'
-
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'administration'
 

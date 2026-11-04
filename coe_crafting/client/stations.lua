@@ -10,9 +10,40 @@ local function setPrompt(key, data)
 	SendNUIMessage({ action = 'prompt', data = data })
 end
 
+local activeAction = nil
+
+local function rebuildStationZones()
+	if not (Core and Core.Zones) then
+		return
+	end
+	Core.Zones.Clear()
+	for idx, station in ipairs(stations) do
+		Core.Zones.AddSphere(('craft_station:%d:%s'):format(idx, tostring(station.id)), {
+			x = station.x,
+			y = station.y,
+			z = station.z,
+			radius = station.radius or 2.0,
+			data = station
+		})
+	end
+end
+
 RegisterNetEvent('coe_crafting:stations', function(list)
 	stations = type(list) == 'table' and list or {}
+	activeAction = nil
+	rebuildStationZones()
 end)
+
+if Core and Core.Zones then
+	Core.Zones.OnInteract(function()
+		if not activeAction or IsNuiFocused() then
+			return
+		end
+		if activeAction.event then
+			TriggerServerEvent(activeAction.event, activeAction.arg1, activeAction.arg2)
+		end
+	end)
+end
 
 RegisterNetEvent('coe_crafting:access', function(ownerKey, stationId, allowed, reason)
 	access[ownerKey .. ':' .. stationId] = { allowed = allowed == true, reason = reason, at = GetGameTimer() }
@@ -32,60 +63,58 @@ CreateThread(function()
 	TriggerServerEvent('coe_crafting:requestStations')
 	while true do
 		local wait = 750
-		local active = false
+		local nextAction = nil
 		if #stations > 0 and not IsNuiFocused() then
 			local at = GetEntityCoords(PlayerPedId())
-			for _, station in ipairs(stations) do
-				if #(at - vector3(station.x, station.y, station.z)) <= station.radius then
-					wait = 0
-					local kind = station.kind or 'business'
-					if kind == 'illegal' then
-						active = true
-						setPrompt('craft:illegal:' .. station.id, {
-							title = station.label or 'Bancada clandestina',
-							subtitle = 'Bancada clandestina',
+			local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(at.x, at.y, at.z)
+			if nearAny then
+				wait = 250
+			end
+			local station = zone and zone.data
+			if station then
+				wait = 200
+				local kind = station.kind or 'business'
+				if kind == 'illegal' then
+					nextAction = { event = 'coe_crafting:openIllegal', arg1 = station.id }
+					setPrompt('craft:illegal:' .. station.id, {
+						title = station.label or 'Bancada clandestina',
+						subtitle = 'Bancada clandestina',
+						options = { { key = 'E', label = 'Produzir' } }
+					})
+				elseif kind == 'faction' or kind == 'faction_stash' then
+					local key = 'faction:' .. station.factionId .. ':' .. station.id
+					local known = askAccess(key, kind, station.factionId, station.id)
+					if known and known.allowed then
+						local isStash = kind == 'faction_stash'
+						nextAction = {
+							event = isStash and 'coe_crafting:openFactionStash' or 'coe_crafting:openFaction',
+							arg1 = station.factionId,
+							arg2 = station.id
+						}
+						setPrompt('craft:' .. kind .. ':' .. key, {
+							title = station.label or (isStash and 'Baú' or 'Bancada da facção'),
+							subtitle = station.factionLabel or (isStash and 'Baú do grupo' or 'Bancada'),
+							options = { { key = 'E', label = isStash and 'Abrir baú' or 'Produzir' } }
+						})
+					end
+				else
+					local key = station.businessId .. ':' .. station.id
+					local known = askAccess(key, 'business', station.businessId, station.id)
+					-- Equipe sem ponto batido também vê a bancada: ao apertar E, o servidor explica o que falta.
+					local offDuty = known and not known.allowed and known.reason == 'off_duty'
+					if known and (known.allowed or offDuty) then
+						nextAction = { event = 'coe_crafting:openBusiness', arg1 = station.businessId, arg2 = station.id }
+						setPrompt('craft:' .. key .. (offDuty and ':off' or ''), {
+							title = station.label or 'Bancada',
+							subtitle = offDuty and 'Bata o ponto para produzir' or 'Bancada',
 							options = { { key = 'E', label = 'Produzir' } }
 						})
-						if IsControlJustReleased(0, 38) then
-							TriggerServerEvent('coe_crafting:openIllegal', station.id)
-						end
-					elseif kind == 'faction' or kind == 'faction_stash' then
-						local key = 'faction:' .. station.factionId .. ':' .. station.id
-						local known = askAccess(key, kind, station.factionId, station.id)
-						if known and known.allowed then
-							active = true
-							local isStash = kind == 'faction_stash'
-							setPrompt('craft:' .. kind .. ':' .. key, {
-								title = station.label or (isStash and 'Baú' or 'Bancada da facção'),
-								subtitle = station.factionLabel or (isStash and 'Baú do grupo' or 'Bancada'),
-								options = { { key = 'E', label = isStash and 'Abrir baú' or 'Produzir' } }
-							})
-							if IsControlJustReleased(0, 38) then
-								TriggerServerEvent(isStash and 'coe_crafting:openFactionStash' or 'coe_crafting:openFaction', station.factionId, station.id)
-							end
-						end
-					else
-						local key = station.businessId .. ':' .. station.id
-						local known = askAccess(key, 'business', station.businessId, station.id)
-						-- Equipe sem ponto batido também vê a bancada: ao apertar E, o servidor explica o que falta.
-						local offDuty = known and not known.allowed and known.reason == 'off_duty'
-						if known and (known.allowed or offDuty) then
-							active = true
-							setPrompt('craft:' .. key .. (offDuty and ':off' or ''), {
-								title = station.label or 'Bancada',
-								subtitle = offDuty and 'Bata o ponto para produzir' or 'Bancada',
-								options = { { key = 'E', label = 'Produzir' } }
-							})
-							if IsControlJustReleased(0, 38) then
-								TriggerServerEvent('coe_crafting:openBusiness', station.businessId, station.id)
-							end
-						end
 					end
-					break
 				end
 			end
 		end
-		if not active then
+		activeAction = nextAction
+		if not nextAction then
 			setPrompt(nil, nil)
 		end
 		Wait(wait)

@@ -2220,12 +2220,10 @@ exports('ShopRefund', function(_, ref, amount, description)
 	return cardRefund(ref, amount, description)
 end)
 
--- Integrações registradas no framework: aba Banco no app do negócio (substitui o Financeiro), a maquininha nas
--- lojas e o atendimento bancário (o banco básico do framework sai de cena). De novo sempre que o coe_businesses, o
--- coe_shops ou o coe_bank reiniciarem.
+-- Integrações registradas no framework: aba Banco no app do negócio (substitui o Financeiro) e a maquininha nas
+-- lojas. De novo sempre que o coe_businesses ou o coe_shops reiniciarem.
 local function registerExtensions()
 	local results = {
-		bank = remote('coe_bank', 'Yield'),
 		tab = remote('coe_businesses', 'RegisterTab', {
 			id = 'bank', label = 'Banco', order = 30, script = 'html/business.js', css = 'html/bank-ui.css',
 			handler = 'BusinessTablet', replaces = 'finance'
@@ -2243,7 +2241,7 @@ local function registerExtensions()
 end
 
 AddEventHandler('onResourceStart', function(resource)
-	if resource == 'coe_businesses' or resource == 'coe_shops' or resource == 'coe_bank' then
+	if resource == 'coe_businesses' or resource == 'coe_shops' then
 		registerExtensions()
 	end
 end)

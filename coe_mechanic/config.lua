@@ -1,9 +1,13 @@
 CoeMechanicConfig = {
-	-- Quem pode trocar peças e ajustar a quilometragem. Auditado.
+	-- Capacidades ACE (`add_ace resource.<nome> coe.mechanic.write allow`) e quem pode trocar peças e ajustar a quilometragem. Auditado.
+	Ace = {
+		Write = 'coe.mechanic.write',
+		Wear = 'coe.mechanic.wear',
+		Tablet = 'coe.mechanic.tablet'
+	},
 	WriterResources = {
 		coe_admin = true,
-		coe_mechanic = true,
-		coe_dealerships = true
+		coe_mechanic = true
 	},
 
 	-- Quem pode somar desgaste extra às peças (AddWear): combustível.

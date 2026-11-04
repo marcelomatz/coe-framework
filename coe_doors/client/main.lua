@@ -125,12 +125,32 @@ local function closePin()
 	end
 end
 
+local function rebuildDoorZones()
+	if not (Core and Core.Zones) then
+		return
+	end
+	Core.Zones.Clear()
+	for _, door in pairs(doors) do
+		local center = door.center
+		if center then
+			Core.Zones.AddSphere('door:' .. tostring(door.id), {
+				x = center.x,
+				y = center.y,
+				z = center.z,
+				radius = door.distance or 2.0,
+				data = door
+			})
+		end
+	end
+end
+
 RegisterNetEvent('coe_doors:list', function(list)
 	doors = {}
 	for _, door in ipairs(type(list) == 'table' and list or {}) do
 		doors[door.id] = door
 	end
 	nearest = nil
+	rebuildDoorZones()
 	registerAll()
 end)
 
@@ -197,50 +217,48 @@ local function distanceTo(coords, door)
 	return #(coords - vector3(center.x, center.y, center.z))
 end
 
--- Busca a porta mais próxima com folga; o laço por frame só roda perto de uma porta.
+if Core and Core.Zones then
+	Core.Zones.OnInteract(function()
+		local door = nearest
+		if not door or pinOpen or pending or IsPauseMenuActive() then
+			return
+		end
+		pending = true
+		TriggerServerEvent('coe_doors:toggle', door.id)
+		CreateThread(playKeyAnimation)
+		SetTimeout(1500, function()
+			pending = false
+		end)
+	end)
+end
+
+-- Busca a porta mais próxima via grade espacial (Core.Zones) e atualiza o prompt sem loop Wait(0).
 CreateThread(function()
 	while true do
 		local coords = GetEntityCoords(PlayerPedId())
-		local best, bestDistance = nil, nil
-		for _, door in pairs(doors) do
-			local distance = distanceTo(coords, door)
-			if distance <= door.distance and (not bestDistance or distance < bestDistance) then
-				best, bestDistance = door, distance
+		local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(coords.x, coords.y, coords.z)
+		local best = zone and zone.data or nil
+		if not (Core and Core.Zones) then
+			local bestDistance = nil
+			for _, door in pairs(doors) do
+				local distance = distanceTo(coords, door)
+				if distance <= door.distance and (not bestDistance or distance < bestDistance) then
+					best, bestDistance = door, distance
+				end
 			end
 		end
 		nearest = best
-		if not best then
+		if best and not pinOpen and not IsPauseMenuActive() then
+			local wide = isWide(best)
+			setPrompt({
+				title = best.label,
+				subtitle = wide and (best.locked and 'Fechado' or 'Aberto') or (best.locked and 'Trancada' or 'Destrancada'),
+				options = { { key = 'E', label = wide and (best.locked and 'Abrir' or 'Fechar') or (best.locked and 'Destrancar' or 'Trancar') } }
+			})
+		else
 			setPrompt(nil)
 		end
-		Wait(best and 200 or 600)
-	end
-end)
-
-CreateThread(function()
-	while true do
-		local door = nearest
-		if door and not pinOpen and not IsPauseMenuActive() then
-			local wide = isWide(door)
-			setPrompt({
-				title = door.label,
-				subtitle = wide and (door.locked and 'Fechado' or 'Aberto') or (door.locked and 'Trancada' or 'Destrancada'),
-				options = { { key = 'E', label = wide and (door.locked and 'Abrir' or 'Fechar') or (door.locked and 'Destrancar' or 'Trancar') } }
-			})
-			if not pending and IsControlJustReleased(0, INTERACT) then
-				pending = true
-				TriggerServerEvent('coe_doors:toggle', door.id)
-				CreateThread(playKeyAnimation)
-				SetTimeout(1500, function()
-					pending = false
-				end)
-			end
-			Wait(0)
-		else
-			if pinOpen or not door then
-				setPrompt(nil)
-			end
-			Wait(250)
-		end
+		Wait((best or nearAny) and 200 or 600)
 	end
 end)
 

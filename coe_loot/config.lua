@@ -3,8 +3,9 @@
 -- Cada sorteio (`rolls`, de min a max) escolhe uma entrada pelo peso (`weight`). `nothing = true` é sorteio vazio.
 -- `min`/`max`: quantidade (padrão 1). `unique = true`: item que não empilha (cada unidade entra separada).
 LootConfig = {
-	-- Resources que podem dar saque a um jogador (Give) ou sortear (Roll). O nome vem do runtime.
-	Callers = { coe_heists = true, coe_robbery = true, coe_admin = true },
+	-- Capacidade ACE (`add_ace resource.<nome> coe.loot allow`) e resources padrão que podem dar saque (Give) ou sortear (Roll).
+	Ace = 'coe.loot',
+	Callers = { coe_admin = true, coe_deepweb = true, coe_races = true },
 
 	-- Comando de teste para a staff: `coe_loot_test <tabela>` dá o saque a si mesmo (ACE command.coe_loot_test).
 	TestCommand = 'coe_loot_test',

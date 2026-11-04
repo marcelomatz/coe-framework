@@ -60,10 +60,27 @@ AddEventHandler('onResourceStop', function(resourceName)
 	end
 end)
 
+local function rebuildZones()
+	if not (Core and Core.Zones) then
+		return
+	end
+	Core.Zones.Clear()
+	for idx, station in ipairs(stations) do
+		Core.Zones.AddSphere(('garage:%d:%s:%s'):format(idx, tostring(station.garageId), tostring(station.spotId)), {
+			x = station.x,
+			y = station.y,
+			z = station.z,
+			radius = station.radius,
+			data = station
+		})
+	end
+end
+
 RegisterNetEvent('coe_garages:stations', function(list)
 	stations = type(list) == 'table' and list or {}
 	current = nil
 	createBlips()
+	rebuildZones()
 end)
 
 CreateThread(function()
@@ -162,21 +179,30 @@ local function activate(station)
 	end)
 end
 
+if Core and Core.Zones then
+	Core.Zones.OnInteract(function()
+		if current and not menuOpen then
+			activate(current)
+		end
+	end)
+end
+
 CreateThread(function()
 	while true do
-		local wait = 500
+		local wait = 600
 		if #stations > 0 and not menuOpen then
-			current = nearest()
+			local at = GetEntityCoords(PlayerPedId())
+			local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(at.x, at.y, at.z)
+			current = zone and zone.data or nearest()
+			if nearAny or current then
+				wait = 200
+			end
 			if current then
-				wait = 0
 				local inVehicle = GetVehiclePedIsIn(PlayerPedId(), false) ~= 0
 				setPrompt({
 					title = current.title or 'Garagem', subtitle = current.label or '',
 					options = { { key = 'E', label = inVehicle and 'Guardar veículo' or 'Abrir garagem' } }
 				})
-				if IsControlJustReleased(0, 38) then
-					activate(current)
-				end
 			else
 				setPrompt(nil)
 			end

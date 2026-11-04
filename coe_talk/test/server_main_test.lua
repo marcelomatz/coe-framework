@@ -8,7 +8,7 @@ local function eq(actual, expected, message)
 end
 
 local handlers, registered, sent = {}, {}, {}
-local now, invoker, playerJob = 0, 'coe_mobile', 'unemployed'
+local now, invoker, playerJob = 0, 'coe_phone', 'unemployed'
 
 RegisterNetEvent = function(name, fn) handlers[name] = fn end
 AddEventHandler = function(name, fn) handlers[name] = fn end
@@ -45,20 +45,20 @@ end
 eq(handlers['coe_talk:server:setCall'], nil, 'evento setCall removido')
 eq(type(handlers['coe_talk:server:leaveCall']), 'function', 'sair da chamada continua pelo client')
 
--- 2. SetPlayerCall: só coe_mobile (ou ACE coe.talk), com id e jogador válidos.
-local ok, err = registered.SetPlayerCall(1, 'coe_mobile:00ff00ff00ff00ff')
-eq(ok, true, 'coe_mobile coloca jogador na chamada')
-eq(Routing.GetCall(1), 'coe_mobile:00ff00ff00ff00ff', 'jogador 1 na chamada')
+-- 2. SetPlayerCall: só coe_phone (ou ACE coe.talk), com id e jogador válidos.
+local ok, err = registered.SetPlayerCall(1, 'coe_phone:00ff00ff00ff00ff')
+eq(ok, true, 'coe_phone coloca jogador na chamada')
+eq(Routing.GetCall(1), 'coe_phone:00ff00ff00ff00ff', 'jogador 1 na chamada')
 
 invoker = 'script_qualquer'
-ok, err = registered.SetPlayerCall(2, 'coe_mobile:00ff00ff00ff00ff')
+ok, err = registered.SetPlayerCall(2, 'coe_phone:00ff00ff00ff00ff')
 eq(ok, false, 'resource sem ACE recusado')
 eq(err, 'forbidden', 'erro forbidden')
 eq(Routing.GetCall(2), nil, 'jogador 2 não entrou')
 ok, err = registered.SetPlayerRadio(2, 2.0)
 eq(err, 'forbidden', 'SetPlayerRadio também exige autorização')
 
-invoker = 'coe_mobile'
+invoker = 'coe_phone'
 eq(select(2, registered.SetPlayerCall(2, { 'tabela' })), 'invalid_call', 'id de chamada não-string recusado')
 eq(select(2, registered.SetPlayerCall(2, string.rep('a', 65))), 'invalid_call', 'id longo recusado')
 eq(select(2, registered.SetPlayerCall('2', 'x')), 'invalid_player', 'jogador inválido recusado')

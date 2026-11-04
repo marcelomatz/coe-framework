@@ -717,35 +717,6 @@ exports('Catalog', function()
 	return catalogList()
 end)
 
-local function registerStaffProvider()
-	if GetResourceState('coe_staff') ~= 'started' then
-		return
-	end
-	pcall(function()
-		exports.coe_staff:RegisterRentalsProvider({
-			resource = GetCurrentResourceName(),
-			List = function() return stationOrder end,
-			Save = function(raw) return packed(saveStation(raw)) end,
-			Delete = function(stationId) return packed(deleteStation(stationId)) end,
-			Catalog = function() return catalogList() end
-		})
-	end)
-end
-
-AddEventHandler('onResourceStart', function(resourceName)
-	if resourceName == 'coe_staff' then
-		CreateThread(function()
-			for _ = 1, 20 do
-				Wait(500)
-				if GetResourceState('coe_staff') == 'started' then
-					registerStaffProvider()
-					return
-				end
-			end
-		end)
-	end
-end)
-
 RegisterNetEvent('coe_rentals:requestStations', function()
 	broadcast(source)
 end)
@@ -765,7 +736,6 @@ CreateThread(function()
 	end
 	ready = true
 	broadcast()
-	registerStaffProvider()
 	log('info', 'rentals_ready', { stations = #stationOrder })
 end)
 

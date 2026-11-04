@@ -272,6 +272,25 @@ Remove o vínculo de grupo do jogador. Só `coe_admin` pode chamar. Server.
 ---@field Satisfies fun(version: string|CoeSemVerData, rangeStr: string): boolean
 ---@field Bump fun(currentVersion: string|CoeSemVerData, bumpType: 'major'|'minor'|'patch'): string|nil, string|nil
 
+---@class CoeZonesModule
+---@field New fun(opts?: { cellSize?: number }): CoeZonesModule
+---@field AddSphere fun(id: string, spec: table): table|nil
+---@field AddBox fun(id: string, spec: table): table|nil
+---@field Remove fun(id: string): boolean
+---@field Clear fun()
+---@field Get fun(id: string): table|nil
+---@field Count fun(): integer
+---@field Contains fun(zone: table, x: number, y: number, z: number): boolean, number
+---@field Query fun(x: number, y: number, z: number): table[]
+---@field Nearest fun(x: number, y: number, z: number): table|nil, number|nil, boolean
+---@field OnInteract fun(fn: fun()): integer
+---@field SetPrompt fun(prompt: table|nil, customKey?: string)
+
+---@class CoeAccessModule
+---@field Allowed fun(resource: string|nil, ace: string, defaults?: table<string, boolean>): boolean
+---@field Caller fun(ace: string, defaults?: table<string, boolean>): string|nil
+---@field Reset fun()
+
 ---@class CoeCoreInstance
 ---@field Name string
 ---@field Prefix string
@@ -279,6 +298,8 @@ Remove o vínculo de grupo do jogador. Só `coe_admin` pode chamar. Server.
 ---@field Platform CoePlatform
 ---@field Locale CoeLocaleModule
 ---@field SemVer CoeSemVerModule
+---@field Zones CoeZonesModule
+---@field Access CoeAccessModule
 ---@field RequireVersion fun(resourceName: string, requiredRange: string): boolean, string|nil
 ---@field Functions table
 ---@field Events table
