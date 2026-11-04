@@ -15,6 +15,8 @@ dependencies {
 
 files {
 	'lib/init.lua',
+	'lib/access.lua',
+	'lib/zones.lua',
 	'lib/logger.lua',
 	'lib/migrations.lua',
 	'lib/platform.lua',
@@ -26,6 +28,7 @@ shared_scripts {
 	'lib/platform.lua',
 	'lib/locale.lua',
 	'lib/semver.lua',
+	'lib/zones.lua',
 	'locales/pt-br.lua',
 	'locales/en-us.lua',
 	'core/shared/bootstrap.lua',

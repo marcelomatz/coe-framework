@@ -204,24 +204,3 @@ AddEventHandler('playerDropped', function()
 	lastCall[source] = nil
 	lastRefresh[source] = nil
 end)
-
--- O tablet de trabalho básico do framework (coe_workpad) sai de cena enquanto este resource roda
--- (ACE coe.workpad.yield). Os dois usam o item business_tablet e a tecla F3.
-local function yieldBasicTablet()
-	if GetResourceState('coe_workpad') ~= 'started' then
-		return
-	end
-	local ok, result = pcall(function()
-		return exports.coe_workpad:Yield()
-	end)
-	if not ok or result ~= true then
-		log('warn', 'system', 'tablet_basic_yield_failed', { error_code = ok and type(result) == 'table' and tostring(result.error) or 'unavailable' })
-	end
-end
-
-AddEventHandler('onResourceStart', function(resource)
-	if resource == 'coe_workpad' then
-		yieldBasicTablet()
-	end
-end)
-CreateThread(yieldBasicTablet)

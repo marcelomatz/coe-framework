@@ -57,6 +57,9 @@ local function allowed()
 	if resource == nil then
 		return true
 	end
+	if CoeAccess and CoeAccess.Allowed then
+		return CoeAccess.Allowed(resource, config.Ace, config.AllowedResources)
+	end
 	return config.AllowedResources[resource] == true
 end
 

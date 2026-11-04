@@ -109,9 +109,24 @@ function Location.AnchorEquals(a, b)
 	return a.l == b.l and a.r == b.r and a.t == b.t and a.b == b.b
 end
 
--- Esconde vida/colete desenhados no proprio minimapa (o HUD tem os icones). O GTA redesenha
--- esses arcos, entao a chamada precisa ser feita a cada frame, depois de alternar o bigmap
--- uma vez para o radar inicializar por completo.
+-- Esconde vida/colete desenhados no proprio minimapa (o HUD tem os icones) e desloca para fora da tela
+-- os componentes nativos de nome de veiculo, regiao, classe e rua (6 a 9), evitando Wait(0) permanente.
+local nativeHiddenApplied = nil
+
+local function applyNativeHudVisibility(hide)
+	if nativeHiddenApplied == hide then
+		return
+	end
+	nativeHiddenApplied = hide
+	for id = 6, 9 do
+		if hide then
+			SetHudComponentPosition(id, 999999.0, 999999.0)
+		else
+			ResetHudComponentValues(id)
+		end
+	end
+end
+
 CreateThread(function()
 	Wait(2000)
 	local scaleform = RequestScaleformMovie('minimap')
@@ -122,28 +137,14 @@ CreateThread(function()
 	end
 	SetMinimapClipType(0)
 	SetRadarBigmapEnabled(true, false)
-	Wait(0)
+	Wait(50)
 	SetRadarBigmapEnabled(false, false)
 	while true do
 		if BeginScaleformMovieMethod(scaleform, 'SETUP_HEALTH_ARMOUR') then
 			ScaleformMovieMethodAddParamInt(3)
 			EndScaleformMovieMethod()
 		end
-		Wait(0)
-	end
-end)
-
--- Nomes de veiculo, regiao, classe e rua nativos (componentes 6 a 9).
-CreateThread(function()
-	while true do
-		if Location.hideNative then
-			HideHudComponentThisFrame(6)
-			HideHudComponentThisFrame(7)
-			HideHudComponentThisFrame(8)
-			HideHudComponentThisFrame(9)
-			Wait(0)
-		else
-			Wait(500)
-		end
+		applyNativeHudVisibility(Location.hideNative == true)
+		Wait(500)
 	end
 end)

@@ -6,9 +6,6 @@ name 'coe_phone'
 version '0.1.0-beta.17'
 description 'Smartphone do COE OS: Telefone, Contatos, Mensagens e os apps da loja (coe_apps)'
 
--- Assume o telefone básico do framework: o coe_supervisor não inicia o coe_mobile enquanto este resource roda.
-coe_supervisor_replaces 'coe_mobile'
-
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
 

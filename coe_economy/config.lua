@@ -31,12 +31,12 @@ EconomyConfig = {
 		coe_jobs = true,
 		-- Lojas de conveniência: receita das vendas no caixa do negócio e saldo no relatório da gestão.
 		coe_shops = true,
-		-- Banco básico: saque, depósito, transferência e extrato da conta do personagem.
-		coe_bank = true,
-		-- Telefone móvel: app bancário e transferências PIX.
-		coe_mobile = true,
-		-- Painel básico da staff: dar e retirar dinheiro da conta (motivo admin_adjustment).
-		coe_staff = true,
+		-- Sistema bancário: saque, depósito, transferência, crédito, empréstimos e extrato da conta do personagem.
+		coe_banking = true,
+		-- Smartphone do COE OS: carteira e transferências.
+		coe_phone = true,
+		-- Painel da staff: dar e retirar dinheiro da conta (motivo admin_adjustment).
+		coe_admin = true,
 		-- Aluguel de veículos: cobra aluguel + caução e devolve a caução na entrega.
 		coe_rentals = true
 	},

@@ -56,6 +56,42 @@ if okSemVer and type(semverMod) == 'table' then
 	Core.SemVer = semverMod
 end
 
+-- Garante que o controle de acesso por ACE (CoeAccess) esteja disponível localmente no resource consumidor
+local okAccess, accessMod = pcall(function()
+	if type(CoeAccess) == 'table' then
+		return CoeAccess
+	end
+	if type(LoadResourceFile) == 'function' then
+		local content = LoadResourceFile('coe_core', 'lib/access.lua')
+		if content then
+			local fn = load(content, '@coe_core/lib/access.lua')
+			if fn then return fn() end
+		end
+	end
+	return dofile('lib/access.lua')
+end)
+if okAccess and type(accessMod) == 'table' then
+	Core.Access = accessMod
+end
+
+-- Garante que o subsistema de zonas espaciais (Core.Zones / CoeZones) execute localmente em cada resource
+local okZones, zonesMod = pcall(function()
+	if type(CoeZones) == 'table' then
+		return CoeZones
+	end
+	if type(LoadResourceFile) == 'function' then
+		local content = LoadResourceFile('coe_core', 'lib/zones.lua')
+		if content then
+			local fn = load(content, '@coe_core/lib/zones.lua')
+			if fn then return fn() end
+		end
+	end
+	return dofile('lib/zones.lua')
+end)
+if okZones and type(zonesMod) == 'table' then
+	Core.Zones = zonesMod
+end
+
 ---Verifica se outro resource atende a uma faixa de versão SemVer requerida.
 ---@param resourceName string
 ---@param requiredRange string Ex: '>=1.1.0' ou '^1.2.0'

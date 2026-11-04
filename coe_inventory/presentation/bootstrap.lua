@@ -25,13 +25,21 @@ Core.Events.OnNet('player.characterUnloaded', function()
 	resetPresentation()
 end)
 
--- A roda de armas e os atalhos numéricos nativos ficam desligados; o inventário controla a hotbar.
+-- A roda de armas e a troca automática nativa ficam desligadas; o inventário controla a hotbar.
 CreateThread(function()
+	if type(SetWeaponsNoAutoswap) == 'function' then
+		SetWeaponsNoAutoswap(true)
+	end
 	while true do
-		for _, control in ipairs(DISABLED_CONTROLS) do
-			DisableControlAction(0, control, true)
+		if IsPauseMenuActive() then
+			Wait(250)
+		else
+			if type(BlockWeaponWheelThisFrame) == 'function' then
+				BlockWeaponWheelThisFrame()
+			end
+			DisableControlAction(0, 37, true)
+			Wait(0)
 		end
-		Wait(0)
 	end
 end)
 

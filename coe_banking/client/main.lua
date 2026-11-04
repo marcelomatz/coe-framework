@@ -120,33 +120,69 @@ local function nearestAgency()
 	return nil
 end
 
+local activeAgency = nil
+
+local function registerAgencyZones()
+	if not (Core and Core.Zones) then
+		return
+	end
+	Core.Zones.Clear()
+	for _, agency in ipairs(config.Agencies) do
+		Core.Zones.AddSphere('agency:' .. tostring(agency.id), {
+			x = agency.x,
+			y = agency.y,
+			z = agency.z,
+			radius = agency.radius,
+			data = agency
+		})
+	end
+end
+
+if Core and Core.Zones then
+	Core.Zones.OnInteract(function()
+		if menuOpen or busy or not activeAgency then
+			return
+		end
+		if GetVehiclePedIsIn(PlayerPedId(), false) ~= 0 then
+			return
+		end
+		busy = true
+		setPrompt(nil)
+		TriggerServerEvent('coe_banking:openAgency', activeAgency.id)
+		SetTimeout(3000, function()
+			busy = false
+		end)
+	end)
+end
+
 CreateThread(function()
 	createBlips()
+	registerAgencyZones()
 	while true do
-		local wait = 500
+		local wait = 600
 		if menuOpen then
+			wait = 250
+			activeAgency = nil
 			setPrompt(nil)
 			-- Afastou-se do balcão ou do caixa: encerra.
 			if openedAt and #(GetEntityCoords(PlayerPedId()) - openedAt) > 3.0 then
 				closeMenu()
 			end
 		elseif not busy and GetVehiclePedIsIn(PlayerPedId(), false) == 0 then
-			local agency = nearestAgency()
+			local at = GetEntityCoords(PlayerPedId())
+			local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(at.x, at.y, at.z)
+			local agency = zone and zone.data or nearestAgency()
+			if nearAny or agency then
+				wait = 200
+			end
+			activeAgency = agency
 			if agency then
-				wait = 0
 				setPrompt({ title = agency.label, subtitle = 'Banco', options = { { key = 'E', label = 'Atendimento' } } })
-				if IsControlJustReleased(0, 38) then
-					busy = true
-					setPrompt(nil)
-					TriggerServerEvent('coe_banking:openAgency', agency.id)
-					SetTimeout(3000, function()
-						busy = false
-					end)
-				end
 			else
 				setPrompt(nil)
 			end
 		else
+			activeAgency = nil
 			setPrompt(nil)
 		end
 		Wait(wait)

@@ -62,10 +62,30 @@ AddEventHandler('onResourceStop', function(resourceName)
 	end
 end)
 
+local activeAction = nil
+
+local function rebuildDoorZones()
+	if not (Core and Core.Zones) then
+		return
+	end
+	Core.Zones.Clear()
+	for idx, door in ipairs(doors) do
+		Core.Zones.AddSphere(('door:%d:%s'):format(idx, tostring(door.id)), {
+			x = door.x,
+			y = door.y,
+			z = door.z,
+			radius = door.radius,
+			data = door
+		})
+	end
+end
+
 RegisterNetEvent('coe_housing:doors', function(list)
 	doors = type(list) == 'table' and list or {}
 	current = nil
+	activeAction = nil
 	createBlips()
+	rebuildDoorZones()
 end)
 
 CreateThread(function()
@@ -132,49 +152,62 @@ local function nearInterior()
 	return exit and #(GetEntityCoords(PlayerPedId()) - vector3(exit.x, exit.y, exit.z)) <= 30.0
 end
 
+if Core and Core.Zones then
+	Core.Zones.OnInteract(function()
+		if menuOpen or busy or not activeAction then
+			return
+		end
+		if activeAction.kind == 'stash' then
+			TriggerServerEvent('coe_housing:openStash')
+		elseif activeAction.kind == 'leave' then
+			busy = true
+			TriggerServerEvent('coe_housing:leave')
+			SetTimeout(3000, function()
+				busy = false
+			end)
+		elseif activeAction.kind == 'open' and activeAction.door then
+			busy = true
+			TriggerServerEvent('coe_housing:open', activeAction.door.id)
+			SetTimeout(3000, function()
+				busy = false
+			end)
+		end
+	end)
+end
+
 CreateThread(function()
 	while true do
-		local wait = 500
+		local wait = 600
+		activeAction = nil
 		if menuOpen or busy then
 			setPrompt(nil)
 		elseif insideInfo and nearInterior() then
+			wait = 200
 			local at = GetEntityCoords(PlayerPedId())
 			local exit = insideInfo.interior
 			local stash = insideInfo.stash
 			local exitDistance = #(at - vector3(exit.x, exit.y, exit.z))
 			local stashDistance = stash and #(at - vector3(stash.x, stash.y, stash.z)) or math.huge
 			if stash and stashDistance <= stash.radius and stashDistance < exitDistance then
-				wait = 0
+				activeAction = { kind = 'stash' }
 				setPrompt({ title = insideInfo.title, subtitle = 'Baú', options = { { key = 'E', label = 'Abrir baú' } } })
-				if IsControlJustReleased(0, 38) then
-					TriggerServerEvent('coe_housing:openStash')
-				end
 			elseif exitDistance <= exit.radius then
-				wait = 0
+				activeAction = { kind = 'leave' }
 				setPrompt({ title = insideInfo.title, subtitle = 'Saída', options = { { key = 'E', label = 'Sair' } } })
-				if IsControlJustReleased(0, 38) then
-					busy = true
-					TriggerServerEvent('coe_housing:leave')
-					SetTimeout(3000, function()
-						busy = false
-					end)
-				end
 			else
 				setPrompt(nil)
 			end
 		elseif #doors > 0 and GetVehiclePedIsIn(PlayerPedId(), false) == 0 then
-			current = nearestDoor()
+			local at = GetEntityCoords(PlayerPedId())
+			local zone, _, nearAny = Core and Core.Zones and Core.Zones.Nearest(at.x, at.y, at.z)
+			current = zone and zone.data or nearestDoor()
+			if nearAny or current then
+				wait = 200
+			end
 			if current then
-				wait = 0
+				activeAction = { kind = 'open', door = current }
 				local subtitle = current.hideout and 'Acesso restrito' or (current.kind == 'commercial' and 'Imóvel comercial' or 'Moradia')
 				setPrompt({ title = current.title, subtitle = subtitle, options = { { key = 'E', label = current.hideout and 'Entrar' or 'Abrir' } } })
-				if IsControlJustReleased(0, 38) then
-					busy = true
-					TriggerServerEvent('coe_housing:open', current.id)
-					SetTimeout(3000, function()
-						busy = false
-					end)
-				end
 			else
 				setPrompt(nil)
 			end

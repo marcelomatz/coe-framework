@@ -20,7 +20,7 @@ JobsConfig = {
 	RecentSessions = 10,
 	-- Tablets que chamam o app Carreira (TabletCall). Padrão do framework: o tablet de trabalho básico; pacotes
 	-- recebem a ACE no server.cfg: add_ace resource.<nome> coe.jobs.tablet allow
-	TabletResources = { coe_workpad = true },
+	TabletResources = { coe_tablet = true, coe_apps = true },
 	-- Materiais do chão onde um campo de plantio (`fields` com `soil`) pode ter pé: pontos que caem em asfalto,
 	-- calçada ou grama ficam sem prop. Se nenhum ponto de um campo bater, o filtro desliga sozinho nesse campo.
 	SoilMaterials = { 'SOIL', 'MUD_HARD', 'MUD_SOFT', 'MUD_DEEP', 'CLAY_HARD', 'CLAY_SOFT', 'DIRT_TRACK', 'SAND_TRACK', 'SAND_DRY_DEEP' },

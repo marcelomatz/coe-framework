@@ -16,5 +16,6 @@ Core = {
 	Repositories = {},
 	Platform = CoePlatform or {},
 	Locale = CoeLocale or {},
-	SemVer = CoeSemVer or {}
+	SemVer = CoeSemVer or {},
+	Zones = CoeZones or {}
 }

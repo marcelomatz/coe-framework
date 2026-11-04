@@ -27,11 +27,19 @@ local function caller()
 end
 
 local function isAdmin()
-	return config.AdminResources[caller()] == true
+	local resource = caller()
+	if CoeAccess and CoeAccess.Allowed and config.Ace then
+		return CoeAccess.Allowed(resource, config.Ace.Admin, config.AdminResources)
+	end
+	return config.AdminResources[resource] == true
 end
 
 local function isReader()
 	local resource = caller()
+	if CoeAccess and CoeAccess.Allowed and config.Ace then
+		return CoeAccess.Allowed(resource, config.Ace.Read, config.ReaderResources)
+			or CoeAccess.Allowed(resource, config.Ace.Admin, config.AdminResources)
+	end
 	return config.ReaderResources[resource] == true or config.AdminResources[resource] == true
 end
 
@@ -278,9 +286,9 @@ exports('Memberships', function(characterId)
 	return memberships(characterId)
 end)
 
--- Facção no dossiê do menu de pausa (coe_pausemenu:RegisterFactionProvider): a primeira facção ativa do personagem.
+-- Facção no dossiê do menu de pausa: a primeira facção ativa do personagem.
 exports('PauseMenuFaction', function(characterId)
-	if GetInvokingResource() ~= 'coe_pausemenu' then
+	if not isReader() then
 		return nil
 	end
 	for _, membership in ipairs(memberships(characterId)) do
@@ -290,25 +298,6 @@ exports('PauseMenuFaction', function(characterId)
 	end
 	return nil
 end)
-
-local function registerPauseMenu()
-	if GetResourceState('coe_pausemenu') ~= 'started' then
-		return
-	end
-	local ok, result = pcall(function()
-		return exports.coe_pausemenu:RegisterFactionProvider('PauseMenuFaction')
-	end)
-	if not ok or result ~= true then
-		log('warn', 'system', 'factions_pausemenu_failed', { error_code = ok and type(result) == 'table' and tostring(result.error) or 'unavailable' })
-	end
-end
-
-AddEventHandler('onResourceStart', function(resource)
-	if resource == 'coe_pausemenu' then
-		registerPauseMenu()
-	end
-end)
-CreateThread(registerPauseMenu)
 
 exports('RecipesFor', function(characterId)
 	if not isReader() or not ready or not validCharacterId(characterId) then

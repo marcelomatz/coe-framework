@@ -6,9 +6,6 @@ name 'coe_tablet'
 version '0.1.0-beta.17'
 description 'COE OS no tablet: tela inicial, dock, multitarefa e central de controle; os apps mudam conforme o personagem'
 
--- Assume o tablet de trabalho básico do framework: o coe_supervisor não inicia o coe_workpad enquanto este resource roda.
-coe_supervisor_replaces 'coe_workpad'
-
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'gameplay'
 

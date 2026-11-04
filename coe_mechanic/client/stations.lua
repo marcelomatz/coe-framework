@@ -160,6 +160,16 @@ local function activate(current)
 	end
 end
 
+local activeInteraction = nil
+
+if Core and Core.Zones then
+	Core.Zones.OnInteract(function()
+		if activeInteraction and not MechanicShowroom.IsOpen() and not IsNuiFocused() then
+			activate(activeInteraction)
+		end
+	end)
+end
+
 CreateThread(function()
 	while true do
 		local wait = 1000
@@ -172,27 +182,26 @@ CreateThread(function()
 				current = interactionAt(at, IsPedInAnyVehicle(ped, false))
 			end
 		end
+		activeInteraction = current
 		if current then
 			setPrompt(current.key, current.prompt)
 			local m = current.marker
 			if m then
-				DrawMarker(1, m.x, m.y, m.z - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, m.size, m.size, 0.6,
-					196, 223, 155, 60, false, false, 2, false, nil, nil, false)
-			end
-			-- Enquanto há uma interação ao alcance, lê a tecla a cada quadro; a checagem de distância volta a cada 250 ms.
-			local deadline = GetGameTimer() + 250
-			while GetGameTimer() < deadline do
-				if IsControlJustReleased(0, PROMPT_KEY) then
-					activate(current)
-					break
-				end
-				if m then
+				-- Apenas o showroom em veículo desenha marcador 3D por quadro; estações a pé usam OnInteract sem Wait(0).
+				local deadline = GetGameTimer() + 250
+				while GetGameTimer() < deadline do
+					if not (Core and Core.Zones) and IsControlJustReleased(0, PROMPT_KEY) then
+						activate(current)
+						break
+					end
 					DrawMarker(1, m.x, m.y, m.z - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, m.size, m.size, 0.6,
 						196, 223, 155, 60, false, false, 2, false, nil, nil, false)
+					Wait(0)
 				end
-				Wait(0)
+				wait = 0
+			elseif not (Core and Core.Zones) and IsControlJustReleased(0, PROMPT_KEY) then
+				activate(current)
 			end
-			wait = 0
 		else
 			setPrompt(nil, nil)
 		end

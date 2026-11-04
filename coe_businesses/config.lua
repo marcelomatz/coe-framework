@@ -23,10 +23,10 @@ BusinessesConfig = {
 	},
 	-- coe_shops semeia as lojinhas (24/7, LTD, Rob's Liquor) até a staff passar uma para um jogador.
 	-- coe_staff: o painel básico da staff cria e edita negócios (área, pontos, dono, equipe e cargos).
-	WriterResources = { coe_shops = true, coe_staff = true },
+	WriterResources = { coe_shops = true, coe_admin = true },
 	-- O tablet de trabalho básico (coe_workpad) mostra os negócios do jogador e encerra o ponto dele.
-	ClockResources = { coe_workpad = true },
-	TabletResources = { coe_workpad = true },
+	ClockResources = { coe_tablet = true },
+	TabletResources = { coe_tablet = true },
 	-- coe_shops registra a aba Loja.
 	ExtensionResources = { coe_shops = true },
 

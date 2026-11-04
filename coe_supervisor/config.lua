@@ -3,7 +3,7 @@ SupervisorConfig = {
 	--   add_ace resource.coe_admin coe.supervisor allow
 	Ace = 'coe.supervisor',
 	Defaults = {
-		coe_staff = true
+		coe_admin = true
 	},
 	-- Sistema de verificação de versão e atualização de scripts via repositório oficial.
 	Updater = {
@@ -44,17 +44,17 @@ MCowBQYDK2VwAyEAkgYLhYRzjtnamROy1ERQhFlD1fht8RwoMAJJpu93Dls=
 		'coe_map',
 		'coe_vehicles',
 		'coe_vehicle_catalog',
-		'coe_garage',
+		'coe_garages',
 		'coe_rentals',
 		'coe_economy',
 		'coe_businesses',
 		'coe_jobs',
-		'coe_workpad',
+		'coe_tablet',
 		'coe_shops',
-		'coe_bank',
+		'coe_banking',
 		'coe_talk',
-		'coe_mobile',
-		'coe_staff'
+		'coe_phone',
+		'coe_admin'
 	},
 	-- Categoria de cada resource gerenciado; critical = reiniciar pode derrubar o servidor inteiro.
 	Catalog = {
@@ -75,17 +75,17 @@ MCowBQYDK2VwAyEAkgYLhYRzjtnamROy1ERQhFlD1fht8RwoMAJJpu93Dls=
 		coe_needs = { category = 'gameplay' },
 		coe_vehicles = { category = 'gameplay' },
 		coe_vehicle_catalog = { category = 'gameplay' },
-		coe_garage = { category = 'gameplay' },
+		coe_garages = { category = 'gameplay' },
 		coe_rentals = { category = 'gameplay' },
 		coe_economy = { category = 'business' },
 		coe_businesses = { category = 'business' },
 		coe_jobs = { category = 'gameplay' },
-		coe_workpad = { category = 'gameplay' },
+		coe_tablet = { category = 'gameplay' },
 		coe_shops = { category = 'business' },
-		coe_bank = { category = 'business' },
+		coe_banking = { category = 'business' },
 		coe_talk = { category = 'gameplay' },
-		coe_mobile = { category = 'gameplay' },
-		coe_staff = { category = 'administration' }
+		coe_phone = { category = 'gameplay' },
+		coe_admin = { category = 'administration' }
 	},
 	-- Substituição: um pacote completo declara no fxmanifest `coe_supervisor_replaces '<básico>'` e o básico (que declara
 	-- `coe_supervisor_replaceable 'yes'`) não inicia enquanto o pacote roda; volta sozinho se o pacote parar ou não subir.

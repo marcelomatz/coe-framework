@@ -196,7 +196,11 @@ local function listFor(source)
 end
 
 local function allowed()
-	return config.ActionResources[GetInvokingResource() or ''] == true
+	local resource = GetInvokingResource()
+	if CoeAccess and CoeAccess.Allowed then
+		return CoeAccess.Allowed(resource, config.Ace, config.ActionResources)
+	end
+	return config.ActionResources[resource or ''] == true
 end
 
 -- Alerta automático de outros resources: Alert(code, x, y, z). Retorna o id ou { error }.

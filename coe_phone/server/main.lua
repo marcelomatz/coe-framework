@@ -1829,28 +1829,12 @@ end
 
 local upgradeReport = nil
 
--- O telefone básico do framework (coe_mobile) sai de cena enquanto este resource roda (ACE coe.mobile.yield).
-local function yieldBasicPhone()
-	if GetResourceState('coe_mobile') ~= 'started' then
-		return
-	end
-	local ok, result = pcall(function()
-		return exports.coe_mobile:Yield()
-	end)
-	if not ok or result ~= true then
-		log('warn', 'system', 'phone_basic_yield_failed', { error_code = ok and type(result) == 'table' and tostring(result.error) or 'unavailable' })
-	end
-end
-
 AddEventHandler('onResourceStart', function(resource)
 	if resource == 'coe_shops' then
 		registerShopPayment()
-	elseif resource == 'coe_mobile' then
-		yieldBasicPhone()
 	end
 end)
 CreateThread(registerShopPayment)
-CreateThread(yieldBasicPhone)
 -- Número (formatado) do primeiro chip de que o personagem é titular; nil se nenhum.
 exports('NumberOf', function(characterId)
 	if not ready or characterId == nil then

@@ -8,8 +8,6 @@ description 'Garagens: veículos do jogador por vaga e frota dos negócios, com 
 
 -- Reinício pelo coe_supervisor (categoria no painel).
 coe_supervisor 'business'
--- Substitui as garagens públicas básicas do framework (mesmas tabelas coe_garage_registry/coe_garage_slots).
-coe_supervisor_replaces 'coe_garage'
 
 dependencies {
 	'coe_core',

@@ -58,7 +58,11 @@ for id, definition in pairs(config.Tables) do
 end
 
 local function allowed()
-	return config.Callers[GetInvokingResource() or ''] == true
+	local resource = GetInvokingResource()
+	if CoeAccess and CoeAccess.Allowed then
+		return CoeAccess.Allowed(resource, config.Ace, config.Callers)
+	end
+	return config.Callers[resource or ''] == true
 end
 
 local function random(a, b)

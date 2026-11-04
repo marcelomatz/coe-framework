@@ -18,6 +18,12 @@ FactionsConfig = {
 		MaxCoordinate = 10000.0
 	},
 
+	-- Capacidades ACE (`add_ace resource.<nome> coe.factions.read allow`) e allowlists padrão.
+	Ace = {
+		Read = 'coe.factions.read',
+		Admin = 'coe.factions.admin',
+		Tablet = 'coe.factions.tablet'
+	},
 	-- Quem pode ler acessos e quem pode alterar facções e membros.
 	ReaderResources = { coe_crafting = true, coe_admin = true, coe_doors = true },
 	AdminResources = { coe_admin = true },

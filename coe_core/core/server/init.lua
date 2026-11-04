@@ -47,7 +47,7 @@ end)
 -- (add_ace resource.<nome> coe.groups.admin allow). A autorização do operador é responsabilidade de quem chama.
 local GROUP_ADMIN_ACE = 'coe.groups.admin'
 -- Padrão do framework: o painel básico da staff (coe_staff), que confere a ACE do operador antes.
-local GROUP_ADMIN_RESOURCES = { coe_staff = true }
+local GROUP_ADMIN_RESOURCES = { coe_admin = true }
 
 local function groupAdminCaller()
 	return CoeAccess.Allowed(GetInvokingResource(), GROUP_ADMIN_ACE, GROUP_ADMIN_RESOURCES)
