@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_mechanic'
-version '0.1.0-beta.16'
+version '0.1.0-beta.17'
 description 'Mecânica de veículos: peças com desgaste por quilometragem, inspeção, troca e ajuste de Mileage'
 
 -- Reinício pelo coe_supervisor (categoria no painel).

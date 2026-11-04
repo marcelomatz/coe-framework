@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_doors'
-version '0.1.0-beta.16'
+version '0.1.0-beta.17'
 description 'Portas e fechaduras do mapa e de MLOs: trancamento, senha, trava automática e acesso por negócio, facção, personagem ou chave'
 
 -- Reinício pelo coe_supervisor (categoria no painel).
