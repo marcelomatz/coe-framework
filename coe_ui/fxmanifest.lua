@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_ui'
-version '0.1.0-beta.17'
+version '0.1.0-beta.18'
 description 'Biblioteca de UI do framework Coe: tokens, componentes e guia de estilos'
 
 coe_platform 'hal'

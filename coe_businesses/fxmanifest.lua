@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_businesses'
-version '0.1.0-beta.17'
+version '0.1.0-beta.18'
 description 'Registro de negócios (mecânicas, lojinhas, postos...): área, baús, mesas de craft e regras definidos pelo admin'
 
 coe_platform 'hal'

@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_races'
-version '0.1.0-beta.17'
+version '0.1.0-beta.18'
 description 'Corridas ilegais de rua do Coe: pistas com checkpoints, tablet de corridas, entrada em cripto, ranking e polícia'
 
 -- Reinício pelo coe_supervisor (categoria no painel).

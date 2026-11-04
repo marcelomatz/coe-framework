@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_crafting'
-version '0.1.0-beta.17'
+version '0.1.0-beta.18'
 description 'Central de craft: receitas, bancadas e execução atômica para mecânica, comércio e craft ilegal'
 
 -- Reinício pelo coe_supervisor (categoria no painel).
