@@ -28,6 +28,26 @@ Lists all vehicles matching an optional multi-criteria filter.
 
 - `CoeVehicleInfo[]`
 
+### `ListVehiclesPage(filter)`
+
+Paginated list of vehicles matching an optional multi-criteria filter.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `filter` | `CoeVehicleFilter\|nil` | Optional search, sort, and pagination criteria |
+
+**Returns**
+
+- `CoeVehiclePage`
+
+### `ListClasses()`
+
+Returns all native vehicle classes (0 to 22) with their identifiers and names.
+
+**Returns**
+
+- `{ id: integer, name: string }[]`
+
 ### `GetBaseHandling(model)`
 
 Returns raw scalar parameters parsed from loaded `handling.meta` files (e.g., `fMass`), or `nil`.
