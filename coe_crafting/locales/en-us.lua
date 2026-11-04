@@ -1,0 +1,32 @@
+Locales = (type(Locales) == 'table' and Locales) or {}
+
+Locales['en-US'] = {
+	forbidden = 'You cannot use this workbench right now.',
+	missing_items = 'Missing materials.',
+	craft_busy = 'You are already crafting something.',
+	inventory_full = 'No space in inventory.',
+	inventory_unavailable = 'Inventory unavailable.',
+	recipe_not_found = 'Recipe not found.',
+	off_duty = 'Clock in at this business to use the workbench.',
+	not_staff = 'Only this business staff can use this workbench.',
+	not_member = 'Only group members can use this workbench.',
+	grade_too_low = 'Your group rank does not unlock this recipe.',
+	too_far = 'Get closer to the workbench.',
+	unavailable = 'Businesses unavailable at this moment. Please try again.',
+	bench_unavailable = 'Workbench unavailable.',
+	stash_not_member = 'Only group members can open this stash.',
+	stash_too_far = 'Get closer to the stash.',
+	no_stash = 'Stash unavailable.',
+	container_limit = 'Close a container before opening another.',
+	stash_open_failed = 'Could not open stash.',
+	crafted_success = '%{label} crafted.',
+	prompt_illegal_title = 'Illicit workbench',
+	prompt_stash_title = 'Stash',
+	prompt_faction_title = 'Faction workbench',
+	prompt_stash_subtitle = 'Group stash',
+	prompt_faction_subtitle = 'Workbench',
+	prompt_business_title = 'Workbench',
+	prompt_duty_subtitle = 'Clock in to craft',
+	prompt_produce = 'Craft',
+	prompt_open_stash = 'Open stash'
+}

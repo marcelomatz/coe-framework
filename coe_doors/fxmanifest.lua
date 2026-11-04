@@ -21,6 +21,8 @@ ui_page 'html/index.html'
 
 shared_scripts {
 	'@coe_core/lib/init.lua',
+	'locales/pt-br.lua',
+	'locales/en-us.lua',
 	'config.lua'
 }
 

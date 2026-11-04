@@ -1,4 +1,5 @@
 local config = CoeAppsConfig
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k, p) local s = (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k; if p then for pk, pv in pairs(p) do s = s:gsub('%%{' .. pk .. '}', tostring(pv)) end end; return s end
 local DAY = 86400
 
 local ready = false
@@ -252,7 +253,7 @@ local function renew(due, now)
 				apply(false)
 				audit('app_subscription_expired', { character_id = due.characterId, operation = due.appId, error_code = errorCode })
 				if playerId then
-					notify(playerId, 'error', ('%s: cobrança recusada no cartão de crédito. O app foi removido.'):format(app.label))
+					notify(playerId, 'error', _t('charge_declined', { app = app.label }))
 				end
 			end
 		end
@@ -269,7 +270,7 @@ local function renew(due, now)
 	end
 	audit('app_subscription_renewed', { character_id = due.characterId, operation = due.appId, count = price })
 	if playerId then
-		notify(playerId, 'info', ('%s: assinatura renovada no cartão de crédito.'):format(app.label))
+		notify(playerId, 'info', _t('subscription_renewed', { app = app.label }))
 	end
 end
 

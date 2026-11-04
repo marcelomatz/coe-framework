@@ -44,7 +44,7 @@ local clock = 1792000000
 os.time = function() return clock end
 
 local coreHandlers = {}
-Core = { Players = { GetActiveCharacterId = function(id) return characters[id] end }, Events = { On = function(name, fn) coreHandlers[name] = fn end }, Platform = dofile('../coe_core/lib/platform.lua') }
+Core = { Players = { GetActiveCharacterId = function(id) return characters[id] end }, Events = { On = function(name, fn) coreHandlers[name] = fn end }, Platform = dofile('../coe_core/lib/platform.lua'), Locale = dofile('../coe_core/lib/locale.lua') }
 function GetPlayers() return { '1', '2', '3' } end
 -- Inventário simulado: personagem -> item -> quantidade.
 local bags = {}

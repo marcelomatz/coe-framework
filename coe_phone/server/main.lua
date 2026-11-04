@@ -1,4 +1,5 @@
 local config = CoePhoneConfig
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k, p) local s = (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k; if p then for pk, pv in pairs(p) do s = s:gsub('%%{' .. pk .. '}', tostring(pv)) end end; return s end
 
 local ready = false
 local lastCall = {}
@@ -549,7 +550,7 @@ local function finish(call, reason)
 	sendState(call, 'callee', 'ended', shown)
 	local calleePrefs = prefsOf(call.callee.serial)
 	if status == 'missed' and not (calleePrefs and calleePrefs.settings.dnd) then
-		notify(call.callee.playerId, 'info', ('Chamada perdida de %s.'):format(nameFor(call.callee.serial, call.caller.number)))
+		notify(call.callee.playerId, 'info', _t('missed_call', { caller = nameFor(call.callee.serial, call.caller.number) }))
 	end
 	log('info', 'system', 'phone_call_ended', { result = status, count = duration, operation = call.kind })
 end
@@ -833,7 +834,7 @@ Native.messages = {
 			local name = nameFor(receiver.serial, me.number)
 			TriggerClientEvent('coe_phone:message', receiver.playerId, { number = format(me.number), name = name, body = body, at = at, sound = soundOf(receiver.serial) })
 			if not receiverPrefs.settings.dnd then
-				notify(receiver.playerId, 'info', ('Nova mensagem de %s.'):format(name))
+				notify(receiver.playerId, 'info', _t('new_message', { sender = name }))
 			end
 		end
 		return { ok = true, data = { id = tonumber(result.insertId), mine = true, body = body, at = at } }
@@ -1521,7 +1522,7 @@ local function deny(playerId, errorCode)
 		no_character = 'Selecione um personagem primeiro.',
 		not_ready = 'O celular ainda está iniciando.'
 	}
-	notify(playerId, 'info', messages[errorCode] or 'O celular não está disponível agora.')
+	notify(playerId, 'info', _t(errorCode) ~= errorCode and _t(errorCode) or _t('phone_unavailable'))
 end
 
 -- slot: item de celular usado no inventário (nil = aparelho ativo ou o primeiro).
@@ -1550,10 +1551,10 @@ local function insertSim(playerId, slot)
 	end
 	local number, placeError = placeSim(me, slot)
 	if not number then
-		notify(playerId, 'error', simErrors[placeError] or 'Não foi possível colocar o chip.')
+		notify(playerId, 'error', _t(placeError) ~= placeError and _t(placeError) or _t('sim_place_failed'))
 		return
 	end
-	notify(playerId, 'success', ('Chip %s colocado no celular.'):format(number))
+	notify(playerId, 'success', _t('sim_placed', { number = number }))
 end
 
 Core.Events.On('inventory.itemUsed', function(inventoryId, slot, item)

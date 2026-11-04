@@ -151,4 +151,27 @@ for _, resName in ipairs(phase2Resources) do
 	end
 end
 
+-- 4.0 Locale.Bind: helper `_t` unificado (substitui o boilerplate dos resources)
+local bindDicts = { ['pt-BR'] = { hello = 'Olá, %{name}!', only_pt = 'Só PT' } }
+local _t, bound = Locale.Bind(bindDicts, 'en-US')
+assertTrue(type(_t) == 'function', 'Bind devolve função')
+assertEqual(bound:GetLanguage(), 'en-US', 'Bind respeita o idioma pedido')
+assertEqual(_t('hello', { name = 'Ana' }), 'Olá, Ana!', 'Sem en-US ainda: cai no fallback pt-BR com interpolação')
+-- Idioma registrado depois do Bind (ordem de carga do manifesto) passa a valer sem recriar o helper.
+bindDicts['en-US'] = { hello = 'Hello, %{name}!' }
+assertEqual(_t('hello', { name = 'Ana' }), 'Hello, Ana!', 'Idioma adicionado após o Bind é visto sob demanda')
+assertEqual(_t('only_pt'), 'Só PT', 'Chave ausente no idioma ativo usa fallback')
+assertEqual(_t('missing_key'), 'missing_key', 'Chave inexistente devolve a própria chave')
+assertEqual(bound:ExportForNui('en-US').only_pt, 'Só PT', 'ExportForNui da instância do Bind inclui fallback')
+
+-- Sem dicionário explícito: lê o _G.Locales do momento da chamada.
+Locales = { ['pt-BR'] = { global_key = 'Global %{n}' } }
+local _tg = Locale.Bind(nil, 'pt-BR')
+assertEqual(_tg('global_key', { n = 1 }), 'Global 1', 'Bind sem dicionário usa _G.Locales')
+Locales = { ['pt-BR'] = { global_key = 'Trocado' } }
+assertEqual(_tg('global_key'), 'Trocado', 'Bind sem dicionário acompanha a troca do _G.Locales')
+
+-- Bind sem idioma usa o padrão do servidor.
+assertEqual(select(2, Locale.Bind({})):GetLanguage(), Locale.GetDefaultLang(), 'Bind sem idioma usa o padrão')
+
 print('✅ Todos os testes de CoeLocale (i18n / l10n) passaram com sucesso!')

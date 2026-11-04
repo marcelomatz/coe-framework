@@ -6,18 +6,8 @@ local config = AdminToolsConfig
 local lastAction = {}
 local frozen = {}
 
-local rawLocales = (type(AdminToolsLocales) == 'table' and AdminToolsLocales) or {}
-local _t_inst = (Core and Core.Locale and Core.Locale.New) and Core.Locale.New({
-	default = (config and config.Locale) or (Core and Core.Locale and Core.Locale.GetDefaultLang()) or 'pt-BR',
-	locales = rawLocales
-})
-local _t = function(k, params)
-	if type(_t_inst) == 'table' and _t_inst.T then
-		return _t_inst:T(k, params)
-	elseif type(_t_inst) == 'function' then
-		return _t_inst(k, params)
-	end
-	local text = (rawLocales['pt-BR'] and rawLocales['pt-BR'][k]) or k
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(AdminToolsLocales) or function(k, params)
+	local text = (AdminToolsLocales and AdminToolsLocales['pt-BR'] and AdminToolsLocales['pt-BR'][k]) or k
 	for name, value in pairs(params or {}) do
 		text = text:gsub('%%{' .. name .. '}', (tostring(value):gsub('%%', '%%%%')))
 	end

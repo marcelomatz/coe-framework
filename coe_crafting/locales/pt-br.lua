@@ -1,0 +1,32 @@
+Locales = (type(Locales) == 'table' and Locales) or {}
+
+Locales['pt-BR'] = {
+	forbidden = 'Você não pode usar esta bancada agora.',
+	missing_items = 'Faltam materiais.',
+	craft_busy = 'Você já está produzindo algo.',
+	inventory_full = 'Sem espaço na mochila.',
+	inventory_unavailable = 'Inventário indisponível.',
+	recipe_not_found = 'Receita não encontrada.',
+	off_duty = 'Bata o ponto neste negócio para usar a bancada.',
+	not_staff = 'Só a equipe deste negócio usa esta bancada.',
+	not_member = 'Só membros deste grupo usam esta bancada.',
+	grade_too_low = 'Seu cargo no grupo não libera esta receita.',
+	too_far = 'Chegue mais perto da bancada.',
+	unavailable = 'Negócios indisponíveis no momento. Tente de novo.',
+	bench_unavailable = 'Bancada indisponível.',
+	stash_not_member = 'Só membros deste grupo abrem este baú.',
+	stash_too_far = 'Chegue mais perto do baú.',
+	no_stash = 'Baú indisponível.',
+	container_limit = 'Feche um baú antes de abrir outro.',
+	stash_open_failed = 'Não foi possível abrir o baú.',
+	crafted_success = '%{label} produzido.',
+	prompt_illegal_title = 'Bancada clandestina',
+	prompt_stash_title = 'Baú',
+	prompt_faction_title = 'Bancada da facção',
+	prompt_stash_subtitle = 'Baú do grupo',
+	prompt_faction_subtitle = 'Bancada',
+	prompt_business_title = 'Bancada',
+	prompt_duty_subtitle = 'Bata o ponto para produzir',
+	prompt_produce = 'Produzir',
+	prompt_open_stash = 'Abrir baú'
+}

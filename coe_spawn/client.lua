@@ -112,6 +112,7 @@ end)
 -- Interações do Hotel de Nascimento (0.00 ms em idle).
 -- Usa o aviso de interação padrão do coe_ui (o mesmo dos imóveis, banco e garagem). Só reenvia quando muda.
 local promptKey = nil
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 
 local function setPrompt(key, title, subtitle, label)
 	if key == promptKey then
@@ -182,7 +183,7 @@ local function ensureHotelLoop()
 						sleep = 0
 						if dEntrance <= 1.8 then
 							prompting = true
-							setPrompt('entrance', h.name or 'Hotel de Início', 'Entrada', 'Entrar no quarto')
+							setPrompt('entrance', h.name or _t('hotel_default_name'), _t('prompt_entrance_sub'), _t('prompt_entrance_action'))
 							if IsControlJustReleased(0, 38) then
 								DoScreenFadeOut(400)
 								Wait(450)
@@ -193,7 +194,7 @@ local function ensureHotelLoop()
 							end
 						elseif dExit <= 1.8 then
 							prompting = true
-							setPrompt('exit', h.name or 'Hotel de Início', 'Saída', 'Sair para a rua')
+							setPrompt('exit', h.name or _t('hotel_default_name'), _t('prompt_exit_sub'), _t('prompt_exit_action'))
 							if IsControlJustReleased(0, 38) then
 								DoScreenFadeOut(400)
 								Wait(450)
@@ -204,7 +205,7 @@ local function ensureHotelLoop()
 							end
 						elseif dStash <= 1.8 then
 							prompting = true
-							setPrompt('stash', h.name or 'Hotel de Início', 'Baú', 'Abrir baú')
+							setPrompt('stash', h.name or _t('hotel_default_name'), _t('prompt_stash_sub'), _t('prompt_stash_action'))
 							if IsControlJustReleased(0, 38) then
 								TriggerServerEvent('coe_spawn:openHotelStash')
 							end

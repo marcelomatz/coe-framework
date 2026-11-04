@@ -1,5 +1,6 @@
 -- Controle do logotipo do servidor na HUD.
 Logo = { getPrefs = nil, savePrefs = nil }
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k, p) local s = (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k; if p then for pk, pv in pairs(p) do s = s:gsub('%%{' .. pk .. '}', tostring(pv)) end end; return s end
 
 local function notify(kind, message)
 	if type(exports) == 'table' or type(exports) == 'userdata' then
@@ -44,8 +45,8 @@ end
 if RegisterCommand then
 	RegisterCommand('logo', function()
 		local visible = Logo.Toggle()
-		local status = visible and 'visível' or 'oculto'
-		notify('info', ('Logotipo do servidor: %s'):format(status))
+		local status = visible and _t('visible') or _t('hidden')
+		notify('info', _t('logo_status', { status = status }))
 	end, false)
 end
 

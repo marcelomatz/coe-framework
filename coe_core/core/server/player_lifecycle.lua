@@ -6,22 +6,7 @@ local MAX_REQUEST_ID = 2147483647
 local MAX_CACHED_REQUESTS = 64
 
 local log = CoeLogger.Create('coe_core').log
-local _t_inst = nil
-local function _t(key, params)
-	if Core and Core.Locale and Core.Locale.New then
-		if not _t_inst then
-			_t_inst = Core.Locale.New({
-				default = Core.Locale.GetDefaultLang(),
-				locales = Locales or {}
-			})
-		end
-		return _t_inst(key, params)
-	end
-	if Locales and Locales['pt-BR'] and Locales['pt-BR'][key] then
-		return Locales['pt-BR'][key]
-	end
-	return key
-end
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 
 local function notifyPlayer(playerSource, kind, message)
 	local ok = pcall(function()

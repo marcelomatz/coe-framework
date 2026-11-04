@@ -11,23 +11,7 @@ local races = {}           -- id -> corrida em memória (lobby, countdown, runni
 local racerOf = {}         -- characterId -> raceId
 local lastCall = {}
 
-local rawLocales = (type(Locales) == 'table' and Locales) or {}
-local _t_inst = (Core and Core.Locale and Core.Locale.New) and Core.Locale.New({
-	default = (config and config.Locale) or (Core and Core.Locale and Core.Locale.GetDefaultLang()) or 'pt-BR',
-	locales = rawLocales
-})
-local function _t(k, params)
-	if type(_t_inst) == 'table' and _t_inst.T then
-		return _t_inst:T(k, params)
-	elseif type(_t_inst) == 'function' then
-		return _t_inst(k, params)
-	end
-	local text = (rawLocales['pt-BR'] and rawLocales['pt-BR'][k]) or k
-	for name, value in pairs(params or {}) do
-		text = text:gsub('%%{' .. name .. '}', (tostring(value):gsub('%%', '%%%%')))
-	end
-	return text
-end
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 
 local function log(level, category, event, context)
 	pcall(function() return exports.coe_logging:Log(level, category, event, context) end)

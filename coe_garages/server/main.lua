@@ -1,4 +1,5 @@
 local config = GaragesConfig
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 local ready = false
 local stations = {}
 local lastAction = {}
@@ -35,7 +36,7 @@ local MESSAGES = {
 
 local function fail(playerId, errorCode, operation)
 	TriggerClientEvent('coe_garages:failed', playerId, errorCode)
-	notify(playerId, 'error', MESSAGES[errorCode] or 'Não foi possível concluir.')
+	notify(playerId, 'error', _t(errorCode) ~= errorCode and _t(errorCode) or _t('action_failed'))
 	-- Sem isto a recusa só aparecia para o jogador; agora fica no console com o código.
 	log('warn', 'gameplay', 'garage_action_refused', { player_id = playerId, error_code = tostring(errorCode), operation = operation or 'garage' })
 end
@@ -361,7 +362,7 @@ RegisterNetEvent('coe_garages:store', function(garageId, spotId, netId)
 		end
 	end
 	audit('garage_vehicle_stored', { operation = garageId, plate = record.plate, character_id = who.characterId })
-	notify(playerId, 'success', ('%s guardado.'):format(record.plate))
+	notify(playerId, 'success', _t('vehicle_stored', { plate = record.plate }))
 end)
 
 AddEventHandler('playerDropped', function()
@@ -708,9 +709,9 @@ end)
 RegisterCommand('coe_fleet_add', function(playerId, args)
 	local record, errorCode = addFleetVehicle(args[1], args[2], args[3])
 	if not record then
-		return reply(playerId, 'error', ('Uso: coe_fleet_add <garagem> <modelo> [placa] (%s)'):format(tostring(errorCode)))
+		return reply(playerId, 'error', _t('fleet_add_usage', { error = tostring(errorCode) }))
 	end
-	reply(playerId, 'success', ('%s (%s) entrou na frota de %s.'):format(record.model, record.plate, args[1]))
+	reply(playerId, 'success', _t('fleet_added', { model = record.model, plate = record.plate, garage = args[1] }))
 end, true)
 
 AddEventHandler('playerDropped', function()

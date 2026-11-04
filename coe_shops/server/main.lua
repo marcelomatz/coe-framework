@@ -1,6 +1,7 @@
 -- coe_shops (servidor): lojas de conveniência como negócios. Sem dono (da staff): estoque infinito e preço de tabela.
 -- Com dono (jogador): vende o que a equipe pôs na prateleira, pelo preço do dono. A receita vai para o caixa do negócio.
 local config = ShopsConfig
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k, p) local s = (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k; if p then for pk, pv in pairs(p) do s = s:gsub('%%{' .. pk .. '}', tostring(pv)) end end; return s end
 local catalog = assert(ShopsRules.Catalog(config))
 
 local ready = false
@@ -304,7 +305,7 @@ local function buy(playerId, character, store, cart, payment)
 		units = quote.units, lines = encodeLines(quote.lines), at = os.time()
 	})
 	audit('shop_sale', { character_id = character.id, target = store.id, count = quote.total, operation = paid.method })
-	notify(playerId, 'success', ('%s: compra de %s concluída.'):format(store.label, money(quote.total)))
+	notify(playerId, 'success', _t('purchase_success', { store = store.label, total = money(quote.total) }))
 	return { ok = true, total = quote.total, units = quote.units }
 end
 

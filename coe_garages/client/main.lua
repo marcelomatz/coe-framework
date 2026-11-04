@@ -1,4 +1,5 @@
 local stations = {}
+local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 local menuOpen = false
 local busy = false
 local current = nil
@@ -200,8 +201,8 @@ CreateThread(function()
 			if current then
 				local inVehicle = GetVehiclePedIsIn(PlayerPedId(), false) ~= 0
 				setPrompt({
-					title = current.title or 'Garagem', subtitle = current.label or '',
-					options = { { key = 'E', label = inVehicle and 'Guardar veículo' or 'Abrir garagem' } }
+					title = current.title or _t('prompt_title'), subtitle = current.label or '',
+					options = { { key = 'E', label = inVehicle and _t('prompt_store') or _t('prompt_open') } }
 				})
 			else
 				setPrompt(nil)

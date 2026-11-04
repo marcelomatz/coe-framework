@@ -1,0 +1,33 @@
+Locales = (type(Locales) == 'table' and Locales) or {}
+
+Locales['en-US'] = {
+	not_ready = 'Service still starting.',
+	no_station = 'Garage unavailable.',
+	too_far = 'Get closer to the parking spot.',
+	vehicle_not_found = 'Vehicle not found.',
+	not_registered = 'This vehicle is not registered.',
+	not_stored = 'Vehicle is not stored.',
+	not_yours = 'This vehicle is not yours.',
+	other_garage = 'This vehicle is stored in another garage.',
+	not_in_fleet = 'This vehicle does not belong to this business.',
+	no_access = 'You do not have access to this vehicle.',
+	garage_full = 'Your garage has no free spots for this vehicle type.',
+	not_owner = 'Only the business owner can do this.',
+	invalid_state_id = 'Invalid ID.',
+	character_not_found = 'ID not found.',
+	access_limit = 'Maximum number of people with access reached.',
+	already_spawned = 'Vehicle is already out on the street.',
+	spawn_failed = 'Could not retrieve vehicle.',
+	spawn_blocked = 'The parking spot is blocked.',
+	vehicle_not_spawned = 'Vehicle cannot be stored here.',
+	database_error = 'Database error. Please try again.',
+	forbidden = 'Garage lacks permission to store vehicles (missing ACE coe.vehicles.write for coe_garages).',
+	store_expired = 'Try storing again.',
+	action_failed = 'Could not complete action.',
+	vehicle_stored = '%{plate} stored.',
+	fleet_add_usage = 'Usage: coe_fleet_add <garage> <model> [plate] (%{error})',
+	fleet_added = '%{model} (%{plate}) added to fleet of %{garage}.',
+	prompt_title = 'Garage',
+	prompt_store = 'Store vehicle',
+	prompt_open = 'Open garage'
+}
