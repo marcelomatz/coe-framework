@@ -107,7 +107,7 @@ Export server `Memberships` (server/main.lua).
 
 ### `PauseMenuFaction(characterId)`
 
-Facção no dossiê do menu de pausa (coe_pausemenu:RegisterFactionProvider): a primeira facção ativa do personagem.
+Facção no dossiê de identidade: a primeira facção ativa do personagem.
 
 | Parâmetro | Tipo | Descrição |
 |---|---|---|

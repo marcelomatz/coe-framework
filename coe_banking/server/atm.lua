@@ -17,6 +17,15 @@ local debit = function(...) return Banking.debit(...) end
 local credit = function(...) return Banking.credit(...) end
 local ownCard = function(...) return Banking.ownCard(...) end
 local hashKey = function(...) return Banking.hashKey(...) end
+local inventoryOf = function(...) return Banking.inventoryOf(...) end
+local remote = function(...) return Banking.remote(...) end
+local creditTierOf = function(...) return Banking.creditTierOf(...) end
+local balanceOf = function(...) return Banking.balanceOf(...) end
+local cashOf = function(...) return Banking.cashOf(...) end
+local guarded = function(...) return Banking.guarded(...) end
+local _t = function(...) return Banking.t(...) end
+local money = function(...) return Banking.money(...) end
+local atmSessions = Banking.atmSessions
 
 local function cardInHand(playerId, cardId)
 	local inventoryId = inventoryOf(playerId)

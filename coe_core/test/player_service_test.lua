@@ -265,9 +265,43 @@ local function testInitialAppearance()
 	assertEqual(noSession ~= nil, true, 'requires a selection session')
 end
 
+local function testSessionValidation()
+	local okNoSession, errNoSession = Core.Players.ValidateSession(999, '1')
+	assertEqual(okNoSession, false, 'unknown session rejected')
+	assertEqual(errNoSession, 'character_not_loaded', 'unknown session error code')
+
+	Core.Players.Disconnect(42)
+
+	local loaded
+	Core.Players.LoadSession(99, 'license:session-val-test', function(success) loaded = success end)
+	assertEqual(loaded, true, 'session 99 loaded')
+
+	local selected
+	Core.Players.SelectCharacter(99, '10', function(success) selected = success end)
+	assertEqual(selected, true, 'character 10 selected for session 99')
+
+	local gen = Core.Players.GetSessionGeneration(99)
+	assertEqual(type(gen) == 'number' and gen > 0, true, 'session generation is a positive number')
+
+	local okValid, charData = Core.Players.ValidateSession(99, '10', gen)
+	assertEqual(okValid, true, 'valid session passes validation')
+	assertEqual(charData.characterId, '10', 'validated character id matches')
+
+	local okMismatch, errMismatch = Core.Players.ValidateSession(99, '9999', gen)
+	assertEqual(okMismatch, false, 'character mismatch rejected')
+	assertEqual(errMismatch, 'character_mismatch', 'character mismatch error code')
+
+	local okStaleGen, errStaleGen = Core.Players.ValidateSession(99, '10', gen + 99)
+	assertEqual(okStaleGen, false, 'stale generation rejected')
+	assertEqual(errStaleGen, 'stale_session', 'stale generation error code')
+
+	Core.Players.Disconnect(99)
+end
+
 testLoadCreateSelectAndArchive()
 testCharacterSlots()
 testCharacterProfile()
 testInitialAppearance()
 testDuplicatePlayerAndStaleAsyncCompletion()
+testSessionValidation()
 print('player service tests passed')

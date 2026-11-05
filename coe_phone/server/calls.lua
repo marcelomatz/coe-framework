@@ -13,6 +13,11 @@ local signalOf = function(...) return Phone.signalOf(...) end
 local offline = function(...) return Phone.offline(...) end
 local nameFor = function(...) return Phone.nameFor(...) end
 local format = function(...) return Phone.format(...) end
+local calls = Phone.calls
+local playerCall = Phone.playerCall
+local prefsOf = function(...) return Phone.prefsOf(...) end
+local contactsOf = function(...) return Phone.contactsOf(...) end
+local _t = function(...) return Phone.t(...) end
 
 local function sendState(call, side, state, reason)
 	local self = call[side]

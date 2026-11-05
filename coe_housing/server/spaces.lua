@@ -10,6 +10,13 @@ local log = function(...) return Housing.log(...) end
 local audit = function(...) return Housing.audit(...) end
 local isMember = function(...) return Housing.isMember(...) end
 local remote = function(...) return Housing.remote(...) end
+local adminOnly = function(...) return Housing.adminOnly(...) end
+local isReady = function() return Housing.isReady() end
+local packResult = function(...) return Housing.packResult(...) end
+local businessLabel = function(...) return Housing.businessLabel(...) end
+local leaseOf = function(...) return Housing.leaseOf(...) end
+local tenancyOf = function(...) return Housing.tenancyOf(...) end
+local spaceOwner = function(...) return Housing.spaceOwner(...) end
 local HousingPersistence = HousingPersistence
 local HousingInteriors = HousingInteriors
 
@@ -25,7 +32,7 @@ exports('InteriorThumbs', function()
 	if not adminOnly() then
 		return { error = 'forbidden' }
 	end
-	if not ready then
+	if not isReady() then
 		return { error = 'not_ready' }
 	end
 	local map, errorCode = HousingPersistence.ListThumbs()
@@ -36,7 +43,7 @@ exports('SaveInteriorThumb', function(interiorId, image)
 	if not adminOnly() then
 		return { error = 'forbidden' }
 	end
-	if not ready then
+	if not isReady() then
 		return { error = 'not_ready' }
 	end
 	local valid, errorCode = HousingRegistry.Thumb(interiorId, image, HousingInteriors.byId, config.Limits.MaxThumbBytes)
@@ -98,7 +105,7 @@ end)
 
 -- Imóveis comerciais de um negócio (alugados ou cedidos), para o tablet de negócios.
 exports('BusinessProperties', function(businessId)
-	if config.BusinessResources[GetInvokingResource() or ''] ~= true or not ready or type(businessId) ~= 'string' then
+	if config.BusinessResources[GetInvokingResource() or ''] ~= true or not isReady() or type(businessId) ~= 'string' then
 		return {}
 	end
 	local now = os.time()
@@ -121,7 +128,7 @@ end)
 -- Endereço = imóvel + dono do espaço (o mesmo do baú). Só resources de config.DeliveryCallers.
 
 local function deliveryCaller()
-	return config.DeliveryCallers[GetInvokingResource() or ''] == true and ready
+	return config.DeliveryCallers[GetInvokingResource() or ''] == true and isReady()
 end
 
 -- Endereços em que o personagem pode receber: moradias, comerciais dos negócios em que trabalha e imóveis ilegais
@@ -207,41 +214,7 @@ exports('PlayersInSpace', function(propertyId, owner)
 	return list
 end)
 
-CreateThread(function()
-	local waitingLogged = false
-	while true do
-		local initialized, errorCode = HousingPersistence.Initialize()
-		if initialized then
-			break
-		end
-		if errorCode == 'database_not_ready' then
-			if not waitingLogged then
-				log('info', 'persistence', 'database_waiting', {})
-				waitingLogged = true
-			end
-			Wait(1000)
-		else
-			log('error', 'persistence', 'database_initialization_failed', { error_code = errorCode or 'database_error', retry_ms = 5000 })
-			Wait(5000)
-		end
-	end
-	local dependenciesLogged = false
-	while not (GetResourceState('coe_economy') == 'started' and exports.coe_economy:IsReady()) do
-		if not dependenciesLogged then
-			log('info', 'system', 'housing_waiting', {})
-			dependenciesLogged = true
-		end
-		Wait(1000)
-	end
-	rebuild()
-	ready = true
-	log('info', 'system', 'housing_ready', {})
-	broadcast()
-	while true do
-		Wait(config.TickMs)
-		tick()
-	end
-end)
+
 
 -- Provedor dos imóveis comerciais no app do negócio (coe_businesses:RegisterProvider 'properties'): aba Propriedades.
 -- De novo sempre que o coe_businesses reiniciar.

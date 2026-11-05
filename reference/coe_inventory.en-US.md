@@ -168,6 +168,19 @@ Counts total quantity of an item matching optional metadata filters.
 - `integer|nil` `count`
 - `string|nil` `errorCode`
 
+### `FlushInventory(id)`
+
+Forces immediate database write for an inventory with pending Write-Behind transactions. Server-side.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | `string` | Inventory identifier |
+
+**Returns**
+
+- `boolean` `ok`
+- `string|nil` `errorCode`
+
 ### `GetPersistenceStats()`
 
 Returns telemetry metrics for inventory write-behind persistence and memory cache.

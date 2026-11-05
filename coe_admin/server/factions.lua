@@ -7,10 +7,6 @@ local getPermissions = function(...) return Admin.getPermissions(...) end
 local refreshPanel = function(...) return Admin.refreshPanel(...) end
 local exportError = function(...) return Admin.exportError(...) end
 
-	sendResult(playerId, 'fleetRemove', requestId, true, 'Veículo removido da frota.')
-	refreshPanel(playerId)
-end)
-
 local factionErrors = {
 	not_ready = 'O serviço de facções ainda está iniciando.', forbidden = 'Ação não permitida.',
 	database_error = 'Falha ao gravar no banco.', invalid_faction = 'Dados da facção inválidos.',

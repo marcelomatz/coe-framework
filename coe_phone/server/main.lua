@@ -530,6 +530,9 @@ Phone = {
 	offline = offline,
 	soundOf = soundOf,
 	banking = banking,
+	calls = calls,
+	playerCall = playerCall,
+	t = _t,
 	CALL_DISPATCH = {},
 	WALLET_DISPATCH = {}
 }
@@ -555,6 +558,10 @@ local function answer(...) return Phone.answer(...) end
 local function hangup(...) return Phone.hangup(...) end
 local CALL_DISPATCH = setmetatable({}, { __index = function(_, k) return Phone.CALL_DISPATCH[k] end })
 
+local Native = {
+	calls = CALL_DISPATCH,
+	wallet = WALLET_DISPATCH,
+}
 
 Native.messages = {
 	threads = function(me)
@@ -782,8 +789,6 @@ local function confirmOwner(...) return Phone.confirmOwner(...) end
 local function newToken(...) return Phone.newToken(...) end
 local function walletLocked(...) return Phone.walletLocked(...) end
 local WALLET_DISPATCH = setmetatable({}, { __index = function(_, k) return Phone.WALLET_DISPATCH[k] end })
-
-}
 
 -- Chips (itens) no inventário do personagem: { { item, display } }.
 local function simItems(characterId)

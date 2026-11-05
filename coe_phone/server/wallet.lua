@@ -107,7 +107,7 @@ local function walletLocked(me, run)
 	return result
 end
 
-Native.wallet = {
+local WALLET_DISPATCH = {
 	list = function(me)
 		local view, errorCode = walletView(me)
 		if not view then
@@ -300,12 +300,7 @@ Native.wallet = {
 		return { ok = true, data = { token = token, expires = config.Wallet.PaymentSeconds } }
 	end
 }
-local simErrors = {
-	invalid_sim = 'Este chip não funciona.',
-	in_call = 'Encerre a ligação antes de trocar o chip.',
-	no_free_sim_slot = 'Não há espaço para outro chip neste celular. Retire o atual em Ajustes.',
-	inventory_unavailable = 'O inventário não respondeu. Tente de novo.',
-	slot_changed = 'O chip não está mais nesse lugar do inventário.'
+
 Phone.walletView = walletView
 Phone.inWallet = inWallet
 Phone.confirmOwner = confirmOwner

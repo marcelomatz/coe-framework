@@ -66,7 +66,7 @@ local function setPhase(phase)
 end
 
 -- Volta para "vara na mão" (sem lance), sem guardar a vara.
-function cancelFishing(notifyServer)
+local function cancelFishing(notifyServer)
 	local state = fishingState
 	fishingState = nil
 	work.busy = false
@@ -80,7 +80,7 @@ function cancelFishing(notifyServer)
 	end
 end
 
-function putAwayRod()
+local function putAwayRod()
 	if not rod then
 		return
 	end

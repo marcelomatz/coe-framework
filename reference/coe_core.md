@@ -50,6 +50,21 @@ Jogador online pelo stateId. Server.
 - `table|nil` `snapshot`
 - `string|nil` `errorCode`
 
+### `ValidateSession(source, expectedCharacterId, expectedGeneration)`
+
+Valida se a sessão do jogador ainda corresponde ao personagem e à geração esperados (proteção contra reciclagem de source no FiveM Enhanced). Server.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `source` | `integer` |  |
+| `expectedCharacterId` | `string\|nil` |  |
+| `expectedGeneration` | `integer\|nil` |  |
+
+**Retorno**
+
+- `boolean` `ok`
+- `table|string` `resultOrError` — Snapshot do personagem se válido, ou código de erro
+
 ### `GetGroupDefinitions()`
 
 Definições de grupos carregadas do config. Server.

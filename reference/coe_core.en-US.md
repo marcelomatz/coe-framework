@@ -50,6 +50,21 @@ Retrieves online player data by character stateId. Server-side.
 - `table|nil` `snapshot`
 - `string|nil` `errorCode`
 
+### `ValidateSession(source, expectedCharacterId, expectedGeneration)`
+
+Validates that a player session still matches the expected active character and session generation (defense against FiveM Enhanced immediate source ID recycling). Server-side.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `source` | `integer` | Player server ID |
+| `expectedCharacterId` | `string\|nil` | Expected active character ID |
+| `expectedGeneration` | `integer\|nil` | Expected session generation counter |
+
+**Returns**
+
+- `boolean` `ok`
+- `table|string` `resultOrError` — Character snapshot if valid, or error code
+
 ### `GetGroupDefinitions()`
 
 Returns all permission and organizational group definitions configured on the server. Server-side.

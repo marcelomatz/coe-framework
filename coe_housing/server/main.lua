@@ -1098,7 +1098,22 @@ Housing = {
 	canFunds = canFunds,
 	businessLabel = businessLabel,
 	societyBalance = societyBalance,
-	bucketOf = bucketOf
+	bucketOf = bucketOf,
+	adminOnly = adminOnly,
+	isReady = function() return ready end,
+	sorted = sorted,
+	usedUnits = usedUnits,
+	packResult = packResult,
+	saveProperty = saveProperty,
+	deleteProperty = deleteProperty,
+	evict = evict,
+	endLease = endLease,
+	leaseOf = leaseOf,
+	tenancyOf = tenancyOf,
+	spaceOwner = spaceOwner,
+	expelWithoutAccess = expelWithoutAccess,
+	exitPlayer = exitPlayer,
+	broadcast = broadcast
 }
 
 local function _loadSub(relPath)
@@ -1297,3 +1312,39 @@ exports('TabletCall', function(playerId, appId, action, payload)
 end)
 
 -- Catálogo de interiores nativos (shared/interiors.lua), para o admin escolher o interior de cada imóvel.
+
+CreateThread(function()
+	local waitingLogged = false
+	while true do
+		local initialized, errorCode = HousingPersistence.Initialize()
+		if initialized then
+			break
+		end
+		if errorCode == 'database_not_ready' then
+			if not waitingLogged then
+				log('info', 'persistence', 'database_waiting', {})
+				waitingLogged = true
+			end
+			Wait(1000)
+		else
+			log('error', 'persistence', 'database_initialization_failed', { error_code = errorCode or 'database_error', retry_ms = 5000 })
+			Wait(5000)
+		end
+	end
+	local dependenciesLogged = false
+	while not (GetResourceState('coe_economy') == 'started' and exports.coe_economy:IsReady()) do
+		if not dependenciesLogged then
+			log('info', 'system', 'housing_waiting', {})
+			dependenciesLogged = true
+		end
+		Wait(1000)
+	end
+	rebuild()
+	ready = true
+	log('info', 'system', 'housing_ready', {})
+	broadcast()
+	while true do
+		Wait(config.TickMs)
+		tick()
+	end
+end)

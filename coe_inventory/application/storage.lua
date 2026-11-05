@@ -182,6 +182,16 @@ function S.flushInventories()
 	return flushed
 end
 
+-- Força a barreira transacional / flush imediato de um inventário pendente em Write-Behind.
+function S.flushInventorySync(inventoryId)
+	if not inventoryId then return false, 'invalid_inventory' end
+	local inventory = S.dirtyInventories[inventoryId]
+	if not inventory then
+		return true
+	end
+	return S.persistInventory(inventory)
+end
+
 -- Remove do cache inventários ociosos (a próxima consulta recarrega do banco). Nunca toca em
 -- inventários com escrita pendente ou em andamento.
 function S.evictIdleInventories()

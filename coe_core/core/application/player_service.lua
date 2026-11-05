@@ -233,6 +233,32 @@ function Core.Players.GetActiveCharacterId(source)
 	return character.characterId
 end
 
+-- Valida se a sessão do jogador ainda corresponde ao personagem e à geração esperados (proteção contra reciclagem de source no FiveM Enhanced).
+function Core.Players.ValidateSession(source, expectedCharacterId, expectedGeneration)
+	if not Core.Functions.IsInteger(source) or source < 1 then
+		return false, 'invalid_source'
+	end
+	local session = Core.SessionRegistry.Get(source)
+	if not session or session.state ~= 'character_loaded' or not session.character then
+		return false, 'character_not_loaded'
+	end
+	if expectedGeneration and session.generation ~= expectedGeneration then
+		return false, 'stale_session'
+	end
+	if expectedCharacterId and session.character.characterId ~= expectedCharacterId then
+		return false, 'character_mismatch'
+	end
+	return true, makeCharacterSnapshot(session.character)
+end
+
+function Core.Players.GetSessionGeneration(source)
+	local session = Core.SessionRegistry.Get(source)
+	if not session then
+		return nil, 'session_not_found'
+	end
+	return session.generation
+end
+
 local function findLoadedSessionByStateId(stateId)
 	if not Core.Identity.IsValidStateId(stateId) then
 		return nil, 'invalid_state_id'

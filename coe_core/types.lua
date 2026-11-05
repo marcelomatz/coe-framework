@@ -31,6 +31,14 @@ function exports_coe_core:GetActiveCharacter(source) end
 ---@return string|nil errorCode
 function exports_coe_core:GetPlayerByStateId(stateId) end
 
+---Valida se a sessão do jogador ainda corresponde ao personagem e à geração esperados (proteção contra reciclagem de source no FiveM Enhanced). Server.
+---@param source integer
+---@param expectedCharacterId string|nil
+---@param expectedGeneration integer|nil
+---@return boolean ok
+---@return table|string resultOrError Snapshot do personagem se válido, ou código de erro
+function exports_coe_core:ValidateSession(source, expectedCharacterId, expectedGeneration) end
+
 ---Definições de grupos carregadas do config. Server.
 ---@return CoeGroupDefinition[]
 function exports_coe_core:GetGroupDefinitions() end

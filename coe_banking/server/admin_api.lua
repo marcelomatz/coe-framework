@@ -15,6 +15,19 @@ local loanView = function(...) return Banking.loanView(...) end
 local withCreditLock = function(...) return Banking.withCreditLock(...) end
 local settleCredit = function(...) return Banking.settleCredit(...) end
 local hashKey = function(...) return Banking.hashKey(...) end
+local balanceOf = function(...) return Banking.balanceOf(...) end
+local cardView = function(...) return Banking.cardView(...) end
+local credit = function(...) return Banking.credit(...) end
+local money = function(...) return Banking.money(...) end
+local notifyDebtors = function(...) return Banking.notifyDebtors(...) end
+local _t = function(...) return Banking.t(...) end
+local requestView = function(...) return Banking.requestView(...) end
+local businessDebtors = function(...) return Banking.businessDebtors(...) end
+local debtorsScore = function(...) return Banking.debtorsScore(...) end
+local remote = function(...) return Banking.remote(...) end
+local settleDueLoan = function(...) return Banking.settleDueLoan(...) end
+local applyTiers = function(...) return Banking.applyTiers(...) end
+local isReady = function() return Banking.isReady() end
 
 -- Admin (só coe_admin; a permissão da staff é checada lá) --------------------------------------------
 
@@ -43,16 +56,6 @@ local function tierList()
 	return list
 end
 
-local function applyTiers(stored)
-	for _, tier in ipairs(creditConfig.Tiers) do
-		local saved = stored[tier.id]
-		if saved then
-			tier.label, tier.minScore, tier.limit = saved.label, saved.minScore, saved.limit
-			tier.pointsPer100, tier.fee, tier.freeAtm = saved.pointsPer100, saved.fee, saved.freeAtm
-		end
-	end
-end
-
 local function staffNotify(characterId, kind, message)
 	local playerId = playerOf(characterId)
 	if playerId then
@@ -79,7 +82,7 @@ exports('AdminSaveTiers', function(list)
 	if not adminOnly() then
 		return { error = 'forbidden' }
 	end
-	if not ready then
+	if not isReady() then
 		return { error = 'not_ready' }
 	end
 	local clean, errorCode = CreditRules.ValidateTiers(list, creditConfig)
@@ -102,8 +105,8 @@ exports('AdminAccount', function(characterId)
 		return { error = 'forbidden' }
 	end
 	characterId = characterIdOf(characterId)
-	if not ready or not characterId then
-		return { error = not ready and 'not_ready' or 'character_not_found' }
+	if not isReady() or not characterId then
+		return { error = not isReady() and 'not_ready' or 'character_not_found' }
 	end
 	local balance = balanceOf(characterId)
 	if not balance then
@@ -127,7 +130,7 @@ exports('AdminSetCredit', function(characterId, data)
 		return { error = 'forbidden' }
 	end
 	characterId = characterIdOf(characterId)
-	if not ready or not characterId or type(data) ~= 'table' or not balanceOf(characterId) then
+	if not isReady() or not characterId or type(data) ~= 'table' or not balanceOf(characterId) then
 		return { error = 'character_not_found' }
 	end
 	local tier = CreditRules.Tier(creditConfig, data.tier)
@@ -174,7 +177,7 @@ exports('AdminPoints', function(characterId, delta)
 	end
 	characterId = characterIdOf(characterId)
 	delta = wholeNumber(delta, -10000000, 10000000)
-	if not ready or not characterId or not delta or delta == 0 then
+	if not isReady() or not characterId or not delta or delta == 0 then
 		return { error = 'invalid_amount' }
 	end
 	local result, resultError = withCreditLock(characterId, function()
@@ -197,7 +200,7 @@ exports('AdminCard', function(cardId, action)
 		return { error = 'forbidden' }
 	end
 	local id = BankingRules.CardId(cardId)
-	local card = ready and id and BankingPersistence.Card(id) or nil
+	local card = isReady() and id and BankingPersistence.Card(id) or nil
 	if not card then
 		return { error = 'card_not_found' }
 	end
@@ -223,7 +226,7 @@ exports('AdminGrantLoan', function(characterId, input)
 		return { error = 'forbidden' }
 	end
 	characterId = characterIdOf(characterId)
-	if not ready or not characterId or not balanceOf(characterId) then
+	if not isReady() or not characterId or not balanceOf(characterId) then
 		return { error = 'character_not_found' }
 	end
 	local clean, errorCode = LoanRules.Validate(input, loanConfig)
@@ -270,7 +273,7 @@ exports('AdminForgiveLoan', function(loanId)
 		return { error = 'forbidden' }
 	end
 	loanId = math.tointeger(tonumber(loanId))
-	if not ready or not loanId then
+	if not isReady() or not loanId then
 		return { error = 'loan_not_found' }
 	end
 	local forgiven
@@ -303,7 +306,7 @@ exports('AdminLoanRequests', function()
 	if not adminOnly() then
 		return { error = 'forbidden' }
 	end
-	if not ready then
+	if not isReady() then
 		return { error = 'not_ready' }
 	end
 	local pending = BankingPersistence.Requests('pending', nil, 50)
@@ -336,7 +339,7 @@ exports('AdminDecideRequest', function(requestId, decision)
 		return { error = 'forbidden' }
 	end
 	requestId = math.tointeger(tonumber(requestId))
-	if not ready or not requestId or type(decision) ~= 'table' then
+	if not isReady() or not requestId or type(decision) ~= 'table' then
 		return { error = 'request_not_found' }
 	end
 	local request = BankingPersistence.Request(requestId)
@@ -420,55 +423,3 @@ exports('AdminDecideRequest', function(requestId, decision)
 	}))
 	return true
 end)
-AddEventHandler('playerDropped', function()
-	local playerId = source
-	atmSessions[playerId] = nil
-	agencyOpen[playerId] = nil
-	agencyAccount[playerId] = nil
-	lastAction[playerId] = nil
-	busy[playerId] = nil
-end)
-
-CreateThread(function()
-	local waitingLogged = false
-	while true do
-		local initialized, errorCode = BankingPersistence.Initialize()
-		if initialized then
-			break
-		end
-		if errorCode == 'database_not_ready' or errorCode == 'database_unavailable' then
-			if not waitingLogged then
-				log('info', 'persistence', 'database_waiting', {})
-				waitingLogged = true
-			end
-			Wait(1000)
-		else
-			log('error', 'persistence', 'banking_initialize_failed', { error_code = tostring(errorCode) })
-			return
-		end
-	end
-	-- Níveis: a tabela manda; vazia, grava os padrões do config.lua.
-	local stored = BankingPersistence.Tiers()
-	if stored and next(stored) == nil then
-		BankingPersistence.SaveTiers(creditConfig.Tiers, os.time())
-	elseif stored then
-		applyTiers(stored)
-	end
-	ready = true
-	log('info', 'banking', 'ready', {})
-	-- Fechamento, vencimento, juros e débito automático das contas de crédito, mesmo com o jogador offline.
-	while true do
-		Wait(creditConfig.TickSeconds * 1000)
-		local now = os.time()
-		for _, characterId in ipairs(BankingPersistence.CreditPending(now, now - creditConfig.AutoDebitDays * 86400, 100) or {}) do
-			withCreditLock(characterId, function()
-				return settleCredit(characterId)
-			end)
-		end
-		for _, loanId in ipairs(BankingPersistence.LoansDue(now, 100) or {}) do
-			settleDueLoan(loanId)
-		end
-	end
-end)
-
--- Carteira digital (smartphone) e compras no crédito ----------------------------------------------

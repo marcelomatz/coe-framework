@@ -3,8 +3,7 @@
 > Gerado de `coe_supervisor/types.lua` por `tools/gen_reference.lua`. Não edite à mão.
 
 Exports server-only. List/Restart/GetUpdateStatus/CheckForUpdates/ApplyUpdate exigem a ACE `coe.supervisor`
-(padrão: coe_staff). WriteFile/ReadFile/HashFile/DownloadFile/CommitFile/DiscardFile/VerifySignature são internos:
-só o próprio coe_supervisor pode chamá-los.
+(padrão: coe_staff). Operações de filesystem em fs_writer.js são estritamente internas e não são expostas publicamente.
 
 ## Exports
 
@@ -49,104 +48,6 @@ Consulta o repositório oficial por novas versões do COE Framework.
 **Retorno**
 
 - `CoeSupervisorUpdateStatus|nil` `status` — `nil` para chamador não autorizado
-
-### `WriteFile(resource, relPath, content, isBinary)`
-
-Interno. Grava um arquivo dentro de um resource (Node.js). Recusa outro chamador e caminho fora do resource.
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `resource` | `string` | Nome do resource de destino |
-| `relPath` | `string` | Caminho relativo dentro do resource (sem `..`, sem caminho absoluto) |
-| `content` | `string` | Conteúdo do arquivo |
-| `isBinary` | `boolean\|nil` | Se o arquivo é binário (ex.: imagem/áudio) |
-
-**Retorno**
-
-- `boolean` `ok`
-
-### `ReadFile(resource, relPath)`
-
-Interno. Lê um arquivo de texto dentro de um resource (Node.js).
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `resource` | `string` |  |
-| `relPath` | `string` |  |
-
-**Retorno**
-
-- `string|nil` `content`
-
-### `HashFile(resource, relPath, isBinary)`
-
-Interno. SHA-256 (hex) de um arquivo instalado; texto com CRLF normalizado para LF.
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `resource` | `string` |  |
-| `relPath` | `string` |  |
-| `isBinary` | `boolean\|nil` |  |
-
-**Retorno**
-
-- `string|nil` `sha256`
-
-### `DownloadFile(url, resource, relPath, sha256, cb)`
-
-Interno. Baixa por HTTPS (hosts do GitHub) para `<arquivo>.coe-new` e só conclui se o SHA-256 bater.
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `url` | `string` | URL HTTPS do arquivo |
-| `resource` | `string` |  |
-| `relPath` | `string` |  |
-| `sha256` | `string` | SHA-256 esperado (hex, 64 caracteres) |
-| `cb` | `fun(ok:` | boolean, err: string\|nil) Callback de conclusão |
-
-**Retorno**
-
-- `boolean` `started` — Se o download foi iniciado
-
-### `CommitFile(resource, relPath)`
-
-Interno. Move o download conferido (`<arquivo>.coe-new`) para o lugar definitivo.
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `resource` | `string` |  |
-| `relPath` | `string` |  |
-
-**Retorno**
-
-- `boolean` `ok`
-
-### `DiscardFile(resource, relPath)`
-
-Interno. Descarta um download conferido que não será aplicado.
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `resource` | `string` |  |
-| `relPath` | `string` |  |
-
-**Retorno**
-
-- `boolean` `ok`
-
-### `VerifySignature(body, signature, publicKeyPem)`
-
-Interno. Confere a assinatura Ed25519 (base64) do version.json com a chave pública em PEM.
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `body` | `string` |  |
-| `signature` | `string` |  |
-| `publicKeyPem` | `string` |  |
-
-**Retorno**
-
-- `boolean` `ok`
 
 ### `ApplyUpdate(requester)`
 
