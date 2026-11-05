@@ -10,24 +10,6 @@ local characterDirectory = Admin.characterDirectory
 local activeCharacter = function(...) return Admin.activeCharacter(...) end
 local garagesList = function(...) return Admin.garagesList(...) end
 
-	local removed, removeError = AdminPersistence.RemoveRole(license)
-	if not removed then
-		log('error', 'audit', 'staff_role_removal_failed', {
-			error_code = removeError or 'database_error',
-			source = playerId
-		})
-		sendResult(playerId, 'removeStaff', requestId, false, removeError or 'Não foi possível salvar a equipe.')
-		return
-	end
-	members[license] = nil
-	log('info', 'audit', 'staff_role_removed', {
-		source = playerId
-	})
-
-	sendResult(playerId, 'removeStaff', requestId, true, 'Acesso removido.')
-	refreshPanel(playerId)
-end)
-
 local businessErrors = {
 	invalid_business = 'Dados do negócio inválidos.', invalid_id = 'ID inválido: use letras minúsculas, números e _ (2 a 32).',
 	invalid_category = 'Categoria inválida.', invalid_label = 'Nome inválido (1 a 48 caracteres, sem < >).',

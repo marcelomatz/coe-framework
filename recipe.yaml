@@ -72,6 +72,8 @@ tasks:
 
       ## OneSync & FiveM Enhanced Settings (DX12 / Gen9)
       onesync on
+      set sv_entityLockdown "full"
+      set sv_syncTickRate 60
 
       ## Sistema de Voz 3D Nativo Enhanced (Zero-lag interno)
       voice_internal

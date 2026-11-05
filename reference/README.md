@@ -12,7 +12,7 @@
 | [coe_banking](coe_banking.md) | `AdminAccount`, `AdminBusinessAccount`, `AdminBusinessAccounts`, `AdminBusinessAdjust`, `AdminBusinessCardLimit`, `AdminCard`, `AdminDecideRequest`, `AdminForgiveLoan`, `AdminGrantLoan`, `AdminLoanRequests`, `AdminPoints`, `AdminSaveTiers`, `AdminSetCredit`, `AdminTiers`, `BusinessTablet`, `CardPurchase`, `CardRefund`, `PosCards`, `PosPurchase`, `ShopCharge`, `ShopOptions`, `ShopRefund`, `TabletCall`, `TabletVisible`, `WalletCards`, `WalletEligible`, `WalletIssueVirtual`, `WalletLink` |
 | [coe_businesses](coe_businesses.md) | `IsReady`, `Categories`, `RuleSchema`, `List`, `Get`, `Save`, `Seed`, `Delete`, `ClockIn`, `ClockOut`, `Clock`, `IsOnDuty`, `DutySummary`, `CurrentDuty`, `Access`, `Partners`, `Debtors`, `Permissions`, `RegisterPermissions`, `Grades`, `GradeOf`, `Can`, `Salary`, `Payroll`, `RegisterTab`, `RegisterProvider`, `TabletInstances`, `TabletCall` |
 | [coe_characters](coe_characters.md) | `IsOpen`, `CloseSelection` |
-| [coe_core](coe_core.md) | `GetCoreObject`, `GetCharacterByStateId`, `GetActiveCharacter`, `GetPlayerByStateId`, `GetGroupDefinitions`, `GetPlayerGroups`, `SetPlayerGroup`, `RemovePlayerGroup` |
+| [coe_core](coe_core.md) | `GetCoreObject`, `GetCharacterByStateId`, `GetActiveCharacter`, `GetPlayerByStateId`, `ValidateSession`, `GetGroupDefinitions`, `GetPlayerGroups`, `SetPlayerGroup`, `RemovePlayerGroup` |
 | [coe_crafting](coe_crafting.md) | `AdminCatalog`, `AdminDeleteBench`, `AdminDeleteMenu`, `AdminDeleteRecipe`, `AdminSaveBench`, `AdminSaveMenu`, `AdminSaveRecipe`, `AdminSetBusinessMenu`, `Begin`, `Busy`, `Cancel`, `Close`, `Complete`, `List`, `ListRecipes`, `Open`, `RegisterBench`, `RegisterRecipe`, `RemoveRecipe` |
 | [coe_crypto](coe_crypto.md) | `IsReady`, `Price`, `Balance`, `IsAddress`, `Format`, `MintMining`, `ComputerCall`, `HeldWallets`, `EscrowLock`, `EscrowRelease`, `ReserveAddress`, `AdminOverview`, `AdminInspect`, `AdminSaveSettings`, `AdminResetSettings`, `AdminSetPrice`, `TabletVisible`, `TabletCall` |
 | [coe_database](coe_database.md) | `Query`, `Execute`, `Transaction`, `IsReady` |
@@ -28,7 +28,7 @@
 | [coe_handling](coe_handling.md) | `GetTyre`, `SetTyre`, `ListTyres`, `ListClasses`, `GetModifiers`, `IsReady` |
 | [coe_housing](coe_housing.md) | `AddressActive`, `BeginPreview`, `BusinessProperties`, `CurrentSpace`, `DeleteProperty`, `DeliveryAddresses`, `EndContract`, `EndPreview`, `InteriorThumbs`, `Interiors`, `IsReady`, `ListProperties`, `PlayersInSpace`, `PropertyContracts`, `SaveInteriorThumb`, `SaveProperty`, `TabletCall`, `TabletVisible` |
 | [coe_hud](coe_hud.md) | `SetHidden`, `IsHidden`, `SetLogoVisible`, `IsLogoVisible`, `ToggleLogo` |
-| [coe_inventory](coe_inventory.md) | `CreateInventory`, `DeleteInventory`, `GetInventory`, `GetSlot`, `SwapSlots`, `SplitItem`, `AddItem`, `RemoveItem`, `UseItem`, `SetItemMetadata`, `GetItemCount`, `GetPersistenceStats`, `OpenStash`, `RemoveItemByName`, `RemoveItemsByMetadata`, `RegisterItem`, `Items`, `GetItem`, `GetContainerInventory`, `GetPlayerInventory`, `GetInventoryObject` |
+| [coe_inventory](coe_inventory.md) | `CreateInventory`, `DeleteInventory`, `GetInventory`, `GetSlot`, `SwapSlots`, `SplitItem`, `AddItem`, `RemoveItem`, `UseItem`, `SetItemMetadata`, `GetItemCount`, `FlushInventory`, `GetPersistenceStats`, `OpenStash`, `RemoveItemByName`, `RemoveItemsByMetadata`, `RegisterItem`, `Items`, `GetItem`, `GetContainerInventory`, `GetPlayerInventory`, `GetInventoryObject` |
 | [coe_jobs](coe_jobs.md) | `RegisterJob`, `UnregisterJob`, `ListJobs`, `IsReady`, `GetSession`, `GetProgress`, `GetCareer`, `TabletVisible`, `TabletCall` |
 | [coe_loadscreen](coe_loadscreen.md) | `IsActive`, `Shutdown` |
 | [coe_logging](coe_logging.md) | `Log` |
@@ -46,7 +46,7 @@
 | [coe_rentals](coe_rentals.md) | `GetActiveRental`, `ListStations`, `SaveStation`, `DeleteStation`, `Catalog` |
 | [coe_shops](coe_shops.md) | `IsReady`, `GetShelves`, `IsStore`, `BusinessTablet`, `RegisterPaymentMethod` |
 | [coe_spawn](coe_spawn.md) | `GetStarterHotel`, `SetStarterHotel` |
-| [coe_supervisor](coe_supervisor.md) | `List`, `Restart`, `GetUpdateStatus`, `CheckForUpdates`, `WriteFile`, `ReadFile`, `HashFile`, `DownloadFile`, `CommitFile`, `DiscardFile`, `VerifySignature`, `ApplyUpdate` |
+| [coe_supervisor](coe_supervisor.md) | `List`, `Restart`, `GetUpdateStatus`, `CheckForUpdates`, `ApplyUpdate` |
 | [coe_tablet](coe_tablet.md) | `TabletVisible`, `TabletCall` |
 | [coe_talk](coe_talk.md) | `SetPlayerRadio`, `GetPlayerRadio`, `SetPlayerCall`, `GetPlayerCall`, `GetRadioMembers`, `GetCallMembers`, `GetVoiceRange`, `SetVoiceRange`, `GetRadioChannel`, `SetRadioChannel`, `GetCallChannel`, `SetCallChannel`, `IsTalking`, `IsRadioTransmitting`, `SetVoiceVolume` |
 | [coe_telecom](coe_telecom.md) | `Authorize`, `Charge`, `LineOf`, `TabletCall`, `TabletVisible` |

@@ -160,6 +160,19 @@ Altera chaves da metadata de um item, mantendo as demais. Gravação síncrona.
 - `integer|nil` `count`
 - `string|nil` `errorCode`
 
+### `FlushInventory(id)`
+
+Força a gravação imediata no banco de dados de um inventário com alterações de Write-Behind pendentes. Server.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `id` | `string` |  |
+
+**Retorno**
+
+- `boolean` `ok`
+- `string|nil` `errorCode`
+
 ### `GetPersistenceStats()`
 
 **Retorno**

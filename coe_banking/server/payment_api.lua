@@ -13,6 +13,28 @@ local withCreditLock = function(...) return Banking.withCreditLock(...) end
 local issueVirtual = function(...) return Banking.issueVirtual(...) end
 local ownCard = function(...) return Banking.ownCard(...) end
 local remote = function(...) return Banking.remote(...) end
+local creditTierOf = function(...) return Banking.creditTierOf(...) end
+local character = function(...) return Banking.character(...) end
+local inventoryOf = function(...) return Banking.inventoryOf(...) end
+local throttled = function(...) return Banking.throttled(...) end
+local settleCredit = function(...) return Banking.settleCredit(...) end
+local creditConfig = Banking.creditConfig
+
+local function wholeNumber(value, low, high)
+	value = tonumber(value)
+	if not value or value ~= value or value % 1 ~= 0 or value < low or value > high then
+		return nil
+	end
+	return math.tointeger(value)
+end
+
+local function cardInHand(playerId, cardId)
+	local inventoryId = inventoryOf(playerId)
+	if not inventoryId then
+		return false
+	end
+	return (tonumber(remote('coe_inventory', 'GetItemCount', inventoryId, 'card_bank', { cardId = cardId }, false)) or 0) > 0
+end
 
 local function walletCaller()
 	return config.WalletCallers[GetInvokingResource() or ''] == true

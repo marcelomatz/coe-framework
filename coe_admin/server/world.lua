@@ -10,6 +10,8 @@ local garageBackend = function(...) return Admin.garageBackend(...) end
 local garagesList = function(...) return Admin.garagesList(...) end
 local garageSaveRaw = function(...) return Admin.garageSaveRaw(...) end
 local garageDeleteRaw = function(...) return Admin.garageDeleteRaw(...) end
+local businessGate = function(...) return Admin.businessGate(...) end
+local characterNames = function(...) return Admin.characterNames(...) end
 
 local garageErrors = {
 	no_fleet_garage = 'Só garagens de negócio ou corporação têm frota.', unknown_model = 'Modelo fora do catálogo.',
@@ -258,23 +260,6 @@ local function housingAllowed(playerId)
 end
 
 -- Imobiliária: contratos de um imóvel (com nomes dos moradores) e encerramento pelo admin -------------
-local function characterNames(ids)
-	local names = {}
-	if #ids == 0 then
-		return names
-	end
-	local marks = {}
-	for index = 1, #ids do
-		marks[index] = '?'
-	end
-	local rows = AdminPersistence.Query(('SELECT character_id, state_id, first_name, last_name FROM coe_characters WHERE character_id IN (%s)'):format(table.concat(marks, ',')), ids)
-	for _, row in ipairs(rows or {}) do
-		local name = ('%s %s'):format(row.first_name or '', row.last_name or ''):gsub('^%s+', ''):gsub('%s+$', '')
-		names[tostring(row.character_id)] = { name = name:sub(1, 48), stateId = row.state_id }
-	end
-	return names
-end
-
 RegisterNetEvent('coe_admin:housingContracts', function(requestId, propertyId)
 	local playerId = source
 	if type(requestId) ~= 'number' or type(propertyId) ~= 'string' or not allowAction(playerId) then

@@ -1,3 +1,10 @@
+if not CoeLoggingConfig and type(LoadResourceFile) == 'function' then
+	local chunk = LoadResourceFile(GetCurrentResourceName(), 'config.lua')
+	if chunk then
+		local fn = load(chunk)
+		if fn then fn() end
+	end
+end
 local levels = {
 	debug = 10,
 	info = 20,
@@ -134,7 +141,8 @@ end
 
 local function log(level, category, event, context)
 	local resourceName = GetInvokingResource()
-	if not CoeAccess.Allowed(resourceName, CoeLoggingConfig.Ace, CoeLoggingConfig.AllowedResources) then
+	local cfg = CoeLoggingConfig or {}
+	if not CoeAccess.Allowed(resourceName, cfg.Ace, cfg.AllowedResources) then
 		return false, 'caller_not_allowed'
 	end
 	if not levels[level] then

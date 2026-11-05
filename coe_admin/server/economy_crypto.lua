@@ -7,6 +7,7 @@ local getPermissions = function(...) return Admin.getPermissions(...) end
 local refreshPanel = function(...) return Admin.refreshPanel(...) end
 local businessGate = function(...) return Admin.businessGate(...) end
 local exportError = function(...) return Admin.exportError(...) end
+local characterNames = function(...) return Admin.characterNames(...) end
 
 local craftErrors = {
 	not_ready = 'O serviço de produção ainda está iniciando.', forbidden = 'Ação não permitida.',

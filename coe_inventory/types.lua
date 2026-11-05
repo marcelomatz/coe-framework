@@ -107,6 +107,12 @@ function exports_coe_inventory:SetItemMetadata(id, slot, patch) end
 ---@return string|nil errorCode
 function exports_coe_inventory:GetItemCount(id, itemName, metadata, strict) end
 
+---Força a gravação imediata no banco de dados de um inventário com alterações de Write-Behind pendentes. Server.
+---@param id string
+---@return boolean ok
+---@return string|nil errorCode
+function exports_coe_inventory:FlushInventory(id) end
+
 ---@return CoePersistenceStats
 function exports_coe_inventory:GetPersistenceStats() end
 

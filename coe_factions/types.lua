@@ -50,7 +50,7 @@ function exports_coe_factions:Members(factionId) end
 ---@return any
 function exports_coe_factions:Memberships(characterId) end
 
----Facção no dossiê do menu de pausa (coe_pausemenu:RegisterFactionProvider): a primeira facção ativa do personagem.
+---Facção no dossiê de identidade: a primeira facção ativa do personagem.
 ---@param characterId any
 ---@return any
 function exports_coe_factions:PauseMenuFaction(characterId) end

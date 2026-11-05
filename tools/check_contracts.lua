@@ -239,6 +239,19 @@ for _, res in ipairs(resources) do
 	end
 end
 
+-- Allowlist de exports estritamente internos (chamadas confidenciais entre runtimes do mesmo resource, ex: Node.js ↔ Lua)
+local internalExports = {
+	coe_supervisor = {
+		WriteFile = true,
+		ReadFile = true,
+		HashFile = true,
+		DownloadFile = true,
+		CommitFile = true,
+		DiscardFile = true,
+		VerifySignature = true
+	}
+}
+
 -- 4. Validação de contratos (types.lua vs Implementação)
 for _, res in ipairs(resources) do
 	local data = resData[res]
@@ -257,7 +270,8 @@ for _, res in ipairs(resources) do
 			end
 		end
 		for exp in pairs(data.allExports) do
-			if not data.typesExports[exp] then
+			local isInternal = internalExports[res] and internalExports[res][exp]
+			if not data.typesExports[exp] and not isInternal then
 				addWarning('contract', res, string.format("Export '%s' implementado no código mas não documentado em types.lua", exp))
 			end
 		end
@@ -278,6 +292,9 @@ for _, res in ipairs(resources) do
 						totalCrossCalls = totalCrossCalls + 1
 						crossCalls[#crossCalls + 1] = { resource = res, target = target, method = method, file = filePath, line = lineNum }
 						local targetData = resData[target]
+						if internalExports[target] and internalExports[target][method] then
+							addError('internal-export', res, string.format("Tentativa de chamar export estritamente interno 'exports.%s:%s()'", target, method), filePath, lineNum)
+						end
 						local targetHasExport = targetData.allExports[method] or targetData.typesExports[method]
 						if not targetHasExport then
 							addError('cross-call', res, string.format("Chama export inexistente 'exports.%s:%s()'", target, method), filePath, lineNum)
@@ -289,6 +306,9 @@ for _, res in ipairs(resources) do
 						totalCrossCalls = totalCrossCalls + 1
 						crossCalls[#crossCalls + 1] = { resource = res, target = target, method = method, file = filePath, line = lineNum }
 						local targetData = resData[target]
+						if internalExports[target] and internalExports[target][method] then
+							addError('internal-export', res, string.format("Tentativa de chamar export estritamente interno 'exports.%s:%s()'", target, method), filePath, lineNum)
+						end
 						local targetHasExport = targetData.allExports[method] or targetData.typesExports[method]
 						if not targetHasExport then
 							addError('cross-call', res, string.format("Chama export inexistente 'exports.%s:%s()'", target, method), filePath, lineNum)
@@ -694,6 +714,23 @@ for _, res in ipairs(resources) do
 			end
 		end
 	end
+end
+
+-- 8. Auditoria de documentação gerada (reference/*.md): proibir literais (none) em parâmetros e retornos
+local refDir = 'reference'
+local cmdRef = isWin and ('dir /b "' .. refDir .. '\\*.md"') or ('ls -1 ' .. refDir .. '/*.md')
+local pipeRef = io.popen(cmdRef)
+if pipeRef then
+	for file in pipeRef:lines() do
+		file = file:gsub('[\r\n]', '')
+		if file ~= '' then
+			local content = readFile(refDir .. '/' .. file)
+			if content and content:find('%(none%)') then
+				addError('documentation', file, 'Snippet de documentação contém literal proibido (none)')
+			end
+		end
+	end
+	pipeRef:close()
 end
 
 -- Relatório e encerramento

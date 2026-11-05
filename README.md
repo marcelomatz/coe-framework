@@ -32,7 +32,7 @@
 >
 > *I want to express my deepest respect and heartfelt gratitude to the pioneers and brilliant minds behind frameworks like **ESX**, **QBCore**, **Qbox**, and **Ox**. They laid the very foundation on which we all stand today, and they continue to do tireless, incredible work for the ecosystem. Likewise, my warmest thanks go out to every single **modder**, creator, and server administrator who dedicates their nights and weekends to making FiveM an ever-evolving, richer platform.*
 >
-> *The COE Framework is offered to the community with an open heart: 55 production-ready, fully tested resources built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
+> *The COE Framework is offered to the community with an open heart: 50 production-ready, fully tested first-party resources (alongside 5 replaceable Tier 2 base packages) built from a clean sheet with strict server-authoritative logic, 0.00ms idle resmon, a complete Platform HAL, and MariaDB 11 async pooling. May it serve as a reliable tool, a modern alternative, and an open foundation for our community to keep building the future of roleplay."*
 >
 > — **Marcelo Matz**
 
@@ -71,7 +71,7 @@ New to setting up a **FiveM for GTAV Enhanced** server or migrating from older b
    https://www.coeroleplay.app/recipe.yaml
    ```
 5. Enter your **MariaDB** password and your Cfx.re license key ([Cfx.re Portal / Keymaster](https://portal.cfx.re/)).
-6. Click **Run Recipe**! txAdmin will handle everything automatically: downloading the default Cfx.re resources, pulling all **55 open-source COE Framework resources**, provisioning the database schema, and launching your server!
+6. Click **Run Recipe**! txAdmin will handle everything automatically: downloading the default Cfx.re resources, pulling all **50 open-source first-party COE Framework resources** (plus 5 Tier 2 base packages), provisioning the database schema, and launching your server!
 
 > [!TIP]
 > **Prefer manual installation or using the full developer workspace?**

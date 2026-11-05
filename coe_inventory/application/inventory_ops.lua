@@ -669,6 +669,7 @@ exports('RemoveItem', unwrapExport(S.RemoveItem))
 exports('UseItem', unwrapExport(S.UseItem))
 exports('SetItemMetadata', unwrapExport(S.SetItemMetadata))
 exports('GetItemCount', unwrapExport(S.GetItemCount))
+exports('FlushInventory', unwrapExport(S.flushInventorySync))
 exports('GetPersistenceStats', unwrapExport(S.getPersistenceStats))
 exports('GetInventoryObject', function()
 	return Inventory

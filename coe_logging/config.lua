@@ -1,4 +1,4 @@
-﻿CoeLoggingConfig = {
+CoeLoggingConfig = {
 	DefaultLevel = 'info',
 	-- 'pretty' (legível, com cores) ou 'json' (uma linha JSON por evento, para coletores).
 	-- As convars coe_logging_format e coe_logging_color sobrescrevem estes valores.

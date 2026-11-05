@@ -284,4 +284,44 @@ assertTrue(handlerId ~= nil, 'AddChangeHandler deve retornar identificador/cooki
 -- Limpeza
 testCar:Delete()
 
-print('✅ Todos os testes de Core.Platform (Fases 1, 2 e 3: Entities, Vehicles, Peds, Players, Routing e StateBags) passaram com sucesso!')
+-- ============================================================================
+-- 8. TESTES DE COLSHAPES (Core.Platform.Colshapes)
+-- ============================================================================
+local Colshapes = Platform.Colshapes
+assertTrue(type(Colshapes) == 'table', 'Platform.Colshapes deve existir')
+
+-- 8.1 Esfera
+local sphere = Colshapes.CreateSphere(vector3(0.0, 0.0, 0.0), 5.0, { tag = 'test_sphere' })
+assertTrue(sphere ~= nil, 'Esfera criada')
+assertEqual(sphere:GetType(), 'sphere', 'Tipo de esfera')
+assertEqual(sphere:GetData('tag'), 'test_sphere', 'Metadado da esfera')
+assertTrue(sphere:IsPointInside(vector3(0.0, 0.0, 0.0)), 'Centro da esfera')
+assertTrue(sphere:IsPointInside(vector3(3.0, 0.0, 0.0)), 'Ponto dentro da esfera')
+assertFalse(sphere:IsPointInside(vector3(6.0, 0.0, 0.0)), 'Ponto fora da esfera')
+assertTrue(Colshapes.IsPointInside(sphere:GetId(), vector3(1.0, 1.0, 1.0)), 'IsPointInside por ID')
+
+-- 8.2 Cilindro
+local cyl = Colshapes.CreateCylinder(vector3(10.0, 10.0, 20.0), 3.0, 4.0)
+assertTrue(cyl:IsPointInside(vector3(10.0, 10.0, 20.0)), 'Centro do cilindro')
+assertTrue(cyl:IsPointInside(vector3(11.0, 10.0, 21.0)), 'Ponto dentro do cilindro')
+assertFalse(cyl:IsPointInside(vector3(15.0, 10.0, 20.0)), 'Ponto fora do raio do cilindro')
+assertFalse(cyl:IsPointInside(vector3(10.0, 10.0, 30.0)), 'Ponto fora da altura Z do cilindro')
+
+-- 8.3 Caixa (Box)
+local box = Colshapes.CreateBox(vector3(100.0, 100.0, 10.0), 4.0, 2.0, 2.0, 0.0)
+assertTrue(box:IsPointInside(vector3(100.0, 100.0, 10.0)), 'Centro da caixa')
+assertTrue(box:IsPointInside(vector3(100.5, 100.5, 10.5)), 'Ponto dentro da caixa')
+assertFalse(box:IsPointInside(vector3(105.0, 100.0, 10.0)), 'Ponto fora do comprimento da caixa')
+
+-- 8.4 Polígono
+local polyPoints = { { x = 0, y = 0 }, { x = 10, y = 0 }, { x = 10, y = 10 }, { x = 0, y = 10 } }
+local poly = Colshapes.CreatePolygon(polyPoints, 0.0, 20.0)
+assertTrue(poly:IsPointInside(vector3(5.0, 5.0, 10.0)), 'Ponto dentro do polígono')
+assertFalse(poly:IsPointInside(vector3(15.0, 5.0, 10.0)), 'Ponto fora do polígono')
+assertFalse(poly:IsPointInside(vector3(5.0, 5.0, 25.0)), 'Ponto acima da altura máxima do polígono')
+
+-- 8.5 Destruição
+assertTrue(sphere:Destroy(), 'Destruir esfera')
+assertFalse(Colshapes.IsPointInside(sphere:GetId(), vector3(0.0, 0.0, 0.0)), 'Esfera destruída não deve responder')
+
+print('✅ Todos os testes de Core.Platform (Fases 1, 2, 3 e 4: Entities, Vehicles, Peds, Players, Routing, StateBags e Colshapes) passaram com sucesso!')

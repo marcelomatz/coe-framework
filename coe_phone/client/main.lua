@@ -291,10 +291,12 @@ exports('RequestPayment', function(request)
 	local id = nextPay
 	local p = promise.new()
 	payRequests[id] = p
-	SetTimeout((config.Wallet.PaymentSeconds + 30) * 1000, function()
+	-- Watchdog de segurança estrito (20s) para evitar bloqueio indefinido de thread de pagamento
+	local timeoutMs = 20000
+	SetTimeout(timeoutMs, function()
 		if payRequests[id] then
 			payRequests[id] = nil
-			p:resolve({ error = 'cancelled' })
+			p:resolve({ error = 'payment_timeout' })
 		end
 	end)
 	SendNUIMessage({

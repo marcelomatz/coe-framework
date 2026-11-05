@@ -20,18 +20,22 @@ local MockBackend = {
 	entities = {}, -- netId / handle -> { coords, heading, model, state, plate, locked, engineHealth, exists, isPed, health, armour, dead, vehicle, seat, bucket }
 	players = {},  -- playerId -> { ped, name, ping, endpoint, bucket, state, identifiers = {}, ace = {} }
 	buckets = {},  -- bucketId -> { population = true, lockdown = 'inactive' }
+	colshapes = {}, -- id -> shapeData
 	globalState = {},
 	nextHandle = 1000,
-	nextNetId = 500
+	nextNetId = 500,
+	nextColshapeId = 1
 }
 
 function MockBackend.Reset()
 	MockBackend.entities = {}
 	MockBackend.players = {}
 	MockBackend.buckets = {}
+	MockBackend.colshapes = {}
 	MockBackend.globalState = {}
 	MockBackend.nextHandle = 1000
 	MockBackend.nextNetId = 500
+	MockBackend.nextColshapeId = 1
 end
 
 local activeMock = nil
@@ -1571,6 +1575,220 @@ function Players.Wrap(playerId)
 		return nil
 	end
 	return setmetatable({ playerId = pId }, PlayerWrapper)
+end
+
+-- ============================================================================
+-- 8. MÓDULO DE COLSHAPES (Core.Platform.Colshapes)
+-- Zonas espaciais de ultra-baixa latência (C++ nativo Gen9 / geometria pura)
+-- ============================================================================
+Platform.Colshapes = {}
+local Colshapes = Platform.Colshapes
+
+local activeColshapes = {}
+local nextColshapeLocalId = 1
+
+local ColshapeWrapper = {}
+ColshapeWrapper.__index = ColshapeWrapper
+
+function ColshapeWrapper:GetId() return self.id end
+function ColshapeWrapper:GetType() return self.shapeType end
+function ColshapeWrapper:GetData(key) return self.data and self.data[key] end
+function ColshapeWrapper:SetData(key, value)
+	if not self.data then self.data = {} end
+	self.data[key] = value
+end
+function ColshapeWrapper:Destroy()
+	return Colshapes.Destroy(self.id)
+end
+
+local function isInsidePolygon(points, px, py)
+	local inside = false
+	local count = #points
+	if count < 3 then return false end
+	local j = count
+	for i = 1, count do
+		local p1 = points[i]
+		local p2 = points[j]
+		local x1, y1 = p1.x or p1[1], p1.y or p1[2]
+		local x2, y2 = p2.x or p2[1], p2.y or p2[2]
+		if ((y1 > py) ~= (y2 > py)) and (px < (x2 - x1) * (py - y1) / (y2 - y1) + x1) then
+			inside = not inside
+		end
+		j = i
+	end
+	return inside
+end
+
+function ColshapeWrapper:IsPointInside(coords)
+	local p = safeVector3(coords)
+	if self.shapeType == 'sphere' then
+		local dx = p.x - self.center.x
+		local dy = p.y - self.center.y
+		local dz = p.z - self.center.z
+		return (dx * dx + dy * dy + dz * dz) <= (self.radius * self.radius)
+	elseif self.shapeType == 'cylinder' then
+		local dx = p.x - self.center.x
+		local dy = p.y - self.center.y
+		local dist2D = dx * dx + dy * dy
+		if dist2D > (self.radius * self.radius) then return false end
+		local minZ = self.minZ or (self.center.z - (self.height / 2))
+		local maxZ = self.maxZ or (self.center.z + (self.height / 2))
+		return p.z >= minZ and p.z <= maxZ
+	elseif self.shapeType == 'box' then
+		local dx = p.x - self.center.x
+		local dy = p.y - self.center.y
+		local dz = p.z - self.center.z
+		local rad = math.rad(-(self.heading or 0.0))
+		local cosA = math.cos(rad)
+		local sinA = math.sin(rad)
+		local localX = math.abs(dx * cosA - dy * sinA)
+		local localY = math.abs(dx * sinA + dy * cosA)
+		local localZ = math.abs(dz)
+		return localX <= (self.width / 2) and localY <= (self.length / 2) and localZ <= (self.height / 2)
+	elseif self.shapeType == 'polygon' then
+		if p.z < self.minZ or p.z > self.maxZ then return false end
+		return isInsidePolygon(self.points, p.x, p.y)
+	end
+	return false
+end
+
+---Cria uma colshape esférica
+---@param coords vector3|table
+---@param radius number
+---@param data table|nil
+---@return table
+function Colshapes.CreateSphere(coords, radius, data)
+	local center = safeVector3(coords)
+	local r = tonumber(radius) or 1.0
+	local id = 'sphere_' .. nextColshapeLocalId
+	nextColshapeLocalId = nextColshapeLocalId + 1
+	local obj = setmetatable({
+		id = id,
+		shapeType = 'sphere',
+		center = center,
+		radius = r,
+		data = data or {}
+	}, ColshapeWrapper)
+	activeColshapes[id] = obj
+	return obj
+end
+
+---Cria uma colshape cilíndrica
+---@param coords vector3|table
+---@param radius number
+---@param height number
+---@param data table|nil
+---@return table
+function Colshapes.CreateCylinder(coords, radius, height, data)
+	local center = safeVector3(coords)
+	local r = tonumber(radius) or 1.0
+	local h = tonumber(height) or 2.0
+	local id = 'cylinder_' .. nextColshapeLocalId
+	nextColshapeLocalId = nextColshapeLocalId + 1
+	local obj = setmetatable({
+		id = id,
+		shapeType = 'cylinder',
+		center = center,
+		radius = r,
+		height = h,
+		minZ = center.z - (h / 2),
+		maxZ = center.z + (h / 2),
+		data = data or {}
+	}, ColshapeWrapper)
+	activeColshapes[id] = obj
+	return obj
+end
+
+---Cria uma colshape em formato de caixa rotacionada (Box)
+---@param coords vector3|table
+---@param length number
+---@param width number
+---@param height number
+---@param heading number
+---@param data table|nil
+---@return table
+function Colshapes.CreateBox(coords, length, width, height, heading, data)
+	local center = safeVector3(coords)
+	local l = tonumber(length) or 1.0
+	local w = tonumber(width) or 1.0
+	local h = tonumber(height) or 1.0
+	local hd = tonumber(heading) or 0.0
+	local id = 'box_' .. nextColshapeLocalId
+	nextColshapeLocalId = nextColshapeLocalId + 1
+	local obj = setmetatable({
+		id = id,
+		shapeType = 'box',
+		center = center,
+		length = l,
+		width = w,
+		height = h,
+		heading = hd,
+		data = data or {}
+	}, ColshapeWrapper)
+	activeColshapes[id] = obj
+	return obj
+end
+
+---Cria uma colshape poligonal delimitada por altura mínima e máxima
+---@param points table Array de {x, y} ou vector3
+---@param minZ number
+---@param maxZ number
+---@param data table|nil
+---@return table
+function Colshapes.CreatePolygon(points, minZ, maxZ, data)
+	local pts = {}
+	for _, p in ipairs(points or {}) do
+		pts[#pts + 1] = { x = tonumber(p.x or p[1]) or 0.0, y = tonumber(p.y or p[2]) or 0.0 }
+	end
+	local id = 'polygon_' .. nextColshapeLocalId
+	nextColshapeLocalId = nextColshapeLocalId + 1
+	local obj = setmetatable({
+		id = id,
+		shapeType = 'polygon',
+		points = pts,
+		minZ = tonumber(minZ) or -100.0,
+		maxZ = tonumber(maxZ) or 1000.0,
+		data = data or {}
+	}, ColshapeWrapper)
+	activeColshapes[id] = obj
+	return obj
+end
+
+---Verifica se um ponto está dentro de uma colshape por ID ou objeto
+---@param shapeOrId string|table
+---@param coords vector3|table
+---@return boolean
+function Colshapes.IsPointInside(shapeOrId, coords)
+	local shape = type(shapeOrId) == 'table' and shapeOrId or activeColshapes[shapeOrId]
+	if not shape or not shape.IsPointInside then return false end
+	return shape:IsPointInside(coords)
+end
+
+---Remove e destrói uma colshape
+---@param shapeOrId string|table
+---@return boolean
+function Colshapes.Destroy(shapeOrId)
+	local id = type(shapeOrId) == 'table' and shapeOrId.id or shapeOrId
+	if activeColshapes[id] then
+		activeColshapes[id] = nil
+		return true
+	end
+	return false
+end
+
+---Obtém uma colshape pelo ID
+---@param id string
+---@return table|nil
+function Colshapes.Get(id)
+	return activeColshapes[id]
+end
+
+---Lista todas as colshapes ativas
+---@return table<string, table>
+function Colshapes.GetAll()
+	local copy = {}
+	for k, v in pairs(activeColshapes) do copy[k] = v end
+	return copy
 end
 
 Core = Core or {}

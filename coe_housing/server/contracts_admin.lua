@@ -11,9 +11,19 @@ local notify = function(...) return Housing.notify(...) end
 local HousingRegistry = HousingRegistry
 local HousingPersistence = HousingPersistence
 local remote = function(...) return Housing.remote(...) end
+local adminOnly = function(...) return Housing.adminOnly(...) end
+local isReady = function() return Housing.isReady() end
+local sorted = function(...) return Housing.sorted(...) end
+local usedUnits = function(...) return Housing.usedUnits(...) end
+local packResult = function(...) return Housing.packResult(...) end
+local saveProperty = function(...) return Housing.saveProperty(...) end
+local deleteProperty = function(...) return Housing.deleteProperty(...) end
+local businessLabel = function(...) return Housing.businessLabel(...) end
+local evict = function(...) return Housing.evict(...) end
+local endLease = function(...) return Housing.endLease(...) end
 
 exports('ListProperties', function()
-	if not adminOnly() or not ready then
+	if not adminOnly() or not isReady() then
 		return {}
 	end
 	local list = {}
@@ -48,7 +58,7 @@ exports('PropertyContracts', function(propertyId)
 	if not adminOnly() then
 		return { error = 'forbidden' }
 	end
-	if not ready then
+	if not isReady() then
 		return { error = 'not_ready' }
 	end
 	if type(propertyId) ~= 'string' or not properties[propertyId] then
@@ -89,7 +99,7 @@ exports('EndContract', function(kind, contractId)
 	if not adminOnly() then
 		return { error = 'forbidden' }
 	end
-	if not ready then
+	if not isReady() then
 		return { error = 'not_ready' }
 	end
 	contractId = tonumber(contractId)

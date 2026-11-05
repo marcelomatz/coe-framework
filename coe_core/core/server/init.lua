@@ -16,6 +16,11 @@ exports('GetPlayerByStateId', function(stateId)
 	return Core.Players.GetPlayerByStateId(stateId)
 end)
 
+-- Valida se a sessão do jogador ainda corresponde ao personagem e à geração esperados (proteção contra reciclagem de source no FiveM Enhanced).
+exports('ValidateSession', function(source, expectedCharacterId, expectedGeneration)
+	return Core.Players.ValidateSession(source, expectedCharacterId, expectedGeneration)
+end)
+
 -- /id: mostra o ID público (stateId) do personagem ativo, o mesmo usado nos painéis e comandos administrativos.
 local lastIdCommand = {}
 local _t = Core.Locale.New({

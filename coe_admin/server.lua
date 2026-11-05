@@ -976,6 +976,23 @@ local staffDeps = {
 	end
 }
 
+local function characterNames(ids)
+	local names = {}
+	if not ids or #ids == 0 then
+		return names
+	end
+	local marks = {}
+	for index = 1, #ids do
+		marks[index] = '?'
+	end
+	local rows = AdminPersistence.Query(('SELECT character_id, state_id, first_name, last_name FROM coe_characters WHERE character_id IN (%s)'):format(table.concat(marks, ',')), ids)
+	for _, row in ipairs(rows or {}) do
+		local name = ('%s %s'):format(row.first_name or '', row.last_name or ''):gsub('^%s+', ''):gsub('%s+$', '')
+		names[tostring(row.character_id)] = { name = name:sub(1, 48), stateId = row.state_id }
+	end
+	return names
+end
+
 Admin = {
 	log = log,
 	allowAction = allowAction,
@@ -991,6 +1008,7 @@ Admin = {
 	garageDeleteRaw = garageDeleteRaw,
 	activeCharacter = activeCharacter,
 	characterDirectory = characterDirectory,
+	characterNames = characterNames,
 	exportError = exportError,
 	staffDeps = staffDeps
 }

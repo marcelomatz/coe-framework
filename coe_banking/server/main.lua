@@ -1209,7 +1209,17 @@ Banking = {
 	loanLabel = loanLabel,
 	settleLoan = settleLoan,
 	settleDueLoan = settleDueLoan,
-	remote = remote
+	remote = remote,
+	atmSessions = atmSessions,
+	money = money,
+	guarded = guarded,
+	t = _t,
+	businessDebtors = businessDebtors,
+	debtorsScore = debtorsScore,
+	requestView = requestView,
+	notifyDebtors = notifyDebtors,
+	applyTiers = function(stored) return applyTiers(stored) end,
+	isReady = function() return ready end
 }
 
 local function _loadSub(relPath)
@@ -1307,3 +1317,64 @@ BankingServer = {
 	businessDebtors = businessDebtors, debtorsScore = debtorsScore, requestView = requestView,
 	requestBusinessLoan = requestBusinessLoan, cancelBusinessLoan = cancelBusinessLoan
 }
+
+local function applyTiers(stored)
+	for _, tier in ipairs(creditConfig.Tiers) do
+		local saved = stored[tier.id]
+		if saved then
+			tier.label, tier.minScore, tier.limit = saved.label, saved.minScore, saved.limit
+			tier.pointsPer100, tier.fee, tier.freeAtm = saved.pointsPer100, saved.fee, saved.freeAtm
+		end
+	end
+end
+
+AddEventHandler('playerDropped', function()
+	local playerId = source
+	atmSessions[playerId] = nil
+	agencyOpen[playerId] = nil
+	agencyAccount[playerId] = nil
+	lastAction[playerId] = nil
+	busy[playerId] = nil
+end)
+
+CreateThread(function()
+	local waitingLogged = false
+	while true do
+		local initialized, errorCode = BankingPersistence.Initialize()
+		if initialized then
+			break
+		end
+		if errorCode == 'database_not_ready' or errorCode == 'database_unavailable' then
+			if not waitingLogged then
+				log('info', 'persistence', 'database_waiting', {})
+				waitingLogged = true
+			end
+			Wait(1000)
+		else
+			log('error', 'persistence', 'banking_initialize_failed', { error_code = tostring(errorCode) })
+			return
+		end
+	end
+	-- Níveis: a tabela manda; vazia, grava os padrões do config.lua.
+	local stored = BankingPersistence.Tiers()
+	if stored and next(stored) == nil then
+		BankingPersistence.SaveTiers(creditConfig.Tiers, os.time())
+	elseif stored then
+		applyTiers(stored)
+	end
+	ready = true
+	log('info', 'banking', 'ready', {})
+	-- Fechamento, vencimento, juros e débito automático das contas de crédito, mesmo com o jogador offline.
+	while true do
+		Wait(creditConfig.TickSeconds * 1000)
+		local now = os.time()
+		for _, characterId in ipairs(BankingPersistence.CreditPending(now, now - creditConfig.AutoDebitDays * 86400, 100) or {}) do
+			withCreditLock(characterId, function()
+				return settleCredit(characterId)
+			end)
+		end
+		for _, loanId in ipairs(BankingPersistence.LoansDue(now, 100) or {}) do
+			settleDueLoan(loanId)
+		end
+	end
+end)
