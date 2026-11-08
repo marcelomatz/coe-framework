@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_logging'
-version '0.1.0-beta.18'
+version '0.1.0-beta.19'
 description 'Structured server-side logging for Coe resources'
 
 coe_platform 'hal'

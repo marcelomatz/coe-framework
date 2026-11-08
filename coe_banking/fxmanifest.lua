@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_banking'
-version '0.1.0-beta.18'
+version '0.1.0-beta.19'
 description 'Sistema bancário: agências, caixas eletrônicos, dinheiro em espécie, cartões com senha e contas de negócio'
 
 -- Reinício pelo coe_supervisor (categoria no painel).

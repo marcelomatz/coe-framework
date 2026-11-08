@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_loadscreen'
-version '0.1.0-beta.18'
+version '0.1.0-beta.19'
 description 'Tela de carregamento do Coe, no visual da seleção e do criador de personagem'
 
 coe_platform 'hal'

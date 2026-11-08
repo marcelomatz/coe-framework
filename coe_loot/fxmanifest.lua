@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_loot'
-version '0.1.0-beta.18'
+version '0.1.0-beta.19'
 description 'Tabelas de saque para roubos (residência, pedestre, veículo, comércio): o que cai e com que chance'
 
 coe_platform 'hal'
