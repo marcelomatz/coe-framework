@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 local config = FuelConfig
@@ -139,4 +140,20 @@ eq(moved.diesel, 200, 'diesel todo')
 eq(newCargo.diesel, 0, 'diesel descarregado')
 eq(newTanks.regular, 5000, 'tanque cheio')
 eq(total, 400, 'total descarregado')
+
+-- Saga e Rate Limiter GCRA
+local refunded = false
+local sagaOk, failedStep, sagaErr = FuelRules.ExecuteSaga({
+	{ name = 'charge', action = function() return true end, compensate = function() refunded = true end },
+	{ name = 'deliver', action = function() return false, 'inventory_full' end }
+}, {})
+eq(sagaOk, false, 'saga falha na entrega')
+eq(failedStep, 'deliver', 'etapa falha identificada')
+eq(sagaErr, 'inventory_full', 'codigo de erro preservado')
+eq(refunded, true, 'estorno compensatorio executado')
+
+local limiter = FuelRules.NewCallLimiter(300)
+eq(limiter:allow(1, 1000, 1), true, 'primeira chamada aceita')
+eq(limiter:allow(1, 1100, 1), false, 'chamada em rajada bloqueada')
+eq(limiter:allow(1, 1300, 1), true, 'chamada apos cooldown aceita')
 print('coe_fuel rules tests passed')

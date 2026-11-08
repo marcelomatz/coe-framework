@@ -170,3 +170,10 @@ function exports_coe_inventory:GetPlayerInventory(playerId) end
 ---Retorna a instância do serviço global de inventário.
 ---@return table inventoryService
 function exports_coe_inventory:GetInventoryObject() end
+
+---Retorna o hash da arma equipada pelo jogador (0 se desarmado), revalidando a posse física no inventário.
+---Exige ACE `coe.shield` ou resource autorizado (`coe_shield`, `coe_admin`).
+---@param playerId integer
+---@return integer|nil weaponHash
+---@return string|nil errorCode `caller_not_allowed`, `character_not_loaded`, `not_found`
+function exports_coe_inventory:GetEquippedWeapon(playerId) end

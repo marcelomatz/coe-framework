@@ -115,7 +115,7 @@ function readConnectionOptions() {
 		waitForConnections: true,
 		connectionLimit,
 		queueLimit: 100,
-		connectTimeout: 10000,
+		connectTimeout: 30000,
 		enableKeepAlive: true,
 		keepAliveInitialDelay: 0,
 		charset: 'utf8mb4',

@@ -19,6 +19,8 @@ local inventoryOf = function(...) return Banking.inventoryOf(...) end
 local throttled = function(...) return Banking.throttled(...) end
 local settleCredit = function(...) return Banking.settleCredit(...) end
 local creditConfig = Banking.creditConfig
+local busy = Banking.busy
+local isReady = function() return Banking.isReady() end
 
 local function wholeNumber(value, low, high)
 	value = tonumber(value)
@@ -63,9 +65,9 @@ exports('WalletEligible', function(playerId)
 		return { ok = false, error = 'forbidden' }
 	end
 	local source = tonumber(playerId)
-	local who = ready and source and character(source)
+	local who = isReady() and source and character(source)
 	if not who then
-		return { ok = false, error = ready and 'no_character' or 'not_ready' }
+		return { ok = false, error = isReady() and 'no_character' or 'not_ready' }
 	end
 	local inventoryId = inventoryOf(source)
 	local snapshot = inventoryId and remote('coe_inventory', 'GetInventory', inventoryId) or nil
@@ -95,9 +97,9 @@ exports('WalletLink', function(playerId, cardId, pin)
 		return { ok = false, error = 'forbidden' }
 	end
 	local source, id = tonumber(playerId), BankingRules.CardId(cardId)
-	local who = ready and source and character(source)
+	local who = isReady() and source and character(source)
 	if not who then
-		return { ok = false, error = ready and 'no_character' or 'not_ready' }
+		return { ok = false, error = isReady() and 'no_character' or 'not_ready' }
 	end
 	if not id then
 		return { ok = false, error = 'card_not_found' }
@@ -148,7 +150,7 @@ exports('WalletCards', function(cardIds)
 	if not walletCaller() then
 		return { ok = false, error = 'forbidden' }
 	end
-	if not ready then
+	if not isReady() then
 		return { ok = false, error = 'not_ready' }
 	end
 	local ids = {}
@@ -176,9 +178,9 @@ exports('WalletIssueVirtual', function(playerId)
 		return { ok = false, error = 'forbidden' }
 	end
 	local source = tonumber(playerId)
-	local who = ready and source and character(source)
+	local who = isReady() and source and character(source)
 	if not who then
-		return { ok = false, error = ready and 'no_character' or 'not_ready' }
+		return { ok = false, error = isReady() and 'no_character' or 'not_ready' }
 	end
 	if busy[source] or throttled(source) then
 		return { ok = false, error = 'busy' }
@@ -198,7 +200,7 @@ local function purchaseInput(cardId, amount, description)
 	if not creditConfig.PurchaseCallers[GetInvokingResource() or ''] then
 		return nil, 'forbidden'
 	end
-	if not ready then
+	if not isReady() then
 		return nil, 'not_ready'
 	end
 	local id = BankingRules.CardId(cardId)
@@ -284,7 +286,7 @@ local function posCards(playerId)
 		return { ok = false, error = 'forbidden' }
 	end
 	local source = tonumber(playerId)
-	if not ready or not source then
+	if not isReady() or not source then
 		return { ok = false, error = 'not_ready' }
 	end
 	local inventoryId = inventoryOf(source)

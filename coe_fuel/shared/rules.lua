@@ -346,3 +346,52 @@ function FuelRules.Unload(config, cargo, tanks, capacities)
 	end
 	return newCargo, newTanks, moved, math.floor(total * 100 + 0.5) / 100
 end
+
+-- Orquestrador Saga (cobrança -> entrega com estorno compensatório determinístico)
+function FuelRules.ExecuteSaga(steps, context)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	local Concurrency = (type(alg) == 'table' and alg.Concurrency) or nil
+	if Concurrency and Concurrency.executeSaga then
+		return Concurrency.executeSaga(steps, context)
+	end
+	local completed = {}
+	for i = 1, #steps do
+		local step = steps[i]
+		local ok, resultOrErr, errCode = pcall(step.action, context)
+		if not ok or resultOrErr == false then
+			local reason = tostring((not ok and resultOrErr) or errCode or 'step_failed')
+			for j = #completed, 1, -1 do
+				local compStep = completed[j]
+				if compStep.compensate then
+					pcall(compStep.compensate, context, compStep.output)
+				end
+			end
+			return false, step.name or ('step_' .. i), reason
+		end
+		completed[#completed + 1] = { name = step.name, compensate = step.compensate, output = resultOrErr }
+	end
+	return true, nil, nil
+end
+
+-- Rate Limiter GCRA O(1) para chamadas de postos e relatórios
+function FuelRules.NewCallLimiter(cooldownMs)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	local RateLimit = (type(alg) == 'table' and alg.RateLimit) or nil
+	if RateLimit and RateLimit.newGCRA then
+		return RateLimit.newGCRA(cooldownMs or 300, 0)
+	end
+	local lastSeen = {}
+	return {
+		allow = function(_, key, nowMs)
+			local prev = lastSeen[key]
+			if prev and (nowMs - prev) < (cooldownMs or 300) then
+				return false, (cooldownMs or 300) - (nowMs - prev)
+			end
+			lastSeen[key] = nowMs
+			return true, 0
+		end,
+		forget = function(_, key)
+			lastSeen[key] = nil
+		end
+	}
+end

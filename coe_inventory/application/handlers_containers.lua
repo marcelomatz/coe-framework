@@ -160,15 +160,30 @@ Core.Events.OnNet('inventory.containerDrop', function(requestId, containerId, ne
 		return
 	end
 
-	local worldContainer, createError = S.adoptWorldContainer(
-		playerId,
-		containerItem.name,
-		containerItem.metadata,
-		netId,
-		coords,
-		type(heading) == 'number' and heading or 0.0,
-		droppedBy
-	)
+	local cleanHeading = type(heading) == 'number' and heading or 0.0
+	local worldContainer, createError
+	if S.isPositiveInteger(netId) then
+		worldContainer, createError = S.adoptWorldContainer(
+			playerId,
+			containerItem.name,
+			containerItem.metadata,
+			netId,
+			coords,
+			cleanHeading,
+			droppedBy
+		)
+	end
+	if not worldContainer and (not S.isPositiveInteger(netId) or createError == 'container_prop_unavailable') then
+		worldContainer, createError = S.createWorldContainer(
+			containerItem.name,
+			containerItem.metadata,
+			coords,
+			cleanHeading
+		)
+		if worldContainer then
+			worldContainer.droppedBy = droppedBy
+		end
+	end
 	if not worldContainer then
 		Core.Events.ToClient(playerId, 'inventory.containerDropResult', requestId, false, createError)
 		return

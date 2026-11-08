@@ -105,5 +105,23 @@ eq(default.limit, 25, 'filtro: linhas padrão')
 eq(default.reasons, nil, 'filtro: motivo inválido descarta a lista')
 eq(EconomyRules.LedgerFilter(nil).days, 30, 'filtro: sem filtro')
 
+-- Cadeia forense SHA-256 e Gerenciador de Travas Lexicográficas
+local chain = EconomyRules.NewForensicChain()
+eq(type(chain), 'table', 'NewForensicChain disponível')
+local h1, p1, s1 = chain:append(1000, 'coe_economy', '1', 'money_credited', 'test:100')
+local h2, p2, s2 = chain:append(2000, 'coe_economy', '1', 'money_debited', 'test:50')
+eq(s1, 1, 'seq 1')
+eq(s2, 2, 'seq 2')
+eq(p2, h1, 'encadeamento prev_hash -> hash')
+local records = {
+	{ seq = s1, timestamp_us = 1000, source = 'coe_economy', actor_id = '1', event = 'money_credited', payload = 'test:100', prev_hash = p1, hash = h1 },
+	{ seq = s2, timestamp_us = 2000, source = 'coe_economy', actor_id = '1', event = 'money_debited', payload = 'test:50', prev_hash = p2, hash = h2 },
+}
+eq(EconomyRules.VerifyForensicChain(records), true, 'VerifyForensicChain íntegra')
+records[2].payload = 'test:999'
+local validAfterTamper, brokenAt = EconomyRules.VerifyForensicChain(records)
+eq(validAfterTamper, false, 'VerifyForensicChain detecta adulteração')
+eq(brokenAt, 2, 'índice adulterado identificado')
+
 print('economy rules ok')
 

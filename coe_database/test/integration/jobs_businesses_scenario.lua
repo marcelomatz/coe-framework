@@ -22,7 +22,7 @@ for attempt = 1, 2 do
 end
 
 local economyVersions = Bridge.Query('SELECT version, name FROM coe_economy_schema_migrations')
-assertEqual(#economyVersions.result, 2, 'economy migrations count')
+assertEqual(#economyVersions.result, 3, 'economy migrations count')
 local businessesVersions = Bridge.Query('SELECT version, name FROM coe_businesses_schema_migrations')
 assertEqual(#businessesVersions.result, 1, 'businesses migrations count')
 local jobsVersions = Bridge.Query('SELECT version, name FROM coe_jobs_schema_migrations')

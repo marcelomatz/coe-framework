@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 
@@ -172,6 +173,15 @@ eq(select(3, DeepwebRules.Blocks(config, { { type = 'text', text = 'ok' }, { typ
 local term, pattern = DeepwebRules.SearchTerm('50%_off')
 eq(term, '50%_off', 'termo')
 eq(pattern, '%50\\%\\_off%', 'curingas escapados')
+
+local sagaRollback = false
+local sagaOk, sagaErr = DeepwebRules.ExecuteSaga({
+	{ name = 'stock', forward = function() return true end, compensate = function() sagaRollback = true end },
+	{ name = 'escrow', forward = function() return false, 'crypto_unavailable' end }
+}, {})
+eq(sagaOk, false, 'saga falha na custódia')
+eq(sagaErr, 'crypto_unavailable', 'erro preservado')
+eq(sagaRollback, true, 'estoque devolvido pela saga')
 
 if failures > 0 then
 	print(('%d falha(s)'):format(failures))

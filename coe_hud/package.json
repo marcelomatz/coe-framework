@@ -4,7 +4,7 @@
   "private": true,
   "description": "HUD do jogador do framework Coe (testes de DOM)",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "devDependencies": {
     "jsdom": "26.1.0"

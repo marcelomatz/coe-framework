@@ -1,4 +1,4 @@
-const INITIAL_RETRY_DELAY_MS = 5000
+const INITIAL_RETRY_DELAY_MS = 1000
 const MAX_RETRY_DELAY_MS = 60000
 
 function createDatabaseProvider({

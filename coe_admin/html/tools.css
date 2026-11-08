@@ -1,52 +1,24 @@
-/* Ferramentas da staff no coe_admin (as do painel básico coe_staff). Só tokens do coe_ui; o painel chanfrado vem de panel.css. */
+/* Ferramentas da staff integradas nativamente à aba Operações de Campo do coe_admin (100% tokens coe_ui). */
 
-.sf {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	width: min(1120px, 96vw);
-	height: min(720px, 92vh);
+.sf-integrated {
 	display: grid;
-	grid-template-rows: auto 1fr auto;
-	translate: -50% -50%;
+	grid-template-rows: 1fr auto;
+	height: 100%;
+	min-height: 0;
 }
-.sf[hidden] { display: none; }
-.sf.is-busy .sf-body { cursor: progress; }
+.sf-integrated.is-busy .sf-body { cursor: progress; }
 
-/* Cabeçalho */
-.sf-head {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--coe-space-4);
-	padding: var(--coe-space-4) var(--coe-space-5);
-	border-bottom: 1px solid var(--coe-line);
-}
-.sf-brand { display: flex; align-items: center; gap: var(--coe-space-4); }
-.sf-logo {
+/* Corpo integrado em duas colunas (sub-abas à esquerda + área de operação à direita) */
+.sf-layout {
 	display: grid;
-	place-items: center;
-	width: 52px;
-	height: 52px;
-	font-weight: 800;
-	font-size: 15px;
-	line-height: 1;
-	letter-spacing: 0.08em;
-	color: var(--coe-on-accent);
-	background: var(--coe-accent);
-	clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+	grid-template-columns: 200px 1fr;
+	min-height: 0;
+	height: 100%;
 }
-.sf-logo small { display: block; font-size: 8px; letter-spacing: 0.2em; }
-.sf-eyebrow { margin: 0 0 2px; color: var(--coe-muted); font-size: var(--coe-text-xs); letter-spacing: 0.16em; text-transform: uppercase; }
-.sf-head h1 { margin: 0; font-size: var(--coe-text-lg); font-weight: 700; letter-spacing: 0.02em; }
-kbd { margin-left: 6px; padding: 0 4px; font-family: inherit; font-size: var(--coe-text-xs); color: var(--coe-muted); border: 1px solid var(--coe-line-strong); }
-
-/* Corpo */
-.sf-layout { display: grid; grid-template-columns: 180px 1fr; min-height: 0; }
 .sf-tabs {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: var(--coe-space-1);
 	padding: var(--coe-space-4) var(--coe-space-3);
 	border-right: 1px solid var(--coe-line);
 	background: rgba(var(--coe-ink-rgb), 0.02);
@@ -55,15 +27,23 @@ kbd { margin-left: 6px; padding: 0 4px; font-family: inherit; font-size: var(--c
 	padding: 10px var(--coe-space-3);
 	font: inherit;
 	font-size: var(--coe-text-sm);
-	letter-spacing: 0.06em;
+	font-weight: 600;
+	letter-spacing: 0.05em;
 	text-align: left;
 	color: var(--coe-muted);
 	background: transparent;
-	border: 0;
+	border: 1px solid transparent;
+	border-radius: var(--coe-radius-sm);
 	cursor: pointer;
+	transition: all var(--coe-duration-fast) var(--coe-ease-out);
 }
 .sf-tab:hover { color: var(--coe-text); background: rgba(var(--coe-ink-rgb), 0.05); }
-.sf-tab.is-active { color: var(--coe-accent); background: var(--coe-accent-soft); box-shadow: inset 2px 0 var(--coe-accent); }
+.sf-tab.is-active {
+	color: var(--coe-text);
+	background: var(--coe-accent-soft);
+	border-color: var(--coe-border-accent);
+	box-shadow: inset 2px 0 var(--coe-accent);
+}
 .sf-tab:focus-visible { outline: 1px solid var(--coe-accent); outline-offset: -1px; }
 
 .sf-body {
@@ -71,7 +51,7 @@ kbd { margin-left: 6px; padding: 0 4px; font-family: inherit; font-size: var(--c
 	flex-direction: column;
 	gap: var(--coe-space-4);
 	min-height: 0;
-	padding: var(--coe-space-5);
+	padding: var(--coe-space-4) var(--coe-space-5);
 	overflow-y: auto;
 }
 
@@ -80,6 +60,8 @@ kbd { margin-left: 6px; padding: 0 4px; font-family: inherit; font-size: var(--c
 	gap: var(--coe-space-3);
 	padding: var(--coe-space-4);
 	background: rgba(var(--coe-ink-rgb), 0.03);
+	border: 1px solid var(--coe-line);
+	border-radius: var(--coe-radius-md);
 	box-shadow: inset 2px 0 var(--coe-line-strong);
 }
 .sf-card.is-danger { box-shadow: inset 2px 0 var(--coe-danger); }
@@ -90,7 +72,7 @@ kbd { margin-left: 6px; padding: 0 4px; font-family: inherit; font-size: var(--c
 	margin: 0;
 	font-size: var(--coe-text-md);
 	font-weight: 700;
-	letter-spacing: 0.1em;
+	letter-spacing: 0.08em;
 	text-transform: uppercase;
 }
 .sf-hint { margin: 4px 0 0; color: var(--coe-muted); font-size: var(--coe-text-xs); line-height: 1.4; }
@@ -115,7 +97,8 @@ select.coe-field.sf-narrow { flex-basis: 140px; width: 140px; }
 .sf-coords {
 	margin: 0;
 	padding: var(--coe-space-3);
-	font-size: var(--coe-text-md);
+	font-family: var(--coe-font-mono);
+	font-size: var(--coe-text-sm);
 	letter-spacing: 0.04em;
 	font-variant-numeric: tabular-nums;
 	background: rgba(var(--coe-ink-rgb), 0.04);
@@ -164,7 +147,7 @@ select.coe-field.sf-narrow { flex-basis: 140px; width: 140px; }
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: var(--coe-warning);
-	border: 1px solid rgba(230, 182, 92, 0.5);
+	border: 1px solid var(--coe-warning);
 }
 
 .sf-lines { display: grid; }
@@ -217,6 +200,3 @@ select.coe-field.sf-narrow { flex-basis: 140px; width: 140px; }
 
 select.coe-field { appearance: auto; }
 input[type=number]::-webkit-inner-spin-button { opacity: 0.5; }
-
-/* Por cima do painel administrativo. */
-.sf { z-index: 50; }

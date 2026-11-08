@@ -2,7 +2,9 @@ local config = DeepwebConfig
 
 local ready = false
 local locks = {}
+local lockManager = DeepwebRules and DeepwebRules.NewLockManager and DeepwebRules.NewLockManager() or nil
 local lastCall = {}
+local callLimiter = DeepwebRules and DeepwebRules.NewCallLimiter and DeepwebRules.NewCallLimiter(config and config.CallCooldownMs or 300) or nil
 local computers = {}
 local loginFails = {}
 local deviceFails = {}
@@ -58,6 +60,18 @@ local function verify(secret, stored)
 end
 
 local function withLock(key, run)
+	if lockManager then
+		local guard <close>, err = lockManager:acquireMulti({ tostring(key) }, 0)
+		if not guard then
+			return { ok = false, error = err == 'lock_timeout' and 'busy' or err }
+		end
+		local ok, result = pcall(run)
+		if not ok then
+			log('error', 'gameplay', 'deepweb_action_failed', { error_code = tostring(result):sub(1, 120) })
+			return { ok = false, error = 'database_error' }
+		end
+		return result
+	end
 	if locks[key] then
 		return { ok = false, error = 'busy' }
 	end
@@ -241,16 +255,35 @@ local function installRig(playerId, character, slot, kind)
 		if not coords then
 			return { ok = false, error = 'no_position' }
 		end
-		if not call('coe_inventory', 'RemoveItem', inventory, slot, 1) then
-			return { ok = false, error = 'no_item' }
-		end
-		local id = DeepwebPersistence.InsertRig({
-			kind = kind, serial = serial, propertyId = space.propertyId, owner = space.owner,
-			x = coords.x, y = coords.y, z = coords.z, heading = coords.heading, installedBy = character
-		}, os.time())
-		if not id then
-			call('coe_inventory', 'AddItem', inventory, KIND_ITEM[kind], 1, { serial = serial })
-			return { ok = false, error = 'database_error' }
+		local sagaOk, sagaErr = DeepwebRules.ExecuteSaga({
+			{
+				name = 'remove_item',
+				forward = function()
+					if not call('coe_inventory', 'RemoveItem', inventory, slot, 1) then
+						return false, 'no_item'
+					end
+					return true
+				end,
+				compensate = function()
+					call('coe_inventory', 'AddItem', inventory, KIND_ITEM[kind], 1, { serial = serial })
+				end
+			},
+			{
+				name = 'insert_rig',
+				forward = function()
+					local id = DeepwebPersistence.InsertRig({
+						kind = kind, serial = serial, propertyId = space.propertyId, owner = space.owner,
+						x = coords.x, y = coords.y, z = coords.z, heading = coords.heading, installedBy = character
+					}, os.time())
+					if not id then
+						return false, 'database_error'
+					end
+					return true
+				end
+			}
+		}, {})
+		if not sagaOk then
+			return { ok = false, error = sagaErr or 'database_error' }
 		end
 		DeepwebPersistence.EnsureDevice(DeepwebRules.DeviceKey(kind, serial), kind, os.time())
 		audit('deepweb_rig_installed', { character_id = character, item = KIND_ITEM[kind], target = space.propertyId })
@@ -738,7 +771,11 @@ local function dispatch(context, action, payload)
 	end
 	local now = GetGameTimer()
 	if not readActions[action] then
-		if lastCall[context.playerId] and now - lastCall[context.playerId] < config.CallCooldownMs then
+		if callLimiter then
+			if not callLimiter:allow(context.playerId, now) then
+				return { ok = false, error = 'rate_limited' }
+			end
+		elseif lastCall[context.playerId] and now - lastCall[context.playerId] < config.CallCooldownMs then
 			return { ok = false, error = 'rate_limited' }
 		end
 		lastCall[context.playerId] = now
@@ -1082,6 +1119,9 @@ end
 AddEventHandler('playerDropped', function()
 	computers[source] = nil
 	lastCall[source] = nil
+	if callLimiter then
+		callLimiter:reset(source)
+	end
 end)
 
 CreateThread(function()

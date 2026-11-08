@@ -3,7 +3,7 @@
 // O nome do chamador vem do runtime (GetInvokingResource), nunca do payload.
 const DEFAULT_CALLERS = Object.freeze([
 	'coe_core', 'coe_inventory', 'coe_audit', 'coe_vehicles', 'coe_vehicle_catalog', 'coe_businesses',
-	'coe_needs', 'coe_economy', 'coe_spawn', 'coe_jobs', 'coe_shops', 'coe_rentals',
+	'coe_needs', 'coe_economy', 'coe_spawn', 'coe_jobs', 'coe_shops', 'coe_rentals', 'coe_shield',
 	// scripts avançados do framework (antigo coe-resources)
 	'coe_phone', 'coe_apps', 'coe_telecom', 'coe_mail', 'coe_elos', 'coe_news', 'coe_mechanic', 'coe_handling', 'coe_fuel', 'coe_garages', 'coe_deepweb', 'coe_crypto', 'coe_races', 'coe_amzg', 'coe_factions', 'coe_police', 'coe_ems', 'coe_mdt', 'coe_banking', 'coe_housing', 'coe_doors', 'coe_crafting', 'coe_admin'
 ])

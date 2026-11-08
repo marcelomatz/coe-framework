@@ -16,6 +16,7 @@ for _, station in ipairs(catalog.stations) do
 	businessStation[station.business] = station
 end
 local lastCall = {}
+local callLimiter = FuelRules.NewCallLimiter(config.CallCooldownMs or 250)
 local lastReport = {}
 local playerBusy = {}
 
@@ -570,13 +571,35 @@ local function buy(playerId, character, station, coords, payload)
 	if not sale then
 		return { ok = false, error = prepareError }
 	end
-	local paid, payError, left = charge(playerId, payload.payment, sale.total, sale.description)
-	if not paid then
-		return { ok = false, error = payError, left = left }
-	end
-	if not deliver(sale) then
-		refund(playerId, paid, sale.total, sale.description)
-		return { ok = false, error = sale.target == 'can' and 'inventory_full' or 'no_vehicle' }
+	local paid, payError, left
+	local sagaOk, _, sagaErr = FuelRules.ExecuteSaga({
+		{
+			name = 'charge',
+			action = function()
+				paid, payError, left = charge(playerId, payload.payment, sale.total, sale.description)
+				if not paid then
+					return false, payError
+				end
+				return paid
+			end,
+			compensate = function(_, paidState)
+				if paidState then
+					refund(playerId, paidState, sale.total, sale.description)
+				end
+			end
+		},
+		{
+			name = 'deliver',
+			action = function()
+				if not deliver(sale) then
+					return false, sale.target == 'can' and 'inventory_full' or 'no_vehicle'
+				end
+				return true
+			end
+		}
+	}, {})
+	if not sagaOk then
+		return { ok = false, error = sagaErr or payError, left = left }
 	end
 	if sale.mode == 'player' then
 		local own = tanks[station.business] or {}
@@ -961,14 +984,34 @@ local function tabletUpgradeFleet(characterId, station)
 	if not spec then
 		return { ok = false, error = specError }
 	end
-	local charged, chargeError = chargeBusiness(station.business, spec.price, 'fuel_fleet_upgrade', spec.id)
-	if not charged then
-		return { ok = false, error = chargeError }
-	end
-	local record = remote('coe_garages', 'AddBusinessFleet', station.business, spec.model, true)
-	if type(record) ~= 'table' or not record.id then
-		remote('coe_economy', 'SocietyCollect', station.business, spec.price, 'fuel_fleet_refund')
-		return { ok = false, error = type(record) == 'table' and record.error or 'garages_unavailable' }
+	local record
+	local sagaOk, _, sagaErr = FuelRules.ExecuteSaga({
+		{
+			name = 'charge_business',
+			action = function()
+				local charged, chargeError = chargeBusiness(station.business, spec.price, 'fuel_fleet_upgrade', spec.id)
+				if not charged then
+					return false, chargeError
+				end
+				return true
+			end,
+			compensate = function()
+				remote('coe_economy', 'SocietyCollect', station.business, spec.price, 'fuel_fleet_refund')
+			end
+		},
+		{
+			name = 'add_fleet',
+			action = function()
+				record = remote('coe_garages', 'AddBusinessFleet', station.business, spec.model, true)
+				if type(record) ~= 'table' or not record.id then
+					return false, type(record) == 'table' and record.error or 'garages_unavailable'
+				end
+				return record
+			end
+		}
+	}, {})
+	if not sagaOk then
+		return { ok = false, error = sagaErr }
 	end
 	local vehicleId = tostring(record.id)
 	fleet[vehicleId] = { business = station.business, tier = tier + 1, cargo = FuelRules.Empty(config) }
@@ -1144,7 +1187,7 @@ RegisterNetEvent('coe_fuel:request', function(requestId, action, payload)
 		return answer({ ok = false, error = 'not_ready' })
 	end
 	local now = GetGameTimer()
-	if lastCall[playerId] and now - lastCall[playerId] < config.CallCooldownMs then
+	if not callLimiter:allow(playerId, now, 1) then
 		return answer({ ok = false, error = 'busy' })
 	end
 	lastCall[playerId] = now
@@ -1156,6 +1199,7 @@ RegisterNetEvent('coe_fuel:request', function(requestId, action, payload)
 end)
 
 AddEventHandler('playerDropped', function()
+	callLimiter:forget(source)
 	lastCall[source], lastReport[source], playerBusy[source] = nil, nil, nil
 end)
 

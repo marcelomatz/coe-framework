@@ -54,7 +54,9 @@ local function loadFramework(path)
 end
 
 loadFramework('coe_core/lib/platform.lua')
+dofile('../coe_core/lib/algorithms/init.lua')
 Core = {
+	Algorithms = Core and Core.Algorithms,
 	Platform = CoePlatform,
 	Players = { GetActiveCharacter = function(id) return characters[id] and { characterId = characters[id] } end }
 }

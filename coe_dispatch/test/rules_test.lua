@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('../coe_dispatch/config.lua')
 dofile('../coe_dispatch/server/rules.lua')
 
@@ -26,12 +27,23 @@ eq(select(2, DispatchRules.Coords(1, 'a', 3)), 'invalid_coords', 'coords texto')
 eq(select(2, DispatchRules.Coords(0 / 0, 1, 1)), 'invalid_coords', 'coords nan')
 eq(select(2, DispatchRules.Coords(1, 1, math.huge)), 'invalid_coords', 'coords infinito')
 
--- Duplicados
+-- Duplicados (varredura e Spatial Grid O(1))
 local calls = { [1] = { id = 1, code = 'shots_fired', category = 'police', priority = 2, x = 0.0, y = 0.0, z = 0.0, createdAt = 100 } }
-eq(DispatchRules.Duplicate(calls, 'shots_fired', { x = 10.0, y = 0.0, z = 0.0 }, 150, c).id, 1, 'duplicado')
-eq(DispatchRules.Duplicate(calls, 'shots_fired', { x = 500.0, y = 0.0, z = 0.0 }, 150, c), nil, 'longe não duplica')
-eq(DispatchRules.Duplicate(calls, 'shots_fired', { x = 10.0, y = 0.0, z = 0.0 }, 100 + c.DedupeSeconds + 1, c), nil, 'antigo não duplica')
-eq(DispatchRules.Duplicate(calls, 'assault', { x = 10.0, y = 0.0, z = 0.0 }, 150, c), nil, 'outro código não duplica')
+local grid = DispatchRules.NewSpatialIndex(c.DedupeRadius)
+grid:insert(1, 0.0, 0.0, 0.0, 0, calls[1])
+eq(DispatchRules.Duplicate(calls, 'shots_fired', { x = 10.0, y = 0.0, z = 0.0 }, 150, c, grid).id, 1, 'duplicado via SpatialGrid O(1)')
+eq(DispatchRules.Duplicate(calls, 'shots_fired', { x = 500.0, y = 0.0, z = 0.0 }, 150, c, grid), nil, 'longe não duplica no Grid')
+eq(DispatchRules.Duplicate(calls, 'shots_fired', { x = 10.0, y = 0.0, z = 0.0 }, 100 + c.DedupeSeconds + 1, c, grid), nil, 'antigo não duplica')
+eq(DispatchRules.Duplicate(calls, 'assault', { x = 10.0, y = 0.0, z = 0.0 }, 150, c, grid), nil, 'outro código não duplica')
+
+-- Timing Wheel O(1) para expiração
+local expiredId = nil
+local wheel = DispatchRules.NewTtlWheel(1000, function(id) expiredId = id end)
+wheel:schedule(99, 2000)
+wheel:tick()
+eq(expiredId, nil, 'ainda não expirou no tick 1')
+wheel:tick()
+eq(expiredId, 99, 'expirou no tick 2')
 
 -- Expiração
 calls[2] = { id = 2, code = 'assault', category = 'police', priority = 2, x = 0, y = 0, z = 0, createdAt = 100 + c.TtlSeconds }

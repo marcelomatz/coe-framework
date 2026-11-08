@@ -1,6 +1,19 @@
 local config = EconomyConfig
 
 local ready = false
+local lockManager = EconomyRules and EconomyRules.NewLockManager and EconomyRules.NewLockManager({ timeoutMs = 5000 }) or nil
+local forensicChain = EconomyRules and EconomyRules.NewForensicChain and EconomyRules.NewForensicChain() or nil
+
+local function withAccountLocks(keys, fn)
+	if not lockManager then
+		return fn()
+	end
+	local guard <close>, err = lockManager:acquireMulti(keys)
+	if not guard then
+		return nil, err or 'busy'
+	end
+	return fn()
+end
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -9,6 +22,19 @@ local function log(level, category, event, context)
 end
 
 local function audit(event, context)
+	if type(context) == 'table' and forensicChain then
+		local tsUs = os.time() * 1000000
+		local actorId = tostring(context.character_id or context.action or '0')
+		local payload = string.format('%s:%s:%s', tostring(context.action or ''), tostring(context.target or ''), tostring(context.count or 0))
+		local hash, prevHash, seq = forensicChain:append(tsUs, tostring(context.source or 'coe_economy'), actorId, event, payload)
+		context.seq = seq
+		context.timestamp_us = tsUs
+		context.actor_id = actorId
+		context.event = event
+		context.payload = payload
+		context.prev_hash = prevHash
+		context.hash = hash
+	end
 	pcall(function()
 		return exports.coe_audit:Record('info', 'audit', event, context)
 	end)
@@ -132,19 +158,21 @@ exports('Credit', function(characterId, amount, reason, reference)
 	if not op then
 		return nil, errorCode
 	end
-	local balance, balanceError = balanceOf(op.id, source)
-	if not balance then
-		return nil, balanceError
-	end
-	if not EconomyRules.CanCredit(balance, op.amount, config) then
-		return nil, 'balance_limit'
-	end
-	local done, creditError = EconomyPersistence.Credit(op.id, op.amount, op.reason, op.reference, source)
-	if not done then
-		return nil, creditError
-	end
-	audit('money_credited', { character_id = op.id, source = source, action = op.reason, count = op.amount })
-	return true
+	return withAccountLocks({ 'acc:' .. op.id }, function()
+		local balance, balanceError = balanceOf(op.id, source)
+		if not balance then
+			return nil, balanceError
+		end
+		if not EconomyRules.CanCredit(balance, op.amount, config) then
+			return nil, 'balance_limit'
+		end
+		local done, creditError = EconomyPersistence.Credit(op.id, op.amount, op.reason, op.reference, source)
+		if not done then
+			return nil, creditError
+		end
+		audit('money_credited', { character_id = op.id, source = source, action = op.reason, count = op.amount })
+		return true
+	end)
 end)
 
 exports('Debit', function(characterId, amount, reason, reference)
@@ -157,24 +185,111 @@ exports('Debit', function(characterId, amount, reason, reference)
 	if not op then
 		return nil, errorCode
 	end
-	local balance, balanceError = balanceOf(op.id, source)
-	if not balance then
-		return nil, balanceError
-	end
-	if balance < op.amount then
-		return nil, 'insufficient_funds'
-	end
-	local done, debitError = EconomyPersistence.Debit(op.id, op.amount, op.reason, op.reference, source)
-	if not done then
-		-- Corrida com outro débito: o modo estrito desfez a transação.
-		local current = EconomyPersistence.Balance(op.id)
-		if current and current < op.amount then
+	return withAccountLocks({ 'acc:' .. op.id }, function()
+		local balance, balanceError = balanceOf(op.id, source)
+		if not balance then
+			return nil, balanceError
+		end
+		local frozen = EconomyPersistence.FrozenBalance and (EconomyPersistence.FrozenBalance(op.id) or 0) or 0
+		if balance < op.amount then
 			return nil, 'insufficient_funds'
 		end
-		return nil, debitError
+		if balance - frozen < op.amount then
+			return nil, 'funds_frozen'
+		end
+		local done, debitError = EconomyPersistence.Debit(op.id, op.amount, op.reason, op.reference, source)
+		if not done then
+			-- Corrida com outro débito: o modo estrito desfez a transação.
+			local current = EconomyPersistence.Balance(op.id)
+			local curFrozen = EconomyPersistence.FrozenBalance and (EconomyPersistence.FrozenBalance(op.id) or 0) or 0
+			if current and current - curFrozen < op.amount then
+				return nil, curFrozen > 0 and current >= op.amount and 'funds_frozen' or 'insufficient_funds'
+			end
+			return nil, debitError
+		end
+		audit('money_debited', { character_id = op.id, source = source, action = op.reason, count = op.amount })
+		return true
+	end)
+end)
+
+exports('GetFrozenBalance', function(characterId)
+	local source = caller()
+	local blocked = guard(source)
+	if blocked then
+		return nil, blocked
 	end
-	audit('money_debited', { character_id = op.id, source = source, action = op.reason, count = op.amount })
-	return true
+	local id, idError = EconomyRules.CharacterId(characterId)
+	if not id then
+		return nil, idError
+	end
+	local ensured, ensureError = ensure(id, source)
+	if not ensured then
+		return nil, ensureError
+	end
+	if not EconomyPersistence.FrozenBalance then
+		return 0
+	end
+	return EconomyPersistence.FrozenBalance(id)
+end)
+
+exports('FreezeFunds', function(characterId, amount, reason, reference)
+	local source = caller()
+	local blocked = guard(source)
+	if blocked then
+		return nil, blocked
+	end
+	local op, errorCode = prepare(characterId, amount, reason, reference)
+	if not op then
+		return nil, errorCode
+	end
+	return withAccountLocks({ 'acc:' .. op.id }, function()
+		local balance, balanceError = balanceOf(op.id, source)
+		if not balance then
+			return nil, balanceError
+		end
+		local frozen = EconomyPersistence.FrozenBalance and (EconomyPersistence.FrozenBalance(op.id) or 0) or 0
+		if balance - frozen < op.amount then
+			return nil, 'insufficient_funds'
+		end
+		if EconomyPersistence.FreezeFunds then
+			local done, freezeError = EconomyPersistence.FreezeFunds(op.id, op.amount, op.reason, op.reference, source)
+			if not done then
+				return nil, freezeError
+			end
+		end
+		audit('money_frozen', { character_id = op.id, source = source, action = op.reason, count = op.amount })
+		return true
+	end)
+end)
+
+exports('UnfreezeFunds', function(characterId, amount, reason, reference)
+	local source = caller()
+	local blocked = guard(source)
+	if blocked then
+		return nil, blocked
+	end
+	local op, errorCode = prepare(characterId, amount, reason, reference)
+	if not op then
+		return nil, errorCode
+	end
+	return withAccountLocks({ 'acc:' .. op.id }, function()
+		local balance, balanceError = balanceOf(op.id, source)
+		if not balance then
+			return nil, balanceError
+		end
+		local frozen = EconomyPersistence.FrozenBalance and (EconomyPersistence.FrozenBalance(op.id) or 0) or 0
+		if frozen < op.amount then
+			return nil, 'insufficient_frozen_funds'
+		end
+		if EconomyPersistence.UnfreezeFunds then
+			local done, unfreezeError = EconomyPersistence.UnfreezeFunds(op.id, op.amount, op.reason, op.reference, source)
+			if not done then
+				return nil, unfreezeError
+			end
+		end
+		audit('money_unfrozen', { character_id = op.id, source = source, action = op.reason, count = op.amount })
+		return true
+	end)
 end)
 
 exports('Transfer', function(fromId, toId, amount, reason, reference)
@@ -194,30 +309,37 @@ exports('Transfer', function(fromId, toId, amount, reason, reference)
 	if target == op.id then
 		return nil, 'same_account'
 	end
-	local fromBalance, fromError = balanceOf(op.id, source)
-	if not fromBalance then
-		return nil, fromError
-	end
-	local toBalance, toError = balanceOf(target, source)
-	if not toBalance then
-		return nil, toError
-	end
-	if fromBalance < op.amount then
-		return nil, 'insufficient_funds'
-	end
-	if not EconomyRules.CanCredit(toBalance, op.amount, config) then
-		return nil, 'balance_limit'
-	end
-	local done, transferError = EconomyPersistence.Transfer(op.id, target, op.amount, op.reason, op.reference, source)
-	if not done then
-		local current = EconomyPersistence.Balance(op.id)
-		if current and current < op.amount then
+	return withAccountLocks({ 'acc:' .. op.id, 'acc:' .. target }, function()
+		local fromBalance, fromError = balanceOf(op.id, source)
+		if not fromBalance then
+			return nil, fromError
+		end
+		local toBalance, toError = balanceOf(target, source)
+		if not toBalance then
+			return nil, toError
+		end
+		local fromFrozen = EconomyPersistence.FrozenBalance and (EconomyPersistence.FrozenBalance(op.id) or 0) or 0
+		if fromBalance < op.amount then
 			return nil, 'insufficient_funds'
 		end
-		return nil, transferError
-	end
-	audit('money_transferred', { character_id = op.id, target = target, source = source, action = op.reason, count = op.amount })
-	return true
+		if fromBalance - fromFrozen < op.amount then
+			return nil, 'funds_frozen'
+		end
+		if not EconomyRules.CanCredit(toBalance, op.amount, config) then
+			return nil, 'balance_limit'
+		end
+		local done, transferError = EconomyPersistence.Transfer(op.id, target, op.amount, op.reason, op.reference, source)
+		if not done then
+			local current = EconomyPersistence.Balance(op.id)
+			local curFrozen = EconomyPersistence.FrozenBalance and (EconomyPersistence.FrozenBalance(op.id) or 0) or 0
+			if current and current - curFrozen < op.amount then
+				return nil, curFrozen > 0 and current >= op.amount and 'funds_frozen' or 'insufficient_funds'
+			end
+			return nil, transferError
+		end
+		audit('money_transferred', { character_id = op.id, target = target, source = source, action = op.reason, count = op.amount })
+		return true
+	end)
 end)
 
 -- Extrato pessoal (mais recentes primeiro): lista de { delta, reason, reference, created_at } ou { error = codigo }.

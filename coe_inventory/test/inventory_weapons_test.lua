@@ -73,4 +73,28 @@ eq(select(2, S.ReloadWeapon(id, pistol, 'WEAPON_PISTOL', 0, 12)), 'persistence_f
 eq(export('GetItemCount')(id, 'ammo-9'), before, 'munição devolvida')
 eq(export('GetSlot')(id, pistol).metadata.ammo, 12, 'arma intacta')
 
+-- GetEquippedWeapon: rastreia saque/coldre, revalida posse física (TOCTOU) e exige ACE.
+eq(export('GetEquippedWeapon')(1), 0, 'desarmado inicialmente')
+export('UseItem')(id, pistol)
+eq(export('GetEquippedWeapon')(1), GetHashKey('WEAPON_PISTOL'), 'arma equipada após UseItem')
+export('UseItem')(id, pistol)
+eq(export('GetEquippedWeapon')(1), 0, 'segundo UseItem no mesmo slot guarda a arma no coldre')
+
+-- Sacar novamente e mover de slot mantém a arma equipada; remover do inventário zera na hora (TOCTOU)
+export('UseItem')(id, pistol)
+eq(export('GetEquippedWeapon')(1), GetHashKey('WEAPON_PISTOL'), 'arma reequipada')
+export('SwapSlots')(id, pistol, 20)
+eq(export('GetEquippedWeapon')(1), GetHashKey('WEAPON_PISTOL'), 'continua equipada após trocar de slot')
+export('RemoveItem')(id, 20, 1)
+eq(export('GetEquippedWeapon')(1), 0, 'remover arma do inventário zera arma equipada imediatamente')
+
+-- Controle de acesso por ACE em GetEquippedWeapon
+GetInvokingResource = function() return 'resource_intruso' end
+local hDenied, errDenied = export('GetEquippedWeapon')(1)
+eq(hDenied, nil, 'negado para resource sem ACE')
+eq(errDenied, 'caller_not_allowed', 'erro caller_not_allowed')
+GetInvokingResource = function() return 'coe_shield' end
+eq(export('GetEquippedWeapon')(1), 0, 'coe_shield autorizado')
+GetInvokingResource = nil
+
 print('inventory_weapons_test: todos os testes passaram')

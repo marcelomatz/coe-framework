@@ -1,7 +1,10 @@
 local config = MdtConfig
 local ready = false
--- Janelas deslizantes por policial (characterId).
+-- Janelas deslizantes / GCRA e Cache LRU Zero-GC por policial (characterId).
 local lookupStamps, writeStamps = {}, {}
+local lookupLimiter = MdtRules.NewRateLimiter(config.LookupsPerWindow or 30, config.LookupWindowSeconds or 60)
+local writeLimiter = MdtRules.NewRateLimiter(config.WritesPerWindow or 10, config.WriteWindowSeconds or 60)
+local characterCache = MdtRules.NewCache(128)
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -77,7 +80,7 @@ end
 
 -- Consulta a dado de cidadão/placa: limita, GRAVA o acesso e só então libera (falha fechada).
 local function guardLookup(cop, action, subject)
-	if throttled(cop, lookupStamps, config.LookupsPerWindow, config.LookupWindowSeconds) then
+	if not lookupLimiter:allow(cop.characterId, os.time() * 1000, 1) then
 		return 'rate_limited'
 	end
 	local logged = MdtPersistence.LogAccess(cop.characterId, cop.businessId, action, subject)
@@ -88,10 +91,22 @@ local function guardLookup(cop, action, subject)
 end
 
 local function guardWrite(cop)
-	if throttled(cop, writeStamps, config.WritesPerWindow, config.WriteWindowSeconds) then
+	if not writeLimiter:allow(cop.characterId, os.time() * 1000, 1) then
 		return 'rate_limited'
 	end
 	return nil
+end
+
+local function cachedCharacter(subjectId)
+	local cached = characterCache:get(subjectId)
+	if cached ~= nil then
+		return cached
+	end
+	local character = MdtPersistence.Character(subjectId)
+	if character then
+		characterCache:put(subjectId, character)
+	end
+	return character
 end
 
 local function fullName(row)
@@ -183,7 +198,7 @@ actions.person = function(cop, payload)
 	if blocked then
 		return failure(blocked)
 	end
-	local character = MdtPersistence.Character(subjectId)
+	local character = cachedCharacter(subjectId)
 	if not character then
 		return failure(character == false and 'unknown_character' or 'database_error')
 	end
@@ -287,7 +302,7 @@ actions.warrant_issue = function(cop, payload)
 	if blocked then
 		return failure(blocked)
 	end
-	local character = MdtPersistence.Character(subjectId)
+	local character = cachedCharacter(subjectId)
 	if not character then
 		return failure(character == false and 'unknown_character' or 'database_error')
 	end
@@ -495,10 +510,40 @@ exports('AccessLog', function(subject, limit)
 	return rows or { error = rowsError }
 end)
 
+local intelligenceReports = {}
+
+exports('RecordFinancialAnomaly', function(report)
+	if type(report) ~= 'table' then return false end
+	intelligenceReports[#intelligenceReports + 1] = {
+		kind = 'financial_coaf',
+		payload = report,
+		recordedAt = os.time()
+	}
+	audit('mdt_financial_anomaly', { operation = tostring(report.shellBusinessId or report.characterId or 'unknown') })
+	return true
+end)
+
+exports('RecordGridAnomaly', function(report)
+	if type(report) ~= 'table' then return false end
+	intelligenceReports[#intelligenceReports + 1] = {
+		kind = 'grid_thermal',
+		payload = report,
+		recordedAt = os.time()
+	}
+	audit('mdt_grid_anomaly', { operation = tostring(report.spaceKey or 'unknown') })
+	return true
+end)
+
+exports('GetIntelligenceReports', function()
+	return intelligenceReports
+end)
+
 AddEventHandler('playerDropped', function()
 	local characterId = characterOf(source)
 	if characterId then
 		lookupStamps[characterId], writeStamps[characterId] = nil, nil
+		lookupLimiter:forget(characterId)
+		writeLimiter:forget(characterId)
 	end
 end)
 

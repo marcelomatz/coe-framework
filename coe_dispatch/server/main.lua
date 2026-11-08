@@ -2,6 +2,23 @@ local config = DispatchConfig
 -- Chamados só em memória: são efêmeros (TTL). O registro durável fica na auditoria.
 local calls, lastCitizenCall = {}, {}
 local nextId = 1
+local spatialGrid = DispatchRules.NewSpatialIndex(config.DedupeRadius or 120.0)
+local ttlWheel = DispatchRules.NewTtlWheel(1000, function(callId)
+	local call = calls[callId]
+	if call then
+		calls[callId] = nil
+	if spatialGrid then
+		spatialGrid:remove(callId)
+	end
+	if ttlWheel then
+		ttlWheel:cancel(callId)
+	end
+		if spatialGrid then
+			spatialGrid:remove(callId)
+		end
+		TriggerClientEvent('coe_dispatch:clear', -1, callId)
+	end
+end)
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -94,7 +111,7 @@ local function open(code, x, y, z, origin)
 		return failure(coordsError)
 	end
 	local now = os.time()
-	local duplicate = DispatchRules.Duplicate(calls, code, coords, now, config)
+	local duplicate = DispatchRules.Duplicate(calls, code, coords, now, config, spatialGrid)
 	if duplicate then
 		duplicate.reports = duplicate.reports + 1
 		broadcast(duplicate)
@@ -109,6 +126,12 @@ local function open(code, x, y, z, origin)
 	}
 	nextId = nextId + 1
 	calls[call.id] = call
+	if spatialGrid then
+		spatialGrid:insert(call.id, call.x, call.y, call.z, 0, call)
+	end
+	if ttlWheel then
+		ttlWheel:schedule(call.id, (config.TtlSeconds or 300) * 1000, call)
+	end
 	broadcast(call)
 	TriggerEvent('coe_dispatch:created', call.id, call.category, call.code, origin)
 	audit('dispatch_created', { action = code, source = origin, count = call.id })
@@ -156,6 +179,12 @@ local function close(source, id)
 		return failure('unknown_call')
 	end
 	calls[callId] = nil
+	if spatialGrid then
+		spatialGrid:remove(callId)
+	end
+	if ttlWheel then
+		ttlWheel:cancel(callId)
+	end
 	for _, target in ipairs(recipients(category)) do
 		TriggerClientEvent('coe_dispatch:clear', target, callId)
 	end

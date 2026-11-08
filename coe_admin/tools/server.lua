@@ -487,8 +487,25 @@ function A.spawnVehicle(admin, data)
 		return { ok = false, error = 'invalid_model' }
 	end
 	if data.mode ~= 'owned' then
+		local ped = GetPlayerPed(admin)
+		local at = coordsOf(admin)
+		local netId = nil
+		if ped and ped ~= 0 and at and Core and Core.Platform and Core.Platform.Vehicles and type(Core.Platform.Vehicles.Create) == 'function' then
+			local current = GetVehiclePedIsIn and GetVehiclePedIsIn(ped, false) or 0
+			if current and current ~= 0 and not Entity(current).state['coe:vehicleId'] then
+				Core.Platform.Entities.Delete(current)
+			end
+			local veh = Core.Platform.Vehicles.Create(model, { x = at.x, y = at.y, z = at.z + 0.5 }, Core.Platform.Entities.GetHeading(ped), true)
+			if veh then
+				veh:SetPlate('STAFF')
+				if Core.Platform.Peds and type(Core.Platform.Peds.SetIntoVehicle) == 'function' then
+					Core.Platform.Peds.SetIntoVehicle(ped, veh:GetHandle(), -1)
+				end
+				netId = veh:GetNetworkId()
+			end
+		end
 		audit('staff_vehicle_temp', { source = admin, model = model })
-		return { ok = true, data = { model = model } }
+		return { ok = true, data = { model = model, netId = netId } }
 	end
 	local who = characterOf(admin)
 	if not who then
@@ -811,3 +828,11 @@ AddEventHandler('playerDropped', function()
 end)
 
 GlobalState.coeAdminWorld = false
+
+function AdminToolsPayload(playerId)
+	local modules, any = modulesOf(playerId)
+	if not any then
+		return nil
+	end
+	return { modules = modules, limits = config.Limits, speeds = config.Noclip.Speeds }
+end

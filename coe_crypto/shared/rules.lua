@@ -583,3 +583,58 @@ function CryptoRules.ApplySettings(config, clean)
 	end
 end
 
+local function getAlgorithms()
+	return (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+end
+
+-- Cria RingBuffer Zero-GC para histórico de cotações da corretora.
+function CryptoRules.NewPriceHistoryRing(capacity)
+	local alg = getAlgorithms()
+	if alg and alg.Containers and alg.Containers.newRingBuffer then
+		return alg.Containers.newRingBuffer(capacity or 48)
+	end
+	return nil
+end
+
+-- Executa uma Saga de múltiplos passos com compensação LIFO automática.
+function CryptoRules.ExecuteSaga(steps, context)
+	local alg = getAlgorithms()
+	if alg and alg.Concurrency and alg.Concurrency.executeSaga then
+		return alg.Concurrency.executeSaga(steps, context)
+	end
+	local completed = {}
+	local ctx = context or {}
+	for i = 1, #steps do
+		local ok, res = pcall(steps[i].action, ctx)
+		if not ok or res == false then
+			for j = #completed, 1, -1 do
+				if completed[j].compensate then
+					pcall(completed[j].compensate, ctx)
+				end
+			end
+			return false, not ok and res or 'step_failed'
+		end
+		completed[#completed + 1] = steps[i]
+	end
+	return true, ctx
+end
+
+-- Cria gerenciador de locks assíncronos com ordenação lexicográfica anti-deadlock.
+function CryptoRules.NewLockManager()
+	local alg = getAlgorithms()
+	if alg and alg.Concurrency and alg.Concurrency.newLockManager then
+		return alg.Concurrency.newLockManager()
+	end
+	return nil
+end
+
+-- Cria rate limiter GCRA O(1) para chamadas de dispositivos e ordens.
+function CryptoRules.NewCallLimiter(cooldownMs)
+	local alg = getAlgorithms()
+	if alg and alg.RateLimit and alg.RateLimit.newGCRA then
+		return alg.RateLimit.newGCRA(cooldownMs or 250, 0)
+	end
+	return nil
+end
+
+

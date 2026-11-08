@@ -329,6 +329,10 @@ function S.transferItem(sourceInventory, targetInventory, fromSlot, count, reque
 	if sourceInventory.id == targetInventory.id then
 		return false, 'invalid_target'
 	end
+	local lockGuard <close>, lockErr = S.acquireInventoryLocks({ sourceInventory.id, targetInventory.id }, tonumber(source))
+	if not lockGuard then
+		return false, lockErr or 'resource_busy'
+	end
 	if not S.isPositiveInteger(fromSlot) or fromSlot > sourceInventory.slots then
 		return false, 'invalid_slot'
 	end

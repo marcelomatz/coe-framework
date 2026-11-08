@@ -4,8 +4,10 @@ local ready = false
 local products = {}
 local productsById = {}
 local locks = {}
+local lockManager = AmzgRules and AmzgRules.NewLockManager and AmzgRules.NewLockManager() or nil
 local watching = {}
 local lastRequest = {}
+local requestLimiter = AmzgRules and AmzgRules.NewRateLimiter and AmzgRules.NewRateLimiter(500) or nil
 
 local HOSTS = { coe_tablet = 'tablet', coe_phone = 'phone' }
 local STASH_PREFIX = 'stash:amzg:'
@@ -59,6 +61,9 @@ end
 
 local function throttled(playerId)
 	local now = GetGameTimer()
+	if requestLimiter then
+		return not requestLimiter:allow(playerId, now)
+	end
 	if lastRequest[playerId] and now - lastRequest[playerId] < 500 then
 		return true
 	end
@@ -67,6 +72,18 @@ local function throttled(playerId)
 end
 
 local function withLock(characterId, run)
+	if lockManager then
+		local guard <close>, err = lockManager:acquireMulti({ 'amzg:' .. tostring(characterId) }, 0)
+		if not guard then
+			return { ok = false, error = err == 'lock_timeout' and 'busy' or err }
+		end
+		local ok, result = pcall(run)
+		if not ok then
+			log('error', 'gameplay', 'amzg_lock_failed', { error_code = tostring(result) })
+			return { ok = false, error = 'database_error' }
+		end
+		return result
+	end
 	if locks[characterId] then
 		return { ok = false, error = 'busy' }
 	end
@@ -411,10 +428,6 @@ function App.checkout(playerId, character, payload, device)
 		if not cardId then
 			return { ok = false, error = outcome[2] or 'payment_expired' }
 		end
-		local charged, chargeError = chargeCard(cardId, priced.total, 'Compra Amzg')
-		if not charged then
-			return { ok = false, error = chargeError }
-		end
 		local now = os.time()
 		local order = {
 			characterId = character.id, propertyId = address.propertyId, owner = address.owner,
@@ -422,10 +435,30 @@ function App.checkout(playerId, character, payload, device)
 			total = priced.total, fee = priced.fee, shipping = priced.shipping.id, cardId = cardId,
 			createdAt = now, deliverAt = now + priced.shipping.minutes * 60
 		}
-		local orderId = AmzgPersistence.InsertOrder(order)
-		if not orderId then
-			refundCard(cardId, priced.total, 'Estorno Compra Amzg')
-			return { ok = false, error = 'database_error' }
+		local orderId = nil
+		local sagaOk, sagaErr = AmzgRules.ExecuteSaga({
+			{
+				name = 'charge_card',
+				forward = function()
+					return chargeCard(cardId, priced.total, 'Compra Amzg')
+				end,
+				compensate = function()
+					refundCard(cardId, priced.total, 'Estorno Compra Amzg')
+				end
+			},
+			{
+				name = 'insert_order',
+				forward = function()
+					orderId = AmzgPersistence.InsertOrder(order)
+					if not orderId then
+						return false, 'database_error'
+					end
+					return true
+				end
+			}
+		}, {})
+		if not sagaOk then
+			return { ok = false, error = sagaErr or 'database_error' }
 		end
 		audit('amzg_order_placed', { source = playerId, character_id = character.id, operation = tostring(orderId), count = priced.total, target = address.propertyId })
 		return { ok = true, order = orderId, total = priced.total, deliverAt = order.deliverAt, now = now }
@@ -544,6 +577,9 @@ end)
 
 AddEventHandler('playerDropped', function()
 	lastRequest[source] = nil
+	if requestLimiter then
+		requestLimiter:reset(source)
+	end
 end)
 
 -- Painel admin ----------------------------------------------------------------------------------------

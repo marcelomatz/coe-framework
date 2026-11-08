@@ -1,4 +1,5 @@
 -- Preferências do COE OS no tablet (papel de parede, brilho, tamanho, dock), validadas antes de ir para o KVP.
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('shared/prefs.lua')
 
 local function eq(a, b, m)
@@ -30,5 +31,14 @@ eq(p.dock[2], 'business:12', 'id de instancia aceito e repetido descartado')
 eq(p.dock[3], 'car', 'ids invalidos descartados')
 eq(#TabletPrefs.Sanitize({ dock = {} }).dock, 0, 'dock vazia fica vazia')
 eq(TabletPrefs.Sanitize({ dock = 'bank' }).dock, nil, 'dock invalida volta a automatica')
+
+local limiter = TabletPrefs.NewRateLimiter(250)
+eq(limiter:allow(1, 1000), true, 'GCRA primeira chamada')
+eq(limiter:allow(1, 1100), false, 'GCRA bloqueia spam')
+eq(limiter:allow(1, 1300), true, 'GCRA libera após janela')
+
+local cache = TabletPrefs.NewProfileCache(8)
+cache:put(1, { apps = {} }, 5000, 1000)
+eq(type(cache:get(1, 2000)), 'table', 'LRU Cache guarda perfil')
 
 print('coe_tablet prefs tests passed')

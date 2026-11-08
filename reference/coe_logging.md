@@ -20,6 +20,19 @@ Registra uma linha estruturada (JSON ou "pretty", conforme convar). O recurso ch
 - `boolean` `ok`
 - `string|nil` `errorCode` — `invalid_level`, `invalid_event`, `encoding_failed`, ...
 
+### `GetRecent(limit)`
+
+Retorna as entradas recentes mantidas no buffer circular Zero-GC em memória. Exige permissão ACE `coe.logging.log` do recurso chamador.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `limit` | `integer\|nil` | Quantidade máxima de entradas (padrão: capacidade total do RingBuffer) |
+
+**Retorno**
+
+- `table|nil` `entries` — Lista de entradas estruturadas (da mais antiga para a mais recente)
+- `string|nil` `errorCode` — `resource_not_allowed` se o chamador não possuir ACE
+
 ## Tipos
 
 ```lua

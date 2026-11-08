@@ -108,7 +108,7 @@ lua test\player_repository_test.lua
 lua test\character_profile_test.lua
 ```
 
-These tests cover identity, character profile, groups, invariants and service operations, migrations, and part of lifecycle registration/shutdown. The MariaDB integration scenario (`coe_database/test/integration/core_scenario.lua`) applies migrations twice and exercises the repository. Repository integration against MariaDB, the real bridge with Node 22, a full session on FXServer Enhanced, and the startup contract must be validated in the target runtime. The overall matrix is in [TEST_COVERAGE.md](../TEST_COVERAGE.md).
+These tests cover identity, character profile, groups, invariants and service operations, migrations, and part of lifecycle registration/shutdown. The MariaDB integration scenario (`coe_database/test/integration/core_scenario.lua`) applies migrations twice and exercises the repository. Repository integration against MariaDB, the real bridge with Node 26 (libnode26), a full session on FXServer Enhanced, and the startup contract must be validated in the target runtime. The overall matrix is in [TEST_COVERAGE.md](../TEST_COVERAGE.md).
 
 ## Observability and gameplay feedback
 

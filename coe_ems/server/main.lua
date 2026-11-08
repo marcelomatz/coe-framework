@@ -3,6 +3,8 @@ local ready = false
 -- Estado em memória por jogador: { characterId, state, since }. Cai ao sair do servidor.
 local patients = {}
 local lastReport = {}
+local reportLimiter = EmsRules and EmsRules.NewReportLimiter and EmsRules.NewReportLimiter(1000, 0) or nil
+local bleedoutWheel = EmsRules and EmsRules.NewBleedoutWheel and EmsRules.NewBleedoutWheel(5000) or nil
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -55,6 +57,17 @@ local function setState(source, state)
 		return true
 	end
 	patients[source] = { characterId = characterId, state = state, since = os.time() }
+	if bleedoutWheel then
+		bleedoutWheel:cancel('bleedout:' .. tostring(source))
+		if state == 'unconscious' and (config.BleedoutSeconds or 0) > 0 then
+			bleedoutWheel:schedule('bleedout:' .. tostring(source), config.BleedoutSeconds * 1000, function()
+				local entry = patients[source]
+				if entry and entry.state == 'unconscious' then
+					setState(source, 'dead')
+				end
+			end)
+		end
+	end
 	TriggerClientEvent('coe_ems:state', source, state)
 	TriggerEvent('coe_ems:stateChanged', source, characterId, from, state)
 	if state == 'unconscious' then
@@ -259,6 +272,12 @@ end)
 
 AddEventHandler('playerDropped', function()
 	patients[source], lastReport[source] = nil, nil
+	if reportLimiter then
+		reportLimiter:reset(source)
+	end
+	if bleedoutWheel then
+		bleedoutWheel:cancel('bleedout:' .. tostring(source))
+	end
 end)
 
 local function registerPermissions()
@@ -303,10 +322,13 @@ CreateThread(function()
 	log('info', 'system', 'ems_ready', {})
 end)
 
--- Sangramento: inconsciente sem socorro vira óbito.
+-- Sangramento: inconsciente sem socorro vira óbito (via TimingWheel O(1) + fallback por epoch).
 CreateThread(function()
 	while true do
 		Wait(5000)
+		if bleedoutWheel then
+			bleedoutWheel:advanceTick()
+		end
 		local now = os.time()
 		for source, entry in pairs(patients) do
 			if entry.state == 'unconscious' and EmsRules.BledOut(entry.since, now, config) then

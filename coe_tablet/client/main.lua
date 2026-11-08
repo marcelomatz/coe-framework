@@ -53,10 +53,12 @@ if config.OpenKey then
 	RegisterKeyMapping('+coe_tablet_open', 'Abrir tablet (COE OS)', 'keyboard', config.OpenKey)
 end
 
-for command in pairs(config.Shortcuts or {}) do
-	RegisterCommand(command, function()
-		requestOpen(command)
-	end, false)
+for command, shortcut in pairs(config.Shortcuts or {}) do
+	if shortcut.command ~= false then
+		RegisterCommand(command, function()
+			requestOpen(command)
+		end, false)
+	end
 end
 
 -- Usar o item do tablet de negócios abre o tablet (o servidor confere o item e o ponto).

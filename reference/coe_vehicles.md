@@ -169,6 +169,69 @@ Personagens (além do dono) que têm a chave.
 
 - `string[]|nil` `characterIds`
 
+### `TransitionState(vehicleId, expectedState, nextState)`
+
+Transiciona atomicamente o estado do veículo. Somente `WriterResources`.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `vehicleId` | `string` |  |
+| `expectedState` | `string` |  |
+| `nextState` | `string` |  |
+
+**Retorno**
+
+- `true|string` `okOrError`
+
+### `SetHousingVehiclePhase(vehicleId, expected, target)`
+
+Altera a fase de manutenção de um veículo estacionado em garagem residencial/oficina. Somente `WriterResources`.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `vehicleId` | `string` |  |
+| `expected` | `string` |  |
+| `target` | `string` |  |
+
+**Retorno**
+
+- `boolean` `ok`
+- `string|nil` `errorCode`
+
+### `IsHousingVehicle(vehicleId)`
+
+Verifica se o veículo está estacionado fisicamente em garagem residencial. Somente `WriterResources`.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `vehicleId` | `string` |  |
+
+**Retorno**
+
+- `boolean` `isHousing`
+
+### `ResumeHousingVehicle(vehicleId)`
+
+Retoma o estado de veículo estacionado em garagem residencial após manutenção. Somente `WriterResources`.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `vehicleId` | `string` |  |
+
+**Retorno**
+
+- `boolean` `ok`
+- `string|nil` `errorCode`
+
+### `RecoverHousingLocks()`
+
+Recupera travas de manutenção pendentes após reinício. Somente `WriterResources`.
+
+**Retorno**
+
+- `boolean` `ok`
+- `string|nil` `errorCode`
+
 ## Tipos
 
 ```lua

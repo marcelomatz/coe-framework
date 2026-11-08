@@ -91,4 +91,25 @@ A.staff = {}
 eq(duty.Sweep(function() return at end), 1, 'removido da equipe encerra o ponto')
 eq(events[#events], 'rest_a:false:not_staff', 'motivo')
 
+-- Polígono 2.5D AABB + Ray-Casting (Spatial.newPolygon) e LRU Cache Intrusivo (Containers.newLRUCache)
+local polyArea = {
+	kind = 'polygon',
+	z = 30.0,
+	height = 10.0,
+	points = {
+		{ x = 0.0, y = 0.0 },
+		{ x = 20.0, y = 0.0 },
+		{ x = 20.0, y = 20.0 },
+		{ x = 0.0, y = 20.0 },
+	}
+}
+eq(BusinessArea.Contains(polyArea, 10.0, 10.0, 32.0), true, 'ponto dentro do polígono 2.5D')
+eq(BusinessArea.Contains(polyArea, 25.0, 10.0, 32.0), false, 'ponto fora do AABB X do polígono 2.5D')
+eq(BusinessArea.Contains(polyArea, 10.0, 10.0, 45.0), false, 'ponto acima do maxZ do polígono 2.5D')
+
+local lru = BusinessAccess.NewCache(4)
+eq(type(lru), 'table', 'LRU cache intrusivo disponível')
+lru:put('rest_a:10', true)
+eq(lru:get('rest_a:10'), true, 'LRU cache recupera chave em O(1)')
+
 print('access_test ok')

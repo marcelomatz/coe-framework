@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 
@@ -57,5 +58,10 @@ eq(Rules.SanitizeVolume(50), 50, 'volume 50')
 eq(Rules.SanitizeVolume(-10), 0, 'volume negativo limitado a 0')
 eq(Rules.SanitizeVolume(150), 100, 'volume alto limitado a 100')
 eq(Rules.SanitizeVolume('abc', 75), 75, 'fallback de volume')
+
+local limiter = Rules.NewEventLimiter(250)
+eq(limiter:allow('1:radio', 1000), true, 'GCRA primeira troca de rádio')
+eq(limiter:allow('1:radio', 1100), false, 'GCRA bloqueia flood de rádio')
+eq(limiter:allow('1:radio', 1300), true, 'GCRA libera após 250ms')
 
 print('coe_talk rules tests passed')

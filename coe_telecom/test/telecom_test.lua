@@ -97,6 +97,42 @@ eq(#plans, 3, 'três planos')
 eq(plans[1].id, 'prepaid', 'pré-pago primeiro')
 eq(plans[3].id, 'unlimited', 'ilimitado por último')
 
+-- TimingWheel O(1) para corte de chamada pré-paga e Saga Compensatória
+local wheel = TelecomRules.NewTimingWheel(1000)
+eq(type(wheel), 'table', 'NewTimingWheel disponível')
+local cut = false
+wheel:schedule('call:5550101', 3000, function() cut = true end)
+wheel:tick()
+wheel:tick()
+eq(cut, false, 'chamada ativa antes do limite')
+wheel:tick()
+eq(cut, true, 'chamada encerrada no tick exato em O(1)')
+
+-- Testes v2: Antenas 5G/4G/3G, DeadZones, Sabotagem de Torres, Fibra Wi-Fi 6 e Satélite OrbitLink
+local sig5g = TelecomRules.EvaluateSignal(config, { x = 310.0, y = -275.0, z = 54.0 }, {}, {})
+eq(sig5g.band, '5G', 'cobertura 5G no centro de Hawick')
+eq(sig5g.bars, 4, '4 barras no 5G')
+eq(TelecomRules.CanAccessBandFeature(sig5g.band, 'deepweb'), true, '5G abre DeepWeb')
+
+-- Sabotagem da torre 5G de Hawick derruba o sinal na célula
+local sigSabotaged = TelecomRules.EvaluateSignal(config, { x = 310.0, y = -275.0, z = 54.0 }, {
+	erb_hawick_badger = { sabotaged = true }
+}, {})
+eq(sigSabotaged.band, 'NONE', 'torre sabotada derruba cobertura local')
+
+-- Cobertura 3G rural bloqueia DeepWeb móvel mas permite voz/SMS
+local sig3g = TelecomRules.EvaluateSignal(config, { x = 1850.0, y = 3680.0, z = 34.0 }, {}, {})
+eq(sig3g.band, '3G', 'cobertura 3G em Sandy Shores')
+eq(select(2, TelecomRules.CanAccessBandFeature(sig3g.band, 'deepweb')), 'band_too_slow', '3G bloqueia DeepWeb pesada')
+eq(TelecomRules.CanAccessBandFeature(sig3g.band, 'voice'), true, '3G permite voz')
+
+-- Zona de Sombra (Mount Chiliad) sem sinal vs Kit Veicular OrbitLink ativo
+local sigDead = TelecomRules.EvaluateSignal(config, { x = 501.0, y = 5604.0, z = 797.0 }, {}, {})
+eq(sigDead.band, 'NONE', 'Mount Chiliad é Dead Zone (0 barras)')
+local sigOrbit = TelecomRules.EvaluateSignal(config, { x = 501.0, y = 5604.0, z = 797.0 }, {}, { orbitlinkBubble = true })
+eq(sigOrbit.band, 'SAT', 'Kit Veicular OrbitLink dá sinal via satélite no Mount Chiliad')
+eq(sigOrbit.freeData, true, 'Bolha Wi-Fi OrbitLink isenta franquia do chip SIM')
+
 if failures > 0 then
 	error(('%d falha(s)'):format(failures))
 end

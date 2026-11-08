@@ -528,12 +528,20 @@ CreateThread(function()
 	end
 	debugPrint('player.clientReady enviado')
 	sendRequest('player.clientReady')
-	-- Rede de segurança: se a seleção não abrir (servidor sem resposta, erro), a tela de carregamento fecha mesmo assim.
+	-- Rede de segurança: se a seleção não abrir (servidor sem resposta, erro ou primeiro start do banco),
+	-- reenvia player.clientReady a cada 2s para recuperar a sessão assim que o servidor concluir o boot.
 	local timeout = CoeCharactersConfig.LoadingScreenTimeoutMs or 30000
 	local elapsed = 0
+	local lastRetry = GetGameTimer()
 	while not loadingClosed and elapsed < timeout do
 		Wait(250)
 		elapsed = elapsed + 250
+		local now = GetGameTimer()
+		if not isOpen and now > 0 and (now - lastRetry) >= 2000 then
+			lastRetry = now
+			debugPrint(('reenviando player.clientReady (timer=%d)'):format(now))
+			sendRequest('player.clientReady')
+		end
 	end
 	if not loadingClosed then
 		debugPrint('seleção não abriu a tempo; fechando a tela de carregamento')

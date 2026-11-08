@@ -273,6 +273,12 @@ CreateThread(function()
 	TriggerServerEvent('coe_doors:request')
 end)
 
+RegisterNetEvent('coe_doors:alarm', function(placeId, entryKey)
+	if type(PlaySoundFrontend) == 'function' then
+		PlaySoundFrontend(-1, 'Beep_Red', 'DLC_HEIST_HACKING_SNAKE_SOUNDS', true)
+	end
+end)
+
 AddEventHandler('onResourceStop', function(resourceName)
 	if resourceName == GetCurrentResourceName() then
 		unregisterAll()

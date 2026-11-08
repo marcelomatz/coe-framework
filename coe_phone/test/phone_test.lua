@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 
@@ -176,6 +177,24 @@ eq(PhoneRules.StorageFits(1, 0, 1048576), true, 'cabe exatamente 1 MB')
 eq(PhoneRules.StorageFits(1, 1, 1048576), false, 'passa de 1 MB')
 eq(PhoneRules.StorageFits(nil, 0, 1), false, 'modelo sem armazenamento')
 eq(config.Models.coe_one.storage > 0, true, 'COE One tem armazenamento')
+
+-- Algoritmos (Saga, GCRA, LRU Cache)
+local restored = false
+local okSaga = PhoneRules.ExecuteSaga({
+	{ name = 'remove_sim', action = function() return true end, compensate = function() restored = true end },
+	{ name = 'insert_db', action = function() return false end }
+})
+eq(okSaga, false, 'Saga falha quando banco recusa')
+eq(restored, true, 'Saga devolve chip ao inventário')
+
+local limiter = PhoneRules.NewRateLimiter(250)
+eq(limiter:allow(1, 1000), true, 'GCRA permite primeira chamada')
+eq(limiter:allow(1, 1100), false, 'GCRA bloqueia dentro do cooldown')
+eq(limiter:allow(1, 1300), true, 'GCRA libera após cooldown')
+
+local cache = PhoneRules.NewCache(8)
+cache:put('SN123', { model = 'coe_one' }, 5000, 1000)
+eq(cache:get('SN123', 2000).model, 'coe_one', 'LRU Cache retorna dispositivo')
 
 if failures > 0 then
 	error(failures .. ' falha(s)')

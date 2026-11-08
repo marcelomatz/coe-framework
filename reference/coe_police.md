@@ -112,6 +112,18 @@ Ficha criminal de um personagem: exige police.records em um negócio police de p
 
 - `any`
 
+### `RegisterArrestInterceptor(def)`
+
+Registra um interceptador de jurisdição para prisões/multas (ex.: transferência de custódia). Requer ACE `coe.police.extend`.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `def` | `{` | id: string, onArrest?: fun(ctx: table): table\|nil, onFine?: fun(ctx: table): table\|nil } |
+
+**Retorno**
+
+- `true|{` `error:` — string }
+
 ### `Search(officerSource, targetSource)`
 
 Export server `Search` (server/main.lua).

@@ -3,9 +3,13 @@ local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Loca
 
 local ready = false
 local lastCall = {}
+local callLimiter = PhoneRules.NewRateLimiter and PhoneRules.NewRateLimiter(config.CallCooldownMs) or nil
 local lastRefresh = {}
+local refreshLimiter = PhoneRules.NewRateLimiter and PhoneRules.NewRateLimiter(1000) or nil
 local lastMessage = {}
+local messageLimiter = PhoneRules.NewRateLimiter and PhoneRules.NewRateLimiter(config.Messages.CooldownMs) or nil
 local lastPhoto = {}
+local photoLimiter = PhoneRules.NewRateLimiter and PhoneRules.NewRateLimiter(config.Photos.CooldownMs) or nil
 local savingPhoto = {}
 local calls = {}
 local playerCall = {}
@@ -21,6 +25,9 @@ local contactCache = {}
 -- Erros de senha por aparelho (passar o celular adiante não zera o bloqueio).
 local unlockFails = {}
 local binding = {}
+local payments = {}
+local walletBusy = {}
+local upgradeReport = nil
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -524,17 +531,22 @@ Phone = {
 	playerOfSerial = playerOfSerial,
 	routeNumber = routeNumber,
 	contactsOf = contactsOf,
+	contactCache = contactCache,
 	nameFor = nameFor,
 	prefsOf = prefsOf,
 	signalOf = signalOf,
 	offline = offline,
 	soundOf = soundOf,
-	banking = banking,
 	calls = calls,
 	playerCall = playerCall,
+	active = active,
+	payments = payments,
+	walletBusy = walletBusy,
+	verifyCurrent = function(...) return verifyCurrent(...) end,
 	t = _t,
 	CALL_DISPATCH = {},
-	WALLET_DISPATCH = {}
+	WALLET_DISPATCH = {},
+	Native = {}
 }
 
 local function _loadSub(relPath)
@@ -558,10 +570,10 @@ local function answer(...) return Phone.answer(...) end
 local function hangup(...) return Phone.hangup(...) end
 local CALL_DISPATCH = setmetatable({}, { __index = function(_, k) return Phone.CALL_DISPATCH[k] end })
 
-local Native = {
+local Native = setmetatable({
 	calls = CALL_DISPATCH,
-	wallet = WALLET_DISPATCH,
-}
+	wallet = setmetatable({}, { __index = function(_, k) return Phone.WALLET_DISPATCH[k] end }),
+}, { __index = function(_, k) return Phone.Native[k] end })
 
 Native.messages = {
 	threads = function(me)
@@ -779,9 +791,6 @@ end
 
 -- Carteira digital ---------------------------------------------------------------------------------
 
-local payments = {}
-local walletBusy = {}
-
 -- Wallet logic extracted to server/wallet.lua
 local function walletView(...) return Phone.walletView(...) end
 local function inWallet(...) return Phone.inWallet(...) end
@@ -846,18 +855,40 @@ local function placeSim(me, slot)
 	if not ok or type(current) ~= 'table' or current.name ~= config.SimItem or type(current.metadata) ~= 'table' or current.metadata.iccid ~= iccid then
 		return nil, 'slot_changed'
 	end
-	local removed, removedOk = pcall(function()
-		return exports.coe_inventory:RemoveItem(inventory, slot, 1)
-	end)
-	if not removed or removedOk ~= true then
-		return nil, 'inventory_unavailable'
-	end
-	simCache[me.serial] = nil
-	if not PhonePersistence.InsertSim(iccid, me.serial, free) then
-		pcall(function()
-			exports.coe_inventory:AddItem(inventory, config.SimItem, 1, current.metadata)
-		end)
-		return nil, 'database_error'
+	local sagaCtx = { errorCode = nil }
+	local sagaOk = PhoneRules.ExecuteSaga({
+		{
+			name = 'remove_sim_item',
+			action = function()
+				local removed, removedOk = pcall(function()
+					return exports.coe_inventory:RemoveItem(inventory, slot, 1)
+				end)
+				if not removed or removedOk ~= true then
+					sagaCtx.errorCode = 'inventory_unavailable'
+					return false
+				end
+				return true
+			end,
+			compensate = function()
+				pcall(function()
+					exports.coe_inventory:AddItem(inventory, config.SimItem, 1, current.metadata)
+				end)
+			end
+		},
+		{
+			name = 'insert_sim_db',
+			action = function()
+				simCache[me.serial] = nil
+				if not PhonePersistence.InsertSim(iccid, me.serial, free) then
+					sagaCtx.errorCode = 'database_error'
+					return false
+				end
+				return true
+			end
+		}
+	}, sagaCtx)
+	if not sagaOk then
+		return nil, sagaCtx.errorCode or 'database_error'
 	end
 	log('info', 'system', 'phone_sim_inserted', { character_id = me.characterId })
 	local updated = useDevice(me.playerId, me.characterId, me.serial)
@@ -1000,21 +1031,47 @@ Native.settings = {
 			return { ok = false, error = 'in_call' }
 		end
 		local inventory = inventoryOf(me.characterId)
-		local ok, added, addedSlot = pcall(function()
-			return exports.coe_inventory:AddItem(inventory, config.SimItem, 1, { iccid = sim.iccid, label = 'Chip ' .. format(sim.number) })
-		end)
-		if not ok then
-			return { ok = false, error = 'inventory_unavailable' }
-		end
-		if added ~= true then
-			return { ok = false, error = 'inventory_full' }
-		end
-		simCache[me.serial] = nil
-		if not PhonePersistence.EjectSim(sim.iccid, me.serial) then
-			pcall(function()
-				exports.coe_inventory:RemoveItem(inventory, addedSlot, 1)
-			end)
-			return { ok = false, error = 'database_error' }
+		local sagaCtx = { addedSlot = nil, errorCode = nil }
+		local sagaOk = PhoneRules.ExecuteSaga({
+			{
+				name = 'add_sim_item',
+				action = function()
+					local ok, added, addedSlot = pcall(function()
+						return exports.coe_inventory:AddItem(inventory, config.SimItem, 1, { iccid = sim.iccid, label = 'Chip ' .. format(sim.number) })
+					end)
+					if not ok then
+						sagaCtx.errorCode = 'inventory_unavailable'
+						return false
+					end
+					if added ~= true then
+						sagaCtx.errorCode = 'inventory_full'
+						return false
+					end
+					sagaCtx.addedSlot = addedSlot
+					return true
+				end,
+				compensate = function()
+					if sagaCtx.addedSlot then
+						pcall(function()
+							exports.coe_inventory:RemoveItem(inventory, sagaCtx.addedSlot, 1)
+						end)
+					end
+				end
+			},
+			{
+				name = 'eject_sim_db',
+				action = function()
+					simCache[me.serial] = nil
+					if not PhonePersistence.EjectSim(sim.iccid, me.serial) then
+						sagaCtx.errorCode = 'database_error'
+						return false
+					end
+					return true
+				end
+			}
+		}, sagaCtx)
+		if not sagaOk then
+			return { ok = false, error = sagaCtx.errorCode or 'database_error' }
 		end
 		log('info', 'system', 'phone_sim_ejected', { character_id = me.characterId })
 		local updated = useDevice(me.playerId, me.characterId, me.serial)
@@ -1150,7 +1207,12 @@ RegisterNetEvent('coe_phone:call', function(requestId, appId, action, payload)
 		return
 	end
 	local now = GetGameTimer()
-	if lastCall[playerId] and now - lastCall[playerId] < config.CallCooldownMs then
+	if callLimiter then
+		if not callLimiter:allow(playerId, now) then
+			reply(playerId, requestId, { ok = false, error = 'rate_limited' })
+			return
+		end
+	elseif lastCall[playerId] and now - lastCall[playerId] < config.CallCooldownMs then
 		reply(playerId, requestId, { ok = false, error = 'rate_limited' })
 		return
 	end
@@ -1169,7 +1231,7 @@ RegisterNetEvent('coe_phone:call', function(requestId, appId, action, payload)
 
 	local native = Native[appId]
 	if native then
-		local handler = rawget(native, action)
+		local handler = rawget(native, action) or native[action]
 		if type(handler) ~= 'function' then
 			reply(playerId, requestId, { ok = false, error = 'unknown_action' })
 			return
@@ -1254,6 +1316,10 @@ AddEventHandler('playerDropped', function()
 	lastRefresh[playerId] = nil
 	lastMessage[playerId] = nil
 	lastPhoto[playerId] = nil
+	if callLimiter then callLimiter:reset(playerId) end
+	if refreshLimiter then refreshLimiter:reset(playerId) end
+	if messageLimiter then messageLimiter:reset(playerId) end
+	if photoLimiter then photoLimiter:reset(playerId) end
 	savingPhoto[playerId] = nil
 	walletBusy[playerId] = nil
 	for token, payment in pairs(payments) do

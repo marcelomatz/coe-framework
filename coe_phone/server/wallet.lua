@@ -3,7 +3,9 @@ local Phone = Phone
 local config = Phone.config
 local log = function(...) return Phone.log(...) end
 local notify = function(...) return Phone.notify(...) end
-local banking = function(...) return Phone.banking(...) end
+local payments = Phone.payments
+local walletBusy = Phone.walletBusy
+local verifyCurrent = function(...) return Phone.verifyCurrent(...) end
 
 local function banking(exportName, ...)
 	if GetResourceState('coe_banking') ~= 'started' then
@@ -307,3 +309,6 @@ Phone.confirmOwner = confirmOwner
 Phone.newToken = newToken
 Phone.walletLocked = walletLocked
 Phone.WALLET_DISPATCH = WALLET_DISPATCH
+if type(Phone.Native) == 'table' then
+	Phone.Native.wallet = WALLET_DISPATCH
+end

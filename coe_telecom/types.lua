@@ -39,3 +39,47 @@ function exports_coe_telecom:TabletCall(playerId, appId, action, payload) end
 ---@param appId any
 ---@return any
 function exports_coe_telecom:TabletVisible(playerId, appId) end
+
+---Avalia a qualidade de sinal, banda (5G/4G/3G/SAT/FIBRA/OFFLINE) e latência para uma operadora e coordenada.
+---@param carrierId string
+---@param coords table|nil
+---@param context table|nil
+---@return table
+function exports_coe_telecom:EvaluateSignal(carrierId, coords, context) end
+
+---Verifica se a banda atual suporta a feature requisitada (text, voice, video, high_freq_market, remote_rig, cloud_sync).
+---@param band string
+---@param feature string
+---@return boolean
+function exports_coe_telecom:CanAccessBandFeature(band, feature) end
+
+---Sabota fisicamente uma torre de celular (ERB) pelo tempo determinado.
+---@param towerId string
+---@param durationSec number|nil
+---@return boolean, string|nil
+function exports_coe_telecom:SabotageTower(towerId, durationSec) end
+
+---Repara imediatamente uma torre de celular (ERB) sabotada.
+---@param towerId string
+---@return boolean
+function exports_coe_telecom:RepairTower(towerId) end
+
+---Ativa um contrato de fibra óptica dedicada Wi-Fi 6 para um espaço (imóvel/empresa).
+---@param spaceKey string
+---@return boolean
+function exports_coe_telecom:ActivateFiber(spaceKey) end
+
+---Verifica se o espaço possui fibra óptica dedicada ativa.
+---@param spaceKey string
+---@return boolean
+function exports_coe_telecom:HasActiveFiber(spaceKey) end
+
+---Instala ou remove o kit veicular de antena satelital OrbitLink em uma placa.
+---@param plate string
+---@param active boolean
+---@return boolean
+function exports_coe_telecom:SetVehicleOrbitlink(plate, active) end
+
+---Retorna o panorama em memória das ERBs (3G/4G/5G), fibras ópticas e operadoras para o painel admin.
+---@return table
+function exports_coe_telecom:AdminOverview() end

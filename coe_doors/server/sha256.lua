@@ -19,6 +19,10 @@ local function rotr(value, bits)
 end
 
 function DoorsHash.Sha256(message)
+	local Crypto = (Core and Core.Algorithms and Core.Algorithms.Crypto) or (CoeAlgorithms and CoeAlgorithms.Crypto)
+	if Crypto and Crypto.sha256 then
+		return Crypto.sha256(message)
+	end
 	local h0, h1, h2, h3 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
 	local h4, h5, h6, h7 = 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
 	local length = #message
@@ -49,4 +53,19 @@ function DoorsHash.Sha256(message)
 		h4, h5, h6, h7 = (h4 + e) & MASK, (h5 + f) & MASK, (h6 + g) & MASK, (h7 + h) & MASK
 	end
 	return ('%08x%08x%08x%08x%08x%08x%08x%08x'):format(h0, h1, h2, h3, h4, h5, h6, h7)
+end
+
+function DoorsHash.ConstantTimeEquals(a, b)
+	local Crypto = (Core and Core.Algorithms and Core.Algorithms.Crypto) or (CoeAlgorithms and CoeAlgorithms.Crypto)
+	if Crypto and Crypto.constantTimeEquals then
+		return Crypto.constantTimeEquals(a, b)
+	end
+	if type(a) ~= 'string' or type(b) ~= 'string' or #a ~= #b then
+		return false
+	end
+	local diff = 0
+	for i = 1, #a do
+		diff = diff | (a:byte(i) ~ b:byte(i))
+	end
+	return diff == 0
 end

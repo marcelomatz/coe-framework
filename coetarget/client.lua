@@ -1,9 +1,46 @@
 -- Registros: chave (entidade/modelo/tipo) -> { [resource dono] = opções }.
+-- Zonas espaciais indexadas em O(1) via Grade de Hash Espacial de 64 bits (@coe_core/lib/algorithms/spatial.lua).
 local entityTargets = {}
 local modelTargets = {}
 local globalTargets = { player = {}, ped = {}, vehicle = {}, object = {} }
 -- Opções de superfície: valem para qualquer ponto mirado (mapa ou entidade), recebendo as coordenadas do acerto.
 local surfaceTargets = {}
+-- Zonas espaciais indexadas em grade 64-bit: zoneKey -> { id, owner, x, y, z, radiusSq, options }
+local zoneTargets = {}
+
+local function resolveAlgorithms()
+	if type(Core) == 'table' and type(Core.Algorithms) == 'table' then
+		return Core.Algorithms
+	end
+	if type(CoeAlgorithms) == 'table' then
+		return CoeAlgorithms
+	end
+	if type(LoadResourceFile) == 'function' then
+		local src = LoadResourceFile('coe_core', 'lib/algorithms/init.lua')
+		if type(src) == 'string' and src ~= '' then
+			local fn = load(src, '@@coe_core/lib/algorithms/init.lua', 't', _G)
+			if fn then pcall(fn) end
+		end
+	elseif type(io) == 'table' and type(io.open) == 'function' then
+		for _, candidate in ipairs({
+			'../coe_core/lib/algorithms/init.lua',
+			'../../coe-framework/coe_core/lib/algorithms/init.lua'
+		}) do
+			local f = io.open(candidate, 'r')
+			if f then
+				f:close()
+				pcall(dofile, candidate)
+				break
+			end
+		end
+	end
+	return CoeAlgorithms
+end
+
+local alg = resolveAlgorithms()
+local spatialGrid = (alg and alg.Spatial and type(alg.Spatial.newGrid) == 'function')
+	and alg.Spatial.newGrid(16.0)
+	or nil
 
 local targetHeld = false
 local targetToggled = false
@@ -168,8 +205,53 @@ local function RemoveTargetSurface()
 	unregister(surfaceTargets, 'all')
 end
 
+-- Zonas espaciais indexadas em Grade de Hash Espacial de 64 bits (consulta O(1) nas 9 células vizinhas).
+local function AddTargetZone(id, coords, radius, options)
+	if type(id) ~= 'string' or id == '' or type(coords) ~= 'table' then
+		return false
+	end
+	local x, y, z = tonumber(coords.x), tonumber(coords.y), tonumber(coords.z)
+	local r = tonumber(radius)
+	if not (x and y and z and r and r > 0) or not validOptions(options) then
+		return false
+	end
+	local owner = invokingResource()
+	local zoneKey = owner .. ':' .. id
+	local record = {
+		id = id,
+		owner = owner,
+		x = x,
+		y = y,
+		z = z,
+		radius = r,
+		radiusSq = r * r,
+		options = options
+	}
+	if spatialGrid then
+		spatialGrid:insert(zoneKey, x, y, z, 0, record)
+	end
+	zoneTargets[zoneKey] = record
+	return true
+end
+
+local function RemoveTargetZone(id)
+	if type(id) ~= 'string' or id == '' then
+		return
+	end
+	local owner = invokingResource()
+	local zoneKey = owner .. ':' .. id
+	if zoneTargets[zoneKey] then
+		if spatialGrid then
+			spatialGrid:remove(zoneKey)
+		end
+		zoneTargets[zoneKey] = nil
+	end
+end
+
 exports('AddTargetSurface', AddTargetSurface)
 exports('RemoveTargetSurface', RemoveTargetSurface)
+exports('AddTargetZone', AddTargetZone)
+exports('RemoveTargetZone', RemoveTargetZone)
 exports('AddTargetEntity', AddTargetEntity)
 exports('RemoveTargetEntity', RemoveTargetEntity)
 exports('AddTargetModel', AddTargetModel)
@@ -186,6 +268,17 @@ local function removeOwner(registry, owner)
 	end
 end
 
+local function removeZoneOwner(owner)
+	for zoneKey, zone in pairs(zoneTargets) do
+		if zone.owner == owner then
+			if spatialGrid then
+				spatialGrid:remove(zoneKey)
+			end
+			zoneTargets[zoneKey] = nil
+		end
+	end
+end
+
 -- Resources que param não podem deixar opções (e callbacks mortos) registradas.
 AddEventHandler('onClientResourceStop', function(resourceName)
 	removeOwner(entityTargets, resourceName)
@@ -194,6 +287,7 @@ AddEventHandler('onClientResourceStop', function(resourceName)
 	for _, registry in pairs(globalTargets) do
 		removeOwner(registry, resourceName)
 	end
+	removeZoneOwner(resourceName)
 end)
 
 local function getCameraDirection()
@@ -302,7 +396,21 @@ local function getOptions(entity, hit)
 		end
 	end
 	if hit then
-		collectFrom(options, surfaceTargets.all, entity, #(playerCoords - hit), hit)
+		local hitDistance = #(playerCoords - hit)
+		collectFrom(options, surfaceTargets.all, entity, hitDistance, hit)
+		if spatialGrid and next(zoneTargets) ~= nil then
+			local candidates, count = spatialGrid:queryRadius(hit.x, hit.y, hit.z, Config.MaxDistance or 8.0, 0)
+			for i = 1, count do
+				local cand = candidates[i]
+				local zone = (type(cand) == 'table' and cand.payload) or zoneTargets[type(cand) == 'table' and cand.id or cand]
+				if zone then
+					local dx, dy, dz = hit.x - zone.x, hit.y - zone.y, hit.z - zone.z
+					if (dx * dx + dy * dy + dz * dz) <= zone.radiusSq then
+						collectFrom(options, { [zone.owner] = zone.options }, entity, hitDistance, hit)
+					end
+				end
+			end
+		end
 	end
 	return options
 end

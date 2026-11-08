@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('../coe_mechanic/config.lua')
 dofile('../coe_mechanic/server/orders.lua')
 
@@ -5,7 +6,7 @@ local function eq(a, b, m)
 	if a ~= b then error(('%s: esperado %s, veio %s'):format(m, tostring(b), tostring(a)), 2) end
 end
 
-local clock, applied, charged, chargeResult = 0, {}, {}, true
+local clock, applied, charged, refunded, chargeResult, applyResult = 0, {}, {}, {}, true, true
 local orders = MechanicOrders.New({
 	config = CoeMechanicConfig,
 	now = function() return clock end,
@@ -14,8 +15,13 @@ local orders = MechanicOrders.New({
 		if patch.none then return { total = 0, lines = {} } end
 		return { total = 1000, lines = { { kind = 'mod', key = '11', price = 1000 } } }
 	end,
-	apply = function(vehicleId, patch) applied[#applied + 1] = vehicleId; return true end,
-	charge = function(source, amount) charged[#charged + 1] = amount; return chargeResult end
+	apply = function(vehicleId, patch)
+		if applyResult ~= true then return applyResult end
+		applied[#applied + 1] = vehicleId
+		return true
+	end,
+	charge = function(source, amount) charged[#charged + 1] = amount; return chargeResult end,
+	refund = function(source, amount) refunded[#refunded + 1] = amount; return true end
 })
 
 local customer = { source = 5, characterId = '9' }
@@ -47,11 +53,15 @@ eq(select(2, orders.Respond(order.id, 6, true)), 'order_not_found', 'outro jogad
 eq(select(2, orders.Complete(order.id, 'bennys')), 'invalid_status', 'concluir sem aprovação')
 eq(orders.Respond(order.id, 5, true).status, 'approved', 'aprovado')
 
--- Cobrança que falha mantém o pedido aprovado.
+-- Cobrança que falha mantém o pedido aprovado; falha na aplicação dispara rollback (refund) da Saga.
 chargeResult = 'insufficient_funds'
 eq(select(2, orders.Complete(order.id, 'bennys')), 'payment_failed', 'pagamento falhou')
 eq(#applied, 0, 'nada aplicado sem pagar')
 chargeResult = true
+applyResult = 'vehicle_not_found'
+eq(select(2, orders.Complete(order.id, 'bennys')), 'vehicle_not_found', 'aplicação falhou')
+eq(refunded[#refunded], 1200, 'saga estornou a cobrança após falha na aplicação')
+applyResult = true
 eq(orders.Complete(order.id, 'bennys').status, 'done', 'concluído')
 eq(charged[#charged], 1200, 'cobrou o valor final')
 eq(applied[1], 'v1', 'aplicou')

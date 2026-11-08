@@ -208,3 +208,30 @@ function ElosRules.CanRequest(config, relation, myConnections, myPendingOut)
 	end
 	return true
 end
+
+function ElosRules.NewCallLimiter(cooldownMs)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	local RateLimit = alg and alg.RateLimit
+	if RateLimit and RateLimit.newGCRA then
+		return RateLimit.newGCRA(math.max(1, tonumber(cooldownMs) or 300), 0)
+	end
+	return nil
+end
+
+function ElosRules.NewProfileCache(capacity)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	local Containers = alg and alg.Containers
+	if Containers and Containers.newLRUCache then
+		return Containers.newLRUCache(capacity or 128)
+	end
+	return nil
+end
+
+function ElosRules.NewLockManager()
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	local Concurrency = alg and alg.Concurrency
+	if Concurrency and Concurrency.newLockManager then
+		return Concurrency.newLockManager()
+	end
+	return nil
+end

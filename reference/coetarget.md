@@ -77,6 +77,27 @@ Opções para qualquer superfície mirada; `entity` é 0 quando a mira acerta o 
 
 ### `RemoveTargetSurface()`
 
+### `AddTargetZone(id, coords, radius, options)`
+
+Zona espacial esférica indexada em Grade de Hash Espacial de 64 bits (O(1) nas células vizinhas).
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `id` | `string` | Identificador único da zona dentro do resource chamador |
+| `coords` | `{` | x: number, y: number, z: number } |
+| `radius` | `number` | Raio da esfera em metros |
+| `options` | `CoeTargetOption[]` |  |
+
+**Retorno**
+
+- `boolean` `ok`
+
+### `RemoveTargetZone(id)`
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `id` | `string` |  |
+
 ## Tipos
 
 ```lua

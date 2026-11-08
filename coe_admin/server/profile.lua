@@ -32,7 +32,8 @@ end
 -- Perfil somente leitura de um personagem. Cada seção é carregada de forma isolada:
 -- uma fonte indisponível devolve { error = codigo } e não impede as demais.
 -- deps: query(sql, params) -> linhas|nil,erro; inventory(characterId) -> snapshot|nil;
--- itemLabel(nome) -> texto; factions(characterId) -> lista; businesses(), properties(), garages() -> listas; online(characterId) -> { serverId, ping }|nil.
+-- itemLabel(nome) -> texto; factions(characterId) -> lista; businesses(), properties(), doors(), garages() -> listas;
+-- online(characterId) -> { serverId, ping }|nil.
 function AdminProfile.Load(deps, characterId)
 	local id = tostring(characterId or '')
 	if not id:match('^%d+$') then
@@ -209,33 +210,209 @@ function AdminProfile.Load(deps, characterId)
 		if not tenancies then
 			return nil, tenancyError
 		end
+		local propsById = {}
+		local allProps = deps.properties and deps.properties() or {}
 		local labels = {}
-		for _, property in ipairs(deps.properties and deps.properties() or {}) do
+		for _, property in ipairs(allProps) do
 			labels[tostring(property.id)] = property.label or property.id
+			propsById[tostring(property.id)] = property
 		end
 		local list = {}
 		for _, tenancy in ipairs(tenancies) do
+			local pid = tostring(tenancy.property_id)
+			local prop = propsById[pid]
+			local cycleDays = tonumber(tenancy.cycle_days) or 0
+			local dailyRate = tonumber(tenancy.daily_rate) or 0
+			local isStarter = (cycleDays == 0 and dailyRate == 0)
+			local modality = isStarter and 'starter' or 'rented'
+			local modalityLabel = isStarter and 'CEDIDO (INICIAL)' or 'ALUGADO'
 			list[#list + 1] = {
 				propertyId = tenancy.property_id,
-				label = labels[tostring(tenancy.property_id)] or tenancy.property_id,
+				label = labels[pid] or tenancy.property_id,
+				kind = prop and prop.kind or 'apartment',
+				modality = modality,
+				modalityLabel = modalityLabel,
 				unit = tonumber(tenancy.unit),
-				cycleDays = tonumber(tenancy.cycle_days) or 0,
-				dailyRate = tonumber(tenancy.daily_rate) or 0,
+				cycleDays = cycleDays,
+				dailyRate = dailyRate,
 				paidUntil = tonumber(tenancy.paid_until) or 0
 			}
 		end
-		return { list = list }
+
+		-- Imóveis Comprados (Dono) ou Cedidos (Chave/Membro) no coe_housing (casas, esconderijos, comerciais)
+		for _, property in ipairs(allProps) do
+			local pid = tostring(property.id)
+			if type(property.owner) == 'table' and tostring(property.owner.characterId) == id then
+				list[#list + 1] = {
+					propertyId = pid,
+					label = property.label or pid,
+					kind = property.kind or 'house',
+					modality = 'owned',
+					modalityLabel = 'COMPRADO (PROPRIETÁRIO)',
+					unit = 1,
+					cycleDays = 0,
+					dailyRate = 0,
+					paidUntil = 0
+				}
+			else
+				for _, member in ipairs(property.members or {}) do
+					if tostring(member.characterId) == id then
+						list[#list + 1] = {
+							propertyId = pid,
+							label = property.label or pid,
+							kind = property.kind or 'house',
+							modality = 'shared',
+							modalityLabel = 'CEDIDO (CHAVE / MEMBRO)',
+							unit = 1,
+							cycleDays = 0,
+							dailyRate = 0,
+							paidUntil = 0
+						}
+						break
+					end
+				end
+			end
+		end
+
+		-- Imóveis de Portas (coe_doors: casas mapeadas, mansões, sedes)
+		for _, place in ipairs(deps.doors and deps.doors() or {}) do
+			local pid = tostring(place.id)
+			if type(place.owner) == 'table' and tostring(place.owner.characterId) == id then
+				list[#list + 1] = {
+					propertyId = pid,
+					label = place.label or pid,
+					kind = 'door_place',
+					modality = 'owned',
+					modalityLabel = 'COMPRADO (IMÓVEL MLO)',
+					unit = 1,
+					cycleDays = 0,
+					dailyRate = 0,
+					paidUntil = 0
+				}
+			else
+				for _, res in ipairs(place.residents or {}) do
+					if tostring(res.characterId) == id then
+						list[#list + 1] = {
+							propertyId = pid,
+							label = place.label or pid,
+							kind = 'door_place',
+							modality = 'shared',
+							modalityLabel = 'CEDIDO (MORADOR MLO)',
+							unit = 1,
+							cycleDays = 0,
+							dailyRate = 0,
+							paidUntil = 0
+						}
+						break
+					end
+				end
+			end
+		end
+
+		-- Imóveis Comerciais vinculados aos negócios do personagem (coe_housing_leases)
+		local myBizLabels = {}
+		local hasBiz = false
+		for _, business in ipairs(deps.businesses and deps.businesses() or {}) do
+			local isMyBiz = (type(business.owner) == 'table' and tostring(business.owner.characterId) == id)
+			if not isMyBiz then
+				for _, partner in ipairs(business.partners or {}) do
+					if tostring(partner.characterId) == id then isMyBiz = true; break end
+				end
+			end
+			if not isMyBiz then
+				for _, member in ipairs(business.staff or {}) do
+					if tostring(member.characterId) == id then isMyBiz = true; break end
+				end
+			end
+			if isMyBiz then
+				hasBiz = true
+				myBizLabels[tostring(business.id)] = business.label or business.id
+			end
+		end
+		if hasBiz then
+			local leases = deps.query([[
+				SELECT property_id, unit, business_id, cycle_days, daily_rate, paid_until
+				FROM coe_housing_leases ORDER BY property_id, unit LIMIT 50
+			]], {}) or {}
+			for _, lease in ipairs(leases) do
+				local bid = tostring(lease.business_id or '')
+				if myBizLabels[bid] then
+					local pid = tostring(lease.property_id)
+					local cycleDays = tonumber(lease.cycle_days) or 0
+					local dailyRate = tonumber(lease.daily_rate) or 0
+					list[#list + 1] = {
+						propertyId = pid,
+						label = (labels[pid] or pid) .. ' (' .. myBizLabels[bid] .. ')',
+						kind = 'commercial',
+						modality = cycleDays == 0 and 'starter' or 'rented',
+						modalityLabel = cycleDays == 0 and 'CEDIDO (SEDE COMERCIAL)' or 'ALUGADO (COMERCIAL)',
+						unit = tonumber(lease.unit),
+						cycleDays = cycleDays,
+						dailyRate = dailyRate,
+						paidUntil = tonumber(lease.paid_until) or 0
+					}
+				end
+			end
+		end
+
+		local counts = { owned = 0, rented = 0, granted = 0, total = #list }
+		for _, item in ipairs(list) do
+			if item.modality == 'owned' then counts.owned = counts.owned + 1
+			elseif item.modality == 'rented' then counts.rented = counts.rented + 1
+			else counts.granted = counts.granted + 1 end
+		end
+		return { list = list, counts = counts }
 	end)
 
 	section('businesses', function()
-		local result = { owned = {}, staff = {} }
+		local result = { owned = {}, partners = {}, staff = {}, all = {} }
 		for _, business in ipairs(deps.businesses and deps.businesses() or {}) do
-			if type(business.owner) == 'table' and tostring(business.owner.characterId) == id then
-				result.owned[#result.owned + 1] = { id = business.id, label = business.label, category = business.category }
+			local gradesById = {}
+			for _, g in ipairs(business.grades or {}) do
+				gradesById[tostring(g.id)] = g
+			end
+			local isOwner = type(business.owner) == 'table' and tostring(business.owner.characterId) == id
+			if isOwner then
+				local entry = {
+					id = business.id,
+					label = business.label,
+					category = business.category,
+					role = 'Proprietário',
+					gradeLabel = 'Dono / Titular',
+					salary = 0
+				}
+				result.owned[#result.owned + 1] = entry
+				result.all[#result.all + 1] = entry
+			end
+			for _, partner in ipairs(business.partners or {}) do
+				if tostring(partner.characterId) == id then
+					local entry = {
+						id = business.id,
+						label = business.label,
+						category = business.category,
+						role = 'Sócio',
+						gradeLabel = 'Sócio Cotista',
+						salary = 0
+					}
+					result.partners[#result.partners + 1] = entry
+					result.all[#result.all + 1] = entry
+					break
+				end
 			end
 			for _, member in ipairs(business.staff or {}) do
 				if tostring(member.characterId) == id then
-					result.staff[#result.staff + 1] = { id = business.id, label = business.label, category = business.category }
+					local gInfo = member.grade and gradesById[tostring(member.grade)] or nil
+					local entry = {
+						id = business.id,
+						label = business.label,
+						category = business.category,
+						role = 'Equipe',
+						grade = member.grade,
+						gradeLabel = (gInfo and gInfo.label) or member.grade or 'Funcionário',
+						salary = (gInfo and tonumber(gInfo.salary)) or 0
+					}
+					result.staff[#result.staff + 1] = entry
+					result.all[#result.all + 1] = entry
 					break
 				end
 			end

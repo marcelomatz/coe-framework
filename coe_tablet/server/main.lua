@@ -1,6 +1,8 @@
 local config = CoeTabletConfig
 local lastCall = {}
+local callLimiter = (TabletPrefs and TabletPrefs.NewRateLimiter and TabletPrefs.NewRateLimiter(config.CallCooldownMs)) or nil
 local lastRefresh = {}
+local refreshLimiter = (TabletPrefs and TabletPrefs.NewRateLimiter and TabletPrefs.NewRateLimiter(1000)) or nil
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -112,7 +114,11 @@ end)
 RegisterNetEvent('coe_tablet:refresh', function()
 	local playerId = source
 	local now = GetGameTimer()
-	if lastRefresh[playerId] and now - lastRefresh[playerId] < 1000 then
+	if refreshLimiter then
+		if not refreshLimiter:allow(playerId, now) then
+			return
+		end
+	elseif lastRefresh[playerId] and now - lastRefresh[playerId] < 1000 then
 		return
 	end
 	lastRefresh[playerId] = now
@@ -144,7 +150,12 @@ RegisterNetEvent('coe_tablet:call', function(requestId, appId, action, payload)
 	end
 
 	local now = GetGameTimer()
-	if lastCall[playerId] and now - lastCall[playerId] < config.CallCooldownMs then
+	if callLimiter then
+		if not callLimiter:allow(playerId, now) then
+			reply(playerId, requestId, { ok = false, error = 'rate_limited' })
+			return
+		end
+	elseif lastCall[playerId] and now - lastCall[playerId] < config.CallCooldownMs then
 		reply(playerId, requestId, { ok = false, error = 'rate_limited' })
 		return
 	end
@@ -177,4 +188,6 @@ end)
 AddEventHandler('playerDropped', function()
 	lastCall[source] = nil
 	lastRefresh[source] = nil
+	if callLimiter then callLimiter:reset(source) end
+	if refreshLimiter then refreshLimiter:reset(source) end
 end)

@@ -1,4 +1,4 @@
--- Estado compartilhado, logging e validações básicas do serviço de inventário.
+-- Estado compartilhado, logging, controle de concorrência lexicográfico e validações básicas do serviço de inventário.
 Inventory.Service = {}
 local S = Inventory.Service
 
@@ -16,6 +16,22 @@ end
 local logger = CoeLogger.Create('coe_inventory')
 S.log = logger.log
 
+local Algorithms = (Core and Core.Algorithms) or CoeAlgorithms
+S.locks = (Algorithms and Algorithms.Concurrency) and Algorithms.Concurrency.newLockManager() or nil
+
+local noopGuard = setmetatable({}, { __close = function() end })
+
+---Adquire travas atômicas em ordem lexicográfica estrita sobre múltiplos inventários (compatível com `<close>`).
+---@param keys string[]
+---@param ownerSource? integer
+---@return table|nil guard, string|nil err
+function S.acquireInventoryLocks(keys, ownerSource, timeoutMs)
+	if not S.locks then
+		return noopGuard, nil
+	end
+	return S.locks:acquireMulti(keys, timeoutMs or 3000, ownerSource)
+end
+
 function S.isValidId(id)
 	return type(id) == 'string'
 		and #id > 0
@@ -31,7 +47,6 @@ function S.generateContainerId()
 	S.containerSequence = S.containerSequence + 1
 	return ('container:%d:%d:%d'):format(os.time(), GetGameTimer(), S.containerSequence)
 end
-
 
 S.inventoryRequestTimes = {}
 S.inventorySwapTimes = {}

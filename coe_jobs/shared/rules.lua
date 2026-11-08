@@ -939,7 +939,77 @@ function JobRules.ValidSpot(spot)
 end
 
 -- Sorteia a espécie de uma área de pesca: o bônus (vara + isca) aumenta o peso das raras. random() em [0, 1).
+local function resolveAlgorithms()
+	if type(Core) == 'table' and type(Core.Algorithms) == 'table' then
+		return Core.Algorithms
+	end
+	if type(CoeAlgorithms) == 'table' then
+		return CoeAlgorithms
+	end
+	if type(LoadResourceFile) == 'function' then
+		local src = LoadResourceFile('coe_core', 'lib/algorithms/init.lua')
+		if type(src) == 'string' and src ~= '' then
+			local fn = load(src, '@@coe_core/lib/algorithms/init.lua', 't', _G)
+			if fn then pcall(fn) end
+		end
+	elseif type(io) == 'table' and type(io.open) == 'function' then
+		local candidates = {
+			'../coe_core/lib/algorithms/init.lua',
+			'../../coe-framework/coe_core/lib/algorithms/init.lua'
+		}
+		for i = 1, #candidates do
+			local f = io.open(candidates[i], 'r')
+			if f then
+				f:close()
+				pcall(dofile, candidates[i])
+				break
+			end
+		end
+	end
+	return CoeAlgorithms
+end
+
+-- Constroi (ou recupera do cache por bonus) uma Tabela de Alias de Vose O(1) para as especies da zona.
+function JobRules.BuildSpeciesSampler(zone, products, bonus)
+	local alg = resolveAlgorithms()
+	if not (alg and alg.Sampling and type(alg.Sampling.newAliasTable) == 'function') then
+		return nil
+	end
+	zone._aliasCache = zone._aliasCache or {}
+	local bonusKey = math.floor(((bonus or 0) * 1000) + 0.5)
+	if zone._aliasCache[bonusKey] then
+		return zone._aliasCache[bonusKey]
+	end
+	local items = {}
+	for index, entry in ipairs(zone.species) do
+		local tier = products and products[entry.id] and products[entry.id].tier or 'common'
+		local weight = entry.weight * (1 + (bonus or 0) * (TIER_BOOST[tier] or 0))
+		items[index] = { item = entry.id, weight = weight }
+	end
+	local sampler = alg.Sampling.newAliasTable(items)
+	zone._aliasCache[bonusKey] = sampler
+	return sampler
+end
+
+-- Calcula a rota otima em grafo 3D de paradas usando A* (A-Star) de @coe_core/lib/algorithms/graph.lua.
+function JobRules.OptimalRoutePath(nodes, startId, goalId)
+	local alg = resolveAlgorithms()
+	if alg and alg.Graph and type(alg.Graph.astar) == 'function' then
+		return alg.Graph.astar(nodes, startId, goalId)
+	end
+	return nil, nil
+end
+
 function JobRules.RollSpecies(zone, products, bonus, random)
+	if random == nil then
+		local sampler = JobRules.BuildSpeciesSampler(zone, products, bonus)
+		if sampler then
+			local picked = sampler:sample()
+			if picked then
+				return picked
+			end
+		end
+	end
 	random = random or math.random
 	local total, weights = 0, {}
 	for index, entry in ipairs(zone.species) do

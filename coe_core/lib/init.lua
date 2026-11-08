@@ -92,6 +92,25 @@ if okZones and type(zonesMod) == 'table' then
 	Core.Zones = zonesMod
 end
 
+-- Garante que a biblioteca de algoritmos (Core.Algorithms / CoeAlgorithms) execute localmente
+-- em cada resource com lazy-loading e zero IPC, preservando metatables (__close, métodos)
+local okAlgorithms, algorithmsMod = pcall(function()
+	if type(CoeAlgorithms) == 'table' then
+		return CoeAlgorithms
+	end
+	if type(LoadResourceFile) == 'function' then
+		local content = LoadResourceFile('coe_core', 'lib/algorithms/init.lua')
+		if content then
+			local fn = load(content, '@coe_core/lib/algorithms/init.lua')
+			if fn then return fn() end
+		end
+	end
+	return dofile('lib/algorithms/init.lua')
+end)
+if okAlgorithms and type(algorithmsMod) == 'table' then
+	Core.Algorithms = algorithmsMod
+end
+
 ---Verifica se outro resource atende a uma faixa de versão SemVer requerida.
 ---@param resourceName string
 ---@param requiredRange string Ex: '>=1.1.0' ou '^1.2.0'

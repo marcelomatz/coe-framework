@@ -4,6 +4,8 @@ local ready = false
 local cuffed, jailed, loaded = {}, {}, {}
 -- escorts[alvo] = policial que escolta
 local escorts = {}
+-- interceptors de jurisdição (ex.: corte marcial / custódia especial registrados via RegisterArrestInterceptor)
+local interceptors = {}
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -189,11 +191,11 @@ local function fine(officerSource, targetSource, amount, charge)
 	return true
 end
 
-local function startSentence(source, characterId, releaseAt)
-	jailed[source] = { characterId = characterId, releaseAt = releaseAt }
+local function startSentence(source, characterId, releaseAt, customPlace)
+	local place = (type(customPlace) == 'table' and type(customPlace.x) == 'number') and customPlace or config.Jail
+	jailed[source] = { characterId = characterId, releaseAt = releaseAt, place = place }
 	setCuffed(source, false)
-	local place = config.Jail
-	TriggerClientEvent('coe_police:jail', source, place.x, place.y, place.z, place.heading, place.radius)
+	TriggerClientEvent('coe_police:jail', source, place.x, place.y, place.z, place.heading or config.Jail.heading, place.radius or config.Jail.radius)
 end
 
 local function arrest(officerSource, targetSource, minutes, charge)
@@ -209,6 +211,24 @@ local function arrest(officerSource, targetSource, minutes, charge)
 	if not ctx then
 		return failure(errorCode)
 	end
+	local intercepted = PoliceRules.ApplyInterceptors(interceptors, 'onArrest', {
+		officerSource = ctx.officerSource,
+		targetSource = ctx.targetSource,
+		officerCharacterId = ctx.officer.characterId,
+		targetCharacterId = ctx.targetId,
+		businessId = ctx.officer.businessId,
+		minutes = total,
+		charge = cleanCharge
+	})
+	local customPlace = nil
+	if type(intercepted) == 'table' then
+		if type(intercepted.adjustedMinutes) == 'number' and intercepted.adjustedMinutes >= 1 then
+			total = math.min(math.floor(intercepted.adjustedMinutes), config.MaxSentenceMinutes * 2)
+		end
+		if type(intercepted.jailCoords) == 'table' and type(intercepted.jailCoords.x) == 'number' then
+			customPlace = intercepted.jailCoords
+		end
+	end
 	local releaseAt = PoliceRules.ReleaseAt(os.time(), total)
 	if not PolicePersistence.SetSentence(ctx.targetId, releaseAt) then
 		return failure('database_error')
@@ -216,7 +236,7 @@ local function arrest(officerSource, targetSource, minutes, charge)
 	if not PolicePersistence.AddRecord(ctx.targetId, ctx.officer.characterId, ctx.officer.businessId, 'arrest', cleanCharge, nil, total) then
 		log('error', 'records', 'arrest_record_failed', { character_id = ctx.targetId })
 	end
-	startSentence(ctx.targetSource, ctx.targetId, releaseAt)
+	startSentence(ctx.targetSource, ctx.targetId, releaseAt, customPlace)
 	TriggerEvent('coe_police:arrested', ctx.officerSource, ctx.targetSource, total, cleanCharge, ctx.officer.businessId)
 	audit('police_arrest', { character_id = ctx.officer.characterId, target = ctx.targetId, action = cleanCharge, count = total })
 	notify(ctx.targetSource, 'error', _t('jailed_notify', { minutes = total }))
@@ -236,8 +256,17 @@ local function release(source)
 	notify(source, 'success', _t('released_notify'))
 end
 
-local function allowed()
-	return config.ActionResources[GetInvokingResource() or ''] == true
+local function allowed(aceName)
+	local invoker = GetInvokingResource() or ''
+	if config.ActionResources[invoker] == true then
+		return true
+	end
+	if invoker ~= '' and type(IsPrincipalAceAllowed) == 'function' then
+		if IsPrincipalAceAllowed('resource.' .. invoker, aceName or 'coe.police.action') == true then
+			return true
+		end
+	end
+	return false
 end
 
 local function inventoryId(characterId)
@@ -279,23 +308,42 @@ local function seize(officerSource, targetSource, slot, count)
 	if not okSlot or type(item) ~= 'table' or type(item.name) ~= 'string' or item.count < cleanCount then
 		return failure('insufficient_items')
 	end
-	local removeOk, removed = pcall(function()
-		return exports.coe_inventory:RemoveItem(targetInventory, cleanSlot, cleanCount)
-	end)
-	if not removeOk or removed ~= true then
-		return failure('inventory_unavailable')
-	end
-	local addOk, added = pcall(function()
-		return exports.coe_inventory:AddItem(officerInventory, item.name, cleanCount, item.metadata)
-	end)
-	if not addOk or added ~= true then
-		local restored = pcall(function()
-			return exports.coe_inventory:AddItem(targetInventory, item.name, cleanCount, item.metadata, cleanSlot)
-		end)
-		if not restored then
-			log('error', 'inventory', 'seize_restore_failed', { character_id = ctx.targetId, item = item.name, count = cleanCount })
-		end
-		return failure('officer_inventory_full')
+	local sagaOk, sagaErr = PoliceRules.ExecuteSaga({
+		{
+			name = 'remove_from_target',
+			forward = function()
+				local removeOk, removed = pcall(function()
+					return exports.coe_inventory:RemoveItem(targetInventory, cleanSlot, cleanCount)
+				end)
+				if not removeOk or removed ~= true then
+					return false, 'inventory_unavailable'
+				end
+				return true
+			end,
+			compensate = function()
+				local restored = pcall(function()
+					return exports.coe_inventory:AddItem(targetInventory, item.name, cleanCount, item.metadata, cleanSlot)
+				end)
+				if not restored then
+					log('error', 'inventory', 'seize_restore_failed', { character_id = ctx.targetId, item = item.name, count = cleanCount })
+				end
+			end,
+		},
+		{
+			name = 'add_to_officer',
+			forward = function()
+				local addOk, added = pcall(function()
+					return exports.coe_inventory:AddItem(officerInventory, item.name, cleanCount, item.metadata)
+				end)
+				if not addOk or added ~= true then
+					return false, 'officer_inventory_full'
+				end
+				return true
+			end,
+		},
+	})
+	if not sagaOk then
+		return failure(sagaErr or 'officer_inventory_full')
 	end
 	audit('police_seize', { character_id = ctx.officer.characterId, target = ctx.targetId, action = item.name, count = cleanCount })
 	TriggerEvent('coe_police:seized', ctx.officerSource, ctx.targetSource, item.name, cleanCount, ctx.officer.businessId)
@@ -366,6 +414,29 @@ end)
 
 exports('Arrest', function(officerSource, targetSource, minutes, charge)
 	return allowed() and arrest(officerSource, targetSource, minutes, charge) or failure('forbidden')
+end)
+
+-- Registra um interceptador de jurisdição para prisões/multas (ACE coe.police.extend ou ActionResources).
+exports('RegisterArrestInterceptor', function(def)
+	if not allowed('coe.police.extend') then
+		return failure('forbidden')
+	end
+	if type(def) ~= 'table' or type(def.id) ~= 'string' or #def.id < 2 or (type(def.onArrest) ~= 'function' and type(def.onFine) ~= 'function') then
+		return failure('invalid_interceptor')
+	end
+	local invoker = GetInvokingResource() or 'coe_police'
+	for i = #interceptors, 1, -1 do
+		if interceptors[i].id == def.id then
+			table.remove(interceptors, i)
+		end
+	end
+	interceptors[#interceptors + 1] = {
+		id = def.id,
+		resource = invoker,
+		onArrest = def.onArrest,
+		onFine = def.onFine
+	}
+	return true
 end)
 
 -- Ficha criminal de um personagem: exige police.records em um negócio police de ponto.
@@ -481,6 +552,14 @@ end
 AddEventHandler('onResourceStart', function(name)
 	if name == 'coe_businesses' then
 		SetTimeout(2000, registerPermissions)
+	end
+end)
+
+AddEventHandler('onResourceStop', function(name)
+	for i = #interceptors, 1, -1 do
+		if interceptors[i].resource == name then
+			table.remove(interceptors, i)
+		end
 	end
 end)
 

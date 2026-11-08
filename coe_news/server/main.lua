@@ -3,7 +3,9 @@ local config = NewsConfig
 local ready = false
 local outlets = {}
 local locks = {}
+local lockManager = NewsRules and NewsRules.NewLockManager and NewsRules.NewLockManager() or nil
 local lastSave = {}
+local saveLimiter = NewsRules and NewsRules.NewSaveLimiter and NewsRules.NewSaveLimiter(config and config.Articles and config.Articles.SaveCooldownSeconds or 3) or nil
 local viewed = {}
 
 local HOSTS = { coe_tablet = 'tablet', coe_phone = 'phone' }
@@ -80,6 +82,18 @@ local function notifyCharacter(characterId, kind, message)
 end
 
 local function withLock(key, run)
+	if lockManager then
+		local guard <close>, err = lockManager:acquireMulti({ tostring(key) }, 0)
+		if not guard then
+			return { ok = false, error = err == 'lock_timeout' and 'busy' or err }
+		end
+		local ok, result = pcall(run)
+		if not ok then
+			log('error', 'gameplay', 'news_action_failed', { error_code = tostring(result) })
+			return { ok = false, error = 'database_error' }
+		end
+		return result
+	end
 	if locks[key] then
 		return { ok = false, error = 'busy' }
 	end
@@ -508,18 +522,34 @@ function App.adBuy(_, character, outletId, payload)
 		if pending >= config.Ads.MaxPendingPerBuyer then
 			return { ok = false, error = 'ad_pending_limit' }
 		end
-		local paid, payError = charge(payer, character.id, ad.price, 'news:' .. outletId)
-		if not paid then
-			return { ok = false, error = payError }
-		end
 		ad.outlet, ad.buyerId, ad.payerKind, ad.payerRef, ad.now = outletId, character.id, payer.kind, payer.ref, os.time()
-		local id = NewsPersistence.InsertAd(ad)
-		if not id then
-			ad.id = 0
-			if not refund(ad) then
-				log('error', 'gameplay', 'news_ad_refund_failed', { character_id = character.id, count = ad.price })
-			end
-			return { ok = false, error = 'database_error' }
+		local id = nil
+		local sagaOk, sagaErr = NewsRules.ExecuteSaga({
+			{
+				name = 'charge_ad',
+				forward = function()
+					return charge(payer, character.id, ad.price, 'news:' .. outletId)
+				end,
+				compensate = function()
+					ad.id = 0
+					if not refund(ad) then
+						log('error', 'gameplay', 'news_ad_refund_failed', { character_id = character.id, count = ad.price })
+					end
+				end
+			},
+			{
+				name = 'insert_ad',
+				forward = function()
+					id = NewsPersistence.InsertAd(ad)
+					if not id then
+						return false, 'database_error'
+					end
+					return true
+				end
+			}
+		}, {})
+		if not sagaOk then
+			return { ok = false, error = sagaErr or 'database_error' }
 		end
 		log('info', 'gameplay', 'news_ad_bought', { character_id = character.id, operation = outletId, count = ad.price })
 		return { ok = true, id = id, price = ad.price }

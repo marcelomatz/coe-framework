@@ -34,7 +34,18 @@ CoeAccess.FirstParty = {
 	coe_housing = { ['coe.database'] = true, ['coe.economy.money'] = true, ['coe.economy.society.collect'] = true, ['coe.economy.society.pay'] = true, ['coe.audit'] = true, ['coe.logging'] = true, ['coe.notify'] = true, ['coe.businesses.extend'] = true },
 	coe_doors = { ['coe.database'] = true, ['coe.audit'] = true, ['coe.logging'] = true, ['coe.notify'] = true, ['coe.factions.read'] = true },
 	coe_crafting = { ['coe.database'] = true, ['coe.audit'] = true, ['coe.logging'] = true, ['coe.notify'] = true, ['coe.factions.read'] = true },
-	coe_admin = { ['coe.database'] = true, ['coe.economy.money'] = true, ['coe.economy.admin'] = true, ['coe.audit'] = true, ['coe.logging'] = true, ['coe.notify'] = true, ['coe.rentals.admin'] = true, ['coe.needs'] = true, ['coe.vehicles.write'] = true, ['coe.vehicles.mileage'] = true, ['coe.vehicles.catalog'] = true, ['coe.businesses.write'] = true, ['coe.businesses.payroll'] = true, ['coe.businesses.admin'] = true, ['coe.groups.admin'] = true, ['coe.ui.theme'] = true, ['coe.supervisor'] = true, ['coe.dispatch'] = true, ['coe.factions.read'] = true, ['coe.factions.admin'] = true, ['coe.handling.write'] = true, ['coe.loot'] = true, ['coe.mechanic.write'] = true, ['coe.crafting'] = true },
+	coe_shield = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.audit'] = true, ['coe.shield'] = true },
+	coe_admin = { ['coe.database'] = true, ['coe.economy.money'] = true, ['coe.economy.admin'] = true, ['coe.audit'] = true, ['coe.logging'] = true, ['coe.notify'] = true, ['coe.rentals.admin'] = true, ['coe.needs'] = true, ['coe.vehicles.write'] = true, ['coe.vehicles.mileage'] = true, ['coe.vehicles.catalog'] = true, ['coe.businesses.write'] = true, ['coe.businesses.payroll'] = true, ['coe.businesses.admin'] = true, ['coe.groups.admin'] = true, ['coe.ui.theme'] = true, ['coe.supervisor'] = true, ['coe.dispatch'] = true, ['coe.factions.read'] = true, ['coe.factions.admin'] = true, ['coe.handling.write'] = true, ['coe.loot'] = true, ['coe.mechanic.write'] = true, ['coe.crafting'] = true, ['coe.shield'] = true },
+	coe_core = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.audit'] = true },
+	coe_audit = { ['coe.database'] = true, ['coe.logging'] = true },
+	coe_businesses = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.notify'] = true, ['coe.audit'] = true, ['coe.economy.money'] = true },
+	coe_economy = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.audit'] = true, ['coe.notify'] = true },
+	coe_inventory = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.audit'] = true, ['coe.notify'] = true },
+	coe_jobs = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.audit'] = true, ['coe.notify'] = true, ['coe.economy.money'] = true, ['coe.vehicles.write'] = true },
+	coe_needs = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.notify'] = true },
+	coe_rentals = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.audit'] = true, ['coe.notify'] = true, ['coe.economy.money'] = true, ['coe.vehicles.write'] = true },
+	coe_shops = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.audit'] = true, ['coe.notify'] = true, ['coe.economy.money'] = true },
+	coe_vehicles = { ['coe.database'] = true, ['coe.logging'] = true, ['coe.audit'] = true, ['coe.notify'] = true },
 }
 
 local CACHE_MS = 5000
@@ -72,7 +83,8 @@ function CoeAccess.Allowed(resource, ace, defaults)
 	if hit and at and hit.at and at - hit.at < CACHE_MS then
 		return hit.ok
 	end
-	local ok = IsPrincipalAceAllowed('resource.' .. resource, ace) == true
+	local raw = IsPrincipalAceAllowed('resource.' .. resource, ace)
+	local ok = raw == true or raw == 1
 	cache[key] = { ok = ok, at = at }
 	return ok
 end

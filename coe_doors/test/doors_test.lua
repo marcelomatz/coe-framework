@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('server/sha256.lua')
 dofile('server/rules.lua')
@@ -237,6 +238,57 @@ eq(ownerView.access, nil, 'tablet sem regras do local')
 local reloaded = DoorsRules.Normalize(adminView, config, owned, salt)
 eq(reloaded.entries[2].pin, vault.pin, 'salvar pela visão admin mantém a senha')
 eq(reloaded.owner.characterId, '9', 'salvar pela visão admin mantém o dono')
+
+eq(DoorsHash.ConstantTimeEquals('abc', 'abc'), true, 'constantTimeEquals igual')
+eq(DoorsHash.ConstantTimeEquals('abc', 'abd'), false, 'constantTimeEquals diferente')
+local grid = DoorsRules.NewSpatialGrid(32.0)
+grid:insert('casa_1:frente', 0, 0, 0)
+eq(#grid:queryRadius(1, 1, 0, 10), 1, 'grid espacial encontra porta')
+
+-- Testes da Fechadura Inteligente 3-em-1 (Biometria Facial, Keycard keyEpoch, 2FA e Contingência Blackout)
+local smartRaw = ownedRaw()
+smartRaw.entries[2].smartLock = { enabled = true, biometric = true, keycard = true, require2FA = true, keyEpoch = 3 }
+local smartPlace = DoorsRules.Normalize(smartRaw, config, nil, salt)
+local smartVault = smartPlace.entries[2]
+eq(smartVault.smartLock.keyEpoch, 3, 'keyEpoch preservado')
+
+-- 1. Biometria negada por máscara (biometric_occluded)
+local maskedOwner = facts({ characterId = 9 })
+maskedOwner.isMasked = function() return true end
+local okBioMask, reasonBioMask = DoorsRules.EvaluateSmartLock(smartPlace, smartVault, maskedOwner, config, false, 'sec')
+eq(okBioMask, false, 'máscara bloqueia biometria facial')
+eq(reasonBioMask, 'biometric_occluded', 'motivo biometric_occluded')
+
+-- 2. Biometria sem máscara + exigência 2FA
+local unmaskedOwner = facts({ characterId = 9 })
+unmaskedOwner.isMasked = function() return false end
+local okBio, viaBio, needPinBio = DoorsRules.EvaluateSmartLock(smartPlace, smartVault, unmaskedOwner, config, false, 'sec')
+eq(okBio, true, 'dono sem máscara passa na biometria')
+eq(viaBio, 'biometric', 'via biometric')
+eq(needPinBio, true, 'exige 2FA (PIN) após biometria')
+
+-- 3. Keycard HMAC-SHA256 válido vs revogado (keyEpoch antigo)
+local validSig = DoorsRules.SignKeycard('casa_dono:cofre', 3, 'sec')
+local cardHolder = facts({ characterId = 999 })
+cardHolder.hasKeycard = function()
+	return { doorId = 'casa_dono:cofre', keyEpoch = 3, signature = validSig }
+end
+local okCard, viaCard, needPinCard = DoorsRules.EvaluateSmartLock(smartPlace, smartVault, cardHolder, config, false, 'sec')
+eq(okCard, true, 'portador de keycard válido autentica')
+eq(viaCard, 'keycard', 'via keycard')
+eq(needPinCard, true, 'keycard em sala 2FA pede PIN')
+
+-- Keycard em Blackout: dispensa 2FA (contingência 1FA)
+local okCardBlk, viaCardBlk, needPinBlk = DoorsRules.EvaluateSmartLock(smartPlace, smartVault, cardHolder, config, true, 'sec')
+eq(okCardBlk, true, 'keycard abre no blackout')
+eq(viaCardBlk, 'keycard_contingency', 'contingência 1FA no blackout')
+eq(needPinBlk, false, 'dispensa 2FA no blackout')
+
+-- Keycard revogado após incremento de keyEpoch (3 -> 4)
+smartVault.smartLock.keyEpoch = 4
+local okRevoked, reasonRevoked = DoorsRules.EvaluateSmartLock(smartPlace, smartVault, cardHolder, config, false, 'sec')
+eq(okRevoked, false, 'keycard com epoch antigo é recusado')
+eq(reasonRevoked, 'keycard_revoked', 'motivo keycard_revoked')
 
 if failures > 0 then
 	error(('%d falha(s)'):format(failures))

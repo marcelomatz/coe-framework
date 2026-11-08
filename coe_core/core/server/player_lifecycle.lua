@@ -1,4 +1,5 @@
 local started = false
+local pendingJoining = {}
 local requestRates = {}
 local requestCaches = {}
 local registeredHandlers = {}
@@ -242,7 +243,13 @@ end
 -- Reenvia o estado de seleção; o envio feito em playerJoining pode chegar antes de o client registrar seus handlers.
 local function resyncSelection(source)
 	local session = Core.SessionRegistry.Get(source)
-	if not session or session.state ~= 'character_selection' then
+	if not session then
+		if started and GetPlayerName(source) and type(Core.Players.LoadSession) == 'function' then
+			beginSession(source)
+		end
+		return
+	end
+	if session.state ~= 'character_selection' then
 		return
 	end
 
@@ -550,6 +557,10 @@ function Core.Players.Start()
 			beginSession(playerSource)
 		end
 	end
+	for playerSource in pairs(pendingJoining) do
+		beginSession(playerSource)
+	end
+	pendingJoining = {}
 	return true
 end
 
@@ -573,6 +584,9 @@ function Core.Players.StopSessions()
 end
 
 AddEventHandler('playerJoining', function()
+	if not started then
+		pendingJoining[source] = true
+	end
 	beginSession(source)
 end)
 

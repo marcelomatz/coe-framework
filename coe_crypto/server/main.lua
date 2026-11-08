@@ -3,14 +3,22 @@ local defaultSettings = CryptoRules.SettingsView(config)
 
 local ready = false
 local locks = {}
+local lockManager = CryptoRules.NewLockManager and CryptoRules.NewLockManager() or nil
 local lastCall = {}
+local callLimiter = CryptoRules.NewCallLimiter and CryptoRules.NewCallLimiter(config.CallCooldownMs) or nil
 local lastSend = {}
 local lastOrder = {}
 local importFails = {}
 local verified = {}
 
 -- Cotação em memória (a última também fica no banco). netFlow: $ comprados - $ vendidos desde a última rodada.
-local market = { price = config.Exchange.StartPrice, history = {}, netFlow = 0, minted = 0 }
+local market = {
+	price = config.Exchange.StartPrice,
+	history = {},
+	ring = CryptoRules.NewPriceHistoryRing and CryptoRules.NewPriceHistoryRing(config.Exchange.HistoryPoints) or nil,
+	netFlow = 0,
+	minted = 0
+}
 local lastMint = {}
 
 local App = {}
@@ -73,6 +81,18 @@ local function keyMatches(wallet, key)
 end
 
 local function withLock(keys, run)
+	if lockManager then
+		local guard <close>, err = lockManager:acquireMulti(keys, 3000)
+		if not guard then
+			return { ok = false, error = err == 'lock_timeout' and 'busy' or 'busy' }
+		end
+		local ok, result = pcall(run)
+		if not ok then
+			log('error', 'gameplay', 'crypto_action_failed', { error_code = tostring(result):sub(1, 120) })
+			return { ok = false, error = 'database_error' }
+		end
+		return result
+	end
 	for _, key in ipairs(keys) do
 		if locks[key] then
 			return { ok = false, error = 'busy' }
@@ -413,14 +433,36 @@ function App.exportUsb(context, payload)
 	end
 	return withLock({ 'character:' .. context.character }, function()
 		local inventory = inventoryOf(context.character)
-		local removed = inventoryCall('RemoveItemByName', inventory, config.Items.BlankUsb, 1)
-		if not removed then
-			return { ok = false, error = 'no_blank_usb' }
-		end
-		local done, giveError = giveKeyItem(context, config.Items.Usb, held, held.entry.label or '')
-		if not done then
-			inventoryCall('AddItem', inventory, config.Items.BlankUsb, 1)
-			return { ok = false, error = giveError }
+		local sagaCtx = { errorCode = nil }
+		local ok = CryptoRules.ExecuteSaga({
+			{
+				name = 'remove_blank_usb',
+				action = function()
+					local removed = inventoryCall('RemoveItemByName', inventory, config.Items.BlankUsb, 1)
+					if not removed then
+						sagaCtx.errorCode = 'no_blank_usb'
+						return false
+					end
+					return true
+				end,
+				compensate = function()
+					inventoryCall('AddItem', inventory, config.Items.BlankUsb, 1)
+				end
+			},
+			{
+				name = 'give_crypto_usb',
+				action = function()
+					local done, giveError = giveKeyItem(context, config.Items.Usb, held, held.entry.label or '')
+					if not done then
+						sagaCtx.errorCode = giveError
+						return false
+					end
+					return true
+				end
+			}
+		}, sagaCtx)
+		if not ok then
+			return { ok = false, error = sagaCtx.errorCode or 'inventory_error' }
 		end
 		audit('crypto_key_exported', { character_id = context.character, item = config.Items.Usb })
 		return { ok = true }
@@ -560,16 +602,38 @@ function App.buy(context, payload)
 		if balance < quote.cost then
 			return { ok = false, error = 'insufficient_funds' }
 		end
-		if economy('Debit', context.character, quote.cost, 'crypto_buy', 'nox:' .. address) ~= true then
-			return { ok = false, error = 'payment_failed' }
-		end
-		local moved = CryptoPersistence.Move({
-			kind = 'buy', from = config.Exchange.ReserveAddress, to = address, amount = quote.units, fiat = quote.cost,
-			memo = config.Exchange.Name, characterId = context.character, deviceKey = context.key
-		}, now)
-		if not moved then
-			economy('Credit', context.character, quote.cost, 'crypto_refund', 'nox:' .. address)
-			return { ok = false, error = 'no_liquidity' }
+		local sagaCtx = { errorCode = nil }
+		local ok = CryptoRules.ExecuteSaga({
+			{
+				name = 'debit_fiat',
+				action = function()
+					if economy('Debit', context.character, quote.cost, 'crypto_buy', 'nox:' .. address) ~= true then
+						sagaCtx.errorCode = 'payment_failed'
+						return false
+					end
+					return true
+				end,
+				compensate = function()
+					economy('Credit', context.character, quote.cost, 'crypto_refund', 'nox:' .. address)
+				end
+			},
+			{
+				name = 'move_crypto',
+				action = function()
+					local moved = CryptoPersistence.Move({
+						kind = 'buy', from = config.Exchange.ReserveAddress, to = address, amount = quote.units, fiat = quote.cost,
+						memo = config.Exchange.Name, characterId = context.character, deviceKey = context.key
+					}, now)
+					if not moved then
+						sagaCtx.errorCode = 'no_liquidity'
+						return false
+					end
+					return true
+				end
+			}
+		}, sagaCtx)
+		if not ok then
+			return { ok = false, error = sagaCtx.errorCode or 'no_liquidity' }
 		end
 		lastOrder[context.character] = now
 		market.netFlow = market.netFlow + quote.cost
@@ -613,20 +677,41 @@ function App.sell(context, payload)
 		if GetResourceState('coe_economy') ~= 'started' then
 			return { ok = false, error = 'bank_unavailable' }
 		end
-		local moved = CryptoPersistence.Move({
-			kind = 'sell', from = held.address, to = config.Exchange.ReserveAddress, amount = units, fiat = quote.payout,
-			memo = config.Exchange.Name, characterId = context.character, deviceKey = context.key
-		}, now)
-		if not moved then
-			return { ok = false, error = 'insufficient_funds' }
-		end
-		if economy('Credit', context.character, quote.payout, 'crypto_sell', 'nox:' .. held.address) ~= true then
-			-- O banco recusou (ex.: teto da conta): as moedas voltam para a carteira.
-			CryptoPersistence.Move({
-				kind = 'refund', from = config.Exchange.ReserveAddress, to = held.address, amount = units,
-				memo = config.Exchange.Name, characterId = context.character, deviceKey = context.key
-			}, now)
-			return { ok = false, error = 'payment_failed' }
+		local sagaCtx = { errorCode = nil }
+		local ok = CryptoRules.ExecuteSaga({
+			{
+				name = 'move_crypto',
+				action = function()
+					local moved = CryptoPersistence.Move({
+						kind = 'sell', from = held.address, to = config.Exchange.ReserveAddress, amount = units, fiat = quote.payout,
+						memo = config.Exchange.Name, characterId = context.character, deviceKey = context.key
+					}, now)
+					if not moved then
+						sagaCtx.errorCode = 'insufficient_funds'
+						return false
+					end
+					return true
+				end,
+				compensate = function()
+					CryptoPersistence.Move({
+						kind = 'refund', from = config.Exchange.ReserveAddress, to = held.address, amount = units,
+						memo = config.Exchange.Name, characterId = context.character, deviceKey = context.key
+					}, now)
+				end
+			},
+			{
+				name = 'credit_fiat',
+				action = function()
+					if economy('Credit', context.character, quote.payout, 'crypto_sell', 'nox:' .. held.address) ~= true then
+						sagaCtx.errorCode = 'payment_failed'
+						return false
+					end
+					return true
+				end
+			}
+		}, sagaCtx)
+		if not ok then
+			return { ok = false, error = sagaCtx.errorCode or 'payment_failed' }
 		end
 		lastOrder[context.character] = now
 		market.netFlow = market.netFlow - quote.payout
@@ -643,10 +728,16 @@ local function dispatch(playerId, character, device, key, action, payload)
 		return { ok = false, error = 'unknown_action' }
 	end
 	local now = GetGameTimer()
-	if lastCall[playerId] and now - lastCall[playerId] < config.CallCooldownMs and action ~= 'state' and action ~= 'market' then
-		return { ok = false, error = 'rate_limited' }
+	if action ~= 'state' and action ~= 'market' then
+		if callLimiter then
+			if not callLimiter:allow(playerId, now) then
+				return { ok = false, error = 'rate_limited' }
+			end
+		elseif lastCall[playerId] and now - lastCall[playerId] < config.CallCooldownMs then
+			return { ok = false, error = 'rate_limited' }
+		end
+		lastCall[playerId] = now
 	end
-	lastCall[playerId] = now
 	return handler({ playerId = playerId, character = character, device = device, key = key }, type(payload) == 'table' and payload or {})
 end
 
@@ -944,26 +1035,65 @@ local function loadSettings()
 	end
 end
 
-local function clampMarketPrice(now)
-	local clamped = math.max(config.Exchange.MinPrice, math.min(config.Exchange.MaxPrice, market.price))
-	if clamped ~= market.price then
-		market.price = clamped
-		market.history[#market.history + 1] = { price = clamped, at = now }
-		CryptoPersistence.InsertPrice(clamped, now)
+local function appendHistoryPoint(point)
+	if market.ring then
+		if market.ring.capacity ~= config.Exchange.HistoryPoints and CryptoRules.NewPriceHistoryRing then
+			local nextRing = CryptoRules.NewPriceHistoryRing(config.Exchange.HistoryPoints)
+			local arr = market.ring:toArray()
+			for i = 1, #arr do
+				nextRing:push(arr[i])
+			end
+			market.ring = nextRing
+		end
+		market.ring:push(point)
+		market.history = market.ring:toArray(market.history)
+		return
 	end
+	market.history[#market.history + 1] = point
 	while #market.history > config.Exchange.HistoryPoints do
 		table.remove(market.history, 1)
 	end
 end
 
+local function clampMarketPrice(now)
+	local clamped = math.max(config.Exchange.MinPrice, math.min(config.Exchange.MaxPrice, market.price))
+	if clamped ~= market.price then
+		market.price = clamped
+		appendHistoryPoint({ price = clamped, at = now })
+		CryptoPersistence.InsertPrice(clamped, now)
+	elseif market.ring then
+		appendHistoryPoint(market.ring:peekNewest(0) or { price = market.price, at = now })
+	else
+		while #market.history > config.Exchange.HistoryPoints do
+			table.remove(market.history, 1)
+		end
+	end
+end
+
 local function loadMarket()
 	local points = CryptoPersistence.Prices(config.Exchange.HistoryPoints)
+	if market.ring then
+		market.ring:clear()
+	end
 	if points and #points > 0 then
-		market.history = points
+		if market.ring then
+			for i = 1, #points do
+				market.ring:push(points[i])
+			end
+			market.history = market.ring:toArray(market.history)
+		else
+			market.history = points
+		end
 		market.price = math.max(config.Exchange.MinPrice, math.min(config.Exchange.MaxPrice, points[#points].price))
 	else
 		market.price = config.Exchange.StartPrice
-		market.history = { { price = market.price, at = os.time() } }
+		local initial = { price = market.price, at = os.time() }
+		if market.ring then
+			market.ring:push(initial)
+			market.history = market.ring:toArray(market.history)
+		else
+			market.history = { initial }
+		end
 		CryptoPersistence.InsertPrice(market.price, os.time())
 	end
 	market.minted = CryptoPersistence.Minted() or 0
@@ -975,10 +1105,7 @@ local function tickMarket()
 	market.netFlow = 0
 	market.price = nextPrice
 	local now = os.time()
-	market.history[#market.history + 1] = { price = nextPrice, at = now }
-	while #market.history > config.Exchange.HistoryPoints do
-		table.remove(market.history, 1)
-	end
+	appendHistoryPoint({ price = nextPrice, at = now })
 	CryptoPersistence.InsertPrice(nextPrice, now)
 	CryptoPersistence.PurgePrices(now - config.Exchange.TickMinutes * 60 * config.Exchange.HistoryPoints * 2)
 end
@@ -1104,16 +1231,16 @@ exports('AdminSetPrice', function(value)
 	end
 	market.price = price
 	market.netFlow = 0
-	market.history[#market.history + 1] = { price = price, at = now }
-	while #market.history > config.Exchange.HistoryPoints do
-		table.remove(market.history, 1)
-	end
+	appendHistoryPoint({ price = price, at = now })
 	audit('crypto_price_set', { count = price })
 	return true
 end)
 
 AddEventHandler('playerDropped', function()
 	lastCall[source] = nil
+	if callLimiter then
+		callLimiter:reset(source)
+	end
 end)
 
 CreateThread(function()

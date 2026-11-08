@@ -62,13 +62,13 @@ local function getPlacementPoint(playerPed, record)
 	return adjustToModelBase(position, record)
 end
 
---- Cria a versão networked e congelada do prop no ponto escolhido.
+--- Cria o prop local congelado no ponto escolhido enquanto o servidor instancia a entidade de rede.
 --- Retorna `entity, netId` ou nil em caso de falha.
 local function createNetworkedProp(record, position, heading)
 	local modelHash = C.resolveModelHash(record.profile.model)
 	if not modelHash or not C.loadModel(modelHash) then return nil end
 
-	local entity = CreateObject(modelHash, position.x, position.y, position.z, true, true, false)
+	local entity = CreateObject(modelHash, position.x, position.y, position.z, false, false, false)
 	SetModelAsNoLongerNeeded(modelHash)
 	if entity == 0 or not Core.Platform.Entities.Exists(entity) then return nil end
 
@@ -79,14 +79,7 @@ local function createNetworkedProp(record, position, heading)
 	SetEntityVisible(entity, true, false)
 	FreezeEntityPosition(entity, true)
 
-	local netId = Core.Platform.Entities.GetNetworkId(entity)
-	if not netId or netId < 1 then
-		Core.Platform.Entities.Delete(entity)
-		return nil
-	end
-	SetNetworkIdExistsOnAllMachines(netId, true)
-	SetNetworkIdCanMigrate(netId, true)
-	return entity, netId
+	return entity, 0
 end
 
 --- Confirma a posição: cria a entidade networked e pede ao servidor para registrar o drop.
@@ -205,6 +198,7 @@ function C.handleDropResult(requestId, success, result)
 	state.pendingDrops[requestId] = nil
 
 	local record = pending.record
+	if Core.Platform.Entities.Exists(pending.entity) then Core.Platform.Entities.Delete(pending.entity) end
 	if success then
 		state.containerProps[record.containerId] = nil
 		if record.equipped then
@@ -218,7 +212,6 @@ function C.handleDropResult(requestId, success, result)
 		return
 	end
 
-	if Core.Platform.Entities.Exists(pending.entity) then Core.Platform.Entities.Delete(pending.entity) end
 	if Core.Platform.Entities.Exists(record.entity) then
 		SetEntityVisible(record.entity, true, false)
 		C.attachContainerProp(record)

@@ -3,8 +3,10 @@ local ready = false
 local DAY = 86400
 
 local properties = {}
+local spatialGrid = HousingRules and HousingRules.NewSpatialGrid and HousingRules.NewSpatialGrid(64.0) or nil
 local tenancies = {}
 local lastAction = {}
+local actionLimiter = HousingRules and HousingRules.NewActionLimiter and HousingRules.NewActionLimiter(config and config.Limits and config.Limits.ActionIntervalMs or 300) or nil
 local inside = {}
 local locked = {}
 local warned = {}
@@ -56,6 +58,9 @@ end
 
 local function throttled(playerId)
 	local now = GetGameTimer()
+	if actionLimiter then
+		return not actionLimiter:allow(playerId, now)
+	end
 	if lastAction[playerId] and now - lastAction[playerId] < config.Limits.ActionIntervalMs then
 		return true
 	end
@@ -671,15 +676,36 @@ local function rentCommercial(playerId, who, property, cycleDays)
 	end
 
 	local total = HousingRules.Total(property.rent.daily, cycleDays)
-	local charged = remote('coe_economy', 'SocietyCharge', businessId, total, 'rent_payment', 'prop_' .. property.id)
-	if charged ~= true then
-		local code = type(charged) == 'table' and charged.error
-		return finish(code == 'insufficient_funds' and 'society_funds' or 'economy_unavailable')
-	end
-	local lease, createError = createLease(property, businessId, cycleDays, property.rent.daily, os.time() + cycleDays * DAY)
-	if not lease then
-		remote('coe_economy', 'SocietyCollect', businessId, total, 'rent_refund')
-		return finish(createError)
+	local lease = nil
+	local sagaOk, sagaErr = HousingRules.ExecuteSaga({
+		{
+			name = 'charge_society',
+			forward = function()
+				local charged = remote('coe_economy', 'SocietyCharge', businessId, total, 'rent_payment', 'prop_' .. property.id)
+				if charged ~= true then
+					local code = type(charged) == 'table' and charged.error
+					return false, code == 'insufficient_funds' and 'society_funds' or 'economy_unavailable'
+				end
+				return true
+			end,
+			compensate = function()
+				remote('coe_economy', 'SocietyCollect', businessId, total, 'rent_refund')
+			end
+		},
+		{
+			name = 'create_lease',
+			forward = function()
+				local createError
+				lease, createError = createLease(property, businessId, cycleDays, property.rent.daily, os.time() + cycleDays * DAY)
+				if not lease then
+					return false, createError
+				end
+				return true
+			end
+		}
+	}, {})
+	if not sagaOk then
+		return finish(sagaErr)
 	end
 	locked[key] = nil
 	notify(playerId, 'success', _t('commercial_leased', { business = businessLabel(businessId), property = property.label }))
@@ -735,21 +761,42 @@ RegisterNetEvent('coe_housing:rent', function(propertyId, cycleDays)
 	end
 
 	local total = HousingRules.Total(property.rent.daily, cycleDays)
-	local ok, debited, debitError = pcall(function()
-		return exports.coe_economy:Debit(who.characterId, total, 'rent_payment', 'prop_' .. property.id)
-	end)
-	if not ok then
-		return finish('economy_unavailable')
-	end
-	if not debited then
-		return finish(debitError == 'insufficient_funds' and 'insufficient_funds' or 'economy_unavailable')
-	end
-	local tenancy, createError = createTenancy(property, who.characterId, cycleDays, property.rent.daily, os.time() + cycleDays * DAY)
-	if not tenancy then
-		pcall(function()
-			return exports.coe_economy:Credit(who.characterId, total, 'rent_refund', 'prop_' .. property.id)
-		end)
-		return finish(createError)
+	local tenancy = nil
+	local sagaOk, sagaErr = HousingRules.ExecuteSaga({
+		{
+			name = 'debit_player',
+			forward = function()
+				local ok, debited, debitError = pcall(function()
+					return exports.coe_economy:Debit(who.characterId, total, 'rent_payment', 'prop_' .. property.id)
+				end)
+				if not ok then
+					return false, 'economy_unavailable'
+				end
+				if not debited then
+					return false, debitError == 'insufficient_funds' and 'insufficient_funds' or 'economy_unavailable'
+				end
+				return true
+			end,
+			compensate = function()
+				pcall(function()
+					return exports.coe_economy:Credit(who.characterId, total, 'rent_refund', 'prop_' .. property.id)
+				end)
+			end
+		},
+		{
+			name = 'create_tenancy',
+			forward = function()
+				local createError
+				tenancy, createError = createTenancy(property, who.characterId, cycleDays, property.rent.daily, os.time() + cycleDays * DAY)
+				if not tenancy then
+					return false, createError
+				end
+				return true
+			end
+		}
+	}, {})
+	if not sagaOk then
+		return finish(sagaErr)
 	end
 	locked[who.characterId] = nil
 	notify(playerId, 'success', _t('residential_rented', { property = property.label, unit = tenancy.unit }))

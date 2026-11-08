@@ -6,7 +6,9 @@ local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Loca
 
 local ready = false
 local locks = {}
+local lockManager = ElosRules and ElosRules.NewLockManager and ElosRules.NewLockManager() or nil
 local lastCall = {}
+local callLimiter = ElosRules and ElosRules.NewCallLimiter and ElosRules.NewCallLimiter(config and config.CallCooldownMs or 300) or nil
 local shifts = {}   -- source -> { character, businessId, startedAt } (ponto aberto)
 
 local HOSTS = { coe_tablet = 'tablet', coe_phone = 'phone' }
@@ -34,6 +36,18 @@ local function characterOf(playerId)
 end
 
 local function withLock(key, run)
+	if lockManager then
+		local guard <close>, err = lockManager:acquireMulti({ tostring(key) }, 0)
+		if not guard then
+			return { ok = false, error = err == 'lock_timeout' and 'busy' or err }
+		end
+		local ok, result = pcall(run)
+		if not ok then
+			log('error', 'gameplay', 'elos_action_failed', { error_code = tostring(result) })
+			return { ok = false, error = 'database_error' }
+		end
+		return result
+	end
 	if locks[key] then
 		return { ok = false, error = 'busy' }
 	end
@@ -510,8 +524,14 @@ exports('TabletCall', function(playerId, appId, action, payload)
 		return { ok = false, error = 'not_installed' }
 	end
 	local now = GetGameTimer()
-	if action ~= 'state' and lastCall[playerId] and now - lastCall[playerId] < config.CallCooldownMs then
-		return { ok = false, error = 'busy' }
+	if action ~= 'state' then
+		if callLimiter then
+			if not callLimiter:allow(playerId, now) then
+				return { ok = false, error = 'busy' }
+			end
+		elseif lastCall[playerId] and now - lastCall[playerId] < config.CallCooldownMs then
+			return { ok = false, error = 'busy' }
+		end
 	end
 	lastCall[playerId] = now
 	return handler(playerId, character, type(payload) == 'table' and payload or {})
@@ -546,6 +566,9 @@ end)
 AddEventHandler('playerDropped', function()
 	closeShift(source)
 	lastCall[source] = nil
+	if callLimiter then
+		callLimiter:reset(source)
+	end
 end)
 
 AddEventHandler('onResourceStop', function(resource)

@@ -1,6 +1,7 @@
 local config = FactionsConfig
 local factions, order = {}, {}
 local ready = false
+local membershipsCache = FactionsRules and FactionsRules.NewCache and FactionsRules.NewCache(128) or nil
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -64,6 +65,9 @@ local function reload()
 end
 
 local function notifyChanged()
+	if membershipsCache then
+		membershipsCache:clear()
+	end
 	TriggerEvent('coe_factions:changed')
 end
 

@@ -168,7 +168,7 @@ function MechanicOrders.New(deps)
 		return summary(order)
 	end
 
-	-- Cobra (se houver economia) e aplica a aparência. Cobrança falha = pedido continua aprovado.
+	-- Cobra (se houver economia) e aplica a aparência via Saga com rollback compensatório.
 	function service.Complete(orderId, shopId)
 		local order = find(orderId)
 		if not order or order.shopId ~= shopId then
@@ -177,15 +177,56 @@ function MechanicOrders.New(deps)
 		if order.status ~= 'approved' then
 			return nil, 'invalid_status'
 		end
-		if deps.charge and order.total > 0 then
-			local charged = deps.charge(order.customer.source, order.total, 'mechanic_order')
-			if charged ~= true then
-				return nil, 'payment_failed'
+		local Concurrency = (type(Core) == 'table' and type(Core.Algorithms) == 'table' and Core.Algorithms.Concurrency) or nil
+		local executeSaga = Concurrency and Concurrency.executeSaga or function(steps, ctx)
+			local completed = {}
+			for i = 1, #steps do
+				local step = steps[i]
+				local ok, res, err = pcall(step.action, ctx)
+				if not ok or res == false then
+					for j = #completed, 1, -1 do
+						if completed[j].compensate then
+							pcall(completed[j].compensate, ctx, completed[j].output)
+						end
+					end
+					return false, step.name, tostring((not ok and res) or err or 'step_failed')
+				end
+				completed[#completed + 1] = { name = step.name, compensate = step.compensate, output = res }
 			end
+			return true, nil, nil
 		end
-		local applied = deps.apply(order.vehicleId, order.patch)
-		if applied ~= true then
-			return nil, tostring(applied)
+
+		local sagaOk, _, sagaErr = executeSaga({
+			{
+				name = 'charge',
+				action = function()
+					if deps.charge and order.total > 0 then
+						local charged = deps.charge(order.customer.source, order.total, 'mechanic_order')
+						if charged ~= true then
+							return false, 'payment_failed'
+						end
+					end
+					return true
+				end,
+				compensate = function()
+					if deps.refund and order.total > 0 then
+						pcall(deps.refund, order.customer.source, order.total, 'mechanic_order_refund')
+					end
+				end
+			},
+			{
+				name = 'apply',
+				action = function()
+					local applied = deps.apply(order.vehicleId, order.patch)
+					if applied ~= true then
+						return false, tostring(applied)
+					end
+					return true
+				end
+			}
+		}, {})
+		if not sagaOk then
+			return nil, sagaErr
 		end
 		order.status = 'done'
 		order.touchedAt = deps.now()

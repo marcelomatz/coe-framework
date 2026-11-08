@@ -1,8 +1,80 @@
 -- Regras puras do coe_loot (sem natives), usadas pelo servidor e pelos testes.
 LootRules = {}
 
+local function resolveSampling()
+	if type(Core) == 'table' and type(Core.Algorithms) == 'table' and type(Core.Algorithms.Sampling) == 'table' then
+		return Core.Algorithms.Sampling
+	end
+	if type(CoeAlgorithms) == 'table' and type(CoeAlgorithms.Sampling) == 'table' then
+		return CoeAlgorithms.Sampling
+	end
+	if type(LoadResourceFile) == 'function' and type(load) == 'function' then
+		local src = LoadResourceFile('coe_core', 'lib/algorithms/sampling.lua')
+		if type(src) == 'string' and src ~= '' then
+			local fn = load(src, '@@coe_core/lib/algorithms/sampling.lua', 't', _G)
+			if fn then
+				local ok, mod = pcall(fn)
+				if ok and type(mod) == 'table' then
+					return mod
+				end
+			end
+		end
+		return nil
+	end
+	if type(loadfile) == 'function' then
+		local candidates = {
+			'../coe_core/lib/algorithms/sampling.lua',
+			'coe-framework/coe_core/lib/algorithms/sampling.lua',
+			'dev/coe_core/lib/algorithms/sampling.lua',
+		}
+		for i = 1, #candidates do
+			local chunk = loadfile(candidates[i])
+			if chunk then
+				local ok, mod = pcall(chunk)
+				if ok and type(mod) == 'table' then
+					return mod
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local Sampling = resolveSampling()
+
 local function int(value)
 	return math.tointeger(tonumber(value))
+end
+
+-- Constrói (e memoriza) o amostrador O(1) pelo Método de Alias de Vose para uma lista de entries.
+function LootRules.BuildAliasSampler(entries)
+	if type(entries) ~= 'table' or #entries == 0 or not Sampling then
+		return nil
+	end
+	local cached = rawget(entries, '_aliasSampler')
+	if cached and rawget(entries, '_aliasCount') == #entries then
+		return cached
+	end
+	local items = {}
+	for index = 1, #entries do
+		local entry = entries[index]
+		local weight = tonumber(entry and entry.weight) or 0
+		if weight <= 0 then
+			return nil
+		end
+		items[index] = {
+			item = entry,
+			value = entry,
+			weight = weight,
+		}
+	end
+	local ok, sampler = pcall(Sampling.newAliasTable, items)
+	if not ok or not sampler then
+		return nil
+	end
+	rawset(entries, '_aliasSampler', sampler)
+	rawset(entries, '_aliasCount', #entries)
+	return sampler
 end
 
 -- Valida uma tabela. Devolve true ou nil + motivo.
@@ -39,8 +111,17 @@ function LootRules.Validate(id, definition)
 	return true
 end
 
--- Escolhe uma entrada pelo peso. rand(a, b) devolve um inteiro de a a b (como math.random).
+-- Escolhe uma entrada pelo peso.
+-- Quando rand é nil ou math.random, utiliza o Método de Alias de Vose em O(1).
+-- Quando rand é uma função determinística injetada em testes, preserva a busca acumulada exata.
 function LootRules.Pick(entries, rand)
+	if rand == nil or rand == math.random then
+		local sampler = LootRules.BuildAliasSampler(entries)
+		if sampler then
+			return sampler:sample()
+		end
+		rand = rand or math.random
+	end
 	local total = 0
 	for _, entry in ipairs(entries) do
 		total = total + entry.weight

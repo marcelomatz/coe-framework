@@ -364,15 +364,22 @@
 			node.dataset.app = id;
 			els.apps.appendChild(node);
 			containers[id] = { app: app, node: node };
-			const renderer = registry[app.base || app.id];
-			if (renderer) {
-				try {
-					renderer(node, appApi(app));
-				} catch (error) {
-					setStatus(errorText('app_error'), 'error');
+			const mountApp = function () {
+				const renderer = registry[app.base || app.id];
+				if (renderer) {
+					try {
+						renderer(node, appApi(app));
+					} catch (error) {
+						setStatus(errorText('app_error'), 'error');
+					}
+				} else {
+					setStatus(errorText('app_unavailable'), 'error');
 				}
+			};
+			if (registry[app.base || app.id] || !app.script) {
+				mountApp();
 			} else {
-				setStatus(errorText('app_unavailable'), 'error');
+				loadApp(app).then(mountApp);
 			}
 		}
 		touch(id);

@@ -1,5 +1,49 @@
 CraftingService = {}
 
+local function resolveConcurrency()
+	if type(Core) == 'table' and type(Core.Algorithms) == 'table' and type(Core.Algorithms.Concurrency) == 'table' then
+		return Core.Algorithms.Concurrency
+	end
+	if type(CoeAlgorithms) == 'table' and type(CoeAlgorithms.Concurrency) == 'table' then
+		return CoeAlgorithms.Concurrency
+	end
+	if type(LoadResourceFile) == 'function' and type(load) == 'function' then
+		local src = LoadResourceFile('coe_core', 'lib/algorithms/init.lua')
+		if type(src) == 'string' and src ~= '' then
+			local fn = load(src, '@@coe_core/lib/algorithms/init.lua', 't', _G)
+			if fn then
+				local ok, mod = pcall(fn)
+				if ok and type(mod) == 'table' and type(mod.Concurrency) == 'table' then
+					return mod.Concurrency
+				end
+			end
+		end
+		if type(CoeAlgorithms) == 'table' and type(CoeAlgorithms.Concurrency) == 'table' then
+			return CoeAlgorithms.Concurrency
+		end
+		return nil
+	end
+	if type(loadfile) == 'function' then
+		local candidates = {
+			'../coe_core/lib/algorithms/init.lua',
+			'coe-framework/coe_core/lib/algorithms/init.lua',
+			'dev/coe_core/lib/algorithms/init.lua',
+		}
+		for i = 1, #candidates do
+			local chunk = loadfile(candidates[i])
+			if chunk then
+				local ok, mod = pcall(chunk)
+				if ok and type(mod) == 'table' and type(mod.Concurrency) == 'table' then
+					return mod.Concurrency
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local Concurrency = resolveConcurrency()
+
 -- deps: registry, inventory = { count(id, item) -> n, remove(id, item, n) -> true|false,erro,
 -- add(id, item, n) -> true|false,erro }, audit(event, context).
 -- Contexto de uma bancada: { inventoryId, stashId, recipes = { [id] = true } | nil (todas da categoria),
@@ -173,6 +217,64 @@ function CraftingService.New(deps)
 		end
 		if lacking(containers, recipe) then
 			return nil, 'missing_items'
+		end
+		if Concurrency and type(Concurrency.executeSaga) == 'function' then
+			local steps = {}
+			for _, input in ipairs(recipe.inputs) do
+				local left = input.count
+				for _, container in ipairs(containers) do
+					if left == 0 then
+						break
+					end
+					local take = math.min(left, inventory.count(container, input.item) or 0)
+					if take > 0 then
+						local itemName = input.item
+						local containerId = container
+						local amount = take
+						steps[#steps + 1] = {
+							name = 'consume_' .. itemName,
+							action = function()
+								local ok = inventory.remove(containerId, itemName, amount)
+								if not ok then
+									return false, 'remove_failed'
+								end
+								return true
+							end,
+							compensate = function()
+								inventory.add(containerId, itemName, amount)
+							end,
+						}
+						left = left - take
+					end
+				end
+				if left > 0 then
+					return nil, 'remove_failed'
+				end
+			end
+			local target = destination(bench, job.context)
+			for _, output in ipairs(recipe.outputs) do
+				local outItem = output.item
+				local outCount = output.count
+				steps[#steps + 1] = {
+					name = 'produce_' .. outItem,
+					action = function()
+						local ok, addError = inventory.add(target, outItem, outCount)
+						if not ok then
+							return false, addError == 'inventory_full' and 'inventory_full' or 'add_failed'
+						end
+						return true
+					end,
+					compensate = function()
+						inventory.remove(target, outItem, outCount)
+					end,
+				}
+			end
+			local sagaOk, _, sagaErr = Concurrency.executeSaga(steps)
+			if not sagaOk then
+				return nil, sagaErr or 'add_failed'
+			end
+			audit('craft_completed', { player_id = playerId, operation = job.bench, item = recipe.id, result = 'ok' })
+			return recipe
 		end
 		local removed, added = {}, {}
 		for _, input in ipairs(recipe.inputs) do

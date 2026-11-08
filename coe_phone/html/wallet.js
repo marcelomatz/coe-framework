@@ -158,6 +158,9 @@
 			const cards = state.cards || [];
 			if (!state.hasPasscode) {
 				page.appendChild(el('p', 'wl-note is-warn', 'Defina uma senha em Ajustes para usar a Carteira. Cada pagamento pede o rosto cadastrado ou a senha.'));
+				page.appendChild(button('Definir senha em Ajustes', 'coe-button--primary', function () {
+					api.openApp('settings');
+				}));
 			}
 			if (!cards.length) {
 				const empty = el('div', 'wl-empty');

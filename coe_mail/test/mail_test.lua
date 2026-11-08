@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 
@@ -77,6 +78,17 @@ eq(MailRules.Locked(state, 100), false, 'ainda não bloqueia')
 state = MailRules.Fail(config, state, 100)
 eq(MailRules.Locked(state, 100), true, 'bloqueia na última tentativa')
 eq(MailRules.Locked(state, 100 + config.Login.LockSeconds), false, 'libera depois do tempo')
+
+-- Algoritmos (GCRA, LRU Cache, LockManager)
+local limiter = MailRules.NewSendLimiter(3)
+eq(limiter:allow(10, 1000), true, 'GCRA permite primeiro envio')
+eq(limiter:allow(10, 2000), false, 'GCRA bloqueia spam antes de 3s')
+eq(limiter:allow(10, 4000), true, 'GCRA libera após 3s')
+
+local cache = MailRules.NewSessionCache(4)
+cache:put('phone:SER1', { id = 1 }, 5000, 1000)
+eq(cache:get('phone:SER1', 2000).id, 1, 'LRU Cache retorna sessão ativa')
+eq(cache:get('phone:SER1', 7000), nil, 'LRU Cache expira TTL')
 
 if failures > 0 then
 	print(('%d falha(s)'):format(failures))

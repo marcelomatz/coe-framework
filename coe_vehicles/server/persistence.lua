@@ -153,6 +153,21 @@ function VehiclesPersistence.SetState(id, state)
 	return true
 end
 
+function VehiclesPersistence.TransitionState(id, expectedState, nextState)
+	local result, errorCode = callDatabase(
+		'Execute',
+		'UPDATE coe_vehicles SET state = ? WHERE vehicle_id = ? AND state = ?',
+		{ nextState, id, expectedState }
+	)
+	if not result then
+		return nil, errorCode
+	end
+	if tonumber(result.affectedRows) ~= 1 then
+		return false, 'state_conflict'
+	end
+	return true
+end
+
 -- Entidades não sobrevivem a reinício: veículos "out" de uma execução anterior voltam a "stored".
 function VehiclesPersistence.ResetOutState()
 	local result, errorCode = callDatabase('Execute', "UPDATE coe_vehicles SET state = 'stored' WHERE state = 'out'", {})

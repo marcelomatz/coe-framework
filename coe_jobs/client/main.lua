@@ -145,7 +145,7 @@ local function attachProp(spec)
 	end
 	local ped = PlayerPedId()
 	local coords = Core.Platform.Entities.GetCoords(ped)
-	local object = CreateObject(hash, coords.x, coords.y, coords.z + 0.2, true, true, false)
+	local object = CreateObject(hash, coords.x, coords.y, coords.z + 0.2, false, false, false)
 	SetModelAsNoLongerNeeded(hash)
 	AttachEntityToEntity(object, ped, GetPedBoneIndex(ped, spec.bone), spec.offset[1], spec.offset[2], spec.offset[3],
 		spec.rotation[1], spec.rotation[2], spec.rotation[3], true, true, false, true, 1, true)

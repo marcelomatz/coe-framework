@@ -210,31 +210,65 @@ function RacesRules.CheckpointOk(config, cp, at, previous, now)
 	return true
 end
 
+local function getAlgorithms()
+	return (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+end
+
+local function compareStandings(a, b)
+	if (a.dnf == true) ~= (b.dnf == true) then
+		return not a.dnf
+	end
+	if a.finishedAt and b.finishedAt then
+		return a.finishedAt < b.finishedAt
+	end
+	if (a.finishedAt ~= nil) ~= (b.finishedAt ~= nil) then
+		return a.finishedAt ~= nil
+	end
+	if a.progress ~= b.progress then
+		return a.progress > b.progress
+	end
+	if (a.distance or 0) ~= (b.distance or 0) then
+		return (a.distance or 0) < (b.distance or 0)
+	end
+	return tostring(a.id) < tostring(b.id)
+end
+
+local function standingPriority(entry, index)
+	local base
+	if entry.dnf == true then
+		base = 2e11 - (entry.progress or 0) * 1e6 + math.min(999999, math.max(0, entry.distance or 0))
+	elseif entry.finishedAt then
+		base = math.max(0, entry.finishedAt)
+	else
+		base = 1e11 - (entry.progress or 0) * 1e6 + math.min(999999, math.max(0, entry.distance or 0))
+	end
+	return base + (index * 1e-4)
+end
+
 ---Ordem atual: quem terminou (pelo tempo), depois quem anda (mais checkpoints e menor distância ao próximo), e por
 ---último os que abandonaram. entries: { id, progress, distance, finishedAt, dnf }.
 function RacesRules.Standings(entries)
+	local alg = getAlgorithms()
 	local list = {}
-	for _, entry in ipairs(entries) do
-		list[#list + 1] = entry
+	if alg and alg.Containers and alg.Containers.newMinHeap and #entries > 0 then
+		local heap = alg.Containers.newMinHeap()
+		local byKey = {}
+		for i, entry in ipairs(entries) do
+			local key = i
+			byKey[key] = entry
+			heap:push(key, standingPriority(entry, i))
+		end
+		while heap:size() > 0 do
+			local key = heap:pop()
+			list[#list + 1] = byKey[key]
+		end
+		table.sort(list, compareStandings)
+	else
+		for _, entry in ipairs(entries) do
+			list[#list + 1] = entry
+		end
+		table.sort(list, compareStandings)
 	end
-	table.sort(list, function(a, b)
-		if (a.dnf == true) ~= (b.dnf == true) then
-			return not a.dnf
-		end
-		if a.finishedAt and b.finishedAt then
-			return a.finishedAt < b.finishedAt
-		end
-		if (a.finishedAt ~= nil) ~= (b.finishedAt ~= nil) then
-			return a.finishedAt ~= nil
-		end
-		if a.progress ~= b.progress then
-			return a.progress > b.progress
-		end
-		if (a.distance or 0) ~= (b.distance or 0) then
-			return (a.distance or 0) < (b.distance or 0)
-		end
-		return tostring(a.id) < tostring(b.id)
-	end)
 	for index, entry in ipairs(list) do
 		entry.position = index
 	end
@@ -307,3 +341,36 @@ function RacesRules.FormatTime(ms)
 	local seconds = (ms % 60000) // 1000
 	return ('%d:%02d.%03d'):format(minutes, seconds, ms % 1000)
 end
+
+---Executa uma Saga transacional com compensação LIFO (ex.: EscrowLock + InsertEntry).
+function RacesRules.ExecuteSaga(steps, context)
+	local alg = getAlgorithms()
+	if alg and alg.Concurrency and alg.Concurrency.executeSaga then
+		return alg.Concurrency.executeSaga(steps, context)
+	end
+	local completed = {}
+	local ctx = context or {}
+	for i = 1, #steps do
+		local ok, res = pcall(steps[i].action, ctx)
+		if not ok or res == false then
+			for j = #completed, 1, -1 do
+				if completed[j].compensate then
+					pcall(completed[j].compensate, ctx)
+				end
+			end
+			return false, not ok and res or 'step_failed'
+		end
+		completed[#completed + 1] = steps[i]
+	end
+	return true, ctx
+end
+
+---Cria rate limiter GCRA O(1) para ações do tablet de corridas.
+function RacesRules.NewCallLimiter(cooldownMs)
+	local alg = getAlgorithms()
+	if alg and alg.RateLimit and alg.RateLimit.newGCRA then
+		return alg.RateLimit.newGCRA(cooldownMs or 250, 0)
+	end
+	return nil
+end
+

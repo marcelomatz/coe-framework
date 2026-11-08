@@ -1,4 +1,4 @@
--- Hash de senhas e chaves em Lua 5.4 puro (SHA-256 iterado com salt), sem depender de natives.
+-- Hash de senhas e chaves em Lua 5.4 puro (SHA-256 iterado com salt e comparação em tempo constante), sem depender de natives.
 -- Formato guardado: sha256$<iterações>$<salt hex>$<hash hex>. Hashes antigos (bcrypt do GetPasswordHash) ainda são
 -- conferidos pelo VerifyPasswordHash, quando o native existe. Incluir com '@coe_core/lib/hash.lua' (server_scripts).
 CoeHash = CoeHash or {}
@@ -15,6 +15,7 @@ local K = {
 }
 
 local MASK = 0xffffffff
+local W = {} -- Array estático pré-alocado Zero-GC
 
 local function rotr(value, bits)
 	return ((value >> bits) | (value << (32 - bits))) & MASK
@@ -25,22 +26,21 @@ function CoeHash.Sha256(message)
 	local h4, h5, h6, h7 = 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
 	local length = #message
 	message = message .. '\128' .. string.rep('\0', (55 - length) % 64) .. string.pack('>I8', length * 8)
-	local w = {}
 	for chunk = 1, #message, 64 do
 		for index = 0, 15 do
-			w[index] = string.unpack('>I4', message, chunk + index * 4)
+			W[index] = string.unpack('>I4', message, chunk + index * 4)
 		end
 		for index = 16, 63 do
-			local a, b = w[index - 15], w[index - 2]
+			local a, b = W[index - 15], W[index - 2]
 			local s0 = rotr(a, 7) ~ rotr(a, 18) ~ (a >> 3)
 			local s1 = rotr(b, 17) ~ rotr(b, 19) ~ (b >> 10)
-			w[index] = (w[index - 16] + s0 + w[index - 7] + s1) & MASK
+			W[index] = (W[index - 16] + s0 + W[index - 7] + s1) & MASK
 		end
 		local a, b, c, d, e, f, g, h = h0, h1, h2, h3, h4, h5, h6, h7
 		for index = 0, 63 do
 			local S1 = rotr(e, 6) ~ rotr(e, 11) ~ rotr(e, 25)
 			local ch = (e & f) ~ (~e & g)
-			local temp1 = (h + S1 + ch + K[index + 1] + w[index]) & MASK
+			local temp1 = (h + S1 + ch + K[index + 1] + W[index]) & MASK
 			local S0 = rotr(a, 2) ~ rotr(a, 13) ~ rotr(a, 22)
 			local maj = (a & b) ~ (a & c) ~ (b & c)
 			local temp2 = (S0 + maj) & MASK
@@ -53,6 +53,16 @@ function CoeHash.Sha256(message)
 	return ('%08x%08x%08x%08x%08x%08x%08x%08x'):format(h0, h1, h2, h3, h4, h5, h6, h7)
 end
 
+function CoeHash.ConstantTimeEquals(a, b)
+	if type(a) ~= 'string' or type(b) ~= 'string' or #a ~= #b then
+		return false
+	end
+	local diff = 0
+	for i = 1, #a do
+		diff = diff | (string.byte(a, i) ~ string.byte(b, i))
+	end
+	return diff == 0
+end
 
 local PREFIX = 'sha256'
 local DEFAULT_ITERATIONS = 300
@@ -90,7 +100,7 @@ function CoeHash.IsCurrent(stored)
 	return type(stored) == 'string' and stored:sub(1, #PREFIX + 1) == PREFIX .. '$'
 end
 
--- Confere um segredo com o hash guardado. Hash antigo: tenta o VerifyPasswordHash do FXServer.
+-- Confere um segredo com o hash guardado usando comparação em tempo constante.
 function CoeHash.Verify(secret, stored)
 	if type(secret) ~= 'string' or type(stored) ~= 'string' or stored == '' then
 		return false
@@ -101,7 +111,7 @@ function CoeHash.Verify(secret, stored)
 		if not iterations or iterations < 1 or iterations > 100000 then
 			return false
 		end
-		return derive(secret, salt, iterations) == digest
+		return CoeHash.ConstantTimeEquals(derive(secret, salt, iterations), digest)
 	end
 	if type(VerifyPasswordHash) ~= 'function' then
 		return false

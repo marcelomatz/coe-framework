@@ -92,3 +92,17 @@ function Rules.SanitizeVolume(raw, fallback)
 	vol = math.floor(math.max(0, math.min(100, vol)) + 0.5)
 	return vol
 end
+
+local function getAlgorithms()
+	return (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+end
+
+-- Cria rate limiter GCRA O(1) para eventos de voz, rádio e PTT.
+function Rules.NewEventLimiter(cooldownMs)
+	local alg = getAlgorithms()
+	if alg and alg.RateLimit and alg.RateLimit.newGCRA then
+		return alg.RateLimit.newGCRA(cooldownMs or 250, 0)
+	end
+	return nil
+end
+

@@ -1,5 +1,77 @@
 BankingRules = {}
 
+local function resolveAlgorithms()
+	if type(Core) == 'table' and type(Core.Algorithms) == 'table' then
+		return Core.Algorithms
+	end
+	if type(CoeAlgorithms) == 'table' then
+		return CoeAlgorithms
+	end
+	if type(LoadResourceFile) == 'function' and type(load) == 'function' then
+		local src = LoadResourceFile('coe_core', 'lib/algorithms/init.lua')
+		if type(src) == 'string' and src ~= '' then
+			local fn = load(src, '@@coe_core/lib/algorithms/init.lua', 't', _G)
+			if fn then
+				local ok, mod = pcall(fn)
+				if ok and type(mod) == 'table' then
+					return mod
+				end
+			end
+		end
+		return CoeAlgorithms
+	end
+	if type(loadfile) == 'function' then
+		local candidates = {
+			'../coe_core/lib/algorithms/init.lua',
+			'coe-framework/coe_core/lib/algorithms/init.lua',
+			'dev/coe_core/lib/algorithms/init.lua',
+		}
+		for i = 1, #candidates do
+			local chunk = loadfile(candidates[i])
+			if chunk then
+				local ok, mod = pcall(chunk)
+				if ok and type(mod) == 'table' then
+					return mod
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local Algorithms = resolveAlgorithms()
+local Crypto = Algorithms and Algorithms.Crypto or nil
+local Concurrency = Algorithms and Algorithms.Concurrency or nil
+local RateLimit = Algorithms and Algorithms.RateLimit or nil
+
+local function constantTimeEq(a, b)
+	if Crypto and type(Crypto.constantTimeEquals) == 'function' then
+		return Crypto.constantTimeEquals(tostring(a or ''), tostring(b or ''))
+	end
+	return a == b
+end
+
+function BankingRules.NewRateLimiter(emissionIntervalMs, burstTolerance)
+	if RateLimit and type(RateLimit.newGCRA) == 'function' then
+		return RateLimit.newGCRA(emissionIntervalMs or 400, burstTolerance or 0)
+	end
+	return nil
+end
+
+function BankingRules.NewLockManager(opts)
+	if Concurrency and type(Concurrency.newLockManager) == 'function' then
+		return Concurrency.newLockManager(opts)
+	end
+	return nil
+end
+
+function BankingRules.ExecuteSaga(steps)
+	if Concurrency and type(Concurrency.executeSaga) == 'function' then
+		return Concurrency.executeSaga(steps)
+	end
+	return false, nil, 'saga_unavailable'
+end
+
 -- Valor inteiro entre 1 e max.
 function BankingRules.Amount(value, max)
 	value = tonumber(value)
@@ -80,7 +152,8 @@ function BankingRules.CheckPin(card, pin, config, hash)
 	if BankingRules.Status(card) ~= 'active' then
 		return { ok = false, attempts = card.attempts, blocked = true, already = true }
 	end
-	if BankingRules.HashPin(pin, card.pinSalt, config.PinHashRounds, hash) == card.pinHash then
+	local computed = BankingRules.HashPin(pin, card.pinSalt, config.PinHashRounds, hash)
+	if constantTimeEq(computed, card.pinHash) then
 		return { ok = true, attempts = 0 }
 	end
 	local attempts = (card.attempts or 0) + 1

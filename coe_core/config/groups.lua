@@ -17,6 +17,26 @@ CoeGroupsConfig = {
 				[3] = { label = 'Comandante' }
 			}
 		},
+		fib = {
+			type = 'job',
+			label = 'FIB — Inteligência Federal',
+			grades = {
+				[0] = { label = 'Agente Especial' },
+				[1] = { label = 'Agente Sênior' },
+				[2] = { label = 'Supervisor de Divisão' },
+				[3] = { label = 'Diretor Federal' }
+			}
+		},
+		doj = {
+			type = 'job',
+			label = 'DOJ — Justiça Federal',
+			grades = {
+				[0] = { label = 'Defensor Público' },
+				[1] = { label = 'Promotor de Justiça' },
+				[2] = { label = 'Juiz Federal' },
+				[3] = { label = 'Procurador-Geral' }
+			}
+		},
 		mechanic = {
 			type = 'job',
 			label = 'Oficina',
@@ -33,6 +53,15 @@ CoeGroupsConfig = {
 				[0] = { label = 'Estagiário' },
 				[1] = { label = 'Médico' },
 				[2] = { label = 'Diretor' }
+			}
+		},
+		banker = {
+			type = 'job',
+			label = 'Executivo Bancário',
+			grades = {
+				[0] = { label = 'Analista Bancário' },
+				[1] = { label = 'Gerente de Contas' },
+				[2] = { label = 'Diretor de Compliance' }
 			}
 		}
 		-- Exemplo de gangue:

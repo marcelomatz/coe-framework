@@ -88,4 +88,11 @@ eq(seed.stations.stashes[1].id, 'estoque', 'bau de estoque')
 eq(ShopsRules.BusinessSeed(catalog, store).category, 'shop', '24/7 e lojinha')
 eq(ShopsRules.Description(store, 1), '24/7 Strawberry (1 item)', 'descricao do extrato')
 
+-- GCRA Rate Limiter e Saga Compensatória
+local limiter = ShopsRules.NewRateLimiter(300, 0)
+eq(type(limiter), 'table', 'NewRateLimiter disponível')
+eq(limiter:allow(1, 1000), true, 'primeira chamada permitida no GCRA')
+eq(limiter:allow(1, 1100), false, 'segunda chamada em <300ms bloqueada no GCRA')
+eq(limiter:allow(1, 1350), true, 'chamada após 300ms liberada no GCRA')
+
 print('coe_shops rules tests passed')

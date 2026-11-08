@@ -6,6 +6,8 @@ local ready = false
 local installedCache = {}
 local ads = {}
 local lastPost = {}
+local postLimiter = AppsRules.NewPostLimiter and AppsRules.NewPostLimiter(config.Insta.PostCooldownSeconds) or nil
+local lockManager = AppsRules.NewLockManager and AppsRules.NewLockManager() or nil
 
 -- Aparelhos que podem pedir apps (o smartphone entra aqui quando existir).
 local HOSTS = { coe_tablet = 'tablet', coe_phone = 'phone' }
@@ -90,6 +92,18 @@ local DECLINED = { no_credit = true, no_card = true, credit_late = true, credit_
 local locks = {}
 
 local function withLock(characterId, run)
+	if lockManager then
+		local guard <close>, err = lockManager:acquire('char:' .. tostring(characterId), 3000)
+		if not guard then
+			return { ok = false, error = err == 'lock_timeout' and 'busy' or 'busy' }
+		end
+		local ok, result = pcall(run)
+		if not ok then
+			log('error', 'gameplay', 'apps_lock_failed', { error_code = tostring(result) })
+			return { ok = false, error = 'database_error' }
+		end
+		return result
+	end
 	if locks[characterId] then
 		return { ok = false, error = 'busy' }
 	end
@@ -180,18 +194,41 @@ function Store.install(playerId, character, payload, device)
 				return { ok = false, error = outcome[2] or 'payment_expired' }
 			end
 		end
-		if price > 0 then
-			local charged, chargeError = chargeCard(cardId, price, subscriptionLabel(appId))
-			if not charged then
-				return { ok = false, error = chargeError }
-			end
-			paidUntil = AppsRules.NextPeriod(record and record.paidUntil, now, PERIOD)
-		end
-		if not AppsPersistence.SetInstalled(character.id, appId, true, price, paidUntil, subscription, cardId) then
-			if price > 0 then
-				refundCard(cardId, price, 'Estorno ' .. subscriptionLabel(appId))
-			end
-			return { ok = false, error = 'database_error' }
+		local sagaCtx = { errorCode = nil }
+		local sagaOk = AppsRules.ExecuteSaga({
+			{
+				name = 'charge_card',
+				action = function()
+					if price <= 0 then
+						return true
+					end
+					local charged, chargeError = chargeCard(cardId, price, subscriptionLabel(appId))
+					if not charged then
+						sagaCtx.errorCode = chargeError
+						return false
+					end
+					paidUntil = AppsRules.NextPeriod(record and record.paidUntil, now, PERIOD)
+					return true
+				end,
+				compensate = function()
+					if price > 0 then
+						refundCard(cardId, price, 'Estorno ' .. subscriptionLabel(appId))
+					end
+				end
+			},
+			{
+				name = 'set_installed',
+				action = function()
+					if not AppsPersistence.SetInstalled(character.id, appId, true, price, paidUntil, subscription, cardId) then
+						sagaCtx.errorCode = 'database_error'
+						return false
+					end
+					return true
+				end
+			}
+		}, sagaCtx)
+		if not sagaOk then
+			return { ok = false, error = sagaCtx.errorCode or 'database_error' }
 		end
 		map[appId] = { installed = true, paidUntil = paidUntil or (record and record.paidUntil) or 0, autoRenew = subscription, cardId = cardId or (record and record.cardId) }
 		if price > 0 then

@@ -107,7 +107,7 @@ lua test\player_repository_test.lua
 lua test\character_profile_test.lua
 ```
 
-Esses testes cobrem identidade, perfil do personagem, grupos, invariantes e operações do serviço, migrations e parte do registro/encerramento do lifecycle. O cenário de integração MariaDB (`coe_database/test/integration/core_scenario.lua`) aplica as migrations duas vezes e exercita o repositório. Repositório contra MariaDB, bridge real com Node 22, sessão completa em FXServer Enhanced e contrato de startup precisam de integração no runtime alvo. A matriz geral está em [TEST_COVERAGE.md](../TEST_COVERAGE.md).
+Esses testes cobrem identidade, perfil do personagem, grupos, invariantes e operações do serviço, migrations e parte do registro/encerramento do lifecycle. O cenário de integração MariaDB (`coe_database/test/integration/core_scenario.lua`) aplica as migrations duas vezes e exercita o repositório. Repositório contra MariaDB, bridge real com Node 26 (libnode26), sessão completa em FXServer Enhanced e contrato de startup precisam de integração no runtime alvo. A matriz geral está em [TEST_COVERAGE.md](../TEST_COVERAGE.md).
 
 ## Observabilidade e feedback de gameplay
 

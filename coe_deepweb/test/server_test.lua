@@ -57,6 +57,7 @@ json = { encode = function() return '{}' end }
 os.time = function() return now end
 
 Core = {
+	Algorithms = dofile('../coe_core/lib/algorithms/init.lua'),
 	Platform = dofile('../coe_core/lib/platform.lua'),
 	Players = { GetActiveCharacterId = function(playerId) return playerId == 1 and 11 or (playerId == 2 and 22 or nil) end },
 	Events = { On = function(name, fn) itemHandlers[name] = fn end }

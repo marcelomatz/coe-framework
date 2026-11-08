@@ -134,4 +134,15 @@ H.as(3)
 H.systemHandlers['playerDropped']()
 eq(Inventory.Service.openedContainers[3], nil, 'desconexão limpa o painel')
 
+assert(Inventory.Service.locks ~= nil, 'LockManager ativo em Inventory.Service.locks')
+assert(Inventory.Service.actionRateLimiter ~= nil, 'GCRA ativo em Inventory.Service.actionRateLimiter')
+do
+	local guard <close>, err = Inventory.Service.acquireInventoryLocks({ inv[2], inv[1] }, 1, 100)
+	eq(err, nil, 'acquireInventoryLocks adquire travas lexicograficas')
+	assert(guard and guard.ok == true, 'guard valido')
+end
+local reacquired, reErr = Inventory.Service.acquireInventoryLocks({ inv[1], inv[2] }, 2, 100)
+eq(reErr, nil, 'travas liberadas via <close> permitem nova aquisicao imediata')
+reacquired.release()
+
 print('world concurrency tests passed')

@@ -321,6 +321,8 @@ setInterval(() => {
 	if (progress < 92) {
 		const step = progress < 65 ? 3 : 2;
 		setProgress(Math.min(92, progress + step) / 100);
+	} else if (progress < 98) {
+		setProgress((progress + 1) / 100);
 	}
 }, CONFIG.activitySeconds * 1000);
 

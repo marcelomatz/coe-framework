@@ -10,6 +10,7 @@ local tracks = {}          -- id -> pista
 local races = {}           -- id -> corrida em memória (lobby, countdown, running)
 local racerOf = {}         -- characterId -> raceId
 local lastCall = {}
+local callLimiter = Rules.NewCallLimiter and Rules.NewCallLimiter(config.CallCooldownMs) or nil
 
 local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Locales) or function(k) return (Locales and Locales['pt-BR'] and Locales['pt-BR'][k]) or k end
 
@@ -553,24 +554,49 @@ local function join(ctx, race, profile, payload)
 		if not validAddress(payoutAddress) then
 			return nil, 'invalid_payout'
 		end
-		local locked = remote('coe_crypto', 'EscrowLock', ctx.playerId, walletKey(ctx.playerId, ctx.characterId), payload.from,
-			race.buyIn, 'corrida #' .. race.id .. ' entrada')
-		if type(locked) ~= 'table' or not locked.ok then
-			return nil, type(locked) == 'table' and locked.error or 'crypto_unavailable'
-		end
-		payAddress = payload.from
+	end
+	local sagaCtx = { errorCode = nil }
+	local sagaOk = Rules.ExecuteSaga({
+		{
+			name = 'escrow_lock',
+			action = function()
+				if race.buyIn <= 0 then
+					return true
+				end
+				local locked = remote('coe_crypto', 'EscrowLock', ctx.playerId, walletKey(ctx.playerId, ctx.characterId), payload.from,
+					race.buyIn, 'corrida #' .. race.id .. ' entrada')
+				if type(locked) ~= 'table' or not locked.ok then
+					sagaCtx.errorCode = type(locked) == 'table' and locked.error or 'crypto_unavailable'
+					return false
+				end
+				payAddress = payload.from
+				return true
+			end,
+			compensate = function()
+				if race.buyIn > 0 and payAddress then
+					release(payAddress, race.buyIn, 'corrida #' .. race.id .. ' estorno')
+				end
+			end
+		},
+		{
+			name = 'insert_entry',
+			action = function()
+				local saved = Store.InsertEntry(race.id, ctx.characterId, payAddress, payoutAddress, race.buyIn)
+				if not saved then
+					sagaCtx.errorCode = 'database_error'
+					return false
+				end
+				return true
+			end
+		}
+	}, sagaCtx)
+	if not sagaOk then
+		return nil, sagaCtx.errorCode or 'database_error'
 	end
 	local entry = {
 		characterId = ctx.characterId, playerId = ctx.playerId, nickname = profile.nickname, rating = profile.rating,
 		payAddress = payAddress, payoutAddress = payoutAddress, amount = race.buyIn, progress = 0, settled = false
 	}
-	local saved = Store.InsertEntry(race.id, ctx.characterId, payAddress, payoutAddress, race.buyIn)
-	if not saved then
-		if race.buyIn > 0 then
-			release(payAddress, race.buyIn, 'corrida #' .. race.id .. ' estorno')
-		end
-		return nil, 'database_error'
-	end
 	race.racers[ctx.characterId] = entry
 	race.order[#race.order + 1] = ctx.characterId
 	racerOf[ctx.characterId] = race.id
@@ -839,10 +865,14 @@ local function handle(playerId, action, payload)
 		return { ok = false, error = 'no_tablet' }
 	end
 	local t = now()
-	if not READ_ACTIONS[action] and lastCall[playerId] and t - lastCall[playerId] < config.CallCooldownMs then
-		return { ok = false, error = 'rate_limited' }
-	end
 	if not READ_ACTIONS[action] then
+		if callLimiter then
+			if not callLimiter:allow(playerId, t) then
+				return { ok = false, error = 'rate_limited' }
+			end
+		elseif lastCall[playerId] and t - lastCall[playerId] < config.CallCooldownMs then
+			return { ok = false, error = 'rate_limited' }
+		end
 		lastCall[playerId] = t
 	end
 	return handler({ playerId = playerId, characterId = characterId }, payload or {})
@@ -1104,6 +1134,9 @@ end)
 AddEventHandler('playerDropped', function()
 	local playerId = source
 	lastCall[playerId] = nil
+	if callLimiter then
+		callLimiter:reset(playerId)
+	end
 	txAdmins[tonumber(playerId) or playerId] = nil
 	for _, race in pairs(races) do
 		for _, entry in ipairs(entryList(race)) do

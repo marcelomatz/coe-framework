@@ -5,6 +5,42 @@ if not CoeLoggingConfig and type(LoadResourceFile) == 'function' then
 		if fn then fn() end
 	end
 end
+
+local function resolveAlgorithms()
+	if type(Core) == 'table' and type(Core.Algorithms) == 'table' then
+		return Core.Algorithms
+	end
+	if type(CoeAlgorithms) == 'table' then
+		return CoeAlgorithms
+	end
+	if type(LoadResourceFile) == 'function' then
+		local src = LoadResourceFile('coe_core', 'lib/algorithms/init.lua')
+		if type(src) == 'string' and src ~= '' then
+			local fn = load(src, '@@coe_core/lib/algorithms/init.lua', 't', _G)
+			if fn then pcall(fn) end
+		end
+	elseif type(io) == 'table' and type(io.open) == 'function' then
+		for _, candidate in ipairs({
+			'../coe_core/lib/algorithms/init.lua',
+			'../../coe-framework/coe_core/lib/algorithms/init.lua'
+		}) do
+			local f = io.open(candidate, 'r')
+			if f then
+				f:close()
+				pcall(dofile, candidate)
+				break
+			end
+		end
+	end
+	return CoeAlgorithms
+end
+
+local alg = resolveAlgorithms()
+local recentCapacity = (CoeLoggingConfig and tonumber(CoeLoggingConfig.RingBufferCapacity)) or 256
+local recentBuffer = (alg and alg.Containers and type(alg.Containers.newRingBuffer) == 'function')
+	and alg.Containers.newRingBuffer(recentCapacity)
+	or nil
+
 local levels = {
 	debug = 10,
 	info = 20,
@@ -168,6 +204,10 @@ local function log(level, category, event, context)
 		resource = resourceName,
 		context = safeContext
 	}
+	if recentBuffer then
+		recentBuffer:push(entry)
+	end
+
 	if configuredFormat() == 'pretty' then
 		print(formatPretty(entry, colorEnabled()))
 		return true
@@ -184,4 +224,24 @@ local function log(level, category, event, context)
 	return true
 end
 
+local function getRecent(limit)
+	local resourceName = GetInvokingResource()
+	local cfg = CoeLoggingConfig or {}
+	if not CoeAccess.Allowed(resourceName, cfg.Ace, cfg.AllowedResources) then
+		return nil, 'caller_not_allowed'
+	end
+	if not recentBuffer then
+		return {}, nil
+	end
+	local maxItems = tonumber(limit) or 50
+	if maxItems < 1 then maxItems = 1 end
+	if maxItems > recentBuffer.size then maxItems = recentBuffer.size end
+	local items = {}
+	for i = 0, maxItems - 1 do
+		items[i + 1] = recentBuffer:peekNewest(i)
+	end
+	return items, nil
+end
+
 exports('Log', log)
+exports('GetRecent', getRecent)

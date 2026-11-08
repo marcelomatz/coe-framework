@@ -14,12 +14,12 @@
 
 ## Runtime requirements
 
-- FXServer with server-side Node.js 22 runtime.
+- FXServer with server-side Node.js 24 LTS / Node 26 (`libnode26`) runtime.
 - JavaScript dependencies installed in the resource folder before starting the server. `package-lock.json` pins the npm dependency tree; `yarn` is not an FXServer resource or runtime dependency.
 - MariaDB accessible to the FXServer process.
 - `mysql2` is restricted to transport and pinned in `package.json`.
 
-Install or restore dependencies from the resource folder with `npm ci --omit=dev`. Do not install a third-party `yarn` resource or declare `yarn` as an FXServer dependency. The local unit suite does not require a MariaDB connection; Node.js 22 runtime, driver, and JavaScript/Lua bridge compatibility still need to be verified in the target FXServer Enhanced environment.
+Install or restore dependencies from the resource folder with `npm ci --omit=dev`. Do not install a third-party `yarn` resource or declare `yarn` as an FXServer dependency. The local unit suite does not require a MariaDB connection; Node.js 24 LTS / Node 26 (`libnode26`) runtime, driver, and JavaScript/Lua bridge compatibility still need to be verified in the target FXServer Enhanced environment.
 
 ## Configuration
 
@@ -67,7 +67,7 @@ exports.coe_database:Query(
 - `server/provider.js`: pool, parameterized execution, transactions, rollback, and lifecycle without FiveM APIs.
 - `server/validation.js`: SQL command allowlist and parameter/statement validation.
 - `package.json` and `package-lock.json`: pinned Node dependencies for npm installation.
-- `fxmanifest.lua`: Node 22 runtime and logging dependency.
+- `fxmanifest.lua`: Node.js (`libnode26` / Node 24+) runtime and logging dependency.
 
 Error codes include `caller_not_allowed`, `invalid_sql`, `invalid_parameters`, `database_not_ready`, `query_failed`, `transaction_failed`, and `transaction_rollback_failed`. Logs do not include SQL, parameters, identifiers, or credentials.
 

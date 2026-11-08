@@ -47,4 +47,21 @@ for _, permission in ipairs(c.Permissions) do
 	assert(not seen[permission.name], 'permissão repetida')
 	seen[permission.name] = true
 end
+
+-- Hierarchical Hashed Timing Wheel O(1) para Bleed-Out e GCRA Report Limiter
+local wheel = EmsRules.NewBleedoutWheel(5000)
+eq(type(wheel), 'table', 'NewBleedoutWheel disponível')
+local died = false
+wheel:schedule('bleedout:10', 10000, function() died = true end)
+wheel:tick()
+eq(died, false, 'ainda inconsciente após 5s')
+wheel:cancel('bleedout:10')
+wheel:tick()
+eq(died, false, 'reanimação cancela timer de sangramento em O(1)')
+
+local limiter = EmsRules.NewReportLimiter(1000, 0)
+eq(type(limiter), 'table', 'NewReportLimiter disponível')
+eq(limiter:allow(10, 1000), true, 'primeiro report aceito')
+eq(limiter:allow(10, 1400), false, 'report duplicado em <1000ms bloqueado')
+
 print('ems rules ok')

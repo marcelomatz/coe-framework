@@ -13,9 +13,10 @@ test('defaults only list framework resources', () => {
 	for (const name of DEFAULT_CALLERS) {
 		assert.match(name, /^coe_/)
 	}
-	// os scripts avançados agora são do framework
+	// os scripts avançados do framework estão na allowlist padrão
 	assert.equal(DEFAULT_CALLERS.includes('coe_admin'), true)
 	assert.equal(DEFAULT_CALLERS.includes('coe_banking'), true)
+	assert.equal(DEFAULT_CALLERS.includes('coe_shield'), true)
 })
 
 test('other resources need the coe.database ACE on their resource principal', () => {

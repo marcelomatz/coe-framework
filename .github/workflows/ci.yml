@@ -17,10 +17,22 @@ jobs:
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Setup Lua
-        uses: leafo/gh-actions-lua@v10
-        with:
-          luaVersion: "5.4"
+      - name: Setup Lua 5.4
+        shell: pwsh
+        run: |
+          $luaBinDir = "$env:RUNNER_TEMP\lua54"
+          New-Item -ItemType Directory -Force -Path $luaBinDir | Out-Null
+          curl.exe -fsSL https://github.com/lua/lua/archive/refs/tags/v5.4.7.tar.gz -o "$luaBinDir\lua.tar.gz"
+          tar -xzf "$luaBinDir\lua.tar.gz" -C $luaBinDir
+          Push-Location "$luaBinDir\lua-5.4.7"
+          if (Get-Command cl.exe -ErrorAction SilentlyContinue) {
+            cl /O2 /W0 /DMAKE_LUA onelua.c /Fe:"$luaBinDir\lua.exe"
+          } else {
+            gcc -O2 -std=gnu99 -DMAKE_LUA onelua.c -o "$luaBinDir\lua.exe"
+          }
+          Pop-Location
+          Add-Content -Path $env:GITHUB_PATH -Value $luaBinDir
+          & "$luaBinDir\lua.exe" -v
 
       - name: Unit Tests
         shell: pwsh
@@ -59,7 +71,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
 
       - name: JavaScript Syntax Check
         shell: pwsh
@@ -119,15 +131,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Lua
-        uses: leafo/gh-actions-lua@v10
-        with:
-          luaVersion: "5.4"
+      - name: Setup Lua 5.4
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4
+          sudo update-alternatives --install /usr/bin/lua lua /usr/bin/lua5.4 100 || sudo ln -sf /usr/bin/lua5.4 /usr/local/bin/lua
+          lua -v
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
 
       - name: Install Database Driver
         working-directory: coe_database

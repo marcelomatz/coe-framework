@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 
@@ -133,6 +134,10 @@ eq(NewsRules.ArticleFilter({ status = 'removed' }, 40).status, nil, 'status desc
 eq(NewsRules.ArticleFilter(nil, 40).status, nil, 'sem filtro')
 eq(#NewsRules.AdGroups.history, 4, 'histórico: expirados, recusados, cancelados e retirados')
 eq(config.AdminResources.coe_admin, true, 'coe_admin chama os exports de admin')
+
+local cache = NewsRules.NewArticleCache(16)
+cache:put(1, { title = 'Manchete' })
+eq(cache:get(1).title, 'Manchete', 'cache LRU de matérias')
 
 if failures > 0 then
 	error(('news_test: %d falha(s)'):format(failures))

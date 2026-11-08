@@ -366,3 +366,48 @@ function PhoneRules.Signal(config, x, y)
 	end
 	return 0
 end
+
+local function getAlgorithms()
+	return (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+end
+
+-- Executa uma Saga transacional com compensação LIFO (ex.: inserir/ejetar chip entre inventário e banco).
+function PhoneRules.ExecuteSaga(steps, context)
+	local alg = getAlgorithms()
+	if alg and alg.Concurrency and alg.Concurrency.executeSaga then
+		return alg.Concurrency.executeSaga(steps, context)
+	end
+	local completed = {}
+	local ctx = context or {}
+	for i = 1, #steps do
+		local ok, res = pcall(steps[i].action, ctx)
+		if not ok or res == false then
+			for j = #completed, 1, -1 do
+				if completed[j].compensate then
+					pcall(completed[j].compensate, ctx)
+				end
+			end
+			return false, not ok and res or 'step_failed'
+		end
+		completed[#completed + 1] = steps[i]
+	end
+	return true, ctx
+end
+
+-- Cria rate limiter GCRA O(1) para chamadas de aplicativos, mensagens e fotos.
+function PhoneRules.NewRateLimiter(cooldownMs)
+	local alg = getAlgorithms()
+	if alg and alg.RateLimit and alg.RateLimit.newGCRA then
+		return alg.RateLimit.newGCRA(cooldownMs or 250, 0)
+	end
+	return nil
+end
+
+-- Cria cache LRU Intrusivo Zero-GC para dispositivos e contatos.
+function PhoneRules.NewCache(capacity)
+	local alg = getAlgorithms()
+	if alg and alg.Containers and alg.Containers.newLRUCache then
+		return alg.Containers.newLRUCache(capacity or 128)
+	end
+	return nil
+end
