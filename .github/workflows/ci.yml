@@ -119,10 +119,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Lua
-        uses: leafo/gh-actions-lua@v10
-        with:
-          luaVersion: "5.4"
+      - name: Setup Lua 5.4
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4
+          sudo update-alternatives --install /usr/bin/lua lua /usr/bin/lua5.4 100 || sudo ln -sf /usr/bin/lua5.4 /usr/local/bin/lua
+          lua -v
 
       - name: Setup Node
         uses: actions/setup-node@v4

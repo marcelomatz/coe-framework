@@ -26,8 +26,8 @@ const { collect } = require('./framework_facts.js');
 
 const FRAMEWORK_ROOT = path.resolve(__dirname, '..');
 const WORKSPACE_ROOT = path.resolve(FRAMEWORK_ROOT, '..');
-const DOCS_ROOT = path.join(WORKSPACE_ROOT, 'docs');
-const WEBSITE_ROOT = path.join(WORKSPACE_ROOT, 'website');
+const DOCS_ROOT = fs.existsSync(path.join(WORKSPACE_ROOT, 'web', 'docs')) ? path.join(WORKSPACE_ROOT, 'web', 'docs') : path.join(WORKSPACE_ROOT, 'docs');
+const WEBSITE_ROOT = fs.existsSync(path.join(WORKSPACE_ROOT, 'web', 'website')) ? path.join(WORKSPACE_ROOT, 'web', 'website') : path.join(WORKSPACE_ROOT, 'website');
 
 function parseArgs(argv) {
 	const opts = {

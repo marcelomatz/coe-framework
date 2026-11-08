@@ -43,8 +43,10 @@ const STRICT = flag('--strict');
 const ONLY = (() => { const i = argv.indexOf('--only'); return i >= 0 ? String(argv[i + 1] || '') : ''; })();
 const want = part => !ONLY || ONLY === part;
 const WORKSPACE = path.resolve(FRAMEWORK_ROOT, '..');
-const DOCS = option('--docs', path.join(WORKSPACE, 'docs'));
-const WEBSITE = option('--website', path.join(WORKSPACE, 'website'));
+const defaultDocs = fs.existsSync(path.join(WORKSPACE, 'web', 'docs')) ? path.join(WORKSPACE, 'web', 'docs') : path.join(WORKSPACE, 'docs');
+const defaultWebsite = fs.existsSync(path.join(WORKSPACE, 'web', 'website')) ? path.join(WORKSPACE, 'web', 'website') : path.join(WORKSPACE, 'website');
+const DOCS = option('--docs', defaultDocs);
+const WEBSITE = option('--website', defaultWebsite);
 
 const issues = [];
 const fixed = [];

@@ -219,7 +219,7 @@ local function loadReleasesHistory(targetVersion, targetNotes)
 		end
 	end
 
-	local webRel = readFile('../website/assets/data/releases.json') or readFile('website/assets/data/releases.json')
+	local webRel = readFile('../web/website/assets/data/releases.json') or readFile('../website/assets/data/releases.json') or readFile('website/assets/data/releases.json')
 	if webRel then
 		for block in webRel:gmatch('{([^{}]+)}') do
 			local ver = block:match('"version"%s*:%s*"([^"]+)"')
