@@ -105,7 +105,10 @@
 		bank: '<path d="M3 10h18L12 4z"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/>',
 		wallet: '<path d="M4 7a2 2 0 0 1 2-2h11v4"/><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 12h5v4h-5a2 2 0 0 1 0-4"/>',
 		crypto: '<circle cx="12" cy="12" r="9"/><path d="M9 7.5h4.5a2.25 2.25 0 0 1 0 4.5H9h5a2.25 2.25 0 0 1 0 4.5H9z"/><path d="M10.5 6v1.5M10.5 16.5V18M13 6v1.5M13 16.5V18"/>',
-		onion: '<circle cx="12" cy="13" r="7"/><path d="M12 6c-2.5 2-3.5 4.5-3.5 7s1 5 3.5 7"/><path d="M12 6c2.5 2 3.5 4.5 3.5 7s-1 5-3.5 7"/><path d="M12 6V3"/><path d="M12 3c1.5 0 2.5-.7 3-1.5"/>'
+		onion: '<circle cx="12" cy="13" r="7"/><path d="M12 6c-2.5 2-3.5 4.5-3.5 7s1 5 3.5 7"/><path d="M12 6c2.5 2 3.5 4.5 3.5 7s-1 5-3.5 7"/><path d="M12 6V3"/><path d="M12 3c1.5 0 2.5-.7 3-1.5"/>',
+		car: '<path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v2H3z"/><circle cx="7.5" cy="13.5" r=".8"/><circle cx="16.5" cy="13.5" r=".8"/>',
+		mdt: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+		workshop: '<path d="M14 6a4 4 0 0 0-5 5L4 16l4 4 5-5a4 4 0 0 0 5-5l-3 3-3-1-1-3z"/>'
 	};
 
 	const DEFAULT_SETTINGS = {

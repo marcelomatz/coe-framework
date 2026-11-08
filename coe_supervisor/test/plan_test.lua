@@ -72,4 +72,17 @@ cyclic.coe_logging.dependencies = { 'coe_database' }
 missing, err = SupervisorPlan.Build('coe_logging', cyclic, managed)
 assertEqual(err, 'dependency_cycle', 'cycle detected')
 
+-- Valida integração com Graph.topologicalSort de @coe_core/lib/algorithms/graph.lua
+local topoOrder, topoWaves, topoErr = SupervisorPlan.TopologicalSort(
+	{ 'coe_logging', 'coe_database', 'coe_core' },
+	{
+		coe_logging = {},
+		coe_database = { 'coe_logging' },
+		coe_core = { 'coe_database', 'coe_logging' }
+	}
+)
+assertEqual(topoErr, nil, 'topologicalSort sem ciclos')
+assertEqual(join(topoOrder), 'coe_logging,coe_database,coe_core', 'ordem topologica O(V+E)')
+assertEqual(#topoWaves, 3, '3 ondas de boot')
+
 print('supervisor plan tests passed')

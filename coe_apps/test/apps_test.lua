@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 
@@ -112,6 +113,20 @@ eq(AppsRules.Path({ data = { url = 'u' } }, 'data.url'), 'u', 'caminho no JSON')
 eq(AppsRules.Path({ data = { 'a', 'b' } }, 'data.2'), 'b', 'caminho com índice')
 eq(AppsRules.Path({ data = 'x' }, 'data.url'), nil, 'caminho inexistente')
 eq(AppsRules.UrlEncode('a+b/c=='), 'a%2Bb%2Fc%3D%3D', 'url encode')
+
+-- Algoritmos (Saga, GCRA, LockManager)
+local refunded = false
+local okSaga = AppsRules.ExecuteSaga({
+	{ name = 'charge', action = function() return true end, compensate = function() refunded = true end },
+	{ name = 'persist', action = function() return false end }
+})
+eq(okSaga, false, 'Saga falha na persistência')
+eq(refunded, true, 'Saga estorna cartão automaticamente')
+
+local limiter = AppsRules.NewPostLimiter(5)
+eq(limiter:allow('c1', 1000), true, 'GCRA permite primeiro post')
+eq(limiter:allow('c1', 2000), false, 'GCRA bloqueia post antes do cooldown')
+eq(limiter:allow('c1', 6500), true, 'GCRA libera após cooldown')
 
 if failures > 0 then
 	error(('%d falha(s)'):format(failures))

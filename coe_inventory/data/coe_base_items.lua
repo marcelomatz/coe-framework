@@ -213,3 +213,30 @@ for name, definition in pairs(definitions) do
 	local item, errorMessage = Inventory.Items.Register(name, definition)
 	assert(item, ('failed to register item "%s": %s'):format(name, errorMessage))
 end
+
+
+local expansionDefinitions = {
+	keycard_encrypted = { label = 'Keycard criptografado', weight = 15, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'card_id.png', category = 'misc' },
+	safe_unit = { label = 'Cofre blindado', weight = 35000, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'WEAPON_BRIEFCASE_02.png', category = 'misc' },
+	weapon_locker = { label = 'Armário tático de armas', weight = 28000, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'WEAPON_BRIEFCASE.png', category = 'misc' },
+	ammo_crate = { label = 'Caixa de munição pesada', weight = 15000, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'ammo-rifle.png', category = 'misc' },
+	smart_lock = { label = 'Fechadura inteligente 3-em-1', weight = 1200, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'advancedkit.png', category = 'misc' },
+	router_wifi6 = { label = 'Roteador Wi-Fi 6 Fibra', weight = 800, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'radio.png', category = 'misc' },
+	network_firewall_rack = { label = 'Switch Gigabit & Firewall', weight = 4500, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'home_server.png', category = 'misc' },
+	orbitlink_dish = { label = 'Antena satélite OrbitLink', weight = 6500, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'news_camera.png', category = 'misc' },
+	server_rack_4u = { label = 'Rack de servidor Blade 4U', weight = 32000, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'home_server.png', category = 'misc' },
+	desktop_workstation = { label = 'Estação desktop multi-monitor', weight = 14000, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'desktop_pc.png', category = 'misc' },
+	monitor_ultrawide = { label = 'Monitor curvo ultrawide DUI', weight = 4200, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'laptop.png', category = 'misc' },
+	diesel_generator = { label = 'Gerador industrial a diesel', weight = 45000, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'scrapmetal.png', category = 'misc' },
+	solar_panel_array = { label = 'Painel solar fotovoltaico', weight = 18000, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'scrapmetal.png', category = 'misc' },
+	battery_wall = { label = 'Bateria estacionária de parede', weight = 22000, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'advancedkit.png', category = 'misc' },
+	fib_chem_scanner = { label = 'Espectrômetro de Massa Portátil (DEA)', weight = 1400, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'radio.png', category = 'misc' },
+	fib_ballistic_kit = { label = 'Maleta Forense Balística IBIS (ATF)', weight = 2200, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'WEAPON_BRIEFCASE_02.png', category = 'misc' },
+	fib_forensic_usb = { label = 'Drive Forense Hot-Dump (FIB Cyber)', weight = 80, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'usb_black.png', category = 'misc' },
+	fib_badge = { label = 'Credencial Federal FIB', weight = 120, stack = false, maxStack = 1, usable = true, consume = 0, close = true, image = 'card_id.png', category = 'misc' }
+}
+
+for name, definition in pairs(expansionDefinitions) do
+	local item, errorMessage = Inventory.Items.Register(name, definition)
+	assert(item, ('failed to register expansion item "%s": %s'):format(name, errorMessage))
+end

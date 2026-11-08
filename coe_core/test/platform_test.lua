@@ -324,4 +324,36 @@ assertFalse(poly:IsPointInside(vector3(5.0, 5.0, 25.0)), 'Ponto acima da altura 
 assertTrue(sphere:Destroy(), 'Destruir esfera')
 assertFalse(Colshapes.IsPointInside(sphere:GetId(), vector3(0.0, 0.0, 0.0)), 'Esfera destruída não deve responder')
 
-print('✅ Todos os testes de Core.Platform (Fases 1, 2, 3 e 4: Entities, Vehicles, Peds, Players, Routing, StateBags e Colshapes) passaram com sucesso!')
+-- ============================================================================
+-- 9. TESTES DE SEGURANÇA E SHIELD (Owner, Type, PopulationType, IsPlayer, Tokens)
+-- ============================================================================
+local secCar = Platform.Vehicles.Create('sultan', vector3(5.0, 5.0, 5.0))
+local secHandle = secCar:GetHandle()
+assertEqual(Platform.Entities.GetOwner(secHandle), nil, 'Entidade sem owner retorna nil')
+assertEqual(Platform.Entities.GetType(secHandle), 0, 'Entidade sem entityType explícito no mock retorna 0')
+assertEqual(Platform.Entities.GetPopulationType(secHandle), 0, 'Entidade sem populationType explícito retorna 0')
+assertFalse(Platform.Peds.IsPlayer(playerPed), 'Ped mock sem flag isPlayer retorna false')
+local toks = Platform.Players.GetTokens(1)
+assertTrue(type(toks) == 'table' and #toks == 0, 'Tokens vazios por padrão no mock')
+assertTrue(type(pObj:GetTokens()) == 'table', 'Wrapper GetTokens retorna tabela')
+secCar:Delete()
+
+-- ============================================================================
+-- 10. TESTES DE FISIOLOGIA E CAPACIDADE FÍSICA (MaxHealth, Stamina, FitnessStats)
+-- ============================================================================
+assertEqual(pedWrap:GetMaxHealth(), 200, 'MaxHealth inicial deve ser 200')
+assertTrue(pedWrap:SetMaxHealth(250), 'SetMaxHealth(250) deve ter sucesso')
+assertEqual(pedWrap:GetMaxHealth(), 250, 'GetMaxHealth deve retornar 250')
+assertTrue(Platform.SetPedMaxHealth(playerPed, 235), 'Atalho Platform.SetPedMaxHealth deve funcionar')
+assertEqual(Platform.GetPedMaxHealth(playerPed), 235, 'Atalho Platform.GetPedMaxHealth deve retornar 235')
+
+assertTrue(Platform.SetPlayerFitnessStats(playerPed, 80, 90, 45.0), 'SetPlayerFitnessStats deve funcionar')
+local fitStats = pedWrap:GetFitnessStats()
+assertTrue(type(fitStats) == 'table', 'GetFitnessStats deve retornar tabela')
+assertEqual(fitStats.stamina, 80, 'Stamina stat deve ser 80')
+assertEqual(fitStats.strength, 90, 'Strength stat deve ser 90')
+assertEqual(fitStats.maxWaterTimeSeconds, 45.0, 'maxWaterTimeSeconds deve ser 45.0')
+
+assertTrue(Platform.RestorePlayerStamina(1.4), 'RestorePlayerStamina deve retornar true no mock')
+
+print('✅ Todos os testes de Core.Platform (Fases 1, 2, 3, 4 e 5: Entities, Vehicles, Peds, Players, Routing, StateBags, Colshapes e Fisiologia) passaram com sucesso!')

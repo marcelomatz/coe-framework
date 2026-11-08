@@ -212,3 +212,47 @@ function AmzgRules.Summary(lines)
 	end
 	return list
 end
+
+function AmzgRules.ExecuteSaga(steps, context)
+	local Concurrency = (Core and Core.Algorithms and Core.Algorithms.Concurrency) or (CoeAlgorithms and CoeAlgorithms.Concurrency)
+	if Concurrency and Concurrency.executeSaga then
+		local ok, failedStep, reason = Concurrency.executeSaga(steps, context)
+		if not ok then
+			return false, reason or failedStep
+		end
+		return true
+	end
+	local completed = {}
+	for _, step in ipairs(steps) do
+		local fn = step.action or step.forward
+		local ok, err = fn(context)
+		if not ok then
+			for j = #completed, 1, -1 do
+				if completed[j].compensate then
+					pcall(completed[j].compensate, context)
+				end
+			end
+			return false, err
+		end
+		completed[#completed + 1] = step
+	end
+	return true
+end
+
+function AmzgRules.NewLockManager()
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	local Concurrency = alg and alg.Concurrency
+	if Concurrency and Concurrency.newLockManager then
+		return Concurrency.newLockManager()
+	end
+	return nil
+end
+
+function AmzgRules.NewRateLimiter(cooldownMs)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	local RateLimit = alg and alg.RateLimit
+	if RateLimit and RateLimit.newGCRA then
+		return RateLimit.newGCRA(math.max(1, tonumber(cooldownMs) or 500), 0)
+	end
+	return nil
+end

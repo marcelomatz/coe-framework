@@ -7,6 +7,7 @@ local catalog = assert(ShopsRules.Catalog(config))
 local ready = false
 local shelves = {}       -- negócio -> produto -> { quantity, price }
 local lastCall = {}      -- playerId -> GetGameTimer()
+local callLimiter = ShopsRules and ShopsRules.NewRateLimiter and ShopsRules.NewRateLimiter(config and config.CallCooldownMs or 300, 0) or nil
 local playerBusy = {}
 local storeBusy = {}
 local payments = ShopsPayments.New()
@@ -275,17 +276,49 @@ local function buy(playerId, character, store, cart, payment)
 	if not paid then
 		return { ok = false, error = payError, left = left }
 	end
-	-- Entrega os itens; se algum não couber, desfaz o que entrou e devolve o dinheiro.
-	local given = {}
-	for _, line in ipairs(quote.lines) do
-		if remote('coe_inventory', 'AddItem', inventoryId, line.item, line.quantity) ~= true then
-			for _, back in ipairs(given) do
-				remote('coe_inventory', 'RemoveItemByName', inventoryId, back.item, back.quantity)
-			end
-			refund(playerId, paid, quote.total, description)
-			return { ok = false, error = 'inventory_full' }
+	-- Entrega os itens via Saga compensatória; se algum não couber, desfaz o que entrou e devolve o dinheiro.
+	if ShopsRules and ShopsRules.ExecuteSaga then
+		local steps = {
+			{
+				name = 'payment_guard',
+				action = function() return true end,
+				compensate = function()
+					refund(playerId, paid, quote.total, description)
+				end,
+			}
+		}
+		for _, line in ipairs(quote.lines) do
+			local itemName = line.item
+			local itemQty = line.quantity
+			steps[#steps + 1] = {
+				name = 'give_' .. itemName,
+				action = function()
+					if remote('coe_inventory', 'AddItem', inventoryId, itemName, itemQty) ~= true then
+						return false, 'inventory_full'
+					end
+					return true
+				end,
+				compensate = function()
+					remote('coe_inventory', 'RemoveItemByName', inventoryId, itemName, itemQty)
+				end,
+			}
 		end
-		given[#given + 1] = line
+		local sagaOk, _, sagaErr = ShopsRules.ExecuteSaga(steps)
+		if not sagaOk then
+			return { ok = false, error = sagaErr or 'inventory_full' }
+		end
+	else
+		local given = {}
+		for _, line in ipairs(quote.lines) do
+			if remote('coe_inventory', 'AddItem', inventoryId, line.item, line.quantity) ~= true then
+				for _, back in ipairs(given) do
+					remote('coe_inventory', 'RemoveItemByName', inventoryId, back.item, back.quantity)
+				end
+				refund(playerId, paid, quote.total, description)
+				return { ok = false, error = 'inventory_full' }
+			end
+			given[#given + 1] = line
+		end
 	end
 	if mode == 'player' then
 		local after = ShopsRules.AfterSale(shelves[store.id], quote.lines)
@@ -560,6 +593,9 @@ end)
 
 AddEventHandler('playerDropped', function()
 	lastCall[source], playerBusy[source], clientReports[source] = nil, nil, nil
+	if callLimiter then
+		callLimiter:reset(source)
+	end
 end)
 
 -- Permissões de cargo e aba Loja no app do negócio. De novo sempre que o coe_businesses reiniciar.

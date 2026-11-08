@@ -228,4 +228,33 @@ local quick = assert(JobRules.Validate(routeJob({ route = { mode = 'collect', st
 	carry = { model = 'prop_a' }, pickAnimation = { dict = 'd', name = 'n', ms = 900 } } })))
 eq(quick.route.pickAnimation.ms, 900, 'duracao da animacao curta')
 
+-- Vose's Alias Method O(1) em BuildSpeciesSampler / RollSpecies e A* 3D em OptimalRoutePath:
+local fishZone = {
+	species = {
+		{ id = 'sardinha', weight = 70 },
+		{ id = 'robalo', weight = 25 },
+		{ id = 'dourado', weight = 5 }
+	}
+}
+local fishProducts = {
+	sardinha = { tier = 'common' },
+	robalo = { tier = 'uncommon' },
+	dourado = { tier = 'rare' }
+}
+local sampler0 = JobRules.BuildSpeciesSampler(fishZone, fishProducts, 0)
+assert(sampler0 ~= nil, 'BuildSpeciesSampler constroi tabela de alias O(1)')
+eq(JobRules.BuildSpeciesSampler(fishZone, fishProducts, 0), sampler0, 'BuildSpeciesSampler reutiliza cache por bonus')
+local rolledSpecies = JobRules.RollSpecies(fishZone, fishProducts, 0.5)
+assert(fishProducts[rolledSpecies] ~= nil, 'RollSpecies em producao sorteia especie valida via Alias Table O(1)')
+
+local routeGraph = {
+	[1] = { x = 0, y = 0, z = 0, neighbors = { { id = 2, cost = 10 }, { id = 3, cost = 50 } } },
+	[2] = { x = 10, y = 0, z = 0, neighbors = { { id = 3, cost = 15 } } },
+	[3] = { x = 20, y = 0, z = 0, neighbors = {} }
+}
+local optPath, optCost = JobRules.OptimalRoutePath(routeGraph, 1, 3)
+eq(#optPath, 3, 'OptimalRoutePath A* encontra caminho 1->2->3')
+eq(optPath[2], 2, 'OptimalRoutePath passa pelo no intermediario 2')
+eq(optCost, 25, 'OptimalRoutePath calcula custo minimo 25')
+
 print('coe_jobs rules tests passed')

@@ -64,7 +64,7 @@ local function start(item)
 		return
 	end
 	local coords = Core.Platform.Entities.GetCoords(ped)
-	local object = CreateObject(model, coords.x, coords.y, coords.z + 0.2, true, true, false)
+	local object = CreateObject(model, coords.x, coords.y, coords.z + 0.2, false, false, false)
 	SetModelAsNoLongerNeeded(model)
 	local offset, rotation = item.offset, item.rotation
 	AttachEntityToEntity(object, ped, GetPedBoneIndex(ped, item.bone), offset[1], offset[2], offset[3],

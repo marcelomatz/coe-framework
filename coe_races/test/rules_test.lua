@@ -1,4 +1,5 @@
 -- Regras das corridas: pista gravada, opções da corrida, classes, checkpoints, posições, pote, rating e polícia.
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 local config, R = RacesConfig, RacesRules
@@ -123,5 +124,18 @@ eq(R.PoliceChance(config, 12, true), 0.9, 'teto')
 
 eq(R.FormatTime(83456), '1:23.456', 'tempo')
 eq(R.FormatTime(nil), '0:00.000', 'tempo vazio')
+
+local refunded = false
+local okSaga = R.ExecuteSaga({
+	{ name = 'lock', action = function() return true end, compensate = function() refunded = true end },
+	{ name = 'insert', action = function() return false end }
+})
+eq(okSaga, false, 'Saga falha no segundo passo')
+eq(refunded, true, 'Saga compensa EscrowLock automaticamente')
+
+local limiter = R.NewCallLimiter(300)
+eq(limiter:allow(1, 1000), true, 'GCRA primeira chamada')
+eq(limiter:allow(1, 1100), false, 'GCRA bloqueia dentro da janela')
+eq(limiter:allow(1, 1400), true, 'GCRA libera após janela')
 
 print('coe_races rules_test: ok')

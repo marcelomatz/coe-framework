@@ -111,6 +111,7 @@ ElosPersistence = {
 	end
 }
 
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 dofile('server/main.lua')

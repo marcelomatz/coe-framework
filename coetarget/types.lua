@@ -46,3 +46,14 @@ function exports_coetarget:RemoveTargetGlobal(entityType) end
 function exports_coetarget:AddTargetSurface(options) end
 
 function exports_coetarget:RemoveTargetSurface() end
+
+---Zona espacial esférica indexada em Grade de Hash Espacial de 64 bits (O(1) nas células vizinhas).
+---@param id string Identificador único da zona dentro do resource chamador
+---@param coords { x: number, y: number, z: number }
+---@param radius number Raio da esfera em metros
+---@param options CoeTargetOption[]
+---@return boolean ok
+function exports_coetarget:AddTargetZone(id, coords, radius, options) end
+
+---@param id string
+function exports_coetarget:RemoveTargetZone(id) end

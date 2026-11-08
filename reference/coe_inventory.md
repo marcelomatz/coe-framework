@@ -291,6 +291,19 @@ Retorna a instância do serviço global de inventário.
 
 - `table` `inventoryService`
 
+### `GetEquippedWeapon(playerId)`
+
+Retorna o hash da arma equipada pelo jogador (0 se desarmado), revalidando a posse física no inventário. Exige ACE `coe.shield` ou resource autorizado (`coe_shield`, `coe_admin`).
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `playerId` | `integer` |  |
+
+**Retorno**
+
+- `integer|nil` `weaponHash`
+- `string|nil` `errorCode` — `caller_not_allowed`, `character_not_loaded`, `not_found`
+
 ## Tipos
 
 ```lua

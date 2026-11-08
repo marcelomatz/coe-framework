@@ -5,11 +5,15 @@ local ready = false
 -- places[id] = local (casa, prédio, sede) com várias portas; runtime["local:porta"] = { place, entry }.
 local places = {}
 local runtime = {}
+local spatialGrid = DoorsRules and DoorsRules.NewSpatialGrid and DoorsRules.NewSpatialGrid(32.0) or nil
 -- Estado e token por porta (ID de execução): uma trava automática agendada só vale se ninguém mexeu na porta depois.
 local lockState = {}
 local autoTokens = {}
 local lastAction = {}
+local actionLimiter = DoorsRules and DoorsRules.NewActionLimiter and DoorsRules.NewActionLimiter(config and config.Limits and config.Limits.ActionIntervalMs or 250) or nil
 local pinFailures = {}
+local blackoutPlaces = {}
+local MASTER_KEYCARD_SECRET = GetConvar('coe_doors_keycard_secret', 'coe_doors_hmac_master_2026')
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -32,7 +36,10 @@ end
 local MESSAGES = {
 	not_ready = 'Fechaduras ainda iniciando.', no_door = 'Porta indisponível.', too_far = 'Chegue mais perto da porta.',
 	no_access = 'Você não tem acesso a esta porta.', wrong_pin = 'Senha incorreta.', no_pin = 'Esta porta não tem senha.',
-	pin_locked = 'Muitas tentativas. Aguarde para tentar de novo.', busy = 'Aguarde um instante.'
+	pin_locked = 'Muitas tentativas. Aguarde para tentar de novo.', busy = 'Aguarde um instante.',
+	biometric_occluded = 'Leitor facial bloqueado: remova a máscara ou use Cartão/PIN.',
+	keycard_revoked = 'Cartão de acesso expirado ou revogado (keyEpoch inválido).',
+	blackout_no_biometrics = 'Sem energia elétrica: leitor biométrico desligado. Use Cartão físico ou PIN.'
 }
 
 local function fail(playerId, errorCode)
@@ -53,6 +60,9 @@ end
 
 local function throttled(playerId)
 	local now = GetGameTimer()
+	if actionLimiter then
+		return not actionLimiter:allow(playerId, now)
+	end
 	if lastAction[playerId] and now - lastAction[playerId] < config.Limits.ActionIntervalMs then
 		return true
 	end
@@ -122,6 +132,10 @@ local function indexPlace(place, previous)
 	for _, entry in ipairs(place.entries) do
 		local runtimeId = DoorsRules.RuntimeId(place, entry)
 		runtime[runtimeId] = { place = place, entry = entry }
+		if spatialGrid then
+			local center = DoorsRules.Center(entry)
+			spatialGrid:insert(runtimeId, center.x, center.y, center.z)
+		end
 		if lockState[runtimeId] == nil or oldDefaults[runtimeId] ~= entry.locked then
 			lockState[runtimeId] = entry.locked
 		end
@@ -132,6 +146,9 @@ local function indexPlace(place, previous)
 	for runtimeId in pairs(oldDefaults) do
 		lockState[runtimeId] = nil
 		autoTokens[runtimeId] = (autoTokens[runtimeId] or 0) + 1
+		if spatialGrid then
+			spatialGrid:remove(runtimeId)
+		end
 	end
 end
 
@@ -140,6 +157,9 @@ local function unindexPlace(place)
 		local runtimeId = DoorsRules.RuntimeId(place, entry)
 		runtime[runtimeId], lockState[runtimeId] = nil, nil
 		autoTokens[runtimeId] = (autoTokens[runtimeId] or 0) + 1
+		if spatialGrid then
+			spatialGrid:remove(runtimeId)
+		end
 	end
 end
 
@@ -191,6 +211,38 @@ local function factsOf(playerId, characterId)
 				return 0
 			end
 			return tonumber(remote('coe_inventory', 'GetItemCount', inventoryId, name, metadata)) or 0
+		end,
+		isMasked = function()
+			local masked = remote('coe_appearance', 'IsWearingMask', playerId)
+			if masked ~= nil then
+				return masked == true
+			end
+			local ped = GetPlayerPed(playerId)
+			if ped and ped ~= 0 and type(GetPedDrawableVariation) == 'function' then
+				return GetPedDrawableVariation(ped, 1) > 0
+			end
+			return false
+		end,
+		hasKeycard = function(runtimeId, placeId)
+			if inventoryId == nil then
+				inventoryId = remote('coe_inventory', 'GetPlayerInventory', playerId) or false
+			end
+			if not inventoryId then
+				return nil
+			end
+			local inv = remote('coe_inventory', 'GetInventory', inventoryId)
+			if type(inv) ~= 'table' or type(inv.items) ~= 'table' then
+				return nil
+			end
+			for _, item in pairs(inv.items) do
+				if type(item) == 'table' and item.name == 'keycard_encrypted' and type(item.metadata) == 'table' then
+					local dId = item.metadata.doorId
+					if dId == runtimeId or dId == placeId then
+						return item.metadata
+					end
+				end
+			end
+			return nil
 		end
 	}
 end
@@ -267,6 +319,27 @@ RegisterNetEvent('coe_doors:toggle', function(runtimeId)
 		return
 	end
 	pinPending[playerId] = nil
+	local isBlackout = blackoutPlaces[place.id] == true
+	if entry.smartLock and entry.smartLock.enabled then
+		local allowed, reasonOrVia, needPin = DoorsRules.EvaluateSmartLock(place, entry, factsOf(playerId, characterId), config, isBlackout, MASTER_KEYCARD_SECRET)
+		if allowed then
+			if needPin and lockState[runtimeId] then
+				askPin(playerId, runtimeId, entry.pin and 'entry' or 'place', place, entry)
+				return
+			end
+			setLocked(runtimeId, not lockState[runtimeId], playerId, reasonOrVia)
+			return
+		end
+		if reasonOrVia == 'biometric_occluded' or reasonOrVia == 'keycard_revoked' or reasonOrVia == 'blackout_no_biometrics' then
+			if (entry.pin or (place.pin and not entry.restricted)) then
+				notify(playerId, 'warn', MESSAGES[reasonOrVia] or _t(reasonOrVia))
+				askPin(playerId, runtimeId, entry.pin and 'entry' or 'place', place, entry)
+				return
+			end
+			fail(playerId, reasonOrVia)
+			return
+		end
+	end
 	local allowed, via = DoorsRules.CanAccess(place, factsOf(playerId, characterId), config, entry)
 	if allowed then
 		proceed(playerId, runtimeId, place, entry, via)
@@ -313,6 +386,10 @@ RegisterNetEvent('coe_doors:pin', function(runtimeId, pin)
 		if record.count >= config.Pin.MaxAttempts then
 			record.blockedUntil = now + config.Pin.LockoutSeconds
 			audit('door_pin_lockout', { source = playerId, operation = place.id })
+			if not blackoutPlaces[place.id] then
+				TriggerClientEvent('coe_doors:alarm', -1, runtimeId, DoorsRules.Center(entry))
+				TriggerEvent('coe_doors:alarmTriggered', place.id, runtimeId, playerId)
+			end
 			fail(playerId, 'pin_locked')
 		else
 			fail(playerId, 'wrong_pin')
@@ -333,6 +410,9 @@ end)
 AddEventHandler('playerDropped', function()
 	local playerId = source
 	lastAction[playerId] = nil
+	if actionLimiter then
+		actionLimiter:reset(playerId)
+	end
 	pinPending[playerId] = nil
 	local prefix = tostring(playerId) .. ':'
 	for key in pairs(pinFailures) do
@@ -468,6 +548,120 @@ end)
 
 exports('IsReady', function()
 	return ready
+end)
+
+-- Modo de Contingência no Blackout, SmartLock 3-em-1 e KeyEpoch.
+exports('SetBlackout', function(placeId, active)
+	if type(placeId) ~= 'string' then
+		return false
+	end
+	blackoutPlaces[placeId] = active == true or nil
+	TriggerEvent('coe_doors:blackoutChanged', placeId, active == true)
+	return true
+end)
+
+exports('IsBlackout', function(placeId)
+	return type(placeId) == 'string' and blackoutPlaces[placeId] == true or false
+end)
+
+exports('UpgradeSmartLock', function(placeId, entryKey, spec)
+	if not ready or type(placeId) ~= 'string' then
+		return { ok = false, error = 'not_ready' }
+	end
+	local previous = places[placeId]
+	if not previous then
+		return { ok = false, error = 'unknown_door' }
+	end
+	local raw = DoorsRules.Admin(previous, lockOf)
+	local targetKey = entryKey or (raw.entries[1] and raw.entries[1].key)
+	local found = false
+	for _, entry in ipairs(raw.entries) do
+		if entry.key == targetKey then
+			spec = type(spec) == 'table' and spec or {}
+			entry.smartLock = {
+				enabled = spec.enabled ~= false,
+				biometric = spec.biometric ~= false,
+				keycard = spec.keycard ~= false,
+				require2FA = spec.require2FA == true,
+				keyEpoch = math.max(1, tonumber(spec.keyEpoch) or 1),
+			}
+			found = true
+		end
+	end
+	if not found then
+		return { ok = false, error = 'unknown_entry' }
+	end
+	local place, errorCode = DoorsRules.Normalize(raw, config, previous, newSalt)
+	if not place then
+		return { ok = false, error = errorCode }
+	end
+	local committed, commitError = commit(place, previous)
+	if not committed then
+		return { ok = false, error = commitError }
+	end
+	return { ok = true, placeId = placeId, entryKey = targetKey }
+end)
+
+exports('RotateKeyEpoch', function(placeId, entryKey)
+	if not ready or type(placeId) ~= 'string' then
+		return { ok = false, error = 'not_ready' }
+	end
+	local previous = places[placeId]
+	if not previous then
+		return { ok = false, error = 'unknown_door' }
+	end
+	local raw = DoorsRules.Admin(previous, lockOf)
+	local targetKey = entryKey or (raw.entries[1] and raw.entries[1].key)
+	local newEpoch = nil
+	for index, entry in ipairs(raw.entries) do
+		if entry.key == targetKey then
+			local prevSmart = previous.entries[index] and previous.entries[index].smartLock or {}
+			newEpoch = (tonumber(prevSmart.keyEpoch) or 1) + 1
+			entry.smartLock = {
+				enabled = true,
+				biometric = prevSmart.biometric ~= false,
+				keycard = prevSmart.keycard ~= false,
+				require2FA = prevSmart.require2FA == true,
+				keyEpoch = newEpoch,
+			}
+		end
+	end
+	if not newEpoch then
+		return { ok = false, error = 'unknown_entry' }
+	end
+	local place, errorCode = DoorsRules.Normalize(raw, config, previous, newSalt)
+	if not place then
+		return { ok = false, error = errorCode }
+	end
+	local committed, commitError = commit(place, previous)
+	if not committed then
+		return { ok = false, error = commitError }
+	end
+	audit('door_keyepoch_rotated', { operation = placeId, target = targetKey, count = newEpoch })
+	return { ok = true, keyEpoch = newEpoch }
+end)
+
+exports('IssueKeycardMetadata', function(placeId, entryKey)
+	local place = ready and type(placeId) == 'string' and places[placeId] or nil
+	if not place then
+		return nil, 'unknown_door'
+	end
+	local targetKey = entryKey or (place.entries[1] and place.entries[1].key)
+	for _, entry in ipairs(place.entries) do
+		if entry.key == targetKey then
+			local epoch = entry.smartLock and tonumber(entry.smartLock.keyEpoch) or 1
+			local runtimeId = DoorsRules.RuntimeId(place, entry)
+			local sig = DoorsRules.SignKeycard(runtimeId, epoch, MASTER_KEYCARD_SECRET)
+			return {
+				doorId = runtimeId,
+				placeId = place.id,
+				label = DoorsRules.EntryLabel(place, entry),
+				keyEpoch = epoch,
+				signature = sig,
+			}
+		end
+	end
+	return nil, 'unknown_entry'
 end)
 
 -- App Casa do tablet (só o coe_tablet chama): o dono gerencia acesso exclusivo e senha de cada porta.

@@ -1,6 +1,8 @@
 -- Phone NFC / QR Payments & Shop Payment Exports
 local Phone = Phone
-local banking = function(...) return Phone.banking(...) end
+local config = Phone.config
+local payments = Phone.payments
+local active = Phone.active
 local log = function(...) return Phone.log(...) end
 local notify = function(...) return Phone.notify(...) end
 

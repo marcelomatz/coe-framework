@@ -34,13 +34,36 @@ local function build(overrides)
 	return AuditEntry.Build(options)
 end
 
--- entrada válida
-local entry = build()
-assertEqual(entry.occurred_at, '1970-01-01 00:00:00', 'timestamp UTC')
-assertEqual(entry.actor_license, 'license:aaa', 'licença do ator resolvida')
-assertEqual(entry.target_license, '', 'alvo offline fica vazio')
-assertEqual(entry.context_json, '{"ok":true}', 'contexto codificado')
-assertEqual(entry.resource, 'coe_core', 'resource vem do chamador')
+-- entrada válida + cadeia forense SHA-256
+local customChain = AuditEntry.NewForensicChain('TEST_AUDIT_SEED')
+local entry1 = build({ chain = customChain })
+local entry2 = build({ chain = customChain, event = 'economy_transfer' })
+assertEqual(entry1.occurred_at, '1970-01-01 00:00:00', 'timestamp UTC')
+assertEqual(entry1.actor_license, 'license:aaa', 'licença do ator resolvida')
+assertEqual(entry1.target_license, '', 'alvo offline fica vazio')
+assertEqual(entry1.context_json, '{"ok":true}', 'contexto codificado')
+assertEqual(entry1.resource, 'coe_core', 'resource vem do chamador')
+assertEqual(#entry1.hash, 64, 'hash SHA-256 de 64 chars anexado')
+assertEqual(entry2.prev_hash, entry1.hash, 'prev_hash do segundo evento encadeia no primeiro')
+
+local chainOk, brokenAt = AuditEntry.VerifyChain({ entry1, entry2 }, 'TEST_AUDIT_SEED')
+assertEqual(chainOk, true, 'cadeia forense integra passa na verificacao')
+assertEqual(brokenAt, nil, 'nenhum elo corrompido')
+
+entry2.context_json = '{"tampered":true}'
+local tamperedOk, tamperedIdx = AuditEntry.VerifyChain({ entry1, entry2 }, 'TEST_AUDIT_SEED')
+assertEqual(tamperedOk, false, 'adulteracao em entry2 detectada pela cadeia SHA-256')
+assertEqual(tamperedIdx, 2, 'indice exato do elo corrompido identificado')
+
+-- Detector estatístico Welford + Tabular CUSUM
+local detector = AuditEntry.NewAnomalyDetector(100.0, 25.0, 150.0, 0.25)
+assert(detector ~= nil, 'detector Welford+CUSUM instanciado')
+for _ = 1, 10 do
+	local res = detector:observe(100.0)
+	assertEqual(res.cusumAlarm, false, 'observacao normal nao dispara CUSUM')
+end
+local spike = detector:observe(500.0)
+assertEqual(spike.cusumAlarm, true, 'pico abrupto dispara alarme Tabular CUSUM')
 
 -- Pacotes e scripts de terceiros entram por ACE (resource.<nome> coe.audit), não pela lista do framework.
 assertEqual(config.AllowedResources.coe_admin, nil, 'padrão só lista resources do framework')
@@ -74,7 +97,7 @@ assertEqual(err, 'encoding_failed', 'falha de encode')
 local ok = build({ resolveLicense = function() error('boom') end })
 assertEqual(ok.actor_license, '', 'falha ao resolver licença não derruba o evento')
 
--- writer: lote, falha, backoff e recuperação
+-- writer: lote O(1), falha, backoff e recuperação
 local clock = 0
 local inserted = {}
 local failNext = false

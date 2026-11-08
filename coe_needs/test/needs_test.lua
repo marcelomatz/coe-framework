@@ -48,4 +48,20 @@ eq(Needs.IsActivity('combat'), true, 'atividade valida')
 eq(Needs.IsActivity('fly'), false, 'atividade invalida')
 eq(Needs.SnapshotEquals(Needs.Snapshot(state), Needs.Snapshot(state)), true, 'snapshots iguais')
 
+-- Hierarchical Hashed Timing Wheel O(1) e GCRA Activity Limiter
+local wheel = Needs.NewTimingWheel(1000)
+eq(type(wheel), 'table', 'NewTimingWheel disponível')
+local fired = false
+wheel:schedule('needs:7', 2000, function() fired = true end)
+wheel:tick()
+eq(fired, false, 'não dispara no primeiro segundo')
+wheel:tick()
+eq(fired, true, 'dispara no segundo configurado em O(1)')
+
+local limiter = Needs.NewActivityLimiter(1000, 0)
+eq(type(limiter), 'table', 'NewActivityLimiter disponível')
+eq(limiter:allow(7, 1000), true, 'primeira atividade permitida')
+eq(limiter:allow(7, 1500), false, 'flood de atividade bloqueado em <1000ms')
+eq(limiter:allow(7, 2100), true, 'atividade permitida após intervalo')
+
 print('coe_needs domain tests passed')

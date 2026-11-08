@@ -77,7 +77,9 @@ json = {
 	end
 }
 
+dofile('../coe_core/lib/algorithms/init.lua')
 Core = {
+	Algorithms = CoeAlgorithms,
 	Platform = dofile('../coe_core/lib/platform.lua'),
 	Players = { GetActiveCharacterId = function(id) return characters[id] end },
 	Events = { On = function(name, fn) coreHandlers[name] = fn end }

@@ -142,9 +142,24 @@ local function normalizeEntry(raw, index, config, previousEntry, newSalt)
 		local salt = newSalt()
 		pin = { salt = salt, hash = DoorsRules.HashPin(salt, raw.pin) }
 	end
+	local prevSmart = previousEntry and type(previousEntry.smartLock) == 'table' and previousEntry.smartLock or nil
+	local rawSmart = type(raw.smartLock) == 'table' and raw.smartLock or prevSmart
+	local smartLock = nil
+	if type(rawSmart) == 'table' and rawSmart.enabled == true then
+		local epoch = int(rawSmart.keyEpoch) or (prevSmart and int(prevSmart.keyEpoch)) or 1
+		if epoch < 1 then epoch = 1 end
+		smartLock = {
+			enabled = true,
+			biometric = rawSmart.biometric ~= false,
+			keycard = rawSmart.keycard ~= false,
+			require2FA = rawSmart.require2FA == true,
+			keyEpoch = epoch,
+		}
+	end
 	return {
 		key = key, label = label, kind = kindName, doors = leaves, distance = round(distance, 1),
-		autoLock = autoLock, locked = raw.locked ~= false, restricted = raw.restricted == true, allowed = allowed, pin = pin
+		autoLock = autoLock, locked = raw.locked ~= false, restricted = raw.restricted == true, allowed = allowed, pin = pin,
+		smartLock = smartLock
 	}
 end
 local function normalizeAccess(raw, limits)
@@ -200,7 +215,11 @@ function DoorsRules.PinMatches(door, pin, config)
 	if type(door.pin) ~= 'table' or not DoorsRules.ValidPin(pin, config) then
 		return false
 	end
-	return DoorsRules.HashPin(door.pin.salt, pin) == door.pin.hash
+	local candidate = DoorsRules.HashPin(door.pin.salt, pin)
+	if DoorsHash.ConstantTimeEquals then
+		return DoorsHash.ConstantTimeEquals(candidate, door.pin.hash)
+	end
+	return candidate == door.pin.hash
 end
 
 -- Cadastro antigo (uma porta por registro): vira um local com uma porta "Principal".
@@ -373,7 +392,8 @@ function DoorsRules.Admin(place, lockOf)
 		entries[index] = {
 			key = entry.key, label = entry.label, kind = entry.kind, doors = entry.doors, distance = entry.distance,
 			autoLock = entry.autoLock, locked = entry.locked, current = lockOf(DoorsRules.RuntimeId(place, entry)),
-			restricted = entry.restricted == true, allowed = entry.allowed or {}, hasPin = entry.pin ~= nil
+			restricted = entry.restricted == true, allowed = entry.allowed or {}, hasPin = entry.pin ~= nil,
+			smartLock = entry.smartLock
 		}
 	end
 	return {
@@ -388,8 +408,118 @@ function DoorsRules.OwnerView(place, lockOf)
 	for index, entry in ipairs(place.entries) do
 		entries[index] = {
 			key = entry.key, label = entry.label, kind = entry.kind, locked = lockOf(DoorsRules.RuntimeId(place, entry)),
-			restricted = entry.restricted == true, allowed = entry.allowed or {}, hasPin = entry.pin ~= nil
+			restricted = entry.restricted == true, allowed = entry.allowed or {}, hasPin = entry.pin ~= nil,
+			smartLock = entry.smartLock
 		}
 	end
 	return { id = place.id, label = place.label, enabled = place.enabled, entries = entries }
+end
+
+function DoorsRules.NewSpatialGrid(cellSize)
+	local Spatial = (Core and Core.Algorithms and Core.Algorithms.Spatial) or (CoeAlgorithms and CoeAlgorithms.Spatial)
+	if Spatial and Spatial.newGrid then
+		return Spatial.newGrid(cellSize or 32.0)
+	end
+	return nil
+end
+
+function DoorsRules.NewActionLimiter(cooldownMs)
+	local RateLimit = (Core and Core.Algorithms and Core.Algorithms.RateLimit) or (CoeAlgorithms and CoeAlgorithms.RateLimit)
+	if RateLimit and RateLimit.newGCRA then
+		return RateLimit.newGCRA(math.max(1, tonumber(cooldownMs) or 250), 0)
+	end
+	return nil
+end
+
+local function resolveCrypto()
+	if Core and Core.Algorithms and Core.Algorithms.Crypto then
+		return Core.Algorithms.Crypto
+	end
+	if CoeAlgorithms and CoeAlgorithms.Crypto then
+		return CoeAlgorithms.Crypto
+	end
+	return nil
+end
+
+-- Assina um keycard criptografado (item keycard_encrypted) vinculado ao keyEpoch atual da fechadura.
+function DoorsRules.SignKeycard(doorId, keyEpoch, masterSecret)
+	local Crypto = resolveCrypto()
+	local payload = tostring(doorId or '') .. ':' .. tostring(math.tointeger(keyEpoch) or 1)
+	local secret = tostring(masterSecret or 'coe_doors_default_secret')
+	if Crypto and Crypto.hmacSha256 then
+		return Crypto.hmacSha256(secret, payload)
+	end
+	return DoorsHash.Sha256(secret .. ':' .. payload)
+end
+
+function DoorsRules.VerifyKeycard(doorId, keyEpoch, signature, masterSecret)
+	if type(signature) ~= 'string' or #signature == 0 then
+		return false
+	end
+	local expected = DoorsRules.SignKeycard(doorId, keyEpoch, masterSecret)
+	if DoorsHash and DoorsHash.ConstantTimeEquals then
+		return DoorsHash.ConstantTimeEquals(signature, expected)
+	end
+	return signature == expected
+end
+
+-- Avalia fechadura inteligente 3-em-1 (Biometria Facial + Keycard com keyEpoch + PIN/2FA) e Modo de Contingência no Blackout.
+-- Retorna: allowed (bool), reasonOrVia (string), requirePinStep (bool)
+function DoorsRules.EvaluateSmartLock(place, entry, facts, config, blackoutActive, masterSecret)
+	local smart = entry and entry.smartLock
+	if type(smart) ~= 'table' or smart.enabled ~= true then
+		local ok, via = DoorsRules.CanAccess(place, facts, config, entry)
+		return ok, via, (ok and entry and entry.pin ~= nil)
+	end
+
+	local runtimeId = DoorsRules.RuntimeId(place, entry)
+	local isPersonAuthorized = DoorsRules.IsOwner(place, facts.characterId)
+	if not isPersonAuthorized then
+		for _, allowed in ipairs(entry.allowed or {}) do
+			if allowed.characterId == tostring(facts.characterId) then
+				isPersonAuthorized = true
+				break
+			end
+		end
+	end
+	if not isPersonAuthorized and not entry.restricted then
+		local baseOk = DoorsRules.CanAccess(place, facts, config, entry)
+		isPersonAuthorized = baseOk == true
+	end
+
+	-- 1. Verificação de Keycard Criptografado (funciona tanto com energia quanto na bateria de contingência 1FA)
+	if smart.keycard and type(facts.hasKeycard) == 'function' then
+		local cardMeta = facts.hasKeycard(runtimeId, place.id)
+		if type(cardMeta) == 'table' then
+			local targetId = cardMeta.doorId or runtimeId
+			if (targetId == runtimeId or targetId == place.id)
+				and tonumber(cardMeta.keyEpoch) == tonumber(smart.keyEpoch)
+				and DoorsRules.VerifyKeycard(targetId, smart.keyEpoch, cardMeta.signature, masterSecret) then
+				-- No blackout, 2FA é dispensado (contingência 1FA)
+				local needPin = (not blackoutActive) and smart.require2FA == true and (entry.pin ~= nil or place.pin ~= nil)
+				return true, blackoutActive and 'keycard_contingency' or 'keycard', needPin
+			else
+				return false, 'keycard_revoked', false
+			end
+		end
+	end
+
+	-- 2. Modo de Contingência no Blackout: leitor facial (câmera) está desligado; permite dono/autorizado via PIN local 1FA
+	if blackoutActive then
+		if isPersonAuthorized then
+			return true, 'contingency_1fa', (entry.pin ~= nil or place.pin ~= nil)
+		end
+		return false, 'blackout_no_biometrics', false
+	end
+
+	-- 3. Biometria Facial (com checagem de máscara no coe_appearance)
+	if smart.biometric and isPersonAuthorized then
+		if type(facts.isMasked) == 'function' and facts.isMasked() == true then
+			return false, 'biometric_occluded', false
+		end
+		local needPin = smart.require2FA == true and (entry.pin ~= nil or place.pin ~= nil)
+		return true, 'biometric', needPin
+	end
+
+	return false, 'no_access', false
 end

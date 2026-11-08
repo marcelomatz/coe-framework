@@ -111,3 +111,70 @@ Export server `TabletVisible` (server/main.lua).
 
 - `any`
 
+### `UpgradeSmartLock(placeId, entryKey, smartLockSpec)`
+
+Instala ou atualiza a fechadura eletrônica 3-em-1 em uma porta.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `placeId` | `string` |  |
+| `entryKey` | `string` |  |
+| `smartLockSpec` | `table` |  |
+
+**Retorno**
+
+- `boolean`
+
+### `RotateKeyEpoch(placeId, entryKey)`
+
+Rotaciona o epoch criptográfico (HMAC-SHA256) invalidando cartões antigos instantaneamente.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `placeId` | `string` |  |
+| `entryKey` | `string` |  |
+
+**Retorno**
+
+- `integer|nil`
+
+### `IssueKeycardMetadata(placeId, entryKey, holderCharId, expiresAt)`
+
+Gera os metadados assinados via HMAC-SHA256 para gravação de um Keycard físico.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `placeId` | `string` |  |
+| `entryKey` | `string` |  |
+| `holderCharId` | `any` |  |
+| `expiresAt` | `integer\|nil` |  |
+
+**Retorno**
+
+- `table|nil`
+
+### `SetBlackout(placeId, active)`
+
+Define o estado de contingência elétrica (blackout) para as portas de um espaço.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `placeId` | `string` |  |
+| `active` | `boolean` |  |
+
+**Retorno**
+
+- `boolean`
+
+### `IsBlackout(placeId)`
+
+Retorna se o espaço está atualmente em contingência elétrica (blackout).
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `placeId` | `string` |  |
+
+**Retorno**
+
+- `boolean`
+

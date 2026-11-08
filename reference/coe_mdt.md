@@ -34,3 +34,35 @@ Ponto único de entrada: coe_tablet:call -> TabletCall(playerId, appId, action, 
 
 - `any`
 
+### `RecordFinancialAnomaly(report)`
+
+Registra alerta estatístico COAF/FIB (Welford-CUSUM) de inteligência financeira.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `report` | `table` |  |
+
+**Retorno**
+
+- `boolean`
+
+### `RecordGridAnomaly(report)`
+
+Registra alerta de anomalia energética/térmica (Welford-CUSUM) da malha elétrica.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `report` | `table` |  |
+
+**Retorno**
+
+- `boolean`
+
+### `GetIntelligenceReports()`
+
+Retorna a lista de relatórios de inteligência financeira e térmica.
+
+**Retorno**
+
+- `table[]`
+

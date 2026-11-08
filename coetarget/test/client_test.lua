@@ -369,4 +369,54 @@ placedAt = nil
 nuiCallbacks.menuSelect({ index = 1 }, function() end)
 assertEqual(placedAt, 'ok', 'seleção em prop grande executa')
 world.surface = nil
+
+-- Zonas espaciais O(1) via Spatial.newGrid(16.0): AddTargetZone / RemoveTargetZone
+commands[Config.Command]()
+stopHandlers['onClientResourceStop']('res_a')
+invoker = 'res_a'
+assertEqual(registeredExports.AddTargetZone('', vector3(2.0, 0.0, 0.0), 1.5, { option('Inválida') }), false, 'zona sem id falha')
+assertEqual(registeredExports.AddTargetZone('atm_1', nil, 1.5, { option('Inválida') }), false, 'zona sem coords falha')
+
+local zoneSelected = nil
+assertEqual(registeredExports.AddTargetZone('atm_1', vector3(2.0, 0.0, 0.0), 1.5, {
+	option('Usar Caixa Eletrônico', {
+		distance = 4.0,
+		onSelect = function() zoneSelected = 'atm_1' end
+	})
+}), true, 'registra zona espacial no Spatial Grid 2D')
+
+commands[Config.Command]()
+world.hit = 0
+world.surface = vector3(2.2, 0.1, 0.0)
+message = tick()
+assertEqual(message.hasTarget, true, 'zona espacial detectada no ponto atingido')
+assertEqual(message.options[1], 'Usar Caixa Eletrônico', 'zona espacial lista opção no bucket vizinho')
+
+pressed[24] = true
+tick()
+pressed[24] = nil
+nuiCallbacks.menuSelect({ index = 1 }, function() end)
+assertEqual(zoneSelected, 'atm_1', 'selecionar opção de zona espacial executa callback')
+
+-- Fora do raio da zona espacial não exibe a opção
+world.surface = vector3(6.0, 0.0, 0.0)
+assertEqual(#tick().options, 0, 'fora do raio da zona espacial não lista opção')
+
+-- Remoção por outro resource não remove zona alheia; remoção pelo dono faz Swap-and-Pop O(1)
+invoker = 'res_b'
+registeredExports.RemoveTargetZone('atm_1')
+world.surface = vector3(2.0, 0.0, 0.0)
+assertEqual(#tick().options, 1, 'outro resource não remove zona de res_a')
+
+invoker = 'res_a'
+registeredExports.RemoveTargetZone('atm_1')
+assertEqual(#tick().options, 0, 'RemoveTargetZone remove zona do grid espacial')
+
+-- Limpeza automática em onClientResourceStop também limpa zonas do Spatial Grid
+registeredExports.AddTargetZone('atm_2', vector3(2.0, 0.0, 0.0), 1.5, { option('Caixa 2') })
+assertEqual(#tick().options, 1, 'nova zona ativa')
+stopHandlers['onClientResourceStop']('res_a')
+assertEqual(#tick().options, 0, 'onClientResourceStop limpa zonas do resource parado')
+world.surface = nil
+
 print('target client tests passed')

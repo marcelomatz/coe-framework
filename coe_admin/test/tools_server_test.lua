@@ -51,8 +51,16 @@ local online = {
 	[1] = { characterId = 11, stateId = 'AAAA2222', firstName = 'Ana', lastName = 'Souza' },
 	[3] = { characterId = 33, stateId = 'CCCC4444', firstName = 'Caio', lastName = 'Melo' }
 }
+local platformPath = '../coe_core/lib/platform.lua'
+local f = io.open(platformPath, 'r')
+if f then
+	f:close()
+else
+	platformPath = '../../coe-framework/coe_core/lib/platform.lua'
+end
+
 Core = {
-	Platform = dofile('../coe_core/lib/platform.lua'),
+	Platform = dofile(platformPath),
 	Players = {
 		GetActiveCharacter = function(id) return online[id] end,
 		GetPlayerByStateId = function(stateId)

@@ -78,7 +78,65 @@ function PoliceRules.ReleaseAt(now, minutes)
 	return now + minutes * 60
 end
 
+-- Avalia interceptadores registrados (ex.: jurisdição especial/corte marcial) de forma pura e determinística.
+function PoliceRules.ApplyInterceptors(interceptors, kind, context)
+	if type(interceptors) ~= 'table' or type(context) ~= 'table' then
+		return nil
+	end
+	for _, entry in ipairs(interceptors) do
+		local fn = type(entry) == 'table' and entry[kind] or nil
+		if type(fn) == 'function' then
+			local ok, res = pcall(fn, context)
+			if ok and type(res) == 'table' and res.intercepted == true then
+				return res
+			end
+		end
+	end
+	return nil
+end
+
 -- Segundos que faltam; 0 quando a pena acabou.
 function PoliceRules.Remaining(releaseAt, now)
 	return math.max(releaseAt - now, 0)
 end
+
+local function algo(name)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	return alg and alg[name]
+end
+
+function PoliceRules.NewActionLimiter(cooldownMs)
+	local RateLimit = algo('RateLimit')
+	local interval = math.max(1, tonumber(cooldownMs) or 250)
+	if RateLimit and RateLimit.newGCRA then
+		return RateLimit.newGCRA(interval, 0)
+	end
+	return nil
+end
+
+function PoliceRules.ExecuteSaga(steps, context)
+	local Concurrency = algo('Concurrency')
+	if Concurrency and Concurrency.executeSaga then
+		local ok, stepOrRes, reason = Concurrency.executeSaga(steps, context)
+		if not ok then
+			return false, reason or stepOrRes
+		end
+		return true, stepOrRes
+	end
+	local ctx = context or {}
+	local completed = {}
+	for _, step in ipairs(steps or {}) do
+		local fn = step.action or step.forward
+		local ok, err = fn(ctx)
+		if not ok then
+			for i = #completed, 1, -1 do
+				local comp = completed[i].compensate
+				if comp then pcall(comp, ctx) end
+			end
+			return false, err or step.name
+		end
+		completed[#completed + 1] = step
+	end
+	return true, ctx
+end
+

@@ -1,6 +1,7 @@
 -- Harness de testes do coe_inventory: stubs de FiveM/Core + carga dos arquivos
 -- server `application/*` na ordem do fxmanifest.lua. Cada teste roda em um processo
 -- Lua próprio, a partir da pasta do resource (`lua test/<arquivo>.lua`).
+dofile([=[../coe_core/lib/access.lua]=])
 dofile([=[../coe_core/lib/platform.lua]=])
 dofile([=[../coe_core/core/shared/bootstrap.lua]=])
 dofile([=[../coe_core/core/shared/functions.lua]=])
@@ -117,6 +118,9 @@ Core.Events = {
 	end,
 	Emit = function(name, ...)
 		H.emitted[#H.emitted + 1] = { name = name, args = { ... } }
+		if H.localHandlers[name] then
+			H.localHandlers[name](...)
+		end
 		return true
 	end
 }

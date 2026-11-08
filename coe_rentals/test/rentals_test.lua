@@ -85,4 +85,11 @@ local free = RentalsStations.FreeSpawn(station, function(point) return point.x =
 eq(free.x, 9, 'pula o ponto ocupado')
 eq(RentalsStations.FreeSpawn(station, function() return true end), nil, 'todos ocupados')
 
+-- GCRA Rate Limiter e Saga Compensatória
+local limiter = RentalsRules.NewRateLimiter(2000, 0)
+eq(type(limiter), 'table', 'NewRateLimiter disponível')
+eq(limiter:allow(1, 5000), true, 'primeira locação permitida no GCRA')
+eq(limiter:allow(1, 6000), false, 'segunda locação dentro de 2000ms bloqueada no GCRA')
+eq(limiter:allow(1, 7100), true, 'locação após 2000ms liberada no GCRA')
+
 print('rentals_test: ok')

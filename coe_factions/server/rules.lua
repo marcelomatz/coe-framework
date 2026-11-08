@@ -190,3 +190,26 @@ function FactionsRules.CanCraft(faction, memberGrade, recipeId)
 	end
 	return false
 end
+
+local function algo(name)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	return alg and alg[name]
+end
+
+function FactionsRules.NewCache(capacity)
+	local Containers = algo('Containers')
+	if Containers and Containers.newLRUCache then
+		return Containers.newLRUCache(capacity or 128)
+	end
+	return nil
+end
+
+function FactionsRules.NewRateLimiter(cooldownMs)
+	local RateLimit = algo('RateLimit')
+	local interval = math.max(1, tonumber(cooldownMs) or 250)
+	if RateLimit and RateLimit.newGCRA then
+		return RateLimit.newGCRA(interval, 0)
+	end
+	return nil
+end
+

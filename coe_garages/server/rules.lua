@@ -39,3 +39,52 @@ end
 function GaragesRules.IsOwner(business, characterId)
 	return business.owner ~= nil and characterId ~= nil and business.owner.characterId == tostring(characterId)
 end
+
+local function algo(name)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	return alg and alg[name]
+end
+
+function GaragesRules.NewSpatialGrid(cellSize)
+	local Spatial = algo('Spatial')
+	if Spatial and Spatial.newGrid then
+		return Spatial.newGrid(cellSize or 64.0)
+	end
+	return nil
+end
+
+function GaragesRules.NewActionLimiter(cooldownMs)
+	local RateLimit = algo('RateLimit')
+	local interval = math.max(1, tonumber(cooldownMs) or 300)
+	if RateLimit and RateLimit.newGCRA then
+		return RateLimit.newGCRA(interval, 0)
+	end
+	return nil
+end
+
+function GaragesRules.ExecuteSaga(steps, context)
+	local Concurrency = algo('Concurrency')
+	if Concurrency and Concurrency.executeSaga then
+		local ok, stepOrRes, reason = Concurrency.executeSaga(steps, context)
+		if not ok then
+			return false, reason or stepOrRes
+		end
+		return true, stepOrRes
+	end
+	local ctx = context or {}
+	local completed = {}
+	for _, step in ipairs(steps or {}) do
+		local fn = step.action or step.forward
+		local ok, err = fn(ctx)
+		if not ok then
+			for i = #completed, 1, -1 do
+				local comp = completed[i].compensate
+				if comp then pcall(comp, ctx) end
+			end
+			return false, err or step.name
+		end
+		completed[#completed + 1] = step
+	end
+	return true, ctx
+end
+

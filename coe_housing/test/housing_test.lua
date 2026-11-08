@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('../coe_housing/config.lua')
 dofile('../coe_housing/server/rules.lua')
 dofile('../coe_housing/server/registry.lua')
@@ -184,4 +185,14 @@ for kind in pairs(c.Kinds) do
 	eq(type(c.DefaultBlips[kind]), 'table', 'blip padrao de ' .. kind)
 	eq(type(c.Stash.Defaults[kind]), 'table', 'bau padrao de ' .. kind)
 end
+
+local refunded = false
+local sagaOk, sagaErr = HousingRules.ExecuteSaga({
+	{ name = 'debit', forward = function() return true end, compensate = function() refunded = true end },
+	{ name = 'tenancy', forward = function() return false, 'no_vacancy' end }
+}, {})
+eq(sagaOk, false, 'saga falha sem vaga')
+eq(sagaErr, 'no_vacancy', 'erro da saga preservado')
+eq(refunded, true, 'estorno executado na saga')
+
 print('housing tests ok')

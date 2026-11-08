@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('server/rules.lua')
 
 local function eq(a, b, m)
@@ -73,5 +74,20 @@ eq(MdtRules.Allow(stamps, 101, 2, 60), true, '2a')
 eq(MdtRules.Allow(stamps, 102, 2, 60), false, '3a bloqueada')
 eq(MdtRules.Allow(stamps, 161, 2, 60), true, 'janela deslizou')
 eq(#stamps, 1, 'carimbos antigos descartados')
+
+-- LRU Cache Zero-GC e Rate Limiter GCRA
+local cache = MdtRules.NewCache(2)
+cache:put('1', { name = 'Alice' })
+cache:put('2', { name = 'Bob' })
+eq(cache:get('1').name, 'Alice', 'LRU get promove 1')
+cache:put('3', { name = 'Carol' })
+eq(cache:get('2'), nil, 'LRU ejetou o menos recente (2)')
+eq(cache:get('1').name, 'Alice', 'LRU preservou 1')
+
+local limiter = MdtRules.NewRateLimiter(2, 60)
+eq(limiter:allow('cop1', 100000, 1), true, 'GCRA 1a')
+eq(limiter:allow('cop1', 100000, 1), true, 'GCRA 2a (burst)')
+eq(limiter:allow('cop1', 100000, 1), false, 'GCRA 3a bloqueada')
+eq(limiter:allow('cop1', 130000, 1), true, 'GCRA liberada após intervalo')
 
 print('mdt rules tests passed')

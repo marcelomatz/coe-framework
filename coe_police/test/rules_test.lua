@@ -1,3 +1,4 @@
+Core = { Algorithms = dofile('../coe_core/lib/algorithms/init.lua') }
 dofile('../coe_police/config.lua')
 dofile('../coe_police/server/rules.lua')
 
@@ -68,4 +69,40 @@ for _, permission in ipairs(c.Permissions) do
 	assert(not seen[permission.name], 'permissão repetida')
 	seen[permission.name] = true
 end
+
+local restored = false
+local okSaga, errSaga = PoliceRules.ExecuteSaga({
+	{
+		name = 'remove_from_target',
+		forward = function() return true end,
+		compensate = function() restored = true end,
+	},
+	{
+		name = 'add_to_officer',
+		forward = function() return false, 'officer_inventory_full' end,
+	},
+})
+eq(okSaga, false, 'saga falha quando inventário do policial está cheio')
+eq(errSaga, 'officer_inventory_full', 'erro de saga propagado')
+eq(restored, true, 'item devolvido ao alvo por compensação da saga')
+
+local interceptRes = PoliceRules.ApplyInterceptors({
+	{
+		id = 'test_jurisdiction',
+		onArrest = function(ctx)
+			if ctx.targetCharacterId == '77' then
+				return {
+					intercepted = true,
+					adjustedMinutes = math.floor(ctx.minutes * 1.35),
+					jailCoords = { x = -2156.4, y = 3238.1, z = 32.8, heading = 150.0, radius = 20.0 }
+				}
+			end
+			return nil
+		end
+	}
+}, 'onArrest', { targetCharacterId = '77', minutes = 40 })
+eq(type(interceptRes), 'table', 'interceptador retorna tabela')
+eq(interceptRes.intercepted, true, 'prisão interceptada')
+eq(interceptRes.adjustedMinutes, 54, 'pena ajustada pelo interceptador')
+
 print('police rules ok')

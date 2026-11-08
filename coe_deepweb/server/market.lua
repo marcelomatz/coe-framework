@@ -284,29 +284,56 @@ function App.marketBuy(context, payload)
 		if type(payout) ~= 'string' or payout == '' then
 			return fail('seller_unavailable')
 		end
-		local taken = DeepwebPersistence.TakeStock(id, quantity)
-		if not taken then
-			return fail(taken == nil and 'database_error' or 'out_of_stock')
-		end
 		local now = os.time()
-		local locked = S.Call('coe_crypto', 'EscrowLock', context.playerId, context.key, payload.from, total, 'deep market: ' .. listing.title)
-		if type(locked) ~= 'table' or not locked.ok then
-			DeepwebPersistence.ReturnStock(id, quantity)
-			return fail(type(locked) == 'table' and locked.error or 'crypto_unavailable')
-		end
 		local dropIndex = listing.kind == 'item' and math.random(#market.Drops) or 0
 		-- Fornecedor NPC: a mercadoria já está no ponto. Jogador: espera o vendedor deixar.
 		local status = (npc and listing.kind == 'item') and 'dropped' or 'paid'
-		local orderId = DeepwebPersistence.InsertOrder({
-			listingId = id, kind = listing.kind, title = listing.title, sellerHandle = listing.sellerHandle, vendor = listing.vendor,
-			buyerHandle = session.id, buyerCharacter = context.character, item = listing.item, count = listing.count * quantity,
-			quantity = quantity, total = total, fee = npc and 0 or DeepwebRules.Fee(total, market.FeeBps), buyerAddress = payload.from,
-			payout = payout, dropIndex = dropIndex, status = status, deliveredAt = status == 'dropped' and now or 0
-		}, now)
-		if not orderId then
-			S.Call('coe_crypto', 'EscrowRelease', payload.from, total, 'deep market: estorno')
-			DeepwebPersistence.ReturnStock(id, quantity)
-			return fail('database_error')
+		local orderId = nil
+		local sagaOk, sagaErr = DeepwebRules.ExecuteSaga({
+			{
+				name = 'take_stock',
+				forward = function()
+					local taken = DeepwebPersistence.TakeStock(id, quantity)
+					if not taken then
+						return false, taken == nil and 'database_error' or 'out_of_stock'
+					end
+					return true
+				end,
+				compensate = function()
+					DeepwebPersistence.ReturnStock(id, quantity)
+				end
+			},
+			{
+				name = 'escrow_lock',
+				forward = function()
+					local locked = S.Call('coe_crypto', 'EscrowLock', context.playerId, context.key, payload.from, total, 'deep market: ' .. listing.title)
+					if type(locked) ~= 'table' or not locked.ok then
+						return false, type(locked) == 'table' and locked.error or 'crypto_unavailable'
+					end
+					return true
+				end,
+				compensate = function()
+					S.Call('coe_crypto', 'EscrowRelease', payload.from, total, 'deep market: estorno')
+				end
+			},
+			{
+				name = 'insert_order',
+				forward = function()
+					orderId = DeepwebPersistence.InsertOrder({
+						listingId = id, kind = listing.kind, title = listing.title, sellerHandle = listing.sellerHandle, vendor = listing.vendor,
+						buyerHandle = session.id, buyerCharacter = context.character, item = listing.item, count = listing.count * quantity,
+						quantity = quantity, total = total, fee = npc and 0 or DeepwebRules.Fee(total, market.FeeBps), buyerAddress = payload.from,
+						payout = payout, dropIndex = dropIndex, status = status, deliveredAt = status == 'dropped' and now or 0
+					}, now)
+					if not orderId then
+						return false, 'database_error'
+					end
+					return true
+				end
+			}
+		}, {})
+		if not sagaOk then
+			return fail(sagaErr or 'database_error')
 		end
 		S.Audit('deepweb_market_order', { character_id = context.character, target = 'order:' .. orderId, count = total })
 		if not npc then

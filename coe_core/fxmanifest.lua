@@ -21,13 +21,23 @@ files {
 	'lib/migrations.lua',
 	'lib/platform.lua',
 	'lib/locale.lua',
-	'lib/semver.lua'
+	'lib/semver.lua',
+	'lib/algorithms/init.lua',
+	'lib/algorithms/spatial.lua',
+	'lib/algorithms/sampling.lua',
+	'lib/algorithms/containers.lua',
+	'lib/algorithms/graph.lua',
+	'lib/algorithms/concurrency.lua',
+	'lib/algorithms/ratelimit.lua',
+	'lib/algorithms/crypto.lua',
+	'lib/algorithms/anomaly.lua'
 }
 
 shared_scripts {
 	'lib/platform.lua',
 	'lib/locale.lua',
 	'lib/semver.lua',
+	'lib/algorithms/init.lua',
 	'lib/zones.lua',
 	'locales/pt-br.lua',
 	'locales/en-us.lua',

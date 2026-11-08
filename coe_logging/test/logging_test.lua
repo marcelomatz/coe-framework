@@ -7,6 +7,7 @@ local loggedEntries = {}
 
 CoeLoggingConfig = {
 	DefaultLevel = 'info',
+	RingBufferCapacity = 4,
 	ResourceLevels = { coe_core = 'info' },
 	AllowedResources = { coe_core = true, coe_admin = true },
 	AllowedContextFields = {
@@ -56,6 +57,7 @@ local function assertEqual(actual, expected, message)
 end
 
 local log = registeredExports.Log
+local getRecent = registeredExports.GetRecent
 local succeeded = log('error', 'runtime', 'database_failed', {
 	error_code = 'database_unavailable',
 	player_id = 42,
@@ -90,6 +92,9 @@ invokingResource = 'unknown_resource'
 local unauthorized, unauthorizedError = log('error', 'runtime', 'forbidden')
 assertEqual(unauthorized, false, 'unlisted caller is rejected')
 assertEqual(unauthorizedError, 'caller_not_allowed', 'unauthorized caller has an explicit error')
+local recentUnauth, recentErr = getRecent(5)
+assertEqual(recentUnauth, nil, 'GetRecent blocks unauthorized caller')
+assertEqual(recentErr, 'caller_not_allowed', 'GetRecent returns caller_not_allowed')
 
 -- Resources fora da lista entram com a ACE coe.logging no principal do resource.
 CoeLoggingConfig.Ace = 'coe.logging'
@@ -128,6 +133,12 @@ local before = #output
 log('info', 'runtime', 'fallback_format')
 assertEqual(output[before + 1]:find('fallback_format', 1, true) ~= nil, true, 'unknown format falls back to pretty')
 assertEqual(output[before + 1] ~= 'structured-entry', true, 'fallback is not JSON output')
+
+-- Valida RingBuffer Circular Zero-GC (Containers.newRingBuffer) via export GetRecent
+local recentList = getRecent(10)
+assertEqual(#recentList, 4, 'RingBuffer respeita capacidade maxima de 4 itens (sobrescreve os mais antigos em O(1))')
+assertEqual(recentList[1].event, 'fallback_format', 'item mais recente vem na posicao 1')
+assertEqual(recentList[2].event, 'injection', 'segundo mais recente vem na posicao 2')
 
 invokingResource = 'coe_admin'
 local invalid, invalidError = log('trace', 'audit', 'invalid_level')

@@ -210,3 +210,49 @@ function AppsRules.UrlEncode(value)
 		return ('%%%02X'):format(char:byte())
 	end))
 end
+
+local function getAlgorithms()
+	return (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+end
+
+-- Executa uma Saga transacional com compensação LIFO (ex.: cobrar cartão + instalar app ou upload + post).
+function AppsRules.ExecuteSaga(steps, context)
+	local alg = getAlgorithms()
+	if alg and alg.Concurrency and alg.Concurrency.executeSaga then
+		return alg.Concurrency.executeSaga(steps, context)
+	end
+	local completed = {}
+	local ctx = context or {}
+	for i = 1, #steps do
+		local ok, res = pcall(steps[i].action, ctx)
+		if not ok or res == false then
+			for j = #completed, 1, -1 do
+				if completed[j].compensate then
+					pcall(completed[j].compensate, ctx)
+				end
+			end
+			return false, not ok and res or 'step_failed'
+		end
+		completed[#completed + 1] = steps[i]
+	end
+	return true, ctx
+end
+
+-- Cria gerenciador de locks assíncronos por personagem.
+function AppsRules.NewLockManager()
+	local alg = getAlgorithms()
+	if alg and alg.Concurrency and alg.Concurrency.newLockManager then
+		return alg.Concurrency.newLockManager()
+	end
+	return nil
+end
+
+-- Cria rate limiter GCRA O(1) para postagens no Insta.
+function AppsRules.NewPostLimiter(cooldownSeconds)
+	local alg = getAlgorithms()
+	if alg and alg.RateLimit and alg.RateLimit.newGCRA then
+		return alg.RateLimit.newGCRA((cooldownSeconds or 10) * 1000, 0)
+	end
+	return nil
+end
+

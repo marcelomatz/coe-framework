@@ -2,6 +2,7 @@ local config = BankingConfig
 local ready = false
 
 local lastAction = {}
+local actionLimiter = BankingRules and BankingRules.NewRateLimiter and BankingRules.NewRateLimiter(config and config.ActionIntervalMs or 400, 0) or nil
 local busy = {}
 -- Sessão do caixa eletrônico: [source] = { cardId, expires }.
 local atmSessions = {}
@@ -91,8 +92,18 @@ end
 
 local function throttled(playerId)
 	local now = GetGameTimer()
+	if actionLimiter and lastAction[playerId] ~= nil then
+		if not actionLimiter:allow(playerId, now) then
+			return true
+		end
+		lastAction[playerId] = now
+		return false
+	end
 	if lastAction[playerId] and now - lastAction[playerId] < config.ActionIntervalMs then
 		return true
+	end
+	if actionLimiter then
+		actionLimiter:allow(playerId, now)
 	end
 	lastAction[playerId] = now
 	return false
@@ -166,7 +177,7 @@ local function debit(accountId, amount, reason, reference)
 	return remote('coe_economy', 'Debit', accountId, amount, reason, reference) == true
 end
 
--- Saque: debita a conta e entrega espécie; se não couber no inventário, devolve à conta.
+-- Saque: debita a conta e entrega espécie via Saga compensatória; se não couber no inventário, devolve à conta.
 local function withdrawCash(playerId, accountId, amount, reference)
 	local inventoryId = inventoryOf(playerId)
 	if not inventoryId then
@@ -178,6 +189,37 @@ local function withdrawCash(playerId, accountId, amount, reference)
 	end
 	if balance < amount then
 		return 'insufficient_funds'
+	end
+	if BankingRules and BankingRules.ExecuteSaga then
+		local ok, _, sagaErr = BankingRules.ExecuteSaga({
+			{
+				name = 'debit_account',
+				action = function()
+					if not debit(accountId, amount, 'bank_withdraw', reference) then
+						return false, 'insufficient_funds'
+					end
+					return true
+				end,
+				compensate = function()
+					if not credit(accountId, amount, 'bank_refund', reference) then
+						log('error', 'banking', 'refund_failed', { character_id = accountId, count = amount, action = 'withdraw' })
+					end
+				end,
+			},
+			{
+				name = 'add_cash_item',
+				action = function()
+					if remote('coe_inventory', 'AddItem', inventoryId, 'money', amount) ~= true then
+						return false, 'inventory_full'
+					end
+					return true
+				end,
+			},
+		})
+		if not ok then
+			return sagaErr or 'transaction_failed'
+		end
+		return nil
 	end
 	if not debit(accountId, amount, 'bank_withdraw', reference) then
 		return 'insufficient_funds'
@@ -191,7 +233,7 @@ local function withdrawCash(playerId, accountId, amount, reference)
 	return nil
 end
 
--- Depósito: retira espécie e credita a conta; se o crédito falhar, devolve a espécie.
+-- Depósito: retira espécie e credita a conta via Saga compensatória; se o crédito falhar, devolve a espécie.
 local function depositCash(playerId, accountId, amount, reference)
 	local inventoryId = inventoryOf(playerId)
 	if not inventoryId then
@@ -199,6 +241,37 @@ local function depositCash(playerId, accountId, amount, reference)
 	end
 	if cashOf(inventoryId) < amount then
 		return 'insufficient_cash'
+	end
+	if BankingRules and BankingRules.ExecuteSaga then
+		local ok, _, sagaErr = BankingRules.ExecuteSaga({
+			{
+				name = 'remove_cash_item',
+				action = function()
+					if remote('coe_inventory', 'RemoveItemByName', inventoryId, 'money', amount) ~= true then
+						return false, 'insufficient_cash'
+					end
+					return true
+				end,
+				compensate = function()
+					if remote('coe_inventory', 'AddItem', inventoryId, 'money', amount) ~= true then
+						log('error', 'banking', 'refund_failed', { character_id = accountId, count = amount, action = 'deposit' })
+					end
+				end,
+			},
+			{
+				name = 'credit_account',
+				action = function()
+					if not credit(accountId, amount, 'bank_deposit', reference) then
+						return false, 'balance_limit'
+					end
+					return true
+				end,
+			},
+		})
+		if not ok then
+			return sagaErr or 'transaction_failed'
+		end
+		return nil
 	end
 	if remote('coe_inventory', 'RemoveItemByName', inventoryId, 'money', amount) ~= true then
 		return 'insufficient_cash'
@@ -1211,6 +1284,9 @@ Banking = {
 	settleDueLoan = settleDueLoan,
 	remote = remote,
 	atmSessions = atmSessions,
+	agencyOpen = agencyOpen,
+	agencyAccount = agencyAccount,
+	busy = busy,
 	money = money,
 	guarded = guarded,
 	t = _t,
@@ -1334,6 +1410,9 @@ AddEventHandler('playerDropped', function()
 	agencyOpen[playerId] = nil
 	agencyAccount[playerId] = nil
 	lastAction[playerId] = nil
+	if actionLimiter then
+		actionLimiter:reset(playerId)
+	end
 	busy[playerId] = nil
 end)
 

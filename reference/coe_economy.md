@@ -40,6 +40,51 @@ Saldo do personagem (a conta é criada com `StartingBalance` no primeiro acesso)
 - `integer|nil` `balance`
 - `string|nil` `errorCode`
 
+### `GetFrozenBalance(characterId)`
+
+Saldo bloqueado judicialmente na conta do personagem.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `characterId` | `integer\|string` |  |
+
+**Retorno**
+
+- `integer|nil` `frozenBalance`
+- `string|nil` `errorCode`
+
+### `FreezeFunds(characterId, amount, reason, reference)`
+
+Congela judicialmente parte do saldo da conta do personagem sem impedir o uso do saldo restante.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `characterId` | `integer\|string` |  |
+| `amount` | `integer` |  |
+| `reason` | `string` |  |
+| `reference` | `string\|nil` |  |
+
+**Retorno**
+
+- `true|nil` `ok`
+- `string|nil` `errorCode`
+
+### `UnfreezeFunds(characterId, amount, reason, reference)`
+
+Desbloqueia saldo congelado judicialmente na conta do personagem.
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `characterId` | `integer\|string` |  |
+| `amount` | `integer` |  |
+| `reason` | `string` |  |
+| `reference` | `string\|nil` |  |
+
+**Retorno**
+
+- `true|nil` `ok`
+- `string|nil` `errorCode`
+
 ### `Credit(characterId, amount, reason, reference)`
 
 Credita na conta do personagem, respeitando o teto `MaxBalance`. Auditado (`money_credited`).

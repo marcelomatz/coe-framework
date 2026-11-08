@@ -5,11 +5,11 @@
 
 	const resource = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'coe_admin';
 	const TABS = [
-		{ id: 'self', label: 'Pessoal' },
-		{ id: 'players', label: 'Jogadores' },
-		{ id: 'vehicles', label: 'Veículos' },
-		{ id: 'world', label: 'Mundo' },
-		{ id: 'businesses', label: 'Negócios' }
+		{ id: 'self', label: 'Pessoal & Teleporte' },
+		{ id: 'players', label: 'Ações em Jogadores' },
+		{ id: 'vehicles', label: 'Veículos & Spawner' },
+		{ id: 'world', label: 'Clima, Hora & Aviso' },
+		{ id: 'businesses', label: 'Negócios em Campo' }
 	];
 	const ERRORS = {
 		forbidden: 'Sem permissão.', busy: 'Aguarde um instante.', timeout: 'Sem resposta do servidor.', closed: 'Painel fechado.',
@@ -97,6 +97,7 @@
 		}).then(function (response) { return response.json(); }).catch(function () { return { ok: false, error: 'closed' }; });
 	}
 	function status(text, kind) {
+		if (!els.status) return;
 		clearTimeout(statusTimer);
 		els.status.textContent = text || '';
 		els.status.className = 'sf-status' + (kind ? ' is-' + kind : '');
@@ -109,10 +110,10 @@
 	function act(action, data, okText, done) {
 		if (busy) { return Promise.resolve(null); }
 		busy = true;
-		els.panel.classList.add('is-busy');
+		if (els.panel) els.panel.classList.add('is-busy');
 		return post('toolsAction', { action: action, data: data || {} }).then(function (result) {
 			busy = false;
-			els.panel.classList.remove('is-busy');
+			if (els.panel) els.panel.classList.remove('is-busy');
 			if (!result || !result.ok) { status(errorText(result), 'error'); return null; }
 			if (okText) { status(okText, 'success'); }
 			if (done) { done(result.data || {}); }
@@ -140,6 +141,7 @@
 	// Abas -----------------------------------------------------------------------------------------------------
 
 	function paintTabs() {
+		if (!els.tabs) return;
 		els.tabs.replaceChildren();
 		TABS.filter(function (tab) { return state.modules[tab.id]; }).forEach(function (tab) {
 			const node = el('button', 'sf-tab' + (state.tab === tab.id ? ' is-active' : ''), tab.label);
@@ -159,6 +161,7 @@
 		if (tab === 'businesses' && !state.businesses) { loadBusinesses(); }
 	}
 	function render() {
+		if (!els.body) return;
 		els.body.replaceChildren();
 		const views = { self: renderSelf, players: renderPlayers, vehicles: renderVehicles, world: renderWorld, businesses: renderBusinesses };
 		(views[state.tab] || function () {})();
@@ -185,7 +188,7 @@
 	}
 
 	function renderSelf() {
-		const tools = card('Ferramentas', 'O noclip fecha o painel: W/A/S/D, Q/E desce e sobe, Shift acelera, roda do mouse muda a velocidade. Atalho: /noclip.');
+		const tools = card('Ferramentas de Campo', 'O noclip fecha o painel automaticamente: W/A/S/D move, Q/E desce e sobe, Shift acelera, roda do mouse muda a velocidade. Atalho: /noclip.');
 		const toggles = el('div', 'sf-grid2');
 		toggles.append(toggle('Noclip', 'noclip', 'noclip'), toggle('Invisível', 'invisible', 'invisible'),
 			toggle('Invencível', 'godmode', 'godmode'), toggle('Coordenadas na tela', 'coords'));
@@ -199,16 +202,16 @@
 
 		const tp = card('Teleporte por coordenadas', 'Cole "x, y, z" ou "vector3(x, y, z)". Sem z, procura o chão.');
 		const coords = input('x, y, z');
-		const go = button('Teleportar', 'coe-button--primary', function () {
+		const goBtn = button('Teleportar', 'coe-button--primary', function () {
 			const numbers = (coords.value.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
 			if (numbers.length < 2) { status('Informe pelo menos x e y.', 'error'); return; }
 			act('tpCoords', { x: numbers[0], y: numbers[1], z: numbers.length > 2 ? numbers[2] : 0 }, 'Teleportado.');
 		});
 		const line = row();
-		line.append(coords, go);
+		line.append(coords, goBtn);
 		tp.append(line);
 
-		const here = card('Minha posição', 'Para colar em configs e scripts.');
+		const here = card('Minha posição atual', 'Para colar em configs e scripts.');
 		const out = el('p', 'sf-coords', '—');
 		const refresh = function () {
 			post('toolsCoords').then(function (result) {
@@ -315,7 +318,7 @@
 	}
 
 	function playerItem(p) {
-		const box = card('Dar item');
+		const box = card('Dar item rápido');
 		const search = input('Buscar item', 'search', state.itemSearch);
 		const count = input('Qtd.', 'number', 1);
 		count.min = '1';
@@ -439,7 +442,7 @@
 				state.vehicles = data;
 				if (data.filters) { state.catalogFilters = data.filters; }
 			} else {
-				state.catalogError = data ? ERRORS.catalog_unavailable : (els.status.textContent || ERRORS.busy);
+				state.catalogError = data ? ERRORS.catalog_unavailable : (els.status && els.status.textContent || ERRORS.busy);
 				status(state.catalogError, 'error');
 			}
 			render();
@@ -461,7 +464,7 @@
 		);
 		tools.append(line);
 
-		const box = card('Criar veículo', 'Temporário: não fica registrado (remova com "Apagar / guardar"). Registrado: fica no coe_vehicles em seu nome, com chave.');
+		const box = card('Criar veículo (Spawner)', 'Temporário: não fica registrado (remova com "Apagar / guardar"). Registrado: fica no coe_vehicles em seu nome, com chave.');
 		const search = input('Buscar modelo, nome ou marca', 'search', state.vehicleSearch);
 		const model = input('ou digite o modelo (ex.: adder)');
 		const direct = row();
@@ -541,7 +544,7 @@
 	function renderWorld() {
 		const world = state.world || {};
 		const time = world.time || {};
-		const clock = card('Horário', world.time ? 'Definido pela staff' + (time.freeze ? ' (parado).' : '.') : 'Ciclo natural do jogo.');
+		const clock = card('Horário Global', world.time ? 'Definido pela staff' + (time.freeze ? ' (parado).' : '.') : 'Ciclo natural do jogo.');
 		const hour = input('Hora', 'number', time.hour !== undefined ? time.hour : 12);
 		hour.min = '0'; hour.max = '23'; hour.className += ' sf-narrow';
 		const minute = input('Min', 'number', time.minute !== undefined ? time.minute : 0);
@@ -563,7 +566,7 @@
 		});
 		clock.append(timeRow, presets);
 
-		const weather = card('Clima', world.weather ? 'Atual: ' + (WEATHERS[world.weather] || world.weather) : 'Clima natural do jogo.');
+		const weather = card('Clima Global', world.weather ? 'Atual: ' + (WEATHERS[world.weather] || world.weather) : 'Clima natural do jogo.');
 		const chips = el('div', 'sf-chips');
 		(world.weathers || Object.keys(WEATHERS)).forEach(function (id) {
 			chips.append(button(WEATHERS[id] || id, 'sf-small' + (world.weather === id ? ' coe-button--primary' : ''), function () {
@@ -577,11 +580,11 @@
 		}));
 		weather.append(reset);
 
-		const notice = card('Aviso para todos', 'Aparece como notificação para quem está online.');
+		const notice = card('Aviso Global para todos os jogadores', 'Aparece como notificação para quem está online.');
 		const text = input('Ex.: Reinício do servidor em 5 minutos');
 		text.maxLength = 200;
 		const noticeRow = row();
-		noticeRow.append(text, button('Enviar', 'coe-button--primary', function () {
+		noticeRow.append(text, button('Enviar Aviso', 'coe-button--primary', function () {
 			act('announce', { text: text.value }, 'Aviso enviado.', function () { text.value = ''; });
 		}));
 		notice.append(noticeRow);
@@ -871,7 +874,7 @@
 		return box;
 	}
 
-	// Abrir e fechar -------------------------------------------------------------------------------------------
+	// Abrir e sincronizar com o painel principal unificado -----------------------------------------------------
 
 	function open(data) {
 		state.modules = data.modules || {};
@@ -885,32 +888,23 @@
 		state.catalogError = null;
 		state.catalogFilters = null;
 		state.items = null;
-		els.panel.hidden = false;
+		if (els.panel) els.panel.hidden = false;
 		const first = TABS.find(function (tab) { return state.modules[tab.id]; });
 		go(state.tab && state.modules[state.tab] ? state.tab : (first ? first.id : null));
 	}
 	function close() {
-		els.panel.hidden = true;
 		status('');
 	}
 
-	els.close.addEventListener('click', function () { post('toolsClose'); });
-	document.addEventListener('keydown', function (event) {
-		if (event.key === 'Escape' && !els.panel.hidden && !document.querySelector('.coe-modal-overlay')) { post('toolsClose'); }
-	});
+	if (els.close) {
+		els.close.addEventListener('click', function () { post('toolsClose'); });
+	}
 	window.addEventListener('message', function (event) {
 		const message = event.data || {};
 		if (message.action === 'toolsOpen' && message.data) { open(message.data); }
 		if (message.action === 'toolsClose') { close(); }
+		if ((message.action === 'open' || message.action === 'refresh') && message.data && message.data.toolsState) {
+			open(message.data.toolsState);
+		}
 	});
-
-	// Botão "Ferramentas" no painel: aparece para quem tem alguma ferramenta e abre as ferramentas.
-	const openTools = document.getElementById('open-tools');
-	if (openTools) {
-		openTools.addEventListener('click', function () { post('openTools'); });
-		window.addEventListener('message', function (event) {
-			const message = event.data || {};
-			if (message.action === 'open' && message.data) { openTools.hidden = message.data.tools !== true; }
-		});
-	}
 })();

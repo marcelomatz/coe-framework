@@ -179,3 +179,35 @@ end
 function MailRules.Locked(state, now)
 	return state ~= nil and (state.lockedUntil or 0) > now
 end
+
+local function getAlgorithms()
+	return (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+end
+
+-- Cria rate limiter GCRA O(1) para controle de cadência de envio de e-mails.
+function MailRules.NewSendLimiter(cooldownSeconds)
+	local alg = getAlgorithms()
+	if alg and alg.RateLimit and alg.RateLimit.newGCRA then
+		return alg.RateLimit.newGCRA((cooldownSeconds or 3) * 1000, 0)
+	end
+	return nil
+end
+
+-- Cria cache LRU Intrusivo Zero-GC para sessões e contas consultadas com frequência.
+function MailRules.NewSessionCache(capacity)
+	local alg = getAlgorithms()
+	if alg and alg.Containers and alg.Containers.newLRUCache then
+		return alg.Containers.newLRUCache(capacity or 128)
+	end
+	return nil
+end
+
+-- Cria gerenciador de locks assíncronos por chave.
+function MailRules.NewLockManager()
+	local alg = getAlgorithms()
+	if alg and alg.Concurrency and alg.Concurrency.newLockManager then
+		return alg.Concurrency.newLockManager()
+	end
+	return nil
+end
+

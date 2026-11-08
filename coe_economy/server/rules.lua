@@ -1,5 +1,91 @@
 EconomyRules = {}
 
+local function resolveAlgorithms()
+	if type(Core) == 'table' and type(Core.Algorithms) == 'table' then
+		return Core.Algorithms
+	end
+	if type(CoeAlgorithms) == 'table' then
+		return CoeAlgorithms
+	end
+	if type(LoadResourceFile) == 'function' and type(load) == 'function' then
+		local src = LoadResourceFile('coe_core', 'lib/algorithms/init.lua')
+		if type(src) == 'string' and src ~= '' then
+			local fn = load(src, '@@coe_core/lib/algorithms/init.lua', 't', _G)
+			if fn then
+				local ok, mod = pcall(fn)
+				if ok and type(mod) == 'table' then
+					return mod
+				end
+			end
+		end
+		return CoeAlgorithms
+	end
+	if type(loadfile) == 'function' then
+		local candidates = {
+			'../coe_core/lib/algorithms/init.lua',
+			'coe-framework/coe_core/lib/algorithms/init.lua',
+			'dev/coe_core/lib/algorithms/init.lua',
+		}
+		for i = 1, #candidates do
+			local chunk = loadfile(candidates[i])
+			if chunk then
+				local ok, mod = pcall(chunk)
+				if ok and type(mod) == 'table' then
+					return mod
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local Algorithms = resolveAlgorithms()
+local Crypto = Algorithms and Algorithms.Crypto or nil
+local Concurrency = Algorithms and Algorithms.Concurrency or nil
+
+function EconomyRules.NewForensicChain(genesisHash)
+	if Crypto and type(Crypto.newForensicChain) == 'function' then
+		return Crypto.newForensicChain(genesisHash)
+	end
+	return nil
+end
+
+function EconomyRules.VerifyForensicChain(records, genesisSeed)
+	if type(records) ~= 'table' or not Crypto or type(Crypto.sha256) ~= 'function' then
+		return false, 0
+	end
+	local expectedPrev = (#records > 0 and records[1].prev_hash) or Crypto.sha256(genesisSeed or 'COE_FRAMEWORK_GEN9_GENESIS_2026')
+	for index = 1, #records do
+		local rec = records[index]
+		if type(rec) ~= 'table' or rec.prev_hash ~= expectedPrev then
+			return false, index
+		end
+		local msg = string.format(
+			'%s|%d|%d|%s|%s|%s|%s',
+			expectedPrev,
+			tonumber(rec.seq) or index,
+			tonumber(rec.timestamp_us) or 0,
+			tostring(rec.source or 'coe_economy'),
+			tostring(rec.actor_id or '0'),
+			tostring(rec.event or ''),
+			tostring(rec.payload or '')
+		)
+		local digest = Crypto.sha256(msg)
+		if rec.hash ~= digest then
+			return false, index
+		end
+		expectedPrev = digest
+	end
+	return true, #records
+end
+
+function EconomyRules.NewLockManager(opts)
+	if Concurrency and type(Concurrency.newLockManager) == 'function' then
+		return Concurrency.newLockManager(opts)
+	end
+	return nil
+end
+
 -- Valor sempre inteiro e positivo; retorna o inteiro ou nil, código.
 function EconomyRules.Amount(value, config)
 	if type(value) ~= 'number' or value ~= value or value % 1 ~= 0 then

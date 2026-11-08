@@ -9,8 +9,8 @@ Define and implement persistent player identity, independent characters, MariaDB
 - **Completed in this phase:** custom MariaDB provider, initial migrations, Player/Character repositories, session and selection services, server-side validation, request cache/rate limiting, initial UI, and spawn gated on Core confirmation. The inventory resolves the `character:<character_id>` key on the server, persists snapshots in MariaDB, and rejects operations without an active character. Custom admin roles also use MariaDB.
 - **Validated locally:** Node provider unit tests and Lua tests for identity, sessions, lifecycle, migrations, and inventory operations using a mock provider.
 - **Current observability:** `coe_logging` emits JSON events to the console/collector and `coe_notify` provides explicit player feedback. The audit history is still partial and is not persisted by the framework; do not use current logs as a durable/compliance audit trail.
-- **Pending before real use:** integration testing on FXServer Enhanced with Node 22, the asynchronous JS/Lua bridge, and MariaDB; configuring database convars in the environment; confirming that the configured Cfx key is active in Keymaster.
-- **Next steps:** validate on FXServer Enhanced/Node 22 and real MariaDB; cover integration tests with constraints/transactions; add character state and appearance if defined as in scope for the MVP; develop gameplay save/load and review operations/rollback.
+- **Pending before real use:** integration testing on FXServer Enhanced with Node 26 (libnode26), the asynchronous JS/Lua bridge, and MariaDB; configuring database convars in the environment; confirming that the configured Cfx key is active in Keymaster.
+- **Next steps:** validate on FXServer Enhanced/Node 26 (libnode26) and real MariaDB; cover integration tests with constraints/transactions; add character state and appearance if defined as in scope for the MVP; develop gameplay save/load and review operations/rollback.
 - Per-resource coverage and current gaps are consolidated in [TEST_COVERAGE.en-US.md](../TEST_COVERAGE.en-US.md); the history of this review and the partial audit-event catalog are in the [changelog](https://docs.coeroleplay.app/#doc=CHANGELOG.en-US.md).
 
 ## Confirmed domain decisions
@@ -43,7 +43,7 @@ coe_inventory ---> coe_core identity contracts
 - `coe_database` is a standalone resource limited to the pool/connection, parameterized queries, transactions, migrations, and database error normalization. It contains no gameplay or identity rules.
 - The connection uses server-only convar credentials; secrets must not be put in manifests, documentation, logs, or the repository.
 - The persistence layer is asynchronous and has defined timeout, pool, and concurrency limits. A database callback may complete an operation only for the same session generation that started it.
-- Approved decision: use the FiveM server-side Node.js 22 runtime and `mysql2` as the transport dependency, while keeping the API, repositories, schema, and migrations custom. The Core and its domain modules remain in Lua; the MariaDB protocol will not be implemented manually.
+- Approved decision: use the FiveM server-side Node.js 24 LTS / Node 26 runtime and `mysql2` as the transport dependency, while keeping the API, repositories, schema, and migrations custom. The Core and its domain modules remain in Lua; the MariaDB protocol will not be implemented manually.
 - Provider dependencies are installed with `npm ci --omit=dev` in the `coe_database` folder; there is no dependency on a `yarn` resource. Integration still needs validation on a compatible FXServer Enhanced build.
 
 ## Implementation phases

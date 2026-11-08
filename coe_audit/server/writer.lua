@@ -1,9 +1,13 @@
--- Fila limitada em memória com envio em lote e backoff exponencial.
+-- Fila circular limitada em memória O(1) com envio em lote e backoff exponencial.
 -- Nunca bloqueia o chamador: o envio acontece em Flush(), chamado por uma thread.
 AuditWriter = {}
 
 function AuditWriter.New(options)
+	local maxSize = options.maxSize or 1000
 	local queue = {}
+	local head = 1
+	local tail = 0
+	local count = 0
 	local writer = {}
 	local flushing = false
 	local failures = 0
@@ -11,23 +15,25 @@ function AuditWriter.New(options)
 	local dropped = 0
 
 	function writer.Enqueue(entry)
-		if #queue >= options.maxSize then
+		if count >= maxSize then
 			dropped = dropped + 1
 			return false, 'queue_full'
 		end
-		queue[#queue + 1] = entry
+		tail = (tail % maxSize) + 1
+		queue[tail] = entry
+		count = count + 1
 		return true
 	end
 
 	function writer.Pending()
-		return #queue
+		return count
 	end
 
 	-- Retorna e zera o contador de eventos descartados por fila cheia.
 	function writer.TakeDropped()
-		local count = dropped
+		local c = dropped
 		dropped = 0
-		return count
+		return c
 	end
 
 	function writer.Failures()
@@ -38,17 +44,18 @@ function AuditWriter.New(options)
 		if flushing then
 			return false, 'busy'
 		end
-		if #queue == 0 then
+		if count == 0 then
 			return true, nil, 0
 		end
 		if options.now() < nextAttemptAt then
 			return false, 'backoff'
 		end
 
-		local size = math.min(#queue, options.batchSize)
+		local size = math.min(count, options.batchSize)
 		local batch = {}
 		for index = 1, size do
-			batch[index] = queue[index]
+			local pos = ((head + index - 2) % maxSize) + 1
+			batch[index] = queue[pos]
 		end
 
 		flushing = true
@@ -56,10 +63,14 @@ function AuditWriter.New(options)
 		flushing = false
 
 		if called and ok then
-			table.move(queue, size + 1, #queue + size, 1)
+			for _ = 1, size do
+				queue[head] = nil
+				head = (head % maxSize) + 1
+				count = count - 1
+			end
 			failures = 0
 			nextAttemptAt = 0
-				return true, nil, size
+			return true, nil, size
 		end
 
 		failures = failures + 1

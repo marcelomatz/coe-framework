@@ -32,17 +32,33 @@ AddEventHandler = function() end
 Wait = function() error('wait_called') end
 
 -- Persistência em memória com a mesma interface usada pelo main.lua.
-local balances, ledger = {}, {}
+local balances, frozenBalances, ledger = {}, {}, {}
 local persistenceReady = true
 EconomyPersistence = {
 	Initialize = function() return persistenceReady, persistenceReady and nil or 'database_not_ready' end,
 	EnsureAccount = function(id, starting)
 		if balances[id] == nil then
 			balances[id] = starting
+			frozenBalances[id] = 0
 		end
 		return true
 	end,
 	Balance = function(id) return balances[id] end,
+	FrozenBalance = function(id) return frozenBalances[id] or 0 end,
+	FreezeFunds = function(id, amount)
+		if (balances[id] or 0) - (frozenBalances[id] or 0) < amount then
+			return nil, 'insufficient_funds'
+		end
+		frozenBalances[id] = (frozenBalances[id] or 0) + amount
+		return true
+	end,
+	UnfreezeFunds = function(id, amount)
+		if (frozenBalances[id] or 0) < amount then
+			return nil, 'insufficient_frozen_funds'
+		end
+		frozenBalances[id] = (frozenBalances[id] or 0) - amount
+		return true
+	end,
 	Credit = function(id, amount, reason, reference, source)
 		balances[id] = balances[id] + amount
 		ledger[#ledger + 1] = { id = id, delta = amount, reason = reason, source = source }
@@ -138,5 +154,25 @@ eq(select(2, registered.Transfer('1', '3', 1, 'test_transfer')), 'balance_limit'
 -- 7. Extrato limitado.
 local rows = registered.Ledger('1', 1000)
 eq(#rows <= 100, true, 'limite do extrato')
+
+-- 8. Bloqueio judicial (FreezeFunds / UnfreezeFunds).
+local curBal = registered.GetBalance('1')
+eq(registered.FreezeFunds('1', 500, 'judicial_freeze', 'warrant:10'), true, 'congela 500')
+eq(registered.GetFrozenBalance('1'), 500, 'saldo congelado = 500')
+eq(select(2, registered.Debit('1', curBal - 200, 'test_debit')), 'funds_frozen', 'recusa débito que invade fatia congelada')
+eq(registered.Debit('1', curBal - 500, 'test_debit'), true, 'permite gastar saldo livre não congelado')
+eq(registered.UnfreezeFunds('1', 500, 'judicial_unfreeze', 'warrant:10'), true, 'desbloqueia 500')
+eq(registered.GetFrozenBalance('1'), 0, 'saldo congelado zerado')
+eq(registered.Debit('1', 500, 'test_debit'), true, 'permite gastar após desbloqueio')
+
+-- 8. Cadeia forense SHA-256 anexada automaticamente às auditorias de transações
+local auditChain = {}
+for _, item in ipairs(audits) do
+	if item.context and item.context.hash then
+		auditChain[#auditChain + 1] = item.context
+	end
+end
+eq(#auditChain >= 3, true, 'transações geram elos na cadeia forense')
+eq(EconomyRules.VerifyForensicChain(auditChain), true, 'cadeia forense de auditoria íntegra de ponta a ponta')
 
 io.write('coe_economy server_test: ok\n')

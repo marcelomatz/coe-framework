@@ -46,3 +46,26 @@ function TabletPrefs.Sanitize(raw)
 		dock = dockOf(source.dock)
 	}
 end
+
+local function getAlgorithms()
+	return (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+end
+
+-- Cria rate limiter GCRA O(1) para chamadas de aplicativos e atualização de perfil do tablet.
+function TabletPrefs.NewRateLimiter(cooldownMs)
+	local alg = getAlgorithms()
+	if alg and alg.RateLimit and alg.RateLimit.newGCRA then
+		return alg.RateLimit.newGCRA(cooldownMs or 250, 0)
+	end
+	return nil
+end
+
+-- Cria cache LRU Intrusivo Zero-GC para perfis resolvidos do COE OS.
+function TabletPrefs.NewProfileCache(capacity)
+	local alg = getAlgorithms()
+	if alg and alg.Containers and alg.Containers.newLRUCache then
+		return alg.Containers.newLRUCache(capacity or 64)
+	end
+	return nil
+end
+

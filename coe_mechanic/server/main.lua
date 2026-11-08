@@ -619,10 +619,15 @@ end)
 
 local COOLDOWN_MS = 400
 local lastAction = {}
+local RateLimit = (type(Core) == 'table' and type(Core.Algorithms) == 'table' and Core.Algorithms.RateLimit) or nil
+local actionLimiter = RateLimit and RateLimit.newGCRA and RateLimit.newGCRA(COOLDOWN_MS, 0) or nil
 
 -- Evita rajadas de eventos de um mesmo jogador nas ações da oficina.
 local function throttled(playerId)
 	local now = GetGameTimer()
+	if actionLimiter then
+		return not actionLimiter:allow(playerId, now, 1)
+	end
 	if lastAction[playerId] and now - lastAction[playerId] < COOLDOWN_MS then
 		return true
 	end
@@ -777,6 +782,9 @@ AddEventHandler('playerDropped', function()
 	lastAction[playerId] = nil
 	lastCheck[playerId] = nil
 	lastShopsRequest[playerId] = nil
+	if actionLimiter then
+		actionLimiter:forget(playerId)
+	end
 	if ordersService then
 		ordersService.Drop(playerId)
 	end

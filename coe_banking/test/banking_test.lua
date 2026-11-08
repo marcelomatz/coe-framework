@@ -125,4 +125,27 @@ for _, agency in ipairs(c.Agencies) do
 end
 eq(c.MaxAtmAmount <= c.MaxAgencyAmount, true, 'teto do caixa eletrônico menor que o da agência')
 
+-- GCRA Rate Limiter e Saga Compensatória
+local limiter = R.NewRateLimiter(400, 0)
+eq(type(limiter), 'table', 'NewRateLimiter disponível')
+eq(limiter:allow(1, 1000), true, 'primeira ação permitida no GCRA')
+eq(limiter:allow(1, 1100), false, 'segunda ação dentro de 400ms bloqueada no GCRA')
+eq(limiter:allow(1, 1450), true, 'ação após 400ms liberada no GCRA')
+
+local refunded = false
+local sagaOk, _, sagaErr = R.ExecuteSaga({
+	{
+		name = 'step1',
+		action = function() return true end,
+		compensate = function() refunded = true end,
+	},
+	{
+		name = 'step2',
+		action = function() return false, 'inventory_full' end,
+	},
+})
+eq(sagaOk, false, 'Saga falha quando segunda etapa falha')
+eq(sagaErr, 'inventory_full', 'Saga preserva código de erro da etapa que falhou')
+eq(refunded, true, 'Saga executa compensação automática da primeira etapa')
+
 print('banking_test ok')

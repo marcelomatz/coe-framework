@@ -1,5 +1,53 @@
 BusinessAccess = {}
 
+local function resolveContainers()
+	if type(Core) == 'table' and type(Core.Algorithms) == 'table' and type(Core.Algorithms.Containers) == 'table' then
+		return Core.Algorithms.Containers
+	end
+	if type(CoeAlgorithms) == 'table' and type(CoeAlgorithms.Containers) == 'table' then
+		return CoeAlgorithms.Containers
+	end
+	if type(LoadResourceFile) == 'function' and type(load) == 'function' then
+		local src = LoadResourceFile('coe_core', 'lib/algorithms/containers.lua')
+		if type(src) == 'string' and src ~= '' then
+			local fn = load(src, '@@coe_core/lib/algorithms/containers.lua', 't', _G)
+			if fn then
+				local ok, mod = pcall(fn)
+				if ok and type(mod) == 'table' then
+					return mod
+				end
+			end
+		end
+		return nil
+	end
+	if type(loadfile) == 'function' then
+		local candidates = {
+			'../coe_core/lib/algorithms/containers.lua',
+			'coe-framework/coe_core/lib/algorithms/containers.lua',
+			'dev/coe_core/lib/algorithms/containers.lua',
+		}
+		for i = 1, #candidates do
+			local chunk = loadfile(candidates[i])
+			if chunk then
+				local ok, mod = pcall(chunk)
+				if ok and type(mod) == 'table' then
+					return mod
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local Containers = resolveContainers()
+
+function BusinessAccess.NewCache(capacity, ttlMs)
+	if Containers and type(Containers.newLRUCache) == 'function' then
+		return Containers.newLRUCache(capacity or 1024, ttlMs)
+	end
+	return nil
+end
+
 local function same(a, b)
 	return a ~= nil and b ~= nil and tostring(a) == tostring(b)
 end

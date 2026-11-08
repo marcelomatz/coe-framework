@@ -131,3 +131,40 @@ function MdtRules.Allow(stamps, now, maxPerWindow, windowSeconds)
 	stamps[#stamps + 1] = now
 	return true
 end
+
+-- Cache intrusivo Zero-GC (LRU) para fichas e nomes de personagens no MDT
+function MdtRules.NewCache(capacity)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	local Containers = (type(alg) == 'table' and alg.Containers) or nil
+	if Containers and Containers.newLRUCache then
+		return Containers.newLRUCache(capacity or 128)
+	end
+	local map = {}
+	return {
+		get = function(_, key) return map[key] end,
+		put = function(_, key, val) map[key] = val end,
+		remove = function(_, key) map[key] = nil end,
+		clear = function(_) map = {} end
+	}
+end
+
+-- Rate Limiter GCRA O(1) para buscas e escritas no MDT
+function MdtRules.NewRateLimiter(maxPerWindow, windowSeconds)
+	local alg = (type(Core) == 'table' and Core.Algorithms) or CoeAlgorithms
+	local RateLimit = (type(alg) == 'table' and alg.RateLimit) or nil
+	local emissionMs = math.max(1, math.floor((windowSeconds * 1000) / math.max(1, maxPerWindow)))
+	local burstMs = math.max(0, (maxPerWindow - 1) * emissionMs)
+	if RateLimit and RateLimit.newGCRA then
+		return RateLimit.newGCRA(emissionMs, burstMs)
+	end
+	local stampsByKey = {}
+	return {
+		allow = function(_, key, nowMs)
+			stampsByKey[key] = stampsByKey[key] or {}
+			return MdtRules.Allow(stampsByKey[key], math.floor(nowMs / 1000), maxPerWindow, windowSeconds), 0
+		end,
+		forget = function(_, key)
+			stampsByKey[key] = nil
+		end
+	}
+end

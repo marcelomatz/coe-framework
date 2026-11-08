@@ -55,5 +55,19 @@ EconomyMigrations = {
 				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 			]]
 		}
+	},
+	{
+		version = 3,
+		name = 'judicial_frozen_balance',
+		statements = {
+			[[
+				ALTER TABLE coe_economy_accounts
+					ADD COLUMN IF NOT EXISTS frozen_balance BIGINT UNSIGNED NOT NULL DEFAULT 0 AFTER balance
+			]],
+			[[
+				ALTER TABLE coe_economy_societies
+					ADD COLUMN IF NOT EXISTS frozen_balance BIGINT UNSIGNED NOT NULL DEFAULT 0 AFTER balance
+			]]
+		}
 	}
 }

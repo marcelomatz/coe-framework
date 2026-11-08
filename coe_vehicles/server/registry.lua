@@ -2,7 +2,7 @@ VehicleRegistry = {}
 
 local MODEL_PATTERN = '^[%w_]+$'
 local MAX_MODEL_LENGTH = 48
-local STATES = { stored = true, out = true, impounded = true }
+local STATES = { stored = true, out = true, impounded = true, workshop = true }
 
 function VehicleRegistry.New(deps)
 	local persistence = deps.persistence
@@ -15,6 +15,9 @@ function VehicleRegistry.New(deps)
 	local pinned = {}
 	local budgets = {}
 	local registry = {}
+
+	local Concurrency = (type(Core) == 'table' and type(Core.Algorithms) == 'table' and Core.Algorithms.Concurrency) or nil
+	local coalescer = Concurrency and Concurrency.newWriteBehindCoalescer and Concurrency.newWriteBehindCoalescer(function() end) or nil
 
 	local function remember(record)
 		record.touched = now()
@@ -168,6 +171,9 @@ function VehicleRegistry.New(deps)
 		end
 		record.mileage = record.mileage + delta
 		dirty[id] = true
+		if coalescer then
+			coalescer:markDirty(id, { id = id, mileage = record.mileage })
+		end
 		return record.mileage
 	end
 
@@ -228,6 +234,32 @@ function VehicleRegistry.New(deps)
 		return true
 	end
 
+	function registry.TransitionState(id, expectedState, nextState)
+		if not STATES[expectedState] or not STATES[nextState] or expectedState == nextState then
+			return nil, 'invalid_state'
+		end
+		local record, errorCode = registry.Get(id)
+		if not record then
+			return nil, errorCode
+		end
+		if type(persistence.TransitionState) == 'function' then
+			local transitioned, transitionError = persistence.TransitionState(id, expectedState, nextState)
+			if not transitioned then
+				return transitioned, transitionError
+			end
+		else
+			if record.state ~= expectedState then
+				return false, 'state_conflict'
+			end
+			local saved, saveError = persistence.SetState(id, nextState)
+			if not saved then
+				return nil, saveError
+			end
+		end
+		record.state = nextState
+		return true
+	end
+
 	function registry.PendingCount()
 		local count = 0
 		for _ in pairs(dirty) do
@@ -249,8 +281,16 @@ function VehicleRegistry.New(deps)
 		end
 
 		if #batch > 0 then
+			if coalescer and not onlyId and #batch >= registry.PendingCount() then
+				coalescer:flush()
+			end
 			local saved, saveError = persistence.UpdateMileageBatch(batch)
 			if not saved then
+				if coalescer then
+					for _, entry in ipairs(batch) do
+						coalescer:markDirty(entry.id, entry)
+					end
+				end
 				return false, saveError
 			end
 			for _, entry in ipairs(batch) do
@@ -258,6 +298,8 @@ function VehicleRegistry.New(deps)
 				-- Se somou mais enquanto gravava, continua pendente.
 				if record and record.mileage == entry.mileage then
 					dirty[entry.id] = nil
+				elseif coalescer and record then
+					coalescer:markDirty(entry.id, { id = entry.id, mileage = record.mileage })
 				end
 			end
 		end

@@ -293,6 +293,7 @@ Remove o vínculo de grupo do jogador. Só `coe_admin` pode chamar. Server.
 ---@field New fun(opts?: { cellSize?: number }): CoeZonesModule
 ---@field AddSphere fun(id: string, spec: table): table|nil
 ---@field AddBox fun(id: string, spec: table): table|nil
+---@field AddPolygon fun(id: string, spec: table): table|nil
 ---@field Remove fun(id: string): boolean
 ---@field Clear fun()
 ---@field Get fun(id: string): table|nil
@@ -317,6 +318,7 @@ Remove o vínculo de grupo do jogador. Só `coe_admin` pode chamar. Server.
 ---@field SemVer CoeSemVerModule
 ---@field Zones CoeZonesModule
 ---@field Access CoeAccessModule
+---@field Algorithms table
 ---@field RequireVersion fun(resourceName: string, requiredRange: string): boolean, string|nil
 ---@field Functions table
 ---@field Events table

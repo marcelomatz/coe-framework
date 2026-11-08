@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 
@@ -114,6 +115,15 @@ local promoPriced = AmzgRules.Checkout(config, { { id = 4, qty = 2 } }, products
 eq(promoPriced and promoPriced.total, 198, 'checkout cobra o preço promocional')
 eq(promoPriced and promoPriced.lines[1].listPrice, 100, 'linha guarda o preço cheio')
 eq(AmzgRules.Checkout(config, { { id = 4, qty = 2 } }, products, definitions, 'standard', 2500).total, 200, 'promoção vencida no checkout')
+
+local refunded = false
+local sagaOk, sagaErr = AmzgRules.ExecuteSaga({
+	{ name = 'charge', forward = function() return true end, compensate = function() refunded = true end },
+	{ name = 'insert', forward = function() return false, 'database_error' end }
+}, {})
+eq(sagaOk, false, 'saga falha quando insert falha')
+eq(sagaErr, 'database_error', 'erro da saga preservado')
+eq(refunded, true, 'compensacao executada na saga')
 
 if failures > 0 then
 	error(('%d falha(s)'):format(failures))

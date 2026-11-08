@@ -55,6 +55,11 @@ function exports_coe_police:IsJailed(source) end
 ---@return any
 function exports_coe_police:Records(officerSource, subjectCharacterId, limit) end
 
+---Registra um interceptador de jurisdição para prisões/multas (ex.: transferência de custódia). Requer ACE `coe.police.extend`.
+---@param def { id: string, onArrest?: fun(ctx: table): table|nil, onFine?: fun(ctx: table): table|nil }
+---@return true|{ error: string }
+function exports_coe_police:RegisterArrestInterceptor(def) end
+
 ---Export server `Search` (server/main.lua).
 ---@param officerSource any
 ---@param targetSource any

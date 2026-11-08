@@ -14,12 +14,12 @@
 
 ## Requisitos de runtime
 
-- FXServer com runtime server-side Node.js 22.
+- FXServer com runtime server-side Node.js 24 LTS / Node 26 (`libnode26`).
 - Dependências JavaScript instaladas na pasta do resource antes de iniciar o servidor. `package-lock.json` fixa a árvore usada por npm; `yarn` não é um resource do FXServer e não é dependência de runtime.
 - MariaDB acessível pelo processo do FXServer.
 - `mysql2` fica restrito ao transporte e está fixado em `package.json`.
 
-Instale ou restaure as dependências a partir da pasta do resource com `npm ci --omit=dev`. Não instale um resource `yarn` de terceiros nem declare `yarn` como dependência FXServer. A suíte unitária local não requer conexão MariaDB; compatibilidade do runtime Node.js 22, do driver e do bridge entre JavaScript e Lua ainda precisa ser verificada no FXServer Enhanced alvo.
+Instale ou restaure as dependências a partir da pasta do resource com `npm ci --omit=dev`. Não instale um resource `yarn` de terceiros nem declare `yarn` como dependência FXServer. A suíte unitária local não requer conexão MariaDB; compatibilidade do runtime Node.js 24 LTS / Node 26 (`libnode26`), do driver e do bridge entre JavaScript e Lua ainda precisa ser verificada no FXServer Enhanced alvo.
 
 ## Configuração
 
@@ -67,7 +67,7 @@ exports.coe_database:Query(
 - `server/provider.js`: pool, execução parametrizada, transações, rollback e ciclo de vida sem APIs FiveM.
 - `server/validation.js`: allowlist de comandos SQL e validação de parâmetros/statements.
 - `package.json` e `package-lock.json`: dependências Node fixadas para instalação com npm.
-- `fxmanifest.lua`: runtime Node 22 e dependência de logging.
+- `fxmanifest.lua`: runtime Node.js (`libnode26` / Node 24+) e dependência de logging.
 
 Códigos de erro incluem `caller_not_allowed`, `invalid_sql`, `invalid_parameters`, `database_not_ready`, `query_failed`, `transaction_failed` e `transaction_rollback_failed`. Logs não incluem SQL, parâmetros, identificadores ou credenciais.
 

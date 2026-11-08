@@ -123,8 +123,41 @@ local function postpaidPlans()
 	return list
 end
 
--- Paga a fatura pela conta do banco de `payer`. Retorna true ou nil, código.
+-- Paga a fatura pela conta do banco de `payer` via Saga compensatória. Retorna true ou nil, código.
 local function payInvoice(payer, number, id, amount)
+	if TelecomRules and TelecomRules.ExecuteSaga then
+		local ok, _, sagaErr = TelecomRules.ExecuteSaga({
+			{
+				name = 'mark_paid',
+				action = function()
+					if not TelecomPersistence.MarkPaid(id, os.time()) then
+						return false, 'already_paid'
+					end
+					return true
+				end,
+				compensate = function()
+					TelecomPersistence.Reopen(id)
+				end,
+			},
+			{
+				name = 'debit_invoice',
+				action = function()
+					if amount > 0 then
+						local paid, errorCode = debit(payer, amount, 'invoice_' .. id)
+						if not paid then
+							return false, errorCode or 'economy_unavailable'
+						end
+					end
+					return true
+				end,
+			},
+		})
+		if not ok then
+			return nil, sagaErr
+		end
+		TelecomPersistence.AddUsage(number, payer, 'invoice', nil, 0, amount, os.time())
+		return true
+	end
 	if not TelecomPersistence.MarkPaid(id, os.time()) then
 		return nil, 'already_paid'
 	end
@@ -246,13 +279,43 @@ function Actions.recharge(ctx, payload)
 	if not value then
 		return { ok = false, error = invalid }
 	end
-	local paid, payError = debit(ctx.characterId, value, 'recharge')
-	if not paid then
-		return { ok = false, error = payError }
-	end
-	if not TelecomPersistence.AddBalance(ctx.number, value, config.MaxBalance) then
-		refund(ctx.characterId, value, 'recharge')
-		return { ok = false, error = 'balance_full' }
+	if TelecomRules and TelecomRules.ExecuteSaga then
+		local ok, _, sagaErr = TelecomRules.ExecuteSaga({
+			{
+				name = 'debit_recharge',
+				action = function()
+					local paid, payError = debit(ctx.characterId, value, 'recharge')
+					if not paid then
+						return false, payError or 'economy_unavailable'
+					end
+					return true
+				end,
+				compensate = function()
+					refund(ctx.characterId, value, 'recharge')
+				end,
+			},
+			{
+				name = 'add_telecom_balance',
+				action = function()
+					if not TelecomPersistence.AddBalance(ctx.number, value, config.MaxBalance) then
+						return false, 'balance_full'
+					end
+					return true
+				end,
+			},
+		})
+		if not ok then
+			return { ok = false, error = sagaErr }
+		end
+	else
+		local paid, payError = debit(ctx.characterId, value, 'recharge')
+		if not paid then
+			return { ok = false, error = payError }
+		end
+		if not TelecomPersistence.AddBalance(ctx.number, value, config.MaxBalance) then
+			refund(ctx.characterId, value, 'recharge')
+			return { ok = false, error = 'balance_full' }
+		end
 	end
 	TelecomPersistence.AddUsage(ctx.number, ctx.characterId, 'recharge', nil, 0, value, os.time())
 	log('info', 'system', 'telecom_recharge', { character_id = ctx.characterId, count = value })
@@ -489,4 +552,115 @@ CreateThread(function()
 		end
 		Wait(config.TickSeconds * 1000)
 	end
+end)
+
+-- Telecom v2: Malha de ERBs 3G/4G/5G, Sabotagem de Torres, Fibra Residencial e Kit Veicular OrbitLink
+local towerStates = {}
+local fiberSpaces = {}
+
+exports('EvaluateSignal', function(coords, context)
+	return TelecomRules.EvaluateSignal(config, coords, towerStates, context)
+end)
+
+exports('CanAccessBandFeature', function(band, feature)
+	return TelecomRules.CanAccessBandFeature(band, feature)
+end)
+
+exports('SabotageTower', function(towerId, durationSec)
+	if type(towerId) ~= 'string' then return false end
+	local dur = math.max(60, tonumber(durationSec) or config.SabotageDurationSeconds or 900)
+	towerStates[towerId] = { sabotaged = true, untilAt = os.time() + dur }
+	TriggerEvent('coe_telecom:towerSabotaged', towerId, dur)
+	if type(SetTimeout) == 'function' then
+		SetTimeout(dur * 1000, function()
+			if towerStates[towerId] and towerStates[towerId].sabotaged then
+				towerStates[towerId] = nil
+				TriggerEvent('coe_telecom:towerRestored', towerId)
+			end
+		end)
+	end
+	return true
+end)
+
+exports('RepairTower', function(towerId)
+	if type(towerId) ~= 'string' then return false end
+	towerStates[towerId] = nil
+	TriggerEvent('coe_telecom:towerRestored', towerId)
+	return true
+end)
+
+exports('ActivateFiber', function(spaceKey, carrierId)
+	if type(spaceKey) ~= 'string' then return false end
+	fiberSpaces[spaceKey] = { active = true, carrier = carrierId or 'badger', since = os.time() }
+	return true
+end)
+
+exports('HasActiveFiber', function(spaceKey)
+	return type(spaceKey) == 'string' and fiberSpaces[spaceKey] ~= nil and fiberSpaces[spaceKey].active == true
+end)
+
+exports('SetVehicleOrbitlink', function(netId, active)
+	local ent = Core and Core.Platform and Core.Platform.Entities and Core.Platform.Entities.FromNetworkId(netId) or nil
+	if ent and ent ~= 0 and type(Entity) == 'function' then
+		Entity(ent).state:set('orbitlinkActive', active == true, true)
+		return true
+	end
+	return false
+end)
+
+exports('AdminOverview', function()
+	local towers = {}
+	local sabotagedCount = 0
+	for _, t in ipairs(config.Towers or {}) do
+		local st = towerStates[t.id]
+		local isSabotaged = st ~= nil and st.sabotaged == true
+		if isSabotaged then
+			sabotagedCount = sabotagedCount + 1
+		end
+		towers[#towers + 1] = {
+			id = t.id,
+			label = t.label,
+			band = t.band,
+			radius = t.radius,
+			speedMbps = t.speedMbps,
+			x = t.x,
+			y = t.y,
+			z = t.z,
+			sabotaged = isSabotaged,
+			untilAt = isSabotaged and st.untilAt or nil
+		}
+	end
+	local fibers = {}
+	for spaceKey, info in pairs(fiberSpaces) do
+		if info and info.active then
+			fibers[#fibers + 1] = {
+				spaceKey = spaceKey,
+				carrier = info.carrier,
+				since = info.since
+			}
+		end
+	end
+	table.sort(fibers, function(a, b) return a.spaceKey < b.spaceKey end)
+	local carriers = {}
+	for id, c in pairs(config.Carriers or {}) do
+		carriers[#carriers + 1] = {
+			id = id,
+			label = c.label,
+			businessId = c.businessId,
+			fiberProvider = c.fiberProvider == true,
+			satellite = c.satellite == true
+		}
+	end
+	table.sort(carriers, function(a, b) return a.id < b.id end)
+	return {
+		towers = towers,
+		fibers = fibers,
+		carriers = carriers,
+		summary = {
+			totalTowers = #towers,
+			activeTowers = #towers - sabotagedCount,
+			sabotagedTowers = sabotagedCount,
+			activeFibers = #fibers
+		}
+	}
 end)

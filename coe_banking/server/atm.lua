@@ -26,6 +26,8 @@ local guarded = function(...) return Banking.guarded(...) end
 local _t = function(...) return Banking.t(...) end
 local money = function(...) return Banking.money(...) end
 local atmSessions = Banking.atmSessions
+local agencyOpen = Banking.agencyOpen
+local agencyAccount = Banking.agencyAccount
 
 local function cardInHand(playerId, cardId)
 	local inventoryId = inventoryOf(playerId)

@@ -1,4 +1,5 @@
 -- Regras do Elos: perfil, currículo montado do histórico, visibilidade e conexões.
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 
@@ -103,5 +104,11 @@ eq(select(2, ElosRules.CanRequest(config, 'outgoing', 0, 0)), 'already_requested
 eq(select(2, ElosRules.CanRequest(config, 'none', 0, config.Network.MaxPendingOut)), 'pending_limit', 'pedidos demais')
 eq(ElosRules.CanRequest(config, 'incoming', 0, config.Network.MaxPendingOut), true, 'aceitar nao conta como pedido')
 eq(select(2, ElosRules.CanRequest(config, 'none', config.Network.MaxConnections, 0)), 'connection_limit', 'conexoes demais')
+
+local limiter = ElosRules.NewCallLimiter(300)
+eq(limiter ~= nil, true, 'limiter GCRA criado')
+local cache = ElosRules.NewProfileCache(16)
+cache:put('11', { name = 'Ana' })
+eq(cache:get('11').name, 'Ana', 'LRU cache funciona')
 
 print('coe_elos rules tests passed')

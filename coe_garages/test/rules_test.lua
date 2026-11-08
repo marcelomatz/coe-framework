@@ -1,3 +1,4 @@
+Core = { Algorithms = dofile('../coe_core/lib/algorithms/init.lua') }
 dofile('../coe_garages/config.lua')
 dofile('../coe_garages/server/rules.lua')
 
@@ -37,5 +38,18 @@ eq(GaragesRules.IsStaff(nil), false, 'sem acesso')
 eq(GaragesRules.IsOwner(business, 7), true, 'dono')
 eq(GaragesRules.IsOwner(business, '8'), false, 'não é o dono')
 eq(GaragesRules.IsOwner({}, '7'), false, 'sem dono')
+
+local grid = GaragesRules.NewSpatialGrid(64.0)
+assert(grid ~= nil, 'grid espacial instanciada')
+grid:insert('g1:s1', 100.0, 200.0, 30.0, 0)
+local out = {}
+local res, n = grid:queryRadius(105.0, 200.0, 30.0, 15.0, 0, out)
+eq(n or #res, 1, 'spot encontrado no raio')
+
+local limiter = GaragesRules.NewActionLimiter(300)
+assert(limiter ~= nil, 'GCRA limiter instanciado')
+eq(limiter:allow(1, 1000), true, 'primeira ação garagem permitida')
+eq(limiter:allow(1, 1100), false, 'segunda ação bloqueada no intervalo')
+eq(limiter:allow(1, 1300), true, 'terceira ação permitida após intervalo')
 
 print('rules_test ok')

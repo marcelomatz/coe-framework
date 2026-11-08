@@ -60,6 +60,13 @@ local expected = LootRules.Chance(config.Tables.pedestrian_robbery, 'onion_usb')
 eq(math.abs(hits / runs - expected) < 0.008, true, 'frequência do onion perto da chance calculada')
 eq(hits > 0, true, 'onion sai em assalto a pedestre')
 
+-- Amostrador O(1) de Vose (BuildAliasSampler) caches na tabela de entries e respeita proporções
+local sampler = LootRules.BuildAliasSampler(config.Tables.pedestrian_robbery.entries)
+eq(sampler ~= nil, true, 'BuildAliasSampler constrói tabela de alias O(1)')
+eq(LootRules.BuildAliasSampler(config.Tables.pedestrian_robbery.entries), sampler, 'BuildAliasSampler reutiliza instância cacheada')
+local picked = LootRules.Pick(config.Tables.pedestrian_robbery.entries)
+eq(type(picked), 'table', 'Pick sem rand customizado usa Alias Table O(1)')
+
 if failures > 0 then
 	print(('%d falha(s)'):format(failures))
 	os.exit(1)

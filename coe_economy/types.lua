@@ -40,6 +40,30 @@ function exports_coe_economy:Summary() end
 ---@return string|nil errorCode
 function exports_coe_economy:GetBalance(characterId) end
 
+---Saldo bloqueado judicialmente na conta do personagem.
+---@param characterId integer|string
+---@return integer|nil frozenBalance
+---@return string|nil errorCode
+function exports_coe_economy:GetFrozenBalance(characterId) end
+
+---Congela judicialmente parte do saldo da conta do personagem sem impedir o uso do saldo restante.
+---@param characterId integer|string
+---@param amount integer
+---@param reason string
+---@param reference string|nil
+---@return true|nil ok
+---@return string|nil errorCode
+function exports_coe_economy:FreezeFunds(characterId, amount, reason, reference) end
+
+---Desbloqueia saldo congelado judicialmente na conta do personagem.
+---@param characterId integer|string
+---@param amount integer
+---@param reason string
+---@param reference string|nil
+---@return true|nil ok
+---@return string|nil errorCode
+function exports_coe_economy:UnfreezeFunds(characterId, amount, reason, reference) end
+
 ---Credita na conta do personagem, respeitando o teto `MaxBalance`. Auditado (`money_credited`).
 ---@param characterId integer|string
 ---@param amount integer

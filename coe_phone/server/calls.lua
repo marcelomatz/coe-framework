@@ -15,9 +15,11 @@ local nameFor = function(...) return Phone.nameFor(...) end
 local format = function(...) return Phone.format(...) end
 local calls = Phone.calls
 local playerCall = Phone.playerCall
+local contactCache = Phone.contactCache
 local prefsOf = function(...) return Phone.prefsOf(...) end
 local contactsOf = function(...) return Phone.contactsOf(...) end
 local _t = function(...) return Phone.t(...) end
+local nextCallId = 0
 
 local function sendState(call, side, state, reason)
 	local self = call[side]
@@ -165,7 +167,7 @@ end
 
 -- Apps nativos -----------------------------------------------------------------------------------------
 
-local Native = {}
+local Native = Phone.Native
 
 Native.phone = {
 	recents = function(me)

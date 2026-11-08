@@ -17,6 +17,7 @@ local function loadFramework(path)
 end
 
 loadFramework('coe_core/lib/hash.lua')
+loadFramework('coe_core/lib/algorithms/init.lua')
 
 local config = CryptoConfig
 local failures = 0
@@ -47,7 +48,10 @@ function CreateThread(fn) local co = coroutine.create(fn); threads[#threads + 1]
 os.time = function() return now end
 function exports(name, fn) registered[name] = fn end
 
-Core = { Players = { GetActiveCharacterId = function(playerId) return playerId == 1 and 11 or (playerId == 2 and 22 or nil) end } }
+Core = {
+	Algorithms = CoeAlgorithms,
+	Players = { GetActiveCharacterId = function(playerId) return playerId == 1 and 11 or (playerId == 2 and 22 or nil) end }
+}
 
 -- Economia, inventário, aparelho e loja.
 local bank = { ['11'] = 100000, ['22'] = 0 }

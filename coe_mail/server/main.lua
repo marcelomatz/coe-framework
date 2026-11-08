@@ -2,8 +2,11 @@ local config = MailConfig
 
 local ready = false
 local locks = {}
+local lockManager = MailRules.NewLockManager and MailRules.NewLockManager() or nil
 local logins = {}
 local lastSend = {}
+local sendLimiter = MailRules.NewSendLimiter and MailRules.NewSendLimiter(config.Messages.SendCooldownSeconds) or nil
+local sessionCache = MailRules.NewSessionCache and MailRules.NewSessionCache(128) or nil
 local seen = {}
 
 local HOSTS = { coe_tablet = 'tablet', coe_phone = 'phone' }
@@ -50,6 +53,18 @@ local function verify(password, stored)
 end
 
 local function withLock(key, run)
+	if lockManager then
+		local guard <close>, err = lockManager:acquire(key, 3000)
+		if not guard then
+			return { ok = false, error = err == 'lock_timeout' and 'busy' or 'busy' }
+		end
+		local ok, result = pcall(run)
+		if not ok then
+			log('error', 'gameplay', 'mail_action_failed', { error_code = tostring(result) })
+			return { ok = false, error = 'database_error' }
+		end
+		return result
+	end
 	if locks[key] then
 		return { ok = false, error = 'busy' }
 	end
@@ -545,7 +560,13 @@ function App.send(playerId, character, payload, context)
 	end
 	return withLock('account:' .. account.id, function()
 		local now = os.time()
-		if lastSend[account.id] and now - lastSend[account.id] < config.Messages.SendCooldownSeconds then
+		local nowMs = now * 1000
+		if sendLimiter then
+			local allowed, retryMs = sendLimiter:allow(account.id, nowMs)
+			if not allowed then
+				return { ok = false, error = 'send_cooldown', seconds = math.max(1, math.ceil((retryMs or 1000) / 1000)) }
+			end
+		elseif lastSend[account.id] and now - lastSend[account.id] < config.Messages.SendCooldownSeconds then
 			return { ok = false, error = 'send_cooldown', seconds = config.Messages.SendCooldownSeconds - (now - lastSend[account.id]) }
 		end
 		local draftId = math.tointeger(tonumber(payload.draft))
@@ -554,6 +575,8 @@ function App.send(playerId, character, payload, context)
 		if result.ok then
 			lastSend[account.id] = now
 			log('info', 'gameplay', 'mail_sent', { character_id = character.id, count = #recipients.all })
+		elseif sendLimiter then
+			sendLimiter:reset(account.id)
 		end
 		return result
 	end)

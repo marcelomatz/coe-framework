@@ -3,6 +3,8 @@ local _t = (Core and Core.Locale and Core.Locale.Bind) and Core.Locale.Bind(Loca
 local ready = false
 local stations = {}
 local lastAction = {}
+local actionLimiter = GaragesRules and GaragesRules.NewActionLimiter and GaragesRules.NewActionLimiter(config.Limits.ActionIntervalMs) or nil
+local spatialGrid = GaragesRules and GaragesRules.NewSpatialGrid and GaragesRules.NewSpatialGrid(64.0) or nil
 
 local function log(level, category, event, context)
 	pcall(function()
@@ -43,6 +45,9 @@ end
 
 local function throttled(playerId)
 	local now = GetGameTimer()
+	if actionLimiter then
+		return not actionLimiter:allow(playerId, now)
+	end
 	if lastAction[playerId] and now - lastAction[playerId] < config.Limits.ActionIntervalMs then
 		return true
 	end
@@ -56,18 +61,25 @@ local garages = {}
 local function rebuild()
 	stations = {}
 	garages = {}
+	if spatialGrid then
+		spatialGrid:clear()
+	end
 	local loaded = GaragesPersistence.ListGarages()
 	local list = {}
 	for _, garage in ipairs(loaded or {}) do
 		garages[garage.id] = garage
 		if garage.enabled then
 			for index, spot in ipairs(garage.spots or {}) do
+				local key = garage.id .. ':' .. spot.id
 				local entry = {
 					garageId = garage.id, spotId = spot.id, kind = garage.kind, businessId = garage.businessId, jobs = garage.jobs,
 					title = garage.label, label = spot.label, blip = index == 1 and garage.blip and garage.blip.enabled and garage.blip or nil,
 					x = spot.x, y = spot.y, z = spot.z, radius = spot.radius, heading = spot.heading or 0.0
 				}
-				stations[garage.id .. ':' .. spot.id] = entry
+				stations[key] = entry
+				if spatialGrid then
+					spatialGrid:insert(key, spot.x, spot.y, spot.z, 0, entry)
+				end
 				list[#list + 1] = entry
 			end
 		end
@@ -716,6 +728,9 @@ end, true)
 
 AddEventHandler('playerDropped', function()
 	lastAction[source] = nil
+	if actionLimiter then
+		actionLimiter:reset(source)
+	end
 end)
 
 CreateThread(function()

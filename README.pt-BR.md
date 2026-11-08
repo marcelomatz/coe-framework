@@ -46,7 +46,7 @@ Verificado e homologado conforme a página oficial de downloads da Cfx.re para *
 |---|---|---|---|
 | **Cfx Server (FiveM Enhanced Artifacts)** | `Build 170+ (b170)` | `Build 170+ (b170 — Track Enhanced)` | É o novo motor **Cfx Server** (`cfx-server_win_x64.zip` / `cfx-server.exe` no Windows ou `cfx-server_linux_x64.tar.xz` no Linux) exclusivo para a plataforma **FiveM for GTAV Enhanced**. |
 | **GTA V Enhanced Game Build** | `Gen9 / DirectX 12 Nativo` | `Última Build Enhanced (Automática)` | No FiveM Enhanced **não se usa** números antigos de `sv_enforceGameBuild` do Legacy (`3095`/`3258`). O servidor carrega automaticamente a build mais recente do GTA V Enhanced com todas as DLCs ativas. |
-| **Runtime & Linguagem** | Node.js 22 LTS | Node.js 22 LTS & Lua 5.4 nativo | Execução ultra-rápida de código sem acúmulo de memória e sem travar a main-thread do servidor. |
+| **Runtime & Linguagem** | Node.js 24 LTS / Node 26 (libnode26) | Node.js 24 LTS / Node 26 (libnode26) & Lua 5.4 nativo | Execução ultra-rápida de código sem acúmulo de memória e sem travar a main-thread do servidor. |
 | **Banco de Dados Relacional** | MariaDB 11.x | MariaDB 11.x (`utf8mb4_unicode_ci`) | O cofre de dados que grava finanças e inventários de forma atômica, eliminando duplicações de itens. |
 
 ---
@@ -162,7 +162,7 @@ Construído a partir de uma folha em branco, o COE Framework foi desenvolvido pa
 2. **Servidor como Fonte Única da Verdade (*Server-Authoritative*)**: O cliente nunca decreta valores financeiros, movimentação de itens no inventário, posse veicular ou permissões. Toda ação é uma requisição de intenção avaliada e autorizada pelo servidor antes de refletir no mundo.
 3. **Desacoplamento de Plataforma (*Hardware Abstraction Layer - HAL*)**: A camada `Core.Platform` isola o código de domínio das natives C++ do CFX/FiveM, blindando os scripts contra *breaking changes* da plataforma e permitindo testes unitários offline com backend em memória.
 4. **Internacionalização & Localização Completa (`Core.Locale`)**: O ecossistema é nativamente multi-idioma (com suporte a `pt-BR` e `en-US` e 100% de paridade estrita em 445 chaves auditadas), eliminando completamente notificações hardcoded.
-5. **Persistência Relacional Concorrente (MariaDB 11 + Node.js 22)**: Pool de conexões assíncronas não-bloqueantes, migrações versionadas idempotentes (`coe_migrations`) e integridade referencial com restrições (`RESTRICT`), garantindo que nenhum item, dinheiro ou veículo seja corrompido em quedas de servidor (*zero rollback*).
+5. **Persistência Relacional Concorrente (MariaDB 11 + Node.js 24 LTS / Node 26)**: Pool de conexões assíncronas não-bloqueantes, migrações versionadas idempotentes (`coe_migrations`) e integridade referencial com restrições (`RESTRICT`), garantindo que nenhum item, dinheiro ou veículo seja corrompido em quedas de servidor (*zero rollback*).
 
 ---
 
@@ -191,7 +191,7 @@ flowchart TD
     end
 
     subgraph Storage["Camada de Persistência Transacional"]
-        NodePool["Node.js 22 async mysql2 pool"]
+        NodePool["Node.js 24 LTS / Node 26 async mysql2 pool"]
         MariaDB[("MariaDB 11 (ACID, Chaves RESTRICT, 3NF)")]
         Audit["Trilha Durável de Auditoria (coe_audit)"]
     end
@@ -234,7 +234,7 @@ Diga adeus a mensagens em português misturadas com inglês e alertas fixos no c
 - O linter em CI impede o merge de Pull Requests com notificações contendo strings literais hardcoded.
 
 ### 4. Persistência Assíncrona & Write-Behind Seguro
-- **Zero Síncrono no Tick da CPU**: Todas as operações SQL transitam através do provedor assíncrono `coe_database` baseado em Node.js 22 e `mysql2` com pool dedicado;
+- **Zero Síncrono no Tick da CPU**: Todas as operações SQL transitam através do provedor assíncrono `coe_database` baseado em Node.js 24 LTS / Node 26 e `mysql2` com pool dedicado;
 - **Write-Behind Inteligente em Inventários**: Trocas rápidas de slots entre baús e inventários ocorrem em memória com gravação assíncrona adiada em lotes periódicos (`Config.Server.flushIntervalMs`), reduzindo o estresse de I/O em picos de 300+ jogadores simultâneos sem risco de duplicação de itens (*dupes*);
 - **Migrações Atômicas e Idempotentes**: Cada resource versiona suas próprias migrações SQL que são executadas automaticamente na subida do servidor, garantindo schemas sempre idênticos em ambientes de desenvolvimento, homologação e produção.
 
@@ -249,7 +249,7 @@ A tabela abaixo sintetiza as diferenças técnicas profundas entre o **COE Frame
 | **Arquitetura Base** | Monolítica, loops pesados de thread | Modular parcial, dependência de 40+ repositórios terceiros | Sistema de proxies/túneis de alta latência | **8 Camadas Estritas (55 resources first-party integrados)** |
 | **Consumo de CPU (*Resmon*)** | `1.5ms – 3.5ms` em repouso no cliente | `0.8ms – 2.0ms` | `1.2ms – 2.5ms` | **`< 0.15ms` somando todos os 55 resources** |
 | **Modelo de Segurança** | Confiante no cliente (vulnerável a executores Lua) | Verificação parcial por callbacks | Verificação por metatables vulneráveis | **Servidor Autoritativo estrito + Auditoria durável (`coe_audit`)** |
-| **Banco de Dados** | Queries síncronas bloqueantes (`MySQL.Sync`) | ORM pesado ou wrappers em Lua | Queries diretas sem integridade | **Node.js 22 assíncrono, Pool MariaDB 11, Transações ACID** |
+| **Banco de Dados** | Queries síncronas bloqueantes (`MySQL.Sync`) | ORM pesado ou wrappers em Lua | Queries diretas sem integridade | **Node.js 24 LTS / Node 26 assíncrono, Pool MariaDB 11, Transações ACID** |
 | **Integridade Relacional** | JSON solto em colunas longas, sem foreign keys | JSON serializado em colunas de inventário | Tabela única desnormalizada | **Modelagem 3NF, Chaves `RESTRICT`, Migrações idempotentes** |
 | **Plataforma Suportada** | FiveM Legacy clássico (DirectX 11) | FiveM Legacy clássico | FiveM Legacy clássico | **FiveM for GTA V Enhanced (DirectX 12 / C++ Native)** |
 | **Desacoplamento de Natives** | Zero (natives soltas em todos os scripts) | Zero (natives soltas em client e server) | Zero (natives espalhadas) | **Camada de Plataforma `Core.Platform` (HAL com Mocking)** |
@@ -354,7 +354,7 @@ Todo o código é permanentemente submetido a uma esteira rigorosa no GitHub Act
    - Todo resource com exports tem `types.lua`, e toda chamada a export protegido (banco, veículos, economia, voz, supervisor) vem de um resource na allowlist padrão do alvo.
 2. **Testes Unitários Lua**: Testes isolados de regras de negócio de cada resource executados via Lua 5.4 nativo.
 3. **Testes de Smoke Boot FiveM (`tools/smoke_boot_test.lua`)**: Simulação em ambiente de CI da inicialização de chunks globais, mitigação de perda de metatables por serialização MsgPack em exports e validação do inicializador `@coe_core/lib/init.lua`.
-4. **Cenários de Integração MariaDB 11**: Validação assíncrona com transações reais em banco MariaDB sobre Node.js 22, incluindo execução cumulativa das migrações SQL dos resources com persistência duas vezes seguidas para atestar **idempotência estrita**.
+4. **Cenários de Integração MariaDB 11**: Validação assíncrona com transações reais em banco MariaDB sobre Node.js 24 LTS / Node 26, incluindo execução cumulativa das migrações SQL dos resources com persistência duas vezes seguidas para atestar **idempotência estrita**.
 5. **Verificação da Referência de APIs (`tools/gen_reference.lua --check`)**: O CI impede o merge caso as anotações em `types.lua` estejam divergentes dos arquivos gerados em `reference/`.
 
 ---

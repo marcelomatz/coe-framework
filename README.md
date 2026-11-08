@@ -46,7 +46,7 @@ Verified and certified in accordance with official Cfx.re guidelines for **FiveM
 |---|---|---|---|
 | **Cfx Server (FiveM Enhanced Artifacts)** | `Build 170+ (b170)` | `Build 170+ (b170 — Enhanced Track)` | The new **Cfx Server** engine (`cfx-server_win_x64.zip` / `cfx-server.exe` on Windows or `cfx-server_linux_x64.tar.xz` on Linux) built specifically for **FiveM for GTAV Enhanced**. |
 | **GTA V Enhanced Game Build** | `Native Gen9 / DirectX 12` | `Latest Enhanced Build (Automatic)` | FiveM Enhanced does **not** use legacy `sv_enforceGameBuild` numbers (`3095`/`3258`). The server automatically mounts the latest GTA V Enhanced build with all DLCs active. |
-| **Runtime & Language** | Node.js 22 LTS | Node.js 22 LTS & Native Lua 5.4 | Ultra-fast non-blocking execution without memory bloat or main-thread bottlenecks. |
+| **Runtime & Language** | Node.js 24 LTS / Node 26 (libnode26) | Node.js 24 LTS / Node 26 (libnode26) & Native Lua 5.4 | Ultra-fast non-blocking execution without memory bloat or main-thread bottlenecks. |
 | **Relational Database** | MariaDB 11.x | MariaDB 11.x (`utf8mb4_unicode_ci`) | Atomic persistence ensuring that money, inventory transactions, and vehicle states are safely committed with zero rollback. |
 
 ---
@@ -162,7 +162,7 @@ Built from the ground up, the framework introduces modern software engineering p
 2. **Strict Server-Authoritative Authority**: The client never dictates cash balances, inventory slots, vehicle permissions, or admin states. Every client action is an intent evaluated by the server before applying to the world.
 3. **Platform Abstraction Layer (`Core.Platform` / HAL)**: Domain business logic is completely isolated from raw CFX/FiveM C++ natives, preventing platform breaking changes and enabling sub-millisecond offline unit testing.
 4. **End-to-End Internationalization (`Core.Locale`)**: Fully asynchronous per-player multi-language localization (`en-US` and `pt-BR` with 100% key parity across 445 audited keys).
-5. **Concurrent Relational Persistence (MariaDB 11 + Node.js 22)**: Dynamic non-blocking connection pooling, idempotent schema migrations (`coe_migrations`), and relational constraints (`RESTRICT`).
+5. **Concurrent Relational Persistence (MariaDB 11 + Node.js 24 LTS / Node 26)**: Dynamic non-blocking connection pooling, idempotent schema migrations (`coe_migrations`), and relational constraints (`RESTRICT`).
 
 ---
 
@@ -189,7 +189,7 @@ flowchart TD
     end
 
     subgraph Storage["Transactional Persistence Layer"]
-        NodePool["Node.js 22 async mysql2 dynamic pool"]
+        NodePool["Node.js 24 LTS / Node 26 async mysql2 dynamic pool"]
         MariaDB[("MariaDB 11 (ACID, RESTRICT Foreign Keys, 3NF)")]
         Audit["Durable Audit Trail (coe_audit)"]
     end
@@ -229,7 +229,7 @@ The [`@coe_core/lib/platform.lua`](https://docs.coeroleplay.app/#doc=PLATFORM_HA
 - Automated CI linters block any Pull Request that introduces hardcoded literal notification strings.
 
 ### 4. Non-Blocking Persistence & Safe Write-Behind
-- **Zero Synchronous Main-Thread Stalls**: All database queries execute via the asynchronous `coe_database` provider on Node.js 22 LTS;
+- **Zero Synchronous Main-Thread Stalls**: All database queries execute via the asynchronous `coe_database` provider on Node.js 24 LTS / Node 26 (libnode26);
 - **Smart Write-Behind Inventory Caching**: High-frequency slot transfers between stashes and player pockets are validated in memory with periodic flushed batch persistence (`Config.Server.flushIntervalMs`), eliminating I/O bottlenecks during peak server concurrency without risk of item duping;
 - **Idempotent Atomic Migrations**: Each database-enabled resource manages its own schema migration definitions, executed idempotently on boot.
 
@@ -242,7 +242,7 @@ The [`@coe_core/lib/platform.lua`](https://docs.coeroleplay.app/#doc=PLATFORM_HA
 | **Architecture** | Monolithic loops | Modular with external dependencies | **Strict 8 Layer Clean Architecture (First-Party)** |
 | **Idle CPU Resmon** | `1.5ms – 3.5ms` idle | `0.8ms – 2.0ms` | **`0.00ms – 0.05ms` per module (< 0.15ms total)** |
 | **Security Model** | Client-trusting (vulnerable to Lua injectors) | Partial callback verification | **Strict Server-Authoritative + Durable Audit (`coe_audit`)** |
-| **Database Engine** | Synchronous blocking queries | Lua wrappers or heavier ORMs | **Node.js 22 Async, MariaDB 11 Pool, Zero Hitch** |
+| **Database Engine** | Synchronous blocking queries | Lua wrappers or heavier ORMs | **Node.js 24 LTS / Node 26 Async, MariaDB 11 Pool, Zero Hitch** |
 | **Relational Integrity** | Unindexed JSON blobs | Semi-structured JSON in columns | **3NF Relational Model, `RESTRICT` Constraints, Migrations** |
 | **Platform Target** | Legacy FiveM DX11 | Legacy FiveM DX11 | **FiveM for GTA V Enhanced (Pure)** |
 | **Native Decoupling** | None (direct natives in scripts) | None (direct natives) | **Platform HAL Layer (`Core.Platform`) with Mocking** |

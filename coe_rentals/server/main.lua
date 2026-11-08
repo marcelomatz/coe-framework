@@ -26,13 +26,24 @@ local function notify(playerId, kind, message)
 end
 
 local lastRequest = {}
+local requestLimiter = RentalsRules and RentalsRules.NewRateLimiter and RentalsRules.NewRateLimiter(RentalsConfig and RentalsConfig.CooldownMs or 2000, 0) or nil
 
--- Um pedido de aluguel/devolução por jogador a cada RentalsConfig.CooldownMs.
+-- Um pedido de aluguel/devolução por jogador a cada RentalsConfig.CooldownMs (via GCRA O(1)).
 local function throttled(playerId)
 	local now = GetGameTimer()
 	local previous = lastRequest[playerId]
+	if requestLimiter and previous ~= nil then
+		if not requestLimiter:allow(playerId, now) then
+			return true
+		end
+		lastRequest[playerId] = now
+		return false
+	end
 	if previous and now - previous < (RentalsConfig.CooldownMs or 2000) then
 		return true
+	end
+	if requestLimiter then
+		requestLimiter:allow(playerId, now)
 	end
 	lastRequest[playerId] = now
 	return false
@@ -345,21 +356,62 @@ Core.Events.OnNet('rentals.rent', function(stationId, model)
 	end
 
 	local price, deposit, total = RentalsRules.CalculateTotal(vehicleDef)
-	local debited, debitError = economy(function() return exports.coe_economy:Debit(characterId, total, 'vehicle_rental') end)
-	if debited ~= true then
-		notify(playerId, 'error', _t(debitError == 'economy_unavailable' and 'economy_unavailable' or 'not_enough_money'))
-		return
-	end
-
 	local plate = RentalsRules.GenerateRentalPlate()
-	local entity = spawnRentalVehicle(vehicleDef, spawnPoint)
-	if not entity then
-		-- Reembolso de segurança caso o spawn falhe
-		if economy(function() return exports.coe_economy:Credit(characterId, total, 'rental_refund_spawn_failed') end) ~= true then
-			log('error', 'rental_refund_failed', { character_id = characterId, total = total })
+	local entity = nil
+	local debitError = nil
+
+	if RentalsRules and RentalsRules.ExecuteSaga then
+		local sagaOk, failedStep, sagaErr = RentalsRules.ExecuteSaga({
+			{
+				name = 'debit_rental',
+				action = function()
+					local debited, err = economy(function() return exports.coe_economy:Debit(characterId, total, 'vehicle_rental') end)
+					if debited ~= true then
+						debitError = err
+						return false, err or 'not_enough_money'
+					end
+					return true
+				end,
+				compensate = function()
+					if economy(function() return exports.coe_economy:Credit(characterId, total, 'rental_refund_spawn_failed') end) ~= true then
+						log('error', 'rental_refund_failed', { character_id = characterId, total = total })
+					end
+				end,
+			},
+			{
+				name = 'spawn_vehicle',
+				action = function()
+					entity = spawnRentalVehicle(vehicleDef, spawnPoint)
+					if not entity then
+						return false, 'vehicle_spawn_failed'
+					end
+					return true
+				end,
+			},
+		})
+		if not sagaOk then
+			if failedStep == 'debit_rental' then
+				notify(playerId, 'error', _t(debitError == 'economy_unavailable' and 'economy_unavailable' or 'not_enough_money'))
+			else
+				notify(playerId, 'error', _t(sagaErr or 'vehicle_spawn_failed'))
+			end
+			return
 		end
-		notify(playerId, 'error', _t('vehicle_spawn_failed'))
-		return
+	else
+		local debited, err = economy(function() return exports.coe_economy:Debit(characterId, total, 'vehicle_rental') end)
+		if debited ~= true then
+			notify(playerId, 'error', _t(err == 'economy_unavailable' and 'economy_unavailable' or 'not_enough_money'))
+			return
+		end
+		entity = spawnRentalVehicle(vehicleDef, spawnPoint)
+		if not entity then
+			-- Reembolso de segurança caso o spawn falhe
+			if economy(function() return exports.coe_economy:Credit(characterId, total, 'rental_refund_spawn_failed') end) ~= true then
+				log('error', 'rental_refund_failed', { character_id = characterId, total = total })
+			end
+			notify(playerId, 'error', _t('vehicle_spawn_failed'))
+			return
+		end
 	end
 
 	Core.Platform.Vehicles.SetPlate(entity, plate)
@@ -618,6 +670,9 @@ end)
 AddEventHandler('playerDropped', function()
 	local playerId = source
 	lastRequest[playerId] = nil
+	if requestLimiter then
+		requestLimiter:reset(playerId)
+	end
 	local characterId = getCharacterId(playerId)
 	if characterId and activeRentals[characterId] then
 		finishRental(characterId, nil, false, 'dropped')

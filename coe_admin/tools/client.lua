@@ -145,18 +145,35 @@ local function close()
 	isOpen = false
 	SetNuiFocus(false, false)
 	send({ action = 'toolsClose' })
+	if type(AdminPanelClose) == 'function' then
+		AdminPanelClose()
+	end
 end
 
 local function requestOpen()
 	if isOpen then
 		return
 	end
-	TriggerServerEvent('coe_admin:tools:open')
+	TriggerServerEvent('coe_admin:requestOpen', false, 'tools')
 end
 
 RegisterCommand(config.Command, requestOpen, false)
 -- Botão "Ferramentas" do painel e F10 de quem só tem ferramentas.
 AdminToolsOpen = requestOpen
+
+function AdminToolsSync(active, payload)
+	isOpen = active == true
+	if type(payload) == 'table' then
+		modules = payload.modules or modules
+		speeds = payload.speeds or speeds
+	end
+	return {
+		modules = modules,
+		limits = type(payload) == 'table' and payload.limits or config.Limits,
+		toggles = toggles,
+		noclip = AdminNoclip.active
+	}
+end
 
 RegisterNetEvent('coe_admin:tools:opened', function(payload)
 	if isOpen or type(payload) ~= 'table' then
@@ -253,7 +270,7 @@ local APPLY = {
 			DeleteVehicle(current)
 		end
 		local at = Core.Platform.Entities.GetCoords(ped)
-		local vehicle = CreateVehicle(hash, at.x, at.y, at.z + 0.5, Core.Platform.Entities.GetHeading(ped), true, false)
+		local vehicle = CreateVehicle(hash, at.x, at.y, at.z + 0.5, Core.Platform.Entities.GetHeading(ped), false, false)
 		SetModelAsNoLongerNeeded(hash)
 		SetVehicleOnGroundProperly(vehicle)
 		Core.Platform.Vehicles.SetPlate(vehicle, 'STAFF')

@@ -1,3 +1,4 @@
+dofile('../coe_core/lib/algorithms/init.lua')
 dofile('config.lua')
 dofile('shared/rules.lua')
 
@@ -156,6 +157,23 @@ clean = CryptoRules.ValidateSettings(view)
 CryptoRules.ApplySettings(config, clean)
 eq(config.Exchange.AnchorPrice, 4000, 'aplica nova âncora em memória')
 eq(config.Transfer.Fee, 25, 'aplica nova taxa em memória')
+
+-- Algoritmos (RingBuffer, Saga, GCRA, LockManager)
+local ring = CryptoRules.NewPriceHistoryRing(3)
+eq(ring ~= nil, true, 'RingBuffer instanciado')
+ring:push({ price = 100 })
+ring:push({ price = 200 })
+ring:push({ price = 300 })
+ring:push({ price = 400 })
+local arr = ring:toArray()
+eq(#arr, 3, 'RingBuffer mantém capacidade 3')
+eq(arr[1].price, 200, 'RingBuffer descarta mais antigo em O(1)')
+eq(arr[3].price, 400, 'RingBuffer preserva mais recente')
+
+local limiter = CryptoRules.NewCallLimiter(250)
+eq(limiter:allow(1, 1000), true, 'GCRA primeira chamada permitida')
+eq(limiter:allow(1, 1100), false, 'GCRA bloqueia dentro da janela')
+eq(limiter:allow(1, 1300), true, 'GCRA libera após janela')
 
 if failures > 0 then
 	print(('%d falha(s)'):format(failures))

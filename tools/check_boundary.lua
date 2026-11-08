@@ -34,11 +34,12 @@ local function listFiles()
 	return run("find . -type f \\( -name '*.lua' -o -name '*.js' -o -name '*.html' \\) 2>/dev/null")
 end
 
+local cachedCwd = (windows and run('cd')[1] or run('pwd')[1] or ''):gsub('\\', '/')
+
 local function normalize(path)
 	path = path:gsub('\\', '/')
-	local cwd = (windows and run('cd')[1] or run('pwd')[1] or ''):gsub('\\', '/')
-	if cwd ~= '' and path:sub(1, #cwd) == cwd then
-		path = path:sub(#cwd + 2)
+	if cachedCwd ~= '' and path:sub(1, #cachedCwd) == cachedCwd then
+		path = path:sub(#cachedCwd + 2)
 	end
 	return (path:gsub('^%./', ''))
 end

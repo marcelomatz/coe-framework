@@ -1,10 +1,15 @@
 -- coe_talk - Servidor de Voz e Comunicacao
 local accessConfig = Config.Access or {}
 local lastEvent = {}
+local eventLimiter = (Rules and Rules.NewEventLimiter and Rules.NewEventLimiter(Config.EventCooldownMs or 250)) or nil
 
 -- Eventos de voz chegam do client: um por jogador a cada Config.EventCooldownMs.
 local function throttled(src, kind)
 	local now = GetGameTimer()
+	if eventLimiter then
+		local key = tostring(src) .. ':' .. tostring(kind)
+		return not eventLimiter:allow(key, now)
+	end
 	local byKind = lastEvent[src]
 	if not byKind then
 		byKind = {}
@@ -54,14 +59,18 @@ local function notify(src, kind, message)
 	end)
 end
 
-local _t = function(key, params)
-	if Core and Core.Locale and Core.Locale.New then
-		return Core.Locale.New({ default = Core.Locale.GetDefaultLang(), locales = Locales or {} })(key, params)
+local _t_inst = (Core and Core.Locale and Core.Locale.New) and Core.Locale.New({
+	default = (Core.Locale.GetDefaultLang and Core.Locale.GetDefaultLang()) or 'pt-BR',
+	locales = Locales or {}
+})
+local function _t(key, params)
+	if type(_t_inst) == 'table' and _t_inst.T then
+		return _t_inst:T(key, params)
 	end
-	if Locales and Locales['pt-BR'] and Locales['pt-BR'][key] then
-		return Locales['pt-BR'][key]
-	end
-	return key
+	local text = (Locales and Locales['pt-BR'] and Locales['pt-BR'][key]) or key
+	return (text:gsub('%%{(%w+)}', function(name)
+		return params and params[name] ~= nil and tostring(params[name]) or nil
+	end))
 end
 
 -- Sincroniza a lista de membros do radio com todos os participantes do canal
@@ -190,6 +199,11 @@ AddEventHandler('playerDropped', function()
 	local call = Routing.GetCall(src)
 	Routing.RemovePlayer(src)
 	lastEvent[src] = nil
+	if eventLimiter then
+		eventLimiter:reset(tostring(src) .. ':voice')
+		eventLimiter:reset(tostring(src) .. ':radio')
+		eventLimiter:reset(tostring(src) .. ':transmit')
+	end
 	if radio then syncRadioChannel(radio) end
 	if call then syncCallChannel(call) end
 end)

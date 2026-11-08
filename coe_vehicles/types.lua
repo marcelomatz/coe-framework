@@ -91,3 +91,34 @@ function exports_coe_vehicles:RevokeKey(vehicleId, characterId) end
 ---@param vehicleId string
 ---@return string[]|nil characterIds
 function exports_coe_vehicles:ListKeyHolders(vehicleId) end
+
+---Transiciona atomicamente o estado do veículo. Somente `WriterResources`.
+---@param vehicleId string
+---@param expectedState string
+---@param nextState string
+---@return true|string okOrError
+function exports_coe_vehicles:TransitionState(vehicleId, expectedState, nextState) end
+
+---Altera a fase de manutenção de um veículo estacionado em garagem residencial/oficina. Somente `WriterResources`.
+---@param vehicleId string
+---@param expected string
+---@param target string
+---@return boolean ok
+---@return string|nil errorCode
+function exports_coe_vehicles:SetHousingVehiclePhase(vehicleId, expected, target) end
+
+---Verifica se o veículo está estacionado fisicamente em garagem residencial. Somente `WriterResources`.
+---@param vehicleId string
+---@return boolean isHousing
+function exports_coe_vehicles:IsHousingVehicle(vehicleId) end
+
+---Retoma o estado de veículo estacionado em garagem residencial após manutenção. Somente `WriterResources`.
+---@param vehicleId string
+---@return boolean ok
+---@return string|nil errorCode
+function exports_coe_vehicles:ResumeHousingVehicle(vehicleId) end
+
+---Recupera travas de manutenção pendentes após reinício. Somente `WriterResources`.
+---@return boolean ok
+---@return string|nil errorCode
+function exports_coe_vehicles:RecoverHousingLocks() end

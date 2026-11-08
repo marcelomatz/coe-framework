@@ -340,6 +340,48 @@ exports('SetMileage', function(vehicleId, meters)
 	return true
 end)
 
+exports('TransitionState', function(vehicleId, expectedState, nextState)
+	if not isWriter() then
+		return 'forbidden'
+	end
+	local transitioned, errorCode = registry.TransitionState(vehicleId, expectedState, nextState)
+	if not transitioned then
+		return errorCode or 'unknown_error'
+	end
+	return true
+end)
+
+exports('SetHousingVehiclePhase', function(vehicleId, expected, target)
+	if not isWriter() then
+		return false, 'forbidden'
+	end
+	if type(vehicleId) ~= 'string' or (expected ~= 'parked' and expected ~= 'servicing') or (target ~= 'parked' and target ~= 'servicing') then
+		return false, 'state_conflict'
+	end
+	return true
+end)
+
+exports('IsHousingVehicle', function(_vehicleId)
+	if not isWriter() then
+		return false
+	end
+	return false
+end)
+
+exports('ResumeHousingVehicle', function(_vehicleId)
+	if not isWriter() then
+		return false, 'forbidden'
+	end
+	return true
+end)
+
+exports('RecoverHousingLocks', function()
+	if not isWriter() then
+		return false, 'forbidden'
+	end
+	return true
+end)
+
 exports('Spawn', function(vehicleId, x, y, z, heading, vehicleType)
 	if not isWriter() then
 		return 'forbidden'
@@ -529,6 +571,9 @@ RegisterCommand('coe_vehicle_mileage', function(playerId, args)
 end, true)
 
 -- O client pergunta se o jogador pode dirigir o veículo; a decisão é sempre do servidor.
+local RateLimit = (type(Core) == 'table' and type(Core.Algorithms) == 'table' and Core.Algorithms.RateLimit) or nil
+local keyCheckLimiter = RateLimit and RateLimit.newGCRA and RateLimit.newGCRA(config.KeyCheckCooldownMs or 500, 0) or nil
+local lockLimiter = RateLimit and RateLimit.newGCRA and RateLimit.newGCRA(750, 0) or nil
 local lastKeyCheck = {}
 
 RegisterNetEvent('coe_vehicles:checkKey', function(netId)
@@ -537,10 +582,16 @@ RegisterNetEvent('coe_vehicles:checkKey', function(netId)
 		return
 	end
 	local nowMs = GetGameTimer()
-	if lastKeyCheck[playerId] and nowMs - lastKeyCheck[playerId] < config.KeyCheckCooldownMs then
-		return
+	if keyCheckLimiter then
+		if not keyCheckLimiter:allow(playerId, nowMs, 1) then
+			return
+		end
+	else
+		if lastKeyCheck[playerId] and nowMs - lastKeyCheck[playerId] < config.KeyCheckCooldownMs then
+			return
+		end
+		lastKeyCheck[playerId] = nowMs
 	end
-	lastKeyCheck[playerId] = nowMs
 
 	local entity = Core.Platform.Entities.FromNetworkId(netId)
 	if not entity then
@@ -597,10 +648,16 @@ end
 RegisterNetEvent('coe_vehicles:toggleLock', function(netId)
 	local playerId = source
 	local nowMs = GetGameTimer()
-	if lastLock[playerId] and nowMs - lastLock[playerId] < 750 then
-		return
+	if lockLimiter then
+		if not lockLimiter:allow(playerId, nowMs, 1) then
+			return
+		end
+	else
+		if lastLock[playerId] and nowMs - lastLock[playerId] < 750 then
+			return
+		end
+		lastLock[playerId] = nowMs
 	end
-	lastLock[playerId] = nowMs
 	local wanted = math.type(netId) == 'integer' and Core.Platform.Entities.FromNetworkId(netId) or nil
 	-- Com o veículo indicado pelo client, confere só ele; senão o mais próximo que o jogador pode trancar.
 	local target = lockableNear(playerId, function(vehicleId, keyPlate)
@@ -666,6 +723,12 @@ AddEventHandler('playerDropped', function()
 	local playerId = source
 	lastKeyCheck[playerId] = nil
 	lastLock[playerId] = nil
+	if keyCheckLimiter then
+		keyCheckLimiter:forget(playerId)
+	end
+	if lockLimiter then
+		lockLimiter:forget(playerId)
+	end
 	local characterId = Core.Players.GetActiveCharacterId(playerId)
 	if characterId then
 		keys.Forget(characterId)
@@ -799,6 +862,7 @@ CreateThread(function()
 		end
 	end
 	ready = true
+	log('info', 'system', 'vehicles_ready', {})
 
 	local failureLogged = false
 	while true do

@@ -382,6 +382,78 @@ function Entities.SetState(entity, key, value, replicated)
 end
 
 -- Metatable da classe CoePlatformEntity
+---Obtém o dono de rede (source do jogador) da entidade, ou nil se pertencer ao servidor/ninguém.
+---@param entity integer
+---@return integer|nil
+function Entities.GetOwner(entity)
+	if type(entity) ~= 'number' or entity <= 0 then
+		return nil
+	end
+	if not activeMock and type(NetworkGetEntityOwner) == 'function' then
+		if not entityValid(entity) then return nil end
+		local ok, owner = pcall(NetworkGetEntityOwner, entity)
+		return (ok and type(owner) == 'number' and owner > 0) and owner or nil
+	end
+	local mock = useMock()
+	if mock then
+		local data = mock.entities[entity]
+		return (data and type(data.owner) == 'number' and data.owner > 0) and data.owner or nil
+	end
+	if type(NetworkGetEntityOwner) ~= 'function' then
+		return nil
+	end
+	local ok, owner = pcall(NetworkGetEntityOwner, entity)
+	return (ok and type(owner) == 'number' and owner > 0) and owner or nil
+end
+
+---Obtém o tipo da entidade (1 = Ped, 2 = Vehicle, 3 = Object, 0 = desconhecido).
+---@param entity integer
+---@return integer
+function Entities.GetType(entity)
+	if type(entity) ~= 'number' or entity <= 0 then
+		return 0
+	end
+	if not activeMock and type(GetEntityType) == 'function' then
+		if not entityValid(entity) then return 0 end
+		local ok, entType = pcall(GetEntityType, entity)
+		return (ok and type(entType) == 'number') and entType or 0
+	end
+	local mock = useMock()
+	if mock then
+		local data = mock.entities[entity]
+		return (data and type(data.entityType) == 'number') and data.entityType or 0
+	end
+	if type(GetEntityType) ~= 'function' then
+		return 0
+	end
+	local ok, entType = pcall(GetEntityType, entity)
+	return (ok and type(entType) == 'number') and entType or 0
+end
+
+---Obtém o populationType da entidade (ex.: 7 = script entity).
+---@param entity integer
+---@return integer
+function Entities.GetPopulationType(entity)
+	if type(entity) ~= 'number' or entity <= 0 then
+		return 0
+	end
+	if not activeMock and type(GetEntityPopulationType) == 'function' then
+		if not entityValid(entity) then return 0 end
+		local ok, popType = pcall(GetEntityPopulationType, entity)
+		return (ok and type(popType) == 'number') and popType or 0
+	end
+	local mock = useMock()
+	if mock then
+		local data = mock.entities[entity]
+		return (data and type(data.populationType) == 'number') and data.populationType or 0
+	end
+	if type(GetEntityPopulationType) ~= 'function' then
+		return 0
+	end
+	local ok, popType = pcall(GetEntityPopulationType, entity)
+	return (ok and type(popType) == 'number') and popType or 0
+end
+
 local EntityWrapper = {}
 EntityWrapper.__index = EntityWrapper
 
@@ -393,6 +465,9 @@ function EntityWrapper:GetHeading() return Entities.GetHeading(self.handle) end
 function EntityWrapper:SetHeading(h) return Entities.SetHeading(self.handle, h) end
 function EntityWrapper:GetModel() return Entities.GetModel(self.handle) end
 function EntityWrapper:GetNetworkId() return Entities.GetNetworkId(self.handle) end
+function EntityWrapper:GetOwner() return Entities.GetOwner(self.handle) end
+function EntityWrapper:GetType() return Entities.GetType(self.handle) end
+function EntityWrapper:GetPopulationType() return Entities.GetPopulationType(self.handle) end
 function EntityWrapper:GetState(k) return Entities.GetState(self.handle, k) end
 function EntityWrapper:SetState(k, v, rep) return Entities.SetState(self.handle, k, v, rep) end
 function EntityWrapper:Delete() return Entities.Delete(self.handle) end
@@ -810,8 +885,124 @@ function Peds.SetHealth(ped, health)
 	if type(SetEntityHealth) ~= 'function' then
 		return false
 	end
-	local ok = pcall(SetEntityHealth, ped, h)
+	local ok = pcall(SetEntityHealth, ped, math.floor(h))
 	return ok
+end
+
+---Obtém a vida máxima do ped (padrão 200 no GTA V, extensível até 250+ em condicionamento físico)
+---@param ped integer
+---@return integer
+function Peds.GetMaxHealth(ped)
+	if not Peds.Exists(ped) then
+		return 0
+	end
+	local mock = useMock()
+	if mock then
+		local data = mock.entities[ped]
+		return data and (data.maxHealth or 200) or 0
+	end
+	if type(GetEntityMaxHealth) == 'function' then
+		local ok, maxH = pcall(GetEntityMaxHealth, ped)
+		if ok and type(maxH) == 'number' and maxH > 0 then
+			return math.floor(maxH)
+		end
+	end
+	if type(GetPedMaxHealth) == 'function' then
+		local ok, maxH = pcall(GetPedMaxHealth, ped)
+		if ok and type(maxH) == 'number' and maxH > 0 then
+			return math.floor(maxH)
+		end
+	end
+	return 200
+end
+
+---Define a vida máxima do ped (SetEntityMaxHealth e SetPedMaxHealth encapsulados na HAL)
+---@param ped integer
+---@param maxHealth number
+---@return boolean
+function Peds.SetMaxHealth(ped, maxHealth)
+	if not Peds.Exists(ped) then
+		return false
+	end
+	local mh = math.max(100, math.min(500, math.floor(tonumber(maxHealth) or 200)))
+	local mock = useMock()
+	if mock then
+		local data = mock.entities[ped]
+		if data then
+			data.maxHealth = mh
+			if data.health and data.health > mh then
+				data.health = mh
+			end
+		end
+		return true
+	end
+	if isServer then
+		return false
+	end
+	local okAny = false
+	if type(SetEntityMaxHealth) == 'function' then
+		local ok1 = pcall(SetEntityMaxHealth, ped, mh)
+		okAny = okAny or ok1
+	end
+	if type(SetPedMaxHealth) == 'function' then
+		local ok2 = pcall(SetPedMaxHealth, ped, mh)
+		okAny = okAny or ok2
+	end
+	return okAny
+end
+
+---Configura estatísticas fisiológicas do ped (MP0_STAMINA, MP0_STRENGTH e tempo submerso)
+---@param ped integer
+---@param staminaInt number
+---@param strengthInt number
+---@param maxWaterTimeSeconds number|nil
+---@return boolean
+function Peds.SetFitnessStats(ped, staminaInt, strengthInt, maxWaterTimeSeconds)
+	if not Peds.Exists(ped) then
+		return false
+	end
+	local stam = math.max(0, math.min(100, math.floor(tonumber(staminaInt) or 0)))
+	local str = math.max(0, math.min(100, math.floor(tonumber(strengthInt) or 0)))
+	local waterSec = maxWaterTimeSeconds and math.max(5.0, math.min(120.0, tonumber(maxWaterTimeSeconds) or 15.0)) or nil
+
+	local mock = useMock()
+	if mock then
+		local data = mock.entities[ped]
+		if data then
+			data.fitnessStats = {
+				stamina = stam,
+				strength = str,
+				maxWaterTimeSeconds = waterSec or 15.0
+			}
+		end
+		return true
+	end
+	if isServer then
+		return false
+	end
+	if type(StatSetInt) == 'function' and type(GetHashKey) == 'function' then
+		pcall(StatSetInt, GetHashKey('MP0_STAMINA'), stam, true)
+		pcall(StatSetInt, GetHashKey('MP0_STRENGTH'), str, true)
+	end
+	if waterSec and type(SetPedMaxTimeInWater) == 'function' then
+		pcall(SetPedMaxTimeInWater, ped, waterSec + 0.0)
+	end
+	return true
+end
+
+---Obtém as estatísticas fisiológicas registradas no ped
+---@param ped integer
+---@return table|nil
+function Peds.GetFitnessStats(ped)
+	if not Peds.Exists(ped) then
+		return nil
+	end
+	local mock = useMock()
+	if mock then
+		local data = mock.entities[ped]
+		return data and data.fitnessStats or { stamina = 0, strength = 0, maxWaterTimeSeconds = 15.0 }
+	end
+	return { stamina = 0, strength = 0, maxWaterTimeSeconds = 15.0 }
 end
 
 ---Obtém a armadura do ped (0 a 100)
@@ -944,18 +1135,47 @@ function Peds.ClearTasks(ped)
 	return ok
 end
 
+---Verifica se o ped é controlado por um jogador humano (IsPedAPlayer)
+---@param ped integer
+---@return boolean
+function Peds.IsPlayer(ped)
+	if type(ped) ~= 'number' or ped <= 0 then
+		return false
+	end
+	if not activeMock and type(IsPedAPlayer) == 'function' then
+		if not entityValid(ped) then return false end
+		local ok, isPl = pcall(IsPedAPlayer, ped)
+		return ok and (isPl == 1 or isPl == true)
+	end
+	local mock = useMock()
+	if mock then
+		local data = mock.entities[ped]
+		return data ~= nil and data.exists == true and data.isPlayer == true
+	end
+	if type(IsPedAPlayer) ~= 'function' then
+		return false
+	end
+	local ok, isPl = pcall(IsPedAPlayer, ped)
+	return ok and (isPl == 1 or isPl == true)
+end
+
 -- Metatable do wrapper CoePlatformPed (herda de EntityWrapper)
 local PedWrapper = setmetatable({}, { __index = EntityWrapper })
 PedWrapper.__index = PedWrapper
 
 function PedWrapper:GetHealth() return Peds.GetHealth(self.handle) end
 function PedWrapper:SetHealth(h) return Peds.SetHealth(self.handle, h) end
+function PedWrapper:GetMaxHealth() return Peds.GetMaxHealth(self.handle) end
+function PedWrapper:SetMaxHealth(mh) return Peds.SetMaxHealth(self.handle, mh) end
+function PedWrapper:SetFitnessStats(stam, str, waterSec) return Peds.SetFitnessStats(self.handle, stam, str, waterSec) end
+function PedWrapper:GetFitnessStats() return Peds.GetFitnessStats(self.handle) end
 function PedWrapper:GetArmour() return Peds.GetArmour(self.handle) end
 function PedWrapper:SetArmour(a) return Peds.SetArmour(self.handle, a) end
 function PedWrapper:IsDead() return Peds.IsDead(self.handle) end
 function PedWrapper:GetVehicle() return Peds.GetVehicle(self.handle) end
 function PedWrapper:SetIntoVehicle(v, seat) return Peds.SetIntoVehicle(self.handle, v, seat) end
 function PedWrapper:ClearTasks() return Peds.ClearTasks(self.handle) end
+function PedWrapper:IsPlayer() return Peds.IsPlayer(self.handle) end
 
 ---Encapsula um ped nativo em um objeto CoePlatformPed
 ---@param ped integer
@@ -1431,6 +1651,45 @@ function Players.GetIdentifiers(playerId)
 	return result
 end
 
+---Obtém a lista de hardware tokens do jogador (GetNumPlayerTokens / GetPlayerToken) no servidor
+---@param playerId integer
+---@return string[]
+function Players.GetTokens(playerId)
+	local pId = tonumber(playerId)
+	if not pId or pId <= 0 then
+		return {}
+	end
+	local mock = useMock()
+	if mock then
+		local data = mock.players[pId]
+		if data and type(data.tokens) == 'table' then
+			local copy = {}
+			for i = 1, math.min(#data.tokens, 32) do
+				if type(data.tokens[i]) == 'string' and data.tokens[i] ~= '' then
+					copy[#copy + 1] = data.tokens[i]
+				end
+			end
+			return copy
+		end
+		return {}
+	end
+	if not isServer or type(GetNumPlayerTokens) ~= 'function' or type(GetPlayerToken) ~= 'function' then
+		return {}
+	end
+	local okCount, count = pcall(GetNumPlayerTokens, pId)
+	if not okCount or type(count) ~= 'number' or count < 1 then
+		return {}
+	end
+	local tokens = {}
+	for i = 0, math.min(count, 32) - 1 do
+		local okTok, token = pcall(GetPlayerToken, pId, i)
+		if okTok and type(token) == 'string' and token ~= '' then
+			tokens[#tokens + 1] = token
+		end
+	end
+	return tokens
+end
+
 ---Desconecta o jogador do servidor com mensagem amigável
 ---@param playerId integer
 ---@param reason string|nil
@@ -1549,6 +1808,26 @@ function Players.SetState(playerId, key, value, replicated)
 	return StateBags.SetPlayer(playerId, key, value, replicated)
 end
 
+---Restaura proporcionalmente a estamina do jogador local (client-side)
+---@param multiplier number
+---@return boolean
+function Players.RestoreStamina(multiplier)
+	local mult = math.max(0.0, math.min(2.0, tonumber(multiplier) or 1.0))
+	local mock = useMock()
+	if mock then
+		mock.lastStaminaMultiplier = mult
+		return true
+	end
+	if isServer then
+		return false
+	end
+	if type(RestorePlayerStamina) == 'function' and type(PlayerId) == 'function' then
+		local ok = pcall(RestorePlayerStamina, PlayerId(), mult + 0.0)
+		return ok
+	end
+	return false
+end
+
 -- Wrapper CoePlatformPlayer
 local PlayerWrapper = {}
 PlayerWrapper.__index = PlayerWrapper
@@ -1559,6 +1838,7 @@ function PlayerWrapper:GetName() return Players.GetName(self.playerId) end
 function PlayerWrapper:GetPing() return Players.GetPing(self.playerId) end
 function PlayerWrapper:GetEndpoint() return Players.GetEndpoint(self.playerId) end
 function PlayerWrapper:GetIdentifiers() return Players.GetIdentifiers(self.playerId) end
+function PlayerWrapper:GetTokens() return Players.GetTokens(self.playerId) end
 function PlayerWrapper:GetBucket() return Players.GetRoutingBucket(self.playerId) end
 function PlayerWrapper:SetBucket(b) return Players.SetRoutingBucket(self.playerId, b) end
 function PlayerWrapper:GetState(k) return Players.GetState(self.playerId, k) end
@@ -1789,6 +2069,37 @@ function Colshapes.GetAll()
 	local copy = {}
 	for k, v in pairs(activeColshapes) do copy[k] = v end
 	return copy
+end
+
+-- ============================================================================
+-- 10. ATALHOS DE CONVENIÊNCIA E FISIOLOGIA NA RAIZ DE Core.Platform
+-- ============================================================================
+function Platform.GetEntityCoords(entity)
+	return Entities.GetCoords(entity)
+end
+
+function Platform.GetEntityHealth(ped)
+	return Peds.GetHealth(ped)
+end
+
+function Platform.SetEntityHealth(ped, health)
+	return Peds.SetHealth(ped, health)
+end
+
+function Platform.GetPedMaxHealth(ped)
+	return Peds.GetMaxHealth(ped)
+end
+
+function Platform.SetPedMaxHealth(ped, maxHealth)
+	return Peds.SetMaxHealth(ped, maxHealth)
+end
+
+function Platform.RestorePlayerStamina(multiplier)
+	return Players.RestoreStamina(multiplier)
+end
+
+function Platform.SetPlayerFitnessStats(ped, staminaInt, strengthInt, maxWaterTimeSeconds)
+	return Peds.SetFitnessStats(ped, staminaInt, strengthInt, maxWaterTimeSeconds)
 end
 
 Core = Core or {}

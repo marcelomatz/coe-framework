@@ -87,6 +87,45 @@ function EconomyPersistence.Balance(characterId)
 	return tonumber(rows[1].balance) or 0
 end
 
+function EconomyPersistence.FrozenBalance(characterId)
+	local rows, errorCode = callDatabase('Query', 'SELECT frozen_balance FROM coe_economy_accounts WHERE character_id = ?', { characterId })
+	if not rows then
+		return nil, errorCode or 'database_error'
+	end
+	if not rows[1] then
+		return 0
+	end
+	return tonumber(rows[1].frozen_balance) or 0
+end
+
+function EconomyPersistence.FreezeFunds(characterId, amount, reason, reference, sourceResource)
+	local result, errorCode = callDatabase('Transaction', {
+		{ sql = 'UPDATE coe_economy_accounts SET frozen_balance = frozen_balance + ? WHERE character_id = ? AND balance >= frozen_balance + ?', parameters = { amount, characterId, amount } },
+		ledgerStatement(characterId, 0, reason, reference, sourceResource)
+	})
+	if not result then
+		return nil, errorCode or 'database_error'
+	end
+	if (result[1].affectedRows or 0) ~= 1 then
+		return nil, 'insufficient_funds'
+	end
+	return true
+end
+
+function EconomyPersistence.UnfreezeFunds(characterId, amount, reason, reference, sourceResource)
+	local result, errorCode = callDatabase('Transaction', {
+		{ sql = 'UPDATE coe_economy_accounts SET frozen_balance = frozen_balance - ? WHERE character_id = ? AND frozen_balance >= ?', parameters = { amount, characterId, amount } },
+		ledgerStatement(characterId, 0, reason, reference, sourceResource)
+	})
+	if not result then
+		return nil, errorCode or 'database_error'
+	end
+	if (result[1].affectedRows or 0) ~= 1 then
+		return nil, 'insufficient_frozen_funds'
+	end
+	return true
+end
+
 local function ledgerStatement(characterId, delta, reason, reference, sourceResource)
 	return {
 		sql = 'INSERT INTO coe_economy_ledger (character_id, delta, reason, reference, source_resource) VALUES (?, ?, ?, ?, ?)',
@@ -110,7 +149,7 @@ end
 
 function EconomyPersistence.Debit(characterId, amount, reason, reference, sourceResource)
 	local result, errorCode = callDatabase('Transaction', {
-		{ sql = 'UPDATE coe_economy_accounts SET balance = balance - ? WHERE character_id = ?', parameters = { amount, characterId } },
+		{ sql = 'UPDATE coe_economy_accounts SET balance = balance - ? WHERE character_id = ? AND balance >= ? + frozen_balance', parameters = { amount, characterId, amount } },
 		ledgerStatement(characterId, -amount, reason, reference, sourceResource)
 	})
 	if not result then
@@ -124,7 +163,7 @@ end
 
 function EconomyPersistence.Transfer(fromId, toId, amount, reason, reference, sourceResource)
 	local result, errorCode = callDatabase('Transaction', {
-		{ sql = 'UPDATE coe_economy_accounts SET balance = balance - ? WHERE character_id = ?', parameters = { amount, fromId } },
+		{ sql = 'UPDATE coe_economy_accounts SET balance = balance - ? WHERE character_id = ? AND balance >= ? + frozen_balance', parameters = { amount, fromId, amount } },
 		{ sql = 'UPDATE coe_economy_accounts SET balance = balance + ? WHERE character_id = ?', parameters = { amount, toId } },
 		ledgerStatement(fromId, -amount, reason, reference, sourceResource),
 		ledgerStatement(toId, amount, reason, reference, sourceResource)

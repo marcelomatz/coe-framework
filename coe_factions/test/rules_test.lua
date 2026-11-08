@@ -1,3 +1,4 @@
+Core = { Algorithms = dofile('../coe_core/lib/algorithms/init.lua') }
 dofile('../coe_factions/config.lua')
 dofile('../coe_factions/server/rules.lua')
 
@@ -78,5 +79,10 @@ _, e = FactionsRules.Normalize(base({ stations = { crafts = { { id = 'm1', x = 0
 eq(e, 'duplicate_station', 'estacao duplicada')
 _, e = FactionsRules.Normalize(base({ stations = { stashes = { { id = 'b1', x = 0, y = 0, z = 0, slots = 999 } } } }), config)
 eq(e, 'invalid_station', 'slots acima do limite')
+
+local cache = FactionsRules.NewCache(32)
+assert(cache ~= nil, 'LRU cache de facções instanciado')
+cache:put('42', { vagos = 2 })
+eq(cache:get('42').vagos, 2, 'cache LRU hit')
 
 print('factions rules ok')

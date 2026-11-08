@@ -1,5 +1,7 @@
 local settings = Config.Needs
 local logger = CoeLogger.Create('coe_needs')
+local activityLimiter = Needs and Needs.NewActivityLimiter and Needs.NewActivityLimiter(settings.ActivityMinIntervalMs or 1000, 0) or nil
+local metabolicWheel = Needs and Needs.NewTimingWheel and Needs.NewTimingWheel(settings.TickIntervalMs or 5000) or nil
 
 -- characterId -> { source, state, activity, lastStepAt, lastActivityEventAt, sentSnapshot, dirty, persistable, lastConsume }
 local byCharacter = {}
@@ -99,6 +101,12 @@ local function loadForPlayer(playerSource, characterId)
 end
 
 local function unloadSource(playerSource)
+	if activityLimiter then
+		activityLimiter:reset(playerSource)
+	end
+	if metabolicWheel then
+		metabolicWheel:cancel('needs:' .. tostring(playerSource))
+	end
 	local characterId = bySource[playerSource]
 	bySource[playerSource] = nil
 	if not characterId then

@@ -70,6 +70,7 @@ client_scripts {
 	'presentation/bootstrap.lua'
 }
 server_scripts {
+	'@coe_core/lib/access.lua',
 	'@coe_core/lib/logger.lua',
 	'@coe_core/lib/migrations.lua',
 	'adapters/migrations.lua',
