@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_phone'
-version '0.1.0-beta.18'
+version '0.1.0-beta.19'
 description 'Smartphone do COE OS: Telefone, Contatos, Mensagens e os apps da loja (coe_apps)'
 
 -- Reinício pelo coe_supervisor (categoria no painel).

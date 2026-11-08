@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_mail'
-version '0.1.0-beta.18'
+version '0.1.0-beta.19'
 description 'E-mail do COE OS: contas com senha, caixas de entrada e envio entre endereços'
 
 coe_platform 'hal'

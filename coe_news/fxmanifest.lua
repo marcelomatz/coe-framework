@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'coe_news'
-version '0.1.0-beta.18'
+version '0.1.0-beta.19'
 description 'Portais de notícias do COE OS: Weazel News e Rebel News, com redação, linha editorial e anúncios'
 
 -- Reinício pelo coe_supervisor (categoria no painel).
